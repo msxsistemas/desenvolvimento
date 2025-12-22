@@ -407,8 +407,9 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
         </div>
       </div>
 
-      {/* Sigma IPTV Integration Card */}
+      {/* Integration Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Sigma IPTV Card */}
         <Card className="bg-card border hover:shadow-lg transition-shadow">
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
@@ -432,6 +433,42 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
             
             <p className="text-sm text-muted-foreground mb-6">
               Painel IPTV Sigma com suporte a múltiplos painéis
+            </p>
+            
+            <Button 
+              onClick={() => setIsConfigModalOpen(true)}
+              className="w-full bg-green-500 hover:bg-green-600 text-white"
+            >
+              <span className="mr-2">+</span>
+              Configurar Agora
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* kOfficePanel API Card */}
+        <Card className="bg-card border hover:shadow-lg transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">kOfficePanel API</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                    <span className="text-sm text-muted-foreground">Configurar</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                <span className="text-sm text-muted-foreground">Configurar</span>
+              </div>
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-6">
+              Integração com kOfficePanel para gerenciamento IPTV
             </p>
             
             <Button 
