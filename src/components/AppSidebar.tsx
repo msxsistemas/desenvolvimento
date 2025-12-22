@@ -26,6 +26,7 @@ import {
   ChevronDown,
   Circle,
   Bell,
+  Link2,
 } from "lucide-react";
 import { useState } from "react";
 import type { LucideProps } from "lucide-react";
@@ -161,6 +162,14 @@ export function AppSidebar() {
                         <NavLink to="/clientes/metricas" end>
                           <Circle className="h-3 w-3" />
                           <span>Métricas</span>
+                        </NavLink>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild isActive={isActive("/clientes/integracoes")}>
+                        <NavLink to="/clientes/integracoes" end>
+                          <Link2 className="h-3 w-3" />
+                          <span>Integrações</span>
                         </NavLink>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
