@@ -119,12 +119,14 @@ export default function ParearWhatsapp() {
         </p>
       </header>
 
-      <Tabs defaultValue="config" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="config" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Configuração
-          </TabsTrigger>
+      <Tabs defaultValue={isConfigured ? "qrcode" : "config"} className="space-y-6">
+        <TabsList className={`grid w-full ${isConfigured ? 'grid-cols-2' : 'grid-cols-3'}`}>
+          {!isConfigured && (
+            <TabsTrigger value="config" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Configuração
+            </TabsTrigger>
+          )}
           <TabsTrigger value="qrcode" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
             Conexão
@@ -140,13 +142,15 @@ export default function ParearWhatsapp() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="config">
-          <EvolutionAPIConfig
-            currentConfig={config}
-            onSave={saveConfig}
-            onTest={testConnection}
-          />
-        </TabsContent>
+        {!isConfigured && (
+          <TabsContent value="config">
+            <EvolutionAPIConfig
+              currentConfig={config}
+              onSave={saveConfig}
+              onTest={testConnection}
+            />
+          </TabsContent>
+        )}
 
         <TabsContent value="qrcode">
           <EvolutionQRCode
