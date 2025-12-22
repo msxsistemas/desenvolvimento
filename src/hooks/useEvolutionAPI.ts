@@ -20,7 +20,7 @@ interface EvolutionConfig {
 // ⚠️ CONFIGURAÇÃO EMBUTIDA - Evolution API
 const DEFAULT_CONFIG: EvolutionConfig = {
   apiUrl: 'https://evolutionapi-evolution-api.kvkrww.easypanel.host',
-  apiKey: 'D4EC457E4EC8-4795-97FA-9B99C48AA0D1',
+  apiKey: 'B9DF5B3678D5-4034-9A35-09EDED13207C',
   instanceName: 'Whatsapp',
 };
 
