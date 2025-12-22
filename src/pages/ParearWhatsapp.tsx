@@ -38,6 +38,13 @@ export default function ParearWhatsapp() {
 
   const { buscar: buscarClientes } = useClientes();
 
+  // Verificar status da conexão ao carregar
+  useEffect(() => {
+    if (isConfigured) {
+      checkStatus();
+    }
+  }, [isConfigured]);
+
   // SEO
   useEffect(() => {
     document.title = "WhatsApp - Evolution API | Gestor Tech Play";
