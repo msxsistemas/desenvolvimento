@@ -398,7 +398,13 @@ export const useEvolutionAPI = () => {
       toast.success('WhatsApp desconectado');
     } catch (error: any) {
       console.error('Erro ao desconectar:', error);
-      toast.error(error.message || 'Erro ao desconectar');
+      // Se já está desconectado ou erro interno, limpar estado mesmo assim
+      if (error.message?.includes('not connected') || error.message?.includes('500')) {
+        setSession(null);
+        toast.success('WhatsApp desconectado');
+      } else {
+        toast.error(error.message || 'Erro ao desconectar');
+      }
     }
   }, [config, makeRequest, statusInterval]);
 
