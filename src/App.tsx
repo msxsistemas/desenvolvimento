@@ -45,6 +45,7 @@ const App = () => (
             <Route path="/marketing" element={<Marketing />} />
             <Route path="/mensagens" element={<MensagensEnviadas />} />
             <Route path="/loja" element={<ParearWhatsapp />} />
+            <Route path="/parear-whatsapp" element={<ParearWhatsapp />} />
             <Route path="/tutoriais" element={<Tutoriais />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="/configuracoes/mensagens-cobranca" element={<MensagensCobranca />} />
