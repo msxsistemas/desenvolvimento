@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useCurrentUser } from './useCurrentUser';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EvolutionSession {
   instanceName: string;
@@ -11,22 +11,9 @@ interface EvolutionSession {
   profilePicture?: string;
 }
 
-interface EvolutionConfig {
-  apiUrl: string;
-  apiKey: string;
-  instanceName: string;
-}
-
-// ⚠️ CONFIGURAÇÃO EMBUTIDA - Evolution API
-const DEFAULT_CONFIG: EvolutionConfig = {
-  apiUrl: 'https://evolutionapi-evolution-api.kvkrww.easypanel.host',
-  apiKey: 'B9DF5B3678D5-4034-9A35-09EDED13207C',
-  instanceName: 'Whatsapp',
-};
+const INSTANCE_NAME = 'Whatsapp';
 
 export const useEvolutionAPI = () => {
-  const { userId } = useCurrentUser();
-  const [config] = useState<EvolutionConfig>(DEFAULT_CONFIG);
   const [session, setSession] = useState<EvolutionSession | null>(null);
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -39,57 +26,36 @@ export const useEvolutionAPI = () => {
     };
   }, [statusInterval]);
 
-  // Configuração já está embutida, não precisa salvar
+  // Função para fazer requisições à Edge Function
+  const makeRequest = useCallback(async (action: string, params: any = {}) => {
+    console.log(`📡 Evolution API: ${action}`);
 
-  // Função para fazer requisições à Evolution API
-  const makeRequest = useCallback(async (
-    endpoint: string, 
-    method: 'GET' | 'POST' | 'DELETE' = 'GET', 
-    body?: any
-  ) => {
-    if (!config) throw new Error('Evolution API não configurada');
-
-    const url = `${config.apiUrl}${endpoint}`;
-    console.log(`📡 ${method} ${url}`);
-
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': config.apiKey,
-      },
-      body: body ? JSON.stringify(body) : undefined,
+    const { data, error } = await supabase.functions.invoke('evolution-api', {
+      body: { action, instanceName: INSTANCE_NAME, ...params },
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error('Evolution API Error:', data);
-      throw new Error(data.message || data.error || `Erro ${response.status}`);
+    if (error) {
+      console.error('Evolution API Error:', error);
+      throw new Error(error.message || 'Erro na Evolution API');
     }
 
     return data;
-  }, [config]);
+  }, []);
 
   // Criar instância na Evolution API
   const createInstance = useCallback(async () => {
-    if (!config) {
-      toast.error('Configure a Evolution API primeiro');
-      return null;
-    }
-
     setConnecting(true);
     try {
       // Primeiro, tentar buscar a instância existente
       try {
-        const existingInstance = await makeRequest(`/instance/fetchInstances?instanceName=${config.instanceName}`);
+        const existingInstance = await makeRequest('fetchInstances');
         console.log('Instância existente:', existingInstance);
         
         if (existingInstance && existingInstance.length > 0) {
           const instance = existingInstance[0];
           if (instance.instance?.state === 'open') {
             setSession({
-              instanceName: config.instanceName,
+              instanceName: INSTANCE_NAME,
               status: 'connected',
               phoneNumber: instance.instance?.owner,
               profileName: instance.instance?.profileName,
@@ -103,24 +69,17 @@ export const useEvolutionAPI = () => {
       }
 
       // Criar nova instância
-      const createData = await makeRequest('/instance/create', 'POST', {
-        instanceName: config.instanceName,
-        qrcode: true,
-        integration: 'WHATSAPP-BAILEYS',
-      });
-
+      const createData = await makeRequest('create');
       console.log('Instância criada:', createData);
 
       if (createData.qrcode?.base64) {
         setSession({
-          instanceName: config.instanceName,
+          instanceName: INSTANCE_NAME,
           status: 'connecting',
           qrCode: createData.qrcode.base64,
         });
         
-        // Iniciar verificação de status
         startStatusCheck();
-        
         toast.success('QR Code gerado! Escaneie com seu WhatsApp');
         return createData;
       }
@@ -133,32 +92,24 @@ export const useEvolutionAPI = () => {
     } finally {
       setConnecting(false);
     }
-  }, [config, makeRequest]);
+  }, [makeRequest]);
 
   // Conectar instância existente (gerar QR Code)
   const connectInstance = useCallback(async () => {
-    if (!config) {
-      toast.error('Configure a Evolution API primeiro');
-      return null;
-    }
-
     setConnecting(true);
     try {
-      // Tentar conectar a instância existente
-      const connectData = await makeRequest(`/instance/connect/${config.instanceName}`);
+      const connectData = await makeRequest('connect');
       console.log('Connect response:', connectData);
 
       if (connectData.base64 || connectData.qrcode?.base64) {
         const qrCode = connectData.base64 || connectData.qrcode?.base64;
         setSession({
-          instanceName: config.instanceName,
+          instanceName: INSTANCE_NAME,
           status: 'connecting',
           qrCode: qrCode,
         });
 
-        // Iniciar verificação de status
         startStatusCheck();
-
         toast.success('QR Code gerado! Escaneie com seu WhatsApp');
         return connectData;
       }
@@ -166,7 +117,7 @@ export const useEvolutionAPI = () => {
       // Se já estiver conectado
       if (connectData.instance?.state === 'open') {
         setSession({
-          instanceName: config.instanceName,
+          instanceName: INSTANCE_NAME,
           status: 'connected',
           phoneNumber: connectData.instance?.owner,
           profileName: connectData.instance?.profileName,
@@ -188,14 +139,12 @@ export const useEvolutionAPI = () => {
     } finally {
       setConnecting(false);
     }
-  }, [config, makeRequest, createInstance]);
+  }, [makeRequest, createInstance]);
 
   // Verificar status da conexão
   const checkStatus = useCallback(async () => {
-    if (!config) return null;
-
     try {
-      const statusData = await makeRequest(`/instance/connectionState/${config.instanceName}`);
+      const statusData = await makeRequest('checkStatus');
       console.log('Status:', statusData);
 
       const state = statusData.instance?.state || statusData.state;
@@ -203,11 +152,11 @@ export const useEvolutionAPI = () => {
       if (state === 'open') {
         // Buscar informações do perfil
         try {
-          const fetchData = await makeRequest(`/instance/fetchInstances?instanceName=${config.instanceName}`);
+          const fetchData = await makeRequest('fetchInstances');
           const instanceInfo = fetchData[0];
           
           setSession({
-            instanceName: config.instanceName,
+            instanceName: INSTANCE_NAME,
             status: 'connected',
             phoneNumber: instanceInfo?.instance?.owner || statusData.instance?.owner,
             profileName: instanceInfo?.instance?.profileName,
@@ -235,7 +184,7 @@ export const useEvolutionAPI = () => {
       console.error('Erro ao verificar status:', error);
       return null;
     }
-  }, [config, makeRequest, statusInterval]);
+  }, [makeRequest, statusInterval]);
 
   // Iniciar verificação de status periódica
   const startStatusCheck = useCallback(() => {
@@ -261,112 +210,44 @@ export const useEvolutionAPI = () => {
 
   // Enviar mensagem de texto
   const sendMessage = useCallback(async (phone: string, message: string) => {
-    if (!config) {
-      throw new Error('Evolution API não configurada');
-    }
-
     setLoading(true);
     try {
-      // Formatar número (remover caracteres especiais)
-      let formattedPhone = phone.replace(/\D/g, '');
-      
-      // Evolution API v2 formato correto
-      const data = await makeRequest(`/message/sendText/${config.instanceName}`, 'POST', {
-        number: formattedPhone,
-        text: message,
-        delay: 1200,
-      });
-
+      const data = await makeRequest('sendMessage', { phone, message });
       console.log('Mensagem enviada:', data);
       toast.success('Mensagem enviada com sucesso!');
       return data;
     } catch (error: any) {
       console.error('Erro ao enviar mensagem:', error);
-      
-      // Tentar formato alternativo se o primeiro falhar
-      try {
-        let formattedPhone = phone.replace(/\D/g, '');
-        const data = await makeRequest(`/message/sendText/${config.instanceName}`, 'POST', {
-          number: formattedPhone,
-          textMessage: {
-            text: message
-          },
-        });
-        console.log('Mensagem enviada (formato alternativo):', data);
-        toast.success('Mensagem enviada com sucesso!');
-        return data;
-      } catch (altError: any) {
-        console.error('Erro no formato alternativo:', altError);
-        toast.error(error.message || 'Erro ao enviar mensagem');
-        throw error;
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [config, makeRequest]);
-
-  // Enviar mensagem com mídia
-  const sendMedia = useCallback(async (
-    phone: string, 
-    mediaUrl: string, 
-    mediaType: 'image' | 'video' | 'audio' | 'document',
-    caption?: string,
-    fileName?: string
-  ) => {
-    if (!config) throw new Error('Evolution API não configurada');
-
-    setLoading(true);
-    try {
-      const formattedPhone = phone.replace(/\D/g, '');
-      
-      const endpoint = `/message/sendMedia/${config.instanceName}`;
-      const data = await makeRequest(endpoint, 'POST', {
-        number: formattedPhone,
-        mediatype: mediaType,
-        media: mediaUrl,
-        caption: caption,
-        fileName: fileName,
-      });
-
-      toast.success('Mídia enviada com sucesso!');
-      return data;
-    } catch (error: any) {
-      console.error('Erro ao enviar mídia:', error);
-      toast.error(error.message || 'Erro ao enviar mídia');
+      toast.error(error.message || 'Erro ao enviar mensagem');
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [config, makeRequest]);
+  }, [makeRequest]);
 
   // Desconectar (logout)
   const disconnect = useCallback(async () => {
-    if (!config) return;
-
     if (statusInterval) {
       clearInterval(statusInterval);
       setStatusInterval(null);
     }
 
     try {
-      await makeRequest(`/instance/logout/${config.instanceName}`, 'DELETE');
+      await makeRequest('disconnect');
       setSession(null);
       toast.success('WhatsApp desconectado');
     } catch (error: any) {
       console.error('Erro ao desconectar:', error);
       toast.error(error.message || 'Erro ao desconectar');
     }
-  }, [config, makeRequest, statusInterval]);
+  }, [makeRequest, statusInterval]);
 
   // Reiniciar instância
   const restartInstance = useCallback(async () => {
-    if (!config) return;
-
     try {
-      await makeRequest(`/instance/restart/${config.instanceName}`, 'POST');
+      await makeRequest('restart');
       toast.success('Instância reiniciada');
       
-      // Verificar status após reiniciar
       setTimeout(() => {
         connectInstance();
       }, 2000);
@@ -374,55 +255,34 @@ export const useEvolutionAPI = () => {
       console.error('Erro ao reiniciar:', error);
       toast.error(error.message || 'Erro ao reiniciar');
     }
-  }, [config, makeRequest, connectInstance]);
+  }, [makeRequest, connectInstance]);
 
   // Deletar instância
   const deleteInstance = useCallback(async () => {
-    if (!config) return;
-
     try {
-      await makeRequest(`/instance/delete/${config.instanceName}`, 'DELETE');
+      await makeRequest('delete');
       setSession(null);
       toast.success('Instância deletada');
     } catch (error: any) {
       console.error('Erro ao deletar instância:', error);
       toast.error(error.message || 'Erro ao deletar');
     }
-  }, [config, makeRequest]);
+  }, [makeRequest]);
 
   // Testar conexão com a API
-  const testConnection = useCallback(async (testConfig?: EvolutionConfig) => {
-    const cfg = testConfig || config;
-    if (!cfg) {
-      toast.error('Configure a Evolution API primeiro');
-      return false;
-    }
-
+  const testConnection = useCallback(async () => {
     try {
-      const response = await fetch(`${cfg.apiUrl}/instance/fetchInstances`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': cfg.apiKey,
-        },
-      });
-
-      if (response.ok) {
-        toast.success('Conexão com Evolution API estabelecida!');
-        return true;
-      } else {
-        const error = await response.json();
-        toast.error(error.message || 'Falha na autenticação');
-        return false;
-      }
+      await makeRequest('fetchInstances');
+      toast.success('Conexão com Evolution API estabelecida!');
+      return true;
     } catch (error: any) {
       console.error('Erro ao testar conexão:', error);
       toast.error('Não foi possível conectar à Evolution API');
       return false;
     }
-  }, [config]);
+  }, [makeRequest]);
 
   return {
-    config,
     session,
     loading,
     connecting,
@@ -431,11 +291,10 @@ export const useEvolutionAPI = () => {
     connectInstance,
     checkStatus,
     sendMessage,
-    sendMedia,
     disconnect,
     restartInstance,
     deleteInstance,
     isConnected: session?.status === 'connected',
-    isConfigured: true, // Sempre configurado com valores embutidos
+    isConfigured: true,
   };
 };
