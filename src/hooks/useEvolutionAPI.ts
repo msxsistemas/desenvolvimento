@@ -383,7 +383,7 @@ export const useEvolutionAPI = () => {
     }
   }, [config, makeRequest]);
 
-  // Desconectar (logout)
+  // Desconectar (logout) - força reset completo deletando e recriando instância
   const disconnect = useCallback(async () => {
     if (!config) return;
 
@@ -393,18 +393,26 @@ export const useEvolutionAPI = () => {
     }
 
     try {
-      await makeRequest(`/instance/logout/${config.instanceName}`, 'DELETE');
+      // Primeiro tenta logout normal
+      try {
+        await makeRequest(`/instance/logout/${config.instanceName}`, 'DELETE');
+      } catch (e) {
+        console.log('Logout falhou, continuando com delete...');
+      }
+      
+      // Deleta a instância para forçar novo QR na próxima conexão
+      try {
+        await makeRequest(`/instance/delete/${config.instanceName}`, 'DELETE');
+      } catch (e) {
+        console.log('Delete falhou:', e);
+      }
+      
       setSession(null);
-      toast.success('WhatsApp desconectado');
+      toast.success('WhatsApp desconectado! Clique em "Conectar" para gerar novo QR Code.');
     } catch (error: any) {
       console.error('Erro ao desconectar:', error);
-      // Se já está desconectado ou erro interno, limpar estado mesmo assim
-      if (error.message?.includes('not connected') || error.message?.includes('500')) {
-        setSession(null);
-        toast.success('WhatsApp desconectado');
-      } else {
-        toast.error(error.message || 'Erro ao desconectar');
-      }
+      setSession(null);
+      toast.success('WhatsApp desconectado');
     }
   }, [config, makeRequest, statusInterval]);
 
