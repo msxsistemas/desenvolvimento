@@ -17,22 +17,20 @@ interface EvolutionConfig {
   instanceName: string;
 }
 
-const STORAGE_KEY = 'evolution_api_config';
+// ⚠️ CONFIGURAÇÃO EMBUTIDA - Evolution API
+const DEFAULT_CONFIG: EvolutionConfig = {
+  apiUrl: 'https://evolutionapi-evolution-api.kvkrww.easypanel.host',
+  apiKey: 'D4EC457E4EC8-4795-97FA-9B99C48AA0D1',
+  instanceName: 'Whatsapp',
+};
 
 export const useEvolutionAPI = () => {
   const { userId } = useCurrentUser();
-  const [config, setConfig] = useState<EvolutionConfig | null>(null);
+  const [config] = useState<EvolutionConfig>(DEFAULT_CONFIG);
   const [session, setSession] = useState<EvolutionSession | null>(null);
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [statusInterval, setStatusInterval] = useState<NodeJS.Timeout | null>(null);
-
-  // Carregar configuração do usuário
-  useEffect(() => {
-    if (userId) {
-      loadConfig();
-    }
-  }, [userId]);
 
   // Limpar interval ao desmontar
   useEffect(() => {
@@ -41,49 +39,7 @@ export const useEvolutionAPI = () => {
     };
   }, [statusInterval]);
 
-  const loadConfig = () => {
-    if (!userId) return;
-
-    try {
-      const stored = localStorage.getItem(`${STORAGE_KEY}_${userId}`);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setConfig({
-          apiUrl: parsed.apiUrl,
-          apiKey: parsed.apiKey,
-          instanceName: parsed.instanceName,
-        });
-      }
-    } catch (error) {
-      console.error('Erro ao carregar configuração:', error);
-    }
-  };
-
-  const saveConfig = async (newConfig: EvolutionConfig) => {
-    if (!userId) {
-      toast.error('Você precisa estar logado');
-      return false;
-    }
-
-    try {
-      const configToSave = {
-        apiUrl: newConfig.apiUrl.replace(/\/$/, ''),
-        apiKey: newConfig.apiKey,
-        instanceName: newConfig.instanceName,
-        updatedAt: new Date().toISOString(),
-      };
-
-      localStorage.setItem(`${STORAGE_KEY}_${userId}`, JSON.stringify(configToSave));
-
-      setConfig(newConfig);
-      toast.success('Configuração salva com sucesso!');
-      return true;
-    } catch (error) {
-      console.error('Erro ao salvar configuração:', error);
-      toast.error('Erro ao salvar configuração');
-      return false;
-    }
-  };
+  // Configuração já está embutida, não precisa salvar
 
   // Função para fazer requisições à Evolution API
   const makeRequest = useCallback(async (
@@ -470,8 +426,6 @@ export const useEvolutionAPI = () => {
     session,
     loading,
     connecting,
-    saveConfig,
-    loadConfig,
     testConnection,
     createInstance,
     connectInstance,
@@ -482,6 +436,6 @@ export const useEvolutionAPI = () => {
     restartInstance,
     deleteInstance,
     isConnected: session?.status === 'connected',
-    isConfigured: !!config,
+    isConfigured: true, // Sempre configurado com valores embutidos
   };
 };
