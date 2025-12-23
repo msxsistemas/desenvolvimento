@@ -41,6 +41,7 @@ export default function ClientesIntegracoes() {
     chaveApi: ""
   });
   const [isKofficeModalOpen, setIsKofficeModalOpen] = useState(false);
+  const [isTestingKoffice, setIsTestingKoffice] = useState(false);
   const [kofficeIntegrations, setKofficeIntegrations] = useState<Array<{
     id: string;
     nomeServidor: string;
@@ -48,6 +49,59 @@ export default function ClientesIntegracoes() {
     usuario: string;
     chaveApi: string;
   }>>([]);
+
+  // Testar conexão kOfficePanel API
+  const handleTestKofficeConnection = async () => {
+    if (!kofficeFormData.linkPainel.trim() || !kofficeFormData.usuario.trim() || !kofficeFormData.chaveApi.trim()) {
+      setTestResultModal({
+        isOpen: true,
+        success: false,
+        message: "Dados Obrigatórios Ausentes",
+        details: "❌ Preencha Link do Painel, Usuário e Chave API antes de testar."
+      });
+      return;
+    }
+
+    setIsTestingKoffice(true);
+    try {
+      const baseUrl = kofficeFormData.linkPainel.trim().replace(/\/$/, '');
+      
+      // Testa a API do kOfficePanel
+      const response = await fetch(`${baseUrl}/api.php?action=user&sub=info&username=${encodeURIComponent(kofficeFormData.usuario)}&password=${encodeURIComponent(kofficeFormData.chaveApi)}`, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json"
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && (data?.result === true || data?.user_data || data?.status === 'success' || !data?.error)) {
+        setTestResultModal({
+          isOpen: true,
+          success: true,
+          message: "CONEXÃO kOfficePanel BEM-SUCEDIDA!",
+          details: `✅ Servidor: ${kofficeFormData.nomeServidor || 'N/A'}\n🔗 Endpoint: ${baseUrl}/api.php\n👤 Usuário: ${kofficeFormData.usuario}\n📡 Status: OK\n\n${data?.user_data ? `Dados recebidos: ${JSON.stringify(data.user_data).slice(0, 100)}...` : 'API respondeu com sucesso!'}`
+        });
+      } else {
+        setTestResultModal({
+          isOpen: true,
+          success: false,
+          message: "FALHA NA AUTENTICAÇÃO kOfficePanel",
+          details: data?.message || data?.error || "Usuário/Chave API inválidos ou URL incorreta."
+        });
+      }
+    } catch (error: any) {
+      setTestResultModal({
+        isOpen: true,
+        success: false,
+        message: "Erro no Teste kOfficePanel",
+        details: `Erro inesperado durante o teste: ${error.message}\n\nVerifique se a URL está correta e acessível.`
+      });
+    } finally {
+      setIsTestingKoffice(false);
+    }
+  };
 
   const { toast, dismiss } = useToast();
 
@@ -1029,6 +1083,16 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
             >
               <span className="mr-2">+</span>
               Adicionar Integração
+            </Button>
+            
+            <Button 
+              onClick={handleTestKofficeConnection}
+              variant="outline" 
+              className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
+              disabled={isTestingKoffice}
+            >
+              <span className="mr-2">🔧</span>
+              {isTestingKoffice ? "Testando..." : "Testar Conexão"}
             </Button>
           </div>
 
