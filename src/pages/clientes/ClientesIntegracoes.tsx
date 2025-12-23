@@ -33,6 +33,22 @@ export default function ClientesIntegracoes() {
     senha: "sua_senha"
   });
 
+  // kOfficePanel form data
+  const [kofficeFormData, setKofficeFormData] = useState({
+    nomeServidor: "",
+    linkPainel: "",
+    usuario: "",
+    chaveApi: ""
+  });
+  const [isKofficeModalOpen, setIsKofficeModalOpen] = useState(false);
+  const [kofficeIntegrations, setKofficeIntegrations] = useState<Array<{
+    id: string;
+    nomeServidor: string;
+    linkPainel: string;
+    usuario: string;
+    chaveApi: string;
+  }>>([]);
+
   const { toast, dismiss } = useToast();
 
   const [panels, setPanels] = useState<Array<{
@@ -456,14 +472,10 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
                 <div>
                   <h3 className="font-semibold text-foreground">kOfficePanel API</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                    <span className="text-sm text-muted-foreground">Configurar</span>
+                    <span className={`w-2 h-2 ${kofficeIntegrations.length > 0 ? 'bg-green-500' : 'bg-gray-400'} rounded-full`}></span>
+                    <span className="text-sm text-muted-foreground">{kofficeIntegrations.length > 0 ? `${kofficeIntegrations.length} Configurado(s)` : 'Configurar'}</span>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                <span className="text-sm text-muted-foreground">Configurar</span>
               </div>
             </div>
             
@@ -472,7 +484,7 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
             </p>
             
             <Button 
-              onClick={() => setIsConfigModalOpen(true)}
+              onClick={() => setIsKofficeModalOpen(true)}
               className="w-full bg-green-500 hover:bg-green-600 text-white"
             >
               <span className="mr-2">+</span>
@@ -878,6 +890,192 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* kOfficePanel Configuration Modal */}
+      <Dialog open={isKofficeModalOpen} onOpenChange={setIsKofficeModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-800 border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="sr-only">Configurar kOfficePanel API</DialogTitle>
+            <DialogDescription className="sr-only">Formulário de configuração da integração kOfficePanel API</DialogDescription>
+          </DialogHeader>
+          
+          {/* Header */}
+          <div className="bg-purple-500 -m-6 mb-6 p-6 text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
+                <Shield className="w-4 h-4" />
+              </div>
+              <h1 className="text-lg font-semibold">kOfficePanel API</h1>
+            </div>
+            <p className="text-sm text-white/90">Configure suas integrações kOfficePanel para gerenciamento IPTV</p>
+          </div>
+
+          {/* Breadcrumb */}
+          <div className="flex items-center justify-between gap-2 text-sm mb-6">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="text-purple-400 hover:text-purple-300 p-0">
+                🏠 Dashboard
+              </Button>
+              <span className="text-gray-400">&gt;</span>
+              <span className="text-white">kOfficePanel API</span>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsKofficeModalOpen(false)}
+              className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar ao Dashboard
+            </Button>
+          </div>
+
+          {/* kOfficePanel Header */}
+          <div className="flex items-center gap-2 mb-6">
+            <Shield className="w-6 h-6 text-purple-400" />
+            <h2 className="text-xl font-semibold text-white">kOfficePanel API</h2>
+          </div>
+
+          {/* Add New Integration Section */}
+          <div className="bg-purple-500 rounded-lg p-4 text-white mb-6">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">+</span>
+              <span className="font-medium">Adicionar Nova Integração kOfficePanel</span>
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Nome do Servidor */}
+            <div className="space-y-2">
+              <Label className="text-purple-400 flex items-center gap-2">
+                <span className="text-purple-400">💼</span>
+                Nome Servidor *
+              </Label>
+              <Input
+                value={kofficeFormData.nomeServidor}
+                onChange={(e) => setKofficeFormData(prev => ({ ...prev, nomeServidor: e.target.value }))}
+                placeholder="Ex: Digital+"
+                className="bg-slate-700 border-slate-600 text-white"
+              />
+              <p className="text-xs text-gray-400">Nome para identificar este servidor</p>
+            </div>
+
+            {/* Link do Painel */}
+            <div className="space-y-2">
+              <Label className="text-purple-400 flex items-center gap-2">
+                <span className="text-purple-400">🔗</span>
+                Link Painel *
+              </Label>
+              <Input
+                value={kofficeFormData.linkPainel}
+                onChange={(e) => setKofficeFormData(prev => ({ ...prev, linkPainel: e.target.value }))}
+                placeholder="https://painel.exemplo.top"
+                className="bg-slate-700 border-slate-600 text-white"
+              />
+              <p className="text-xs text-gray-400">URL do painel kOffice</p>
+            </div>
+
+            {/* Usuário */}
+            <div className="space-y-2">
+              <Label className="text-purple-400 flex items-center gap-2">
+                <span className="text-purple-400">👤</span>
+                Usuário *
+              </Label>
+              <Input
+                value={kofficeFormData.usuario}
+                onChange={(e) => setKofficeFormData(prev => ({ ...prev, usuario: e.target.value }))}
+                placeholder="seu_usuario"
+                className="bg-slate-700 border-slate-600 text-white"
+              />
+              <p className="text-xs text-gray-400">Username da conta kOffice</p>
+            </div>
+
+            {/* Chave API */}
+            <div className="space-y-2">
+              <Label className="text-purple-400 flex items-center gap-2">
+                <span className="text-purple-400">🔑</span>
+                Chave API *
+              </Label>
+              <Input
+                value={kofficeFormData.chaveApi}
+                onChange={(e) => setKofficeFormData(prev => ({ ...prev, chaveApi: e.target.value }))}
+                placeholder="12d9c25f4dceffbc741de91412ec729d"
+                className="bg-slate-700 border-slate-600 text-white font-mono text-sm"
+              />
+              <p className="text-xs text-gray-400">Chave de API do painel kOffice</p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4 mb-6">
+            <Button 
+              onClick={() => {
+                if (!kofficeFormData.nomeServidor.trim() || !kofficeFormData.linkPainel.trim() || !kofficeFormData.usuario.trim() || !kofficeFormData.chaveApi.trim()) {
+                  toast({ title: "Campos obrigatórios", description: "Preencha todos os campos marcados com *" });
+                  return;
+                }
+                const newIntegration = {
+                  id: Date.now().toString(),
+                  ...kofficeFormData
+                };
+                setKofficeIntegrations(prev => [...prev, newIntegration]);
+                setKofficeFormData({ nomeServidor: "", linkPainel: "", usuario: "", chaveApi: "" });
+                toast({ title: "Sucesso", description: "Integração kOfficePanel adicionada!" });
+              }}
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
+              <span className="mr-2">+</span>
+              Adicionar Integração
+            </Button>
+          </div>
+
+          {/* kOfficePanel Integrations Table */}
+          {kofficeIntegrations.length > 0 && (
+            <div className="mt-6">
+              <div className="bg-purple-600 text-white rounded-t-lg px-4 py-2 flex items-center gap-2">
+                <span className="text-sm">≡</span>
+                <span className="font-medium">Integrações kOfficePanel Configuradas ({kofficeIntegrations.length})</span>
+              </div>
+              <div className="border border-purple-600/40 rounded-b-lg overflow-hidden">
+                <div className="grid grid-cols-12 bg-purple-200 text-slate-800 font-medium px-4 py-2 text-sm">
+                  <div className="col-span-3">Nome Servidor:</div>
+                  <div className="col-span-4">Link Painel:</div>
+                  <div className="col-span-2">Usuário:</div>
+                  <div className="col-span-2">Chave API:</div>
+                  <div className="col-span-1 text-right">Ações</div>
+                </div>
+                <div className="divide-y divide-slate-700">
+                  {kofficeIntegrations.map((integration) => (
+                    <div key={integration.id} className="grid grid-cols-12 items-center px-4 py-3 bg-slate-900 text-sm">
+                      <div className="col-span-3 text-white font-medium">{integration.nomeServidor}</div>
+                      <div className="col-span-4">
+                        <a href={integration.linkPainel} target="_blank" rel="noreferrer" className="text-purple-400 hover:underline">
+                          {integration.linkPainel}
+                        </a>
+                      </div>
+                      <div className="col-span-2 text-gray-300">{integration.usuario}</div>
+                      <div className="col-span-2 text-gray-400 font-mono text-xs truncate" title={integration.chaveApi}>
+                        {integration.chaveApi}
+                      </div>
+                      <div className="col-span-1 flex justify-end">
+                        <Button 
+                          onClick={() => setKofficeIntegrations(prev => prev.filter(i => i.id !== integration.id))}
+                          variant="outline" 
+                          size="icon" 
+                          className="h-8 w-8 border-red-500 text-red-400 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </main>
