@@ -195,9 +195,13 @@ export default function FilaMensagens() {
         erros++;
       }
 
-      // Delay de 3 segundos entre mensagens para evitar bloqueio
+      // Delay variável entre mensagens para evitar bloqueio do WhatsApp
+      // Base de 17-25 segundos + variação de 1-10 segundos
       if (i < paraEnviar.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        const baseDelay = Math.floor(Math.random() * (25 - 17 + 1)) + 17; // 17-25 segundos
+        const variation = Math.floor(Math.random() * 10) + 1; // 1-10 segundos
+        const totalDelay = (baseDelay + variation) * 1000; // Converter para ms
+        await new Promise(resolve => setTimeout(resolve, totalDelay));
       }
     }
 
