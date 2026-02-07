@@ -35,8 +35,8 @@ export default function DashboardNewCards({
       {/* Card 1 - Novos Clientes */}
       <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white">
         <div className="absolute right-4 top-1/2 -translate-y-1/2">
-          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-3">
-            <Users className="h-8 w-8 text-[hsl(142,70%,45%)]" />
+          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
+            <Users className="h-6 w-6 text-[hsl(142,70%,45%)]" />
           </div>
         </div>
         <div className="relative z-10 space-y-2 pr-16">
@@ -61,8 +61,8 @@ export default function DashboardNewCards({
       {/* Card 2 - Clientes Vencendo */}
       <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white">
         <div className="absolute right-4 top-1/2 -translate-y-1/2">
-          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-3">
-            <Users className="h-8 w-8 text-[hsl(142,70%,45%)]" />
+          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
+            <Users className="h-6 w-6 text-[hsl(142,70%,45%)]" />
           </div>
         </div>
         <div className="relative z-10 space-y-2 pr-16">
@@ -84,8 +84,8 @@ export default function DashboardNewCards({
       {/* Card 3 - Valores a Receber */}
       <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white">
         <div className="absolute right-4 top-1/2 -translate-y-1/2">
-          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-3">
-            <TrendingUp className="h-8 w-8 text-[hsl(142,70%,45%)]" />
+          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
+            <TrendingUp className="h-6 w-6 text-[hsl(142,70%,45%)]" />
           </div>
         </div>
         <div className="relative z-10 space-y-2 pr-16">
