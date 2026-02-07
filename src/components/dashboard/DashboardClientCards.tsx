@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Users, AlertTriangle, UserX } from "lucide-react";
 
 interface Props {
@@ -12,49 +11,52 @@ export default function DashboardClientCards({
   clientesVencidos,
   clientesDesativados = 0,
 }: Props) {
+  const cards = [
+    {
+      label: "Clientes Ativos",
+      value: clientesAtivos,
+      icon: Users,
+      bgColor: "bg-[hsl(142,70%,45%)]",
+      iconBgColor: "bg-[hsl(142,60%,35%)]",
+    },
+    {
+      label: "Clientes Vencidos",
+      value: clientesVencidos,
+      icon: AlertTriangle,
+      bgColor: "bg-[hsl(0,72%,51%)]",
+      iconBgColor: "bg-[hsl(0,60%,40%)]",
+    },
+    {
+      label: "Clientes Desativados",
+      value: clientesDesativados,
+      icon: UserX,
+      bgColor: "bg-[hsl(300,70%,40%)]",
+      iconBgColor: "bg-[hsl(300,60%,30%)]",
+    },
+  ];
+
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-      <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-dashboard-green/10 p-3">
-              <Users className="h-6 w-6 text-dashboard-green" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Clientes Ativos</p>
-              <p className="text-2xl font-bold text-foreground">{clientesAtivos}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      {cards.map((card) => (
+        <div
+          key={card.label}
+          className={`relative overflow-hidden rounded-xl ${card.bgColor} p-5 text-white transition-transform duration-200 hover:scale-[1.02]`}
+        >
+          {/* Decorative circles */}
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 h-24 w-24 rounded-full bg-white/10" />
+          <div className="absolute -right-4 -bottom-8 h-32 w-32 rounded-full bg-white/5" />
 
-      <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-dashboard-red/10 p-3">
-              <AlertTriangle className="h-6 w-6 text-dashboard-red" />
+          <div className="relative z-10 flex items-center gap-4">
+            <div className={`rounded-lg ${card.iconBgColor} p-3`}>
+              <card.icon className="h-6 w-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Clientes Vencidos</p>
-              <p className="text-2xl font-bold text-foreground">{clientesVencidos}</p>
+              <p className="text-sm font-medium text-white/90">{card.label}</p>
+              <p className="text-3xl font-bold">{card.value}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-dashboard-purple/10 p-3">
-              <UserX className="h-6 w-6 text-dashboard-purple" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Clientes Desativados</p>
-              <p className="text-2xl font-bold text-foreground">{clientesDesativados}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      ))}
+    </section>
   );
 }

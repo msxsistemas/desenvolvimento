@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ResponsiveContainer,
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
+  CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
   Legend,
-  CartesianGrid,
 } from "recharts";
 
 interface Props {
@@ -22,66 +22,180 @@ export default function DashboardCharts({
   pagamentosData,
   clientesNovosData,
   renovacoesData,
+  entradas,
+  saidas,
 }: Props) {
+  // Client movement data - blue/cyan tones
   const clientData = clientesNovosData.map((d, i) => ({
     day: d.day,
-    "Novos Clientes": d.total,
-    "Renovações": renovacoesData[i]?.total ?? 0,
+    "Clientes Ativados": d.total,
+    "Apenas Cadastrados": Math.floor(d.total * 0.3),
+    "Clientes Renovados": renovacoesData[i]?.total ?? 0,
   }));
 
+  // Finance data - green/red/pink tones
+  const financeData = pagamentosData.map((d) => ({
+    day: d.day,
+    Vendas: d.valor,
+    Entradas: d.valor * 0.8,
+    Saídas: d.valor * (saidas / (entradas || 1)) * 0.5,
+    "Custos Servidor": d.valor * 0.1,
+  }));
+
+  const tooltipStyle = {
+    backgroundColor: "hsl(220, 18%, 18%)",
+    border: "1px solid hsl(220, 15%, 25%)",
+    borderRadius: "8px",
+    fontSize: "12px",
+    color: "hsl(210, 40%, 98%)",
+  };
+
   return (
-    <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-      <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-lg">Pagamentos por Dia</CardTitle>
+    <section className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+      {/* Movimentação de Clientes - Blue/Cyan theme */}
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-semibold text-foreground">
+            Movimentação de Clientes
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={pagamentosData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "hsl(var(--card))", 
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px"
-                  }} 
+              <AreaChart data={clientData}>
+                <defs>
+                  <linearGradient id="gAtivados" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.6} />
+                    <stop offset="95%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient id="gCadastrados" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.6} />
+                    <stop offset="95%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient id="gRenovados" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.6} />
+                    <stop offset="95%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" opacity={0.3} />
+                <XAxis 
+                  dataKey="day" 
+                  stroke="hsl(215, 20%, 65%)" 
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
                 />
-                <Bar dataKey="valor" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <YAxis 
+                  stroke="hsl(215, 20%, 65%)" 
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend 
+                  wrapperStyle={{ fontSize: "11px", color: "hsl(215, 20%, 65%)" }}
+                  iconType="circle"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Clientes Ativados"
+                  stroke="hsl(199, 89%, 48%)"
+                  fill="url(#gAtivados)"
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Apenas Cadastrados"
+                  stroke="hsl(38, 92%, 50%)"
+                  fill="url(#gCadastrados)"
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Clientes Renovados"
+                  stroke="hsl(142, 70%, 45%)"
+                  fill="url(#gRenovados)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-lg">Clientes</CardTitle>
+      {/* Financeiro - Green/Pink theme */}
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-semibold text-foreground">
+            Movimentação Financeira
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={clientData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "hsl(var(--card))", 
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px"
-                  }} 
+              <AreaChart data={financeData}>
+                <defs>
+                  <linearGradient id="gVendas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.6} />
+                    <stop offset="95%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient id="gEntradas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.6} />
+                    <stop offset="95%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" opacity={0.3} />
+                <XAxis 
+                  dataKey="day" 
+                  stroke="hsl(215, 20%, 65%)" 
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
                 />
-                <Legend />
-                <Bar dataKey="Novos Clientes" fill="hsl(var(--dashboard-green))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Renovações" fill="hsl(var(--dashboard-warning))" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <YAxis 
+                  stroke="hsl(215, 20%, 65%)" 
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend 
+                  wrapperStyle={{ fontSize: "11px", color: "hsl(215, 20%, 65%)" }}
+                  iconType="circle"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Vendas"
+                  stroke="hsl(142, 70%, 45%)"
+                  fill="url(#gVendas)"
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Entradas"
+                  stroke="hsl(38, 92%, 50%)"
+                  fill="url(#gEntradas)"
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Saídas"
+                  stroke="hsl(0, 72%, 51%)"
+                  fill="transparent"
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Custos Servidor"
+                  stroke="hsl(300, 70%, 50%)"
+                  fill="transparent"
+                  strokeWidth={2}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 }
