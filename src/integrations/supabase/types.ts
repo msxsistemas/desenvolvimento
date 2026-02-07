@@ -209,6 +209,45 @@ export type Database = {
         }
         Relationships: []
       }
+      paineis_integracao: {
+        Row: {
+          auto_renovacao: boolean
+          created_at: string
+          id: string
+          nome: string
+          senha: string
+          status: string
+          updated_at: string
+          url: string
+          user_id: string
+          usuario: string
+        }
+        Insert: {
+          auto_renovacao?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          senha: string
+          status?: string
+          updated_at?: string
+          url: string
+          user_id: string
+          usuario: string
+        }
+        Update: {
+          auto_renovacao?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          senha?: string
+          status?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+          usuario?: string
+        }
+        Relationships: []
+      }
       planos: {
         Row: {
           created_at: string | null
