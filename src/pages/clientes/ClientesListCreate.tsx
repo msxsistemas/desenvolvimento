@@ -884,7 +884,6 @@ export default function ClientesListCreate() {
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableHead className="font-medium">Nome do Cliente:</TableHead>
-              <TableHead className="font-medium">WhatsApp:</TableHead>
               <TableHead className="font-medium">Vencimento:</TableHead>
               <TableHead className="font-medium">Status:</TableHead>
               <TableHead className="font-medium">Plano:</TableHead>
@@ -895,13 +894,13 @@ export default function ClientesListCreate() {
           <TableBody>
             {loadingClientes ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   <span className="text-muted-foreground">Carregando clientes...</span>
                 </TableCell>
               </TableRow>
             ) : clientesFiltrados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   <span className="text-muted-foreground">Nenhum cliente encontrado</span>
                 </TableCell>
               </TableRow>
@@ -910,6 +909,7 @@ export default function ClientesListCreate() {
                 .filter(cliente => cliente && cliente.id)
                 .map((cliente) => {
                   const { status } = getClienteStatus(cliente);
+                  const formattedPhone = cliente.whatsapp ? `+${cliente.whatsapp}` : '-';
                   return (
                     <TableRow 
                       key={cliente.id} 
@@ -917,19 +917,17 @@ export default function ClientesListCreate() {
                       onClick={() => handleEditCliente(cliente)}
                     >
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{cliente.nome}</span>
-                          {cliente.whatsapp && (
-                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500">
-                              <MessageSquare className="h-3 w-3 text-white" />
-                            </span>
-                          )}
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{cliente.nome}</span>
+                            {cliente.whatsapp && (
+                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500">
+                                <MessageSquare className="h-3 w-3 text-white" />
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground">{formattedPhone}</span>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-muted-foreground text-sm">
-                          {cliente.whatsapp ? `+${cliente.whatsapp}` : '-'}
-                        </span>
                       </TableCell>
                       <TableCell>
                         {cliente.data_vencimento 
