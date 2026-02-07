@@ -8,7 +8,6 @@ import DashboardClientCards from "@/components/dashboard/DashboardClientCards";
 import DashboardFinanceCards from "@/components/dashboard/DashboardFinanceCards";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import DashboardExpiredAlert from "@/components/dashboard/DashboardExpiredAlert";
-import DashboardSummaryCards from "@/components/dashboard/DashboardSummaryCards";
 
 export default function Index() {
   const { entradas, saidas, lucros, loading: loadingFinanceiro } = useFinanceiro();
@@ -39,14 +38,14 @@ export default function Index() {
     return (
       <div className="space-y-6 animate-pulse">
         <div className="h-8 bg-muted rounded w-64" />
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
             <div key={i} className="h-28 rounded-xl bg-muted" />
           ))}
         </div>
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 rounded-lg bg-muted" />
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="h-24 rounded-lg bg-muted" />
           ))}
         </div>
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
@@ -65,24 +64,24 @@ export default function Index() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <header>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-          {saudacao}! 👋
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Acompanhe clientes, pagamentos e desempenho.
-        </p>
+      <header className="flex items-center gap-2">
+        <span className="text-muted-foreground">🏠</span>
+        <span className="text-muted-foreground">/</span>
+        <span className="text-muted-foreground text-sm">Home</span>
       </header>
+      
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+        {saudacao}, Tech Play!
+      </h1>
 
-      {/* 1ª linha — Cards de clientes */}
+      {/* 1ª linha — Cards de clientes (3 cards) */}
       <DashboardClientCards
         clientesAtivos={clientesAtivos}
         clientesVencidos={clientesVencidos}
-        clientesNovosHoje={clientesNovosHoje}
-        totalClientes={totalClientes}
+        clientesDesativados={0}
       />
 
-      {/* 2ª linha — Financeiro */}
+      {/* 2ª linha — Financeiro (2 cards) */}
       <DashboardFinanceCards
         entradas={entradas}
         saidas={saidas}
@@ -101,14 +100,6 @@ export default function Index() {
 
       {/* 4ª linha — Alerta de vencidos */}
       <DashboardExpiredAlert clientesVencidos={clientesVencidos} />
-
-      {/* 5ª linha — Resumos */}
-      <DashboardSummaryCards
-        mediaPorDia={mediaPorDia}
-        valorTotalMes={valorTotalMes}
-        totalClientes={totalClientes}
-        pagamentosData={pagamentosData}
-      />
     </div>
   );
 }

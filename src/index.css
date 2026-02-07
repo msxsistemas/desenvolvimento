@@ -8,62 +8,68 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 220 20% 14%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 18% 18%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 18% 18%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 220 20% 14%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 15% 22%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 15% 22%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 15% 25%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 15% 25%;
+    --input: 220 15% 22%;
+    --ring: 199 89% 48%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 199 89% 48%;
 
     /* Brand and support tokens */
-    --brand: 199 89% 48%;
-    --brand-2: 268 83% 60%;
+    --brand: 14 100% 57%;
+    --brand-2: 199 89% 48%;
     --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 10%;
-    --info: 200 90% 50%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
     
-    /* Dashboard colors */
-    --dashboard-primary: 224 71% 20%; /* dark blue */
-    --dashboard-secondary: 199 89% 48%; /* cyan */
-    --dashboard-danger: 0 84% 60%; /* red */
-    --dashboard-success: 142 70% 45%; /* green */
-    --dashboard-warning: 38 92% 50%; /* yellow */
-    --dashboard-neutral: 215 16% 47%; /* gray */
+    /* Dashboard card colors */
+    --dashboard-green: 142 70% 45%;
+    --dashboard-red: 0 72% 51%;
+    --dashboard-purple: 300 70% 40%;
+    --dashboard-cyan: 199 89% 48%;
+    
+    /* Dashboard chart colors */
+    --dashboard-primary: 220 20% 14%;
+    --dashboard-secondary: 199 89% 48%;
+    --dashboard-danger: 0 72% 51%;
+    --dashboard-success: 142 70% 45%;
+    --dashboard-warning: 38 92% 50%;
+    --dashboard-neutral: 215 16% 47%;
 
     /* Effects */
     --gradient-primary: linear-gradient(135deg, hsl(var(--brand)), hsl(var(--brand-2)));
@@ -72,56 +78,63 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 220 20% 14%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 220 18% 18%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 220 18% 18%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-foreground: 220 20% 14%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 220 15% 22%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 15% 22%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 220 15% 25%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 220 15% 25%;
+    --input: 220 15% 22%;
+    --ring: 199 89% 48%;
+
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 199 89% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 199 89% 48%;
 
     /* Brand and support tokens (dark) */
-    --brand: 199 89% 56%;
-    --brand-2: 268 83% 66%;
-    --success: 142 60% 40%;
+    --brand: 14 100% 57%;
+    --brand-2: 199 89% 48%;
+    --success: 142 60% 50%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 55%;
     --warning-foreground: 0 0% 10%;
-    --info: 200 90% 60%;
+    --info: 199 89% 52%;
     --info-foreground: 0 0% 100%;
     
-    /* Dashboard colors (dark) */
-    --dashboard-primary: 224 71% 25%;
+    /* Dashboard card colors */
+    --dashboard-green: 142 70% 45%;
+    --dashboard-red: 0 72% 51%;
+    --dashboard-purple: 300 70% 40%;
+    --dashboard-cyan: 199 89% 48%;
+    
+    /* Dashboard chart colors (dark) */
+    --dashboard-primary: 220 20% 14%;
     --dashboard-secondary: 199 89% 52%;
-    --dashboard-danger: 0 84% 65%;
+    --dashboard-danger: 0 72% 55%;
     --dashboard-success: 142 60% 50%;
     --dashboard-warning: 38 92% 60%;
     --dashboard-neutral: 215 16% 52%;

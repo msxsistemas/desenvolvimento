@@ -82,7 +82,11 @@ export default {
 					danger: 'hsl(var(--dashboard-danger))',
 					success: 'hsl(var(--dashboard-success))',
 					warning: 'hsl(var(--dashboard-warning))',
-					neutral: 'hsl(var(--dashboard-neutral))'
+					neutral: 'hsl(var(--dashboard-neutral))',
+					green: 'hsl(var(--dashboard-green))',
+					red: 'hsl(var(--dashboard-red))',
+					purple: 'hsl(var(--dashboard-purple))',
+					cyan: 'hsl(var(--dashboard-cyan))'
 				}
 			},
 			fontFamily: {
