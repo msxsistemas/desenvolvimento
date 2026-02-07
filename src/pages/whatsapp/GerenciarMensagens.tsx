@@ -229,7 +229,7 @@ export default function GerenciarMensagens() {
                   value={mensagens.bem_vindo}
                   onChange={(e) => setMensagens(prev => ({ ...prev, bem_vindo: e.target.value }))}
                   onFocus={() => setSelectedTemplate("bem_vindo")}
-                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
+                  className="bg-muted border-border text-foreground min-h-[180px] text-sm"
                 />
               </div>
 
@@ -239,7 +239,7 @@ export default function GerenciarMensagens() {
                   value={mensagens.fatura_criada}
                   onChange={(e) => setMensagens(prev => ({ ...prev, fatura_criada: e.target.value }))}
                   onFocus={() => setSelectedTemplate("fatura_criada")}
-                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
+                  className="bg-muted border-border text-foreground min-h-[200px] text-sm"
                 />
               </div>
 
@@ -249,7 +249,7 @@ export default function GerenciarMensagens() {
                   value={mensagens.proximo_vencer}
                   onChange={(e) => setMensagens(prev => ({ ...prev, proximo_vencer: e.target.value }))}
                   onFocus={() => setSelectedTemplate("proximo_vencer")}
-                  className="bg-muted border-border text-foreground min-h-[80px] text-sm"
+                  className="bg-muted border-border text-foreground min-h-[180px] text-sm"
                 />
               </div>
 
@@ -259,7 +259,7 @@ export default function GerenciarMensagens() {
                   value={mensagens.vence_hoje}
                   onChange={(e) => setMensagens(prev => ({ ...prev, vence_hoje: e.target.value }))}
                   onFocus={() => setSelectedTemplate("vence_hoje")}
-                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
+                  className="bg-muted border-border text-foreground min-h-[200px] text-sm"
                 />
               </div>
 
@@ -269,7 +269,7 @@ export default function GerenciarMensagens() {
                   value={mensagens.vencido}
                   onChange={(e) => setMensagens(prev => ({ ...prev, vencido: e.target.value }))}
                   onFocus={() => setSelectedTemplate("vencido")}
-                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
+                  className="bg-muted border-border text-foreground min-h-[200px] text-sm"
                 />
               </div>
 
@@ -279,7 +279,7 @@ export default function GerenciarMensagens() {
                   value={mensagens.confirmacao_pagamento}
                   onChange={(e) => setMensagens(prev => ({ ...prev, confirmacao_pagamento: e.target.value }))}
                   onFocus={() => setSelectedTemplate("confirmacao_pagamento")}
-                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
+                  className="bg-muted border-border text-foreground min-h-[180px] text-sm"
                 />
               </div>
 
@@ -289,7 +289,7 @@ export default function GerenciarMensagens() {
                   value={mensagens.dados_cliente}
                   onChange={(e) => setMensagens(prev => ({ ...prev, dados_cliente: e.target.value }))}
                   onFocus={() => setSelectedTemplate("dados_cliente")}
-                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
+                  className="bg-muted border-border text-foreground min-h-[180px] text-sm"
                 />
               </div>
             </div>
