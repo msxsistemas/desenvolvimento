@@ -41,17 +41,17 @@ export default function DashboardNewCards({
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
             <span className="text-sm text-muted-foreground">Novos Clientes Hoje</span>
-            <span className="text-[hsl(142,70%,45%)] font-semibold">{novosClientesHoje}</span>
+            <span className="text-foreground font-semibold">{novosClientesHoje}</span>
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
             <span className="text-sm text-muted-foreground">Novos Clientes Esta Semana</span>
-            <span className="text-[hsl(142,70%,45%)] font-semibold">{novosClientesSemana}</span>
+            <span className="text-foreground font-semibold">{novosClientesSemana}</span>
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
             <span className="text-sm text-muted-foreground">Novos Clientes Este Mês</span>
-            <span className="text-[hsl(142,70%,45%)] font-semibold">{novosClientesMes}</span>
+            <span className="text-foreground font-semibold">{novosClientesMes}</span>
           </div>
         </div>
       </div>
@@ -64,15 +64,15 @@ export default function DashboardNewCards({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Clientes Vencendo Hoje</span>
-            <span className="text-[hsl(142,70%,45%)] font-semibold">{clientesVencendoHoje}</span>
+            <span className="text-foreground font-semibold">{clientesVencendoHoje}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Clientes Vencendo em 3 Dias</span>
-            <span className="text-[hsl(142,70%,45%)] font-semibold">{clientesVencendo3Dias}</span>
+            <span className="text-foreground font-semibold">{clientesVencendo3Dias}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Clientes sem Renovar este Mês</span>
-            <span className="text-[hsl(142,70%,45%)] font-semibold">{clientesSemRenovar}</span>
+            <span className="text-foreground font-semibold">{clientesSemRenovar}</span>
           </div>
         </div>
       </div>
