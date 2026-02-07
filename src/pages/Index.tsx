@@ -10,6 +10,7 @@ import DashboardFinanceCards from "@/components/dashboard/DashboardFinanceCards"
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import DashboardExpiredAlert from "@/components/dashboard/DashboardExpiredAlert";
 import DashboardNewCards from "@/components/dashboard/DashboardNewCards";
+import DashboardClientTables from "@/components/dashboard/DashboardClientTables";
 
 export default function Index() {
   const { entradas, saidas, lucros, loading: loadingFinanceiro } = useFinanceiro();
@@ -117,7 +118,10 @@ export default function Index() {
         saidas={saidas}
       />
 
-      {/* 4ª linha — Alerta de vencidos */}
+      {/* 4ª linha — Tabelas de clientes */}
+      <DashboardClientTables />
+
+      {/* 5ª linha — Alerta de vencidos */}
       <DashboardExpiredAlert clientesVencidos={clientesVencidos} />
     </div>
   );
