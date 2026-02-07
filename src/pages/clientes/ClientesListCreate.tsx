@@ -222,9 +222,15 @@ export default function ClientesListCreate() {
     setEditingCliente(cliente);
     setIsEditing(true);
     
+    // Remover o +55 do início para exibir no formulário
+    let whatsappSemPrefixo = cliente.whatsapp || "";
+    if (whatsappSemPrefixo.startsWith('55') && whatsappSemPrefixo.length > 11) {
+      whatsappSemPrefixo = whatsappSemPrefixo.substring(2);
+    }
+    
     form.reset({
       nome: cliente.nome || "",
-      whatsapp: cliente.whatsapp || "",
+      whatsapp: whatsappSemPrefixo,
       email: cliente.email || "",
       dataVenc: cliente.data_vencimento ? cliente.data_vencimento.slice(0, 10) : "",
       fixo: cliente.fixo || false,
@@ -553,6 +559,18 @@ export default function ClientesListCreate() {
     },
   });
 
+  // Função para formatar o número de WhatsApp com +55
+  const formatWhatsAppNumber = (phone: string): string => {
+    if (!phone) return '';
+    // Remove tudo que não for número
+    let cleaned = phone.replace(/\D/g, '');
+    // Se não começar com 55, adiciona
+    if (!cleaned.startsWith('55')) {
+      cleaned = '55' + cleaned;
+    }
+    return cleaned;
+  };
+
   const onSubmitNovoCliente = form.handleSubmit(async (data) => {
     dismiss();
     
@@ -582,13 +600,16 @@ export default function ClientesListCreate() {
       });
       return;
     }
+
+    // Formatar o número de WhatsApp com +55
+    const whatsappFormatado = formatWhatsAppNumber(data.whatsapp);
     
     setLoading(true);
     try {
       if (isEditing && editingCliente) {
         const clienteAtualizado = await editar(editingCliente.id, {
           nome: data.nome,
-          whatsapp: data.whatsapp,
+          whatsapp: whatsappFormatado,
           email: data.email,
            data_vencimento: data.dataVenc ? new Date(data.dataVenc + 'T23:59:59.999Z').toISOString() : null,
           fixo: data.fixo,
@@ -617,7 +638,7 @@ export default function ClientesListCreate() {
       } else {
         const novoCliente = await criar({
           nome: data.nome,
-          whatsapp: data.whatsapp,
+          whatsapp: whatsappFormatado,
           email: data.email,
           data_vencimento: data.dataVenc ? new Date(data.dataVenc + 'T23:59:59.999Z').toISOString() : null,
           fixo: data.fixo,
@@ -1021,7 +1042,27 @@ export default function ClientesListCreate() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="whatsapp">Whatsapp</Label>
-                <Input id="whatsapp" placeholder="WhatsApp" {...form.register("whatsapp")} />
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 bg-muted border border-r-0 border-input rounded-l-md text-muted-foreground text-sm">
+                    +55
+                  </span>
+                  <Input 
+                    id="whatsapp" 
+                    placeholder="83999999999" 
+                    className="rounded-l-none"
+                    {...form.register("whatsapp")}
+                    onChange={(e) => {
+                      // Remove tudo que não for número
+                      let value = e.target.value.replace(/\D/g, '');
+                      // Remove o 55 do início se o usuário digitar
+                      if (value.startsWith('55') && value.length > 11) {
+                        value = value.substring(2);
+                      }
+                      form.setValue("whatsapp", value);
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Digite apenas DDD + número (ex: 83999999999)</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
