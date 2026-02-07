@@ -31,7 +31,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import type { LucideProps } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 // Custom WhatsApp icon to match sidebar icon API
 const WhatsAppIcon = (props: LucideProps) => (
@@ -66,39 +65,37 @@ export function AppSidebar() {
 
   const isActive = (path: string) => currentPath === path;
 
+  // Estilo base dos itens - plano sem background
+  const menuItemClass = (active: boolean) =>
+    `flex items-center justify-between w-full px-5 py-3.5 transition-colors border-0 rounded-none ${
+      active 
+        ? "text-white" 
+        : "text-[#8b8b9a] hover:text-white"
+    }`;
+
   return (
-    <Sidebar className="border-r border-sidebar-border" collapsible="icon">
-      <SidebarContent className="bg-[hsl(220,25%,10%)]">
-        {/* Logo Header */}
-        <div className="flex justify-center py-8">
-          <div className="w-20 h-20 rounded-full bg-[hsl(var(--brand))] flex items-center justify-center shadow-[0_0_30px_hsl(var(--brand)/0.4)]">
-            <Play className="h-10 w-10 text-white fill-white ml-1" />
+    <Sidebar className="border-r border-[#2a2a3c]" collapsible="icon">
+      <SidebarContent className="bg-[#1a1a2e]">
+        {/* Logo Header - Centered */}
+        <div className="flex justify-center py-10">
+          <div className="w-24 h-24 rounded-full bg-[#ff4d4d] flex items-center justify-center">
+            <Play className="h-12 w-12 text-white fill-white ml-1" />
           </div>
         </div>
 
         {/* Main Navigation */}
-        <SidebarGroup className="px-2">
+        <SidebarGroup className="px-0">
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
+            <SidebarMenu className="space-y-0">
               {/* Dashboard */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-auto p-0">
-                  <NavLink
-                    to="/"
-                    end
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
-                        isActive 
-                          ? "bg-sidebar-accent text-sidebar-foreground" 
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                      }`
-                    }
-                  >
-                    <div className="flex items-center gap-3">
+                <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
+                  <NavLink to="/" end className={menuItemClass(isActive("/"))}>
+                    <div className="flex items-center gap-4">
                       <Home className="h-5 w-5" />
-                      {!isCollapsed && <span className="text-sm">Dashboard</span>}
+                      {!isCollapsed && <span className="text-[15px]">Dashboard</span>}
                     </div>
-                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-50" />}
+                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-40" />}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -107,43 +104,36 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setClientesOpen((o) => !o)}
-                  className={`flex items-center justify-between px-4 py-3 rounded-lg transition-colors w-full h-auto ${
-                    clientesActive 
-                      ? "bg-sidebar-accent text-sidebar-foreground" 
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                  }`}
+                  className={`${menuItemClass(clientesActive)} hover:bg-transparent`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <Users className="h-5 w-5" />
-                    {!isCollapsed && <span className="text-sm">Clientes</span>}
+                    {!isCollapsed && <span className="text-[15px]">Clientes</span>}
                   </div>
-                  {!isCollapsed && (
-                    <ChevronRight className={`h-4 w-4 opacity-50 transition-transform ${clientesOpen ? "rotate-90" : ""}`} />
-                  )}
+                  {!isCollapsed && <ChevronRight className={`h-4 w-4 opacity-40 transition-transform ${clientesOpen ? "rotate-90" : ""}`} />}
                 </SidebarMenuButton>
                 {clientesOpen && !isCollapsed && (
-                  <SidebarMenuSub className="ml-8 mt-1 space-y-0.5 border-l border-sidebar-border/50 pl-4">
+                  <SidebarMenuSub className="ml-12 mt-1 space-y-1 border-l border-[#2a2a3c] pl-4">
                     {[
-                      { to: "/clientes", label: "Listar/Criar", icon: LayoutGrid },
-                      { to: "/clientes/planos", label: "Planos", icon: Package },
-                      { to: "/clientes/produtos", label: "Produtos", icon: ShoppingCart },
-                      { to: "/clientes/aplicativos", label: "Aplicativos", icon: Smartphone },
-                      { to: "/clientes/metricas", label: "Métricas", icon: BarChart3 },
-                      { to: "/clientes/integracoes", label: "Integrações", icon: Link2 },
+                      { to: "/clientes", label: "Listar/Criar" },
+                      { to: "/clientes/planos", label: "Planos" },
+                      { to: "/clientes/produtos", label: "Produtos" },
+                      { to: "/clientes/aplicativos", label: "Aplicativos" },
+                      { to: "/clientes/metricas", label: "Métricas" },
+                      { to: "/clientes/integracoes", label: "Integrações" },
                     ].map((item) => (
                       <SidebarMenuSubItem key={item.to}>
-                        <SidebarMenuSubButton asChild className="h-auto p-0">
+                        <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
                           <NavLink
                             to={item.to}
                             end
-                            className={`flex items-center gap-2 py-2 text-sm transition-colors ${
+                            className={`py-2 text-[14px] transition-colors ${
                               isActive(item.to)
-                                ? "text-sidebar-primary"
-                                : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                                ? "text-white"
+                                : "text-[#8b8b9a] hover:text-white"
                             }`}
                           >
-                            <item.icon className="h-4 w-4" />
-                            <span>{item.label}</span>
+                            {item.label}
                           </NavLink>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -154,23 +144,13 @@ export function AppSidebar() {
 
               {/* Financeiro */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-auto p-0">
-                  <NavLink
-                    to="/financeiro"
-                    end
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
-                        isActive 
-                          ? "bg-sidebar-accent text-sidebar-foreground" 
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                      }`
-                    }
-                  >
-                    <div className="flex items-center gap-3">
+                <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
+                  <NavLink to="/financeiro" end className={menuItemClass(isActive("/financeiro"))}>
+                    <div className="flex items-center gap-4">
                       <DollarSign className="h-5 w-5" />
-                      {!isCollapsed && <span className="text-sm">Financeiro</span>}
+                      {!isCollapsed && <span className="text-[15px]">Financeiro</span>}
                     </div>
-                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-50" />}
+                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-40" />}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -179,46 +159,39 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setPagamentosOpen((o) => !o)}
-                  className={`flex items-center justify-between px-4 py-3 rounded-lg transition-colors w-full h-auto ${
-                    pagamentosActive 
-                      ? "bg-sidebar-accent text-sidebar-foreground" 
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                  }`}
+                  className={`${menuItemClass(pagamentosActive)} hover:bg-transparent`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <Wallet className="h-5 w-5" />
                     {!isCollapsed && (
                       <div className="flex items-center gap-2">
-                        <span className="text-sm">Pagamentos</span>
-                        <Badge className="bg-[hsl(var(--brand))] text-white text-[10px] px-1.5 py-0 h-4">
+                        <span className="text-[15px]">Pagamentos</span>
+                        <span className="bg-[#22c55e] text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
                           Novo
-                        </Badge>
+                        </span>
                       </div>
                     )}
                   </div>
-                  {!isCollapsed && (
-                    <ChevronRight className={`h-4 w-4 opacity-50 transition-transform ${pagamentosOpen ? "rotate-90" : ""}`} />
-                  )}
+                  {!isCollapsed && <ChevronRight className={`h-4 w-4 opacity-40 transition-transform ${pagamentosOpen ? "rotate-90" : ""}`} />}
                 </SidebarMenuButton>
                 {pagamentosOpen && !isCollapsed && (
-                  <SidebarMenuSub className="ml-8 mt-1 space-y-0.5 border-l border-sidebar-border/50 pl-4">
+                  <SidebarMenuSub className="ml-12 mt-1 space-y-1 border-l border-[#2a2a3c] pl-4">
                     {[
-                      { to: "/financeiro-extra/assas", label: "Assas", icon: CreditCard },
-                      { to: "/financeiro-extra/checkout", label: "Checkout", icon: ShoppingCart },
+                      { to: "/financeiro-extra/assas", label: "Assas" },
+                      { to: "/financeiro-extra/checkout", label: "Checkout" },
                     ].map((item) => (
                       <SidebarMenuSubItem key={item.to}>
-                        <SidebarMenuSubButton asChild className="h-auto p-0">
+                        <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
                           <NavLink
                             to={item.to}
                             end
-                            className={`flex items-center gap-2 py-2 text-sm transition-colors ${
+                            className={`py-2 text-[14px] transition-colors ${
                               isActive(item.to)
-                                ? "text-sidebar-primary"
-                                : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                                ? "text-white"
+                                : "text-[#8b8b9a] hover:text-white"
                             }`}
                           >
-                            <item.icon className="h-4 w-4" />
-                            <span>{item.label}</span>
+                            {item.label}
                           </NavLink>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -229,69 +202,39 @@ export function AppSidebar() {
 
               {/* WhatsApp */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-auto p-0">
-                  <NavLink
-                    to="/parear-whatsapp"
-                    end
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
-                        isActive 
-                          ? "bg-sidebar-accent text-sidebar-foreground" 
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                      }`
-                    }
-                  >
-                    <div className="flex items-center gap-3">
+                <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
+                  <NavLink to="/parear-whatsapp" end className={menuItemClass(isActive("/parear-whatsapp"))}>
+                    <div className="flex items-center gap-4">
                       <WhatsAppIcon className="h-5 w-5" />
-                      {!isCollapsed && <span className="text-sm">WhatsApp</span>}
+                      {!isCollapsed && <span className="text-[15px]">WhatsApp</span>}
                     </div>
-                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-50" />}
+                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-40" />}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Mensagens de Cobrança */}
+              {/* Mensagens */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-auto p-0">
-                  <NavLink
-                    to="/configuracoes/mensagens-cobranca"
-                    end
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
-                        isActive 
-                          ? "bg-sidebar-accent text-sidebar-foreground" 
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                      }`
-                    }
-                  >
-                    <div className="flex items-center gap-3">
+                <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
+                  <NavLink to="/configuracoes/mensagens-cobranca" end className={menuItemClass(isActive("/configuracoes/mensagens-cobranca"))}>
+                    <div className="flex items-center gap-4">
                       <MessageSquare className="h-5 w-5" />
-                      {!isCollapsed && <span className="text-sm">Mensagens</span>}
+                      {!isCollapsed && <span className="text-[15px]">Mensagens</span>}
                     </div>
-                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-50" />}
+                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-40" />}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               {/* Configurações */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-auto p-0">
-                  <NavLink
-                    to="/configuracoes"
-                    end
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
-                        isActive 
-                          ? "bg-sidebar-accent text-sidebar-foreground" 
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                      }`
-                    }
-                  >
-                    <div className="flex items-center gap-3">
+                <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
+                  <NavLink to="/configuracoes" end className={menuItemClass(isActive("/configuracoes"))}>
+                    <div className="flex items-center gap-4">
                       <Settings className="h-5 w-5" />
-                      {!isCollapsed && <span className="text-sm">Configurações</span>}
+                      {!isCollapsed && <span className="text-[15px]">Configurações</span>}
                     </div>
-                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-50" />}
+                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-40" />}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
