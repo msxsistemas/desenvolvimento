@@ -79,7 +79,7 @@ export default function DashboardFinanceCards({
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <p className="text-sm text-muted-foreground">Saldo Líquido do Ano</p>
-                <Badge className="bg-[hsl(199,89%,48%)] text-white text-xs px-2 py-0.5">
+                <Badge className="bg-[hsl(142,70%,45%)] text-white text-xs px-2 py-0.5">
                   {currentYear}
                 </Badge>
               </div>
