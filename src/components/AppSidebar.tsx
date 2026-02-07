@@ -67,25 +67,25 @@ export function AppSidebar() {
       active ? "text-white" : "text-[#8b8b9a] hover:text-white"
     }`;
 
-  // Menu items com nomes originais do projeto
+  // Menu items baseado na imagem de referência
   const menuItems = [
     { to: "/", icon: Home, label: "Dashboard" },
     { to: "/clientes", icon: Users, label: "Clientes", hasSubmenu: true },
-    { to: "/clientes/integracoes", icon: Server, label: "Integrações" },
+    { to: "/clientes/integracoes", icon: Server, label: "Servidores" },
     { to: "/clientes/planos", icon: List, label: "Planos" },
     { to: "/clientes/produtos", icon: Package, label: "Produtos" },
     { to: "/financeiro", icon: DollarSign, label: "Financeiro" },
-    { to: "/financeiro-extra/assas", icon: ArrowLeftRight, label: "Assas" },
-    { to: "/clientes/metricas", icon: Filter, label: "Métricas" },
-    { to: "/marketing", icon: Tag, label: "Marketing" },
-    { to: "/financeiro-extra/checkout", icon: Globe, label: "Checkout", badge: "Novo!" },
-    { to: "/configuracoes", icon: Globe, label: "Configurações" },
-    { to: "/configuracoes/ativar-cobrancas", icon: Webhook, label: "Ativar Cobranças" },
-    { to: "/parear-whatsapp", icon: WhatsAppIcon, label: "Parear WhatsApp" },
-    { to: "/mensagens-enviadas", icon: MessageSquare, label: "Mensagens Enviadas" },
-    { to: "/configuracoes/mensagens-cobranca", icon: Share2, label: "Mensagens Cobrança" },
-    { to: "/configuracoes/mensagens-padroes", icon: MoreHorizontal, label: "Mensagens Padrões" },
-    { to: "/tutoriais", icon: ScrollText, label: "Tutoriais" },
+    { to: "/financeiro-extra/assas", icon: ArrowLeftRight, label: "Movimentações" },
+    { to: "/clientes/metricas", icon: Filter, label: "Relatórios" },
+    { to: "/marketing", icon: Tag, label: "Tags" },
+    { to: "/financeiro-extra/checkout", icon: Globe, label: "V3Pay", badge: "Novo!" },
+    { to: "/configuracoes", icon: Globe, label: "Gateways" },
+    { to: "/configuracoes/ativar-cobrancas", icon: Webhook, label: "WebHook" },
+    { to: "/parear-whatsapp", icon: WhatsAppIcon, label: "WhatsApp" },
+    { to: "/mensagens-enviadas", icon: MessageSquare, label: "SMS" },
+    { to: "/configuracoes/mensagens-cobranca", icon: Share2, label: "Indicações" },
+    { to: "/configuracoes/mensagens-padroes", icon: MoreHorizontal, label: "Outros" },
+    { to: "/tutoriais", icon: ScrollText, label: "Logs" },
   ];
 
   // Subitens do Clientes
