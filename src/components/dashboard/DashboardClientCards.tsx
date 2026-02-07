@@ -50,7 +50,7 @@ export default function DashboardClientCards({
             <card.icon className="h-6 w-6 text-white/80" />
             <div>
               <p className="text-sm font-medium text-white/90">{card.label}</p>
-              <p className="text-3xl font-bold">{card.value}</p>
+              <p className="text-xl font-bold">{card.value}</p>
             </div>
           </div>
         </div>
