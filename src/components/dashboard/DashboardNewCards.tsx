@@ -67,16 +67,16 @@ export default function DashboardNewCards({
         </div>
         <div className="relative z-10 space-y-2 pr-16">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[hsl(142,70%,45%)]">Clientes Vencendo Hoje</span>
-            <span className="text-white font-semibold">{clientesVencendoHoje}</span>
+            <span className="text-sm text-muted-foreground">Clientes Vencendo Hoje</span>
+            <span className="text-[hsl(142,70%,45%)] font-semibold">{clientesVencendoHoje}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[hsl(142,70%,45%)]">Clientes Vencendo em 3 Dias</span>
-            <span className="text-white font-semibold">{clientesVencendo3Dias}</span>
+            <span className="text-sm text-muted-foreground">Clientes Vencendo em 3 Dias</span>
+            <span className="text-[hsl(142,70%,45%)] font-semibold">{clientesVencendo3Dias}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[hsl(142,70%,45%)]">Clientes sem Renovar este Mês</span>
-            <span className="text-white font-semibold">{clientesSemRenovar}</span>
+            <span className="text-sm text-muted-foreground">Clientes sem Renovar este Mês</span>
+            <span className="text-[hsl(142,70%,45%)] font-semibold">{clientesSemRenovar}</span>
           </div>
         </div>
       </div>
