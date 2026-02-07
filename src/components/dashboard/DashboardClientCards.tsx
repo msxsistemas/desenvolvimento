@@ -42,9 +42,9 @@ export default function DashboardClientCards({
           key={card.label}
           className={`relative overflow-hidden rounded-xl ${card.bgColor} p-5 text-white transition-transform duration-200 hover:scale-[1.02]`}
         >
-          {/* Decorative circles */}
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 h-24 w-24 rounded-full bg-white/10" />
-          <div className="absolute -right-4 -bottom-8 h-32 w-32 rounded-full bg-white/5" />
+          {/* Subtle glow effect */}
+          <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-white/8 to-transparent" />
+          <div className="absolute -right-6 top-1/2 -translate-y-1/2 h-16 w-16 rounded-full bg-white/10 blur-xl" />
 
           <div className="relative z-10 flex items-center gap-4">
             <card.icon className="h-6 w-6 text-white/80" />
