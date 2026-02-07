@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -48,7 +48,6 @@ export default function EnviosEmMassa() {
   const [tipoMensagem, setTipoMensagem] = useState("");
   const [destinatarios, setDestinatarios] = useState("");
   const [mensagem, setMensagem] = useState("");
-  const [enviarWebhook, setEnviarWebhook] = useState(false);
   const [sending, setSending] = useState(false);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
@@ -228,7 +227,7 @@ export default function EnviosEmMassa() {
           .replace(/{email}/g, cliente.email || '')
           .replace(/{observacao}/g, cliente.observacao || '')
           .replace(/{br}/g, '\n'),
-        status: enviarWebhook ? 'webhook' : 'pending',
+        status: 'pending',
         session_id: 'bulk_' + Date.now(),
         sent_at: new Date().toISOString(),
         media_url: mediaUrl,
@@ -411,19 +410,6 @@ export default function EnviosEmMassa() {
                 />
               </div>
 
-              {/* Webhook Toggle */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <Label className="text-foreground">Enviar apenas por Webhook:</Label>
-                  <Switch
-                    checked={enviarWebhook}
-                    onCheckedChange={setEnviarWebhook}
-                  />
-                </div>
-                <p className="text-[hsl(var(--brand-2))] text-sm">
-                  Caso ative essa opção as mensagens em massa não serão enviadas para a fila do whatsapp
-                </p>
-              </div>
 
               {/* Send Button */}
               <Button 
