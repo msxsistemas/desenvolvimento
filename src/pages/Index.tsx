@@ -85,7 +85,15 @@ export default function Index() {
         clientesDesativados={0}
       />
 
-      {/* Nova linha — Cards extras */}
+      {/* 2ª linha — Financeiro (2 cards de saldo) */}
+      <DashboardFinanceCards
+        entradas={entradas}
+        saidas={saidas}
+        lucros={lucros}
+        valorTotalMes={valorTotalMes}
+      />
+
+      {/* 3ª linha — Cards extras */}
       <DashboardNewCards
         novosClientesHoje={metricasExtras.novosClientesHoje}
         novosClientesSemana={metricasExtras.novosClientesSemana}
@@ -98,14 +106,6 @@ export default function Index() {
         valoresHoje={metricasExtras.valoresHoje}
         valoresAmanha={metricasExtras.valoresAmanha}
         projecaoMensal={metricasExtras.projecaoMensal}
-      />
-
-      {/* 2ª linha — Financeiro (2 cards) */}
-      <DashboardFinanceCards
-        entradas={entradas}
-        saidas={saidas}
-        lucros={lucros}
-        valorTotalMes={valorTotalMes}
       />
 
       {/* 3ª linha — Gráficos */}
