@@ -31,7 +31,7 @@ export default function DashboardNewCards({
   projecaoMensal,
 }: Props) {
   return (
-    <section className="grid gap-4 grid-cols-1 md:grid-cols-2">
+    <section className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {/* Card 1 - Novos Clientes */}
       <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white flex items-center gap-4">
         <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
