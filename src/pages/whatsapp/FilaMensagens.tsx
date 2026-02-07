@@ -344,7 +344,7 @@ export default function FilaMensagens() {
                       </TableCell>
                       <TableCell>{getStatusBadge(msg.status)}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
+                        <div className="flex flex-col items-center gap-1">
                           <Button 
                             size="icon" 
                             variant="ghost"
