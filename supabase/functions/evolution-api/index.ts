@@ -15,6 +15,9 @@ serve(async (req) => {
     const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
     const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
 
+    console.log('[Evolution API] URL configured:', EVOLUTION_API_URL ? 'Yes' : 'No');
+    console.log('[Evolution API] Key configured:', EVOLUTION_API_KEY ? 'Yes (length: ' + EVOLUTION_API_KEY.length + ')' : 'No');
+
     if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
       console.error('Evolution API not configured');
       return new Response(
@@ -39,27 +42,64 @@ serve(async (req) => {
       );
     }
 
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action } = body;
     const instanceName = `user_${user.id.replace(/-/g, '_')}`;
     const apiUrl = EVOLUTION_API_URL.replace(/\/$/, '');
 
     console.log(`[Evolution API] Action: ${action}, Instance: ${instanceName}`);
 
-    const makeRequest = async (endpoint: string, method: string = 'GET', body?: any) => {
+    const makeRequest = async (endpoint: string, method: string = 'GET', requestBody?: any) => {
       const url = `${apiUrl}${endpoint}`;
       console.log(`[Evolution API] ${method} ${url}`);
       
-      const response = await fetch(url, {
+      // Try with 'apikey' header first (Evolution API v2 standard)
+      let response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           'apikey': EVOLUTION_API_KEY,
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: requestBody ? JSON.stringify(requestBody) : undefined,
       });
 
-      const data = await response.json();
-      console.log(`[Evolution API] Response status: ${response.status}`, data);
+      // If unauthorized, try with 'Authorization: Bearer' header
+      if (response.status === 401) {
+        console.log('[Evolution API] Trying Authorization Bearer header...');
+        response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${EVOLUTION_API_KEY}`,
+          },
+          body: requestBody ? JSON.stringify(requestBody) : undefined,
+        });
+      }
+
+      // If still unauthorized, try with 'Authorization: apikey' header
+      if (response.status === 401) {
+        console.log('[Evolution API] Trying Authorization apikey header...');
+        response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `apikey ${EVOLUTION_API_KEY}`,
+          },
+          body: requestBody ? JSON.stringify(requestBody) : undefined,
+        });
+      }
+
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        console.log('[Evolution API] Non-JSON response:', text);
+        data = { message: text };
+      }
+      
+      console.log(`[Evolution API] Response status: ${response.status}`, JSON.stringify(data));
       
       return { ok: response.ok, status: response.status, data };
     };
@@ -108,10 +148,14 @@ serve(async (req) => {
           integration: 'WHATSAPP-BAILEYS',
         });
 
+        console.log('[Evolution API] Create instance result:', JSON.stringify(createResult));
+
         if (createResult.ok && createResult.data.qrcode?.base64) {
           result = { status: 'connecting', qrCode: createResult.data.qrcode.base64 };
+        } else if (createResult.status === 401) {
+          result = { error: 'API Key inválida ou sem permissão. Verifique as credenciais da Evolution API.' };
         } else {
-          result = { error: createResult.data.message || 'Erro ao criar instância' };
+          result = { error: createResult.data.message || createResult.data.error || 'Erro ao criar instância' };
         }
         break;
       }
@@ -162,7 +206,7 @@ serve(async (req) => {
       }
 
       case 'sendMessage': {
-        const { phone, message } = await req.json();
+        const { phone, message } = body;
         const formattedPhone = phone.replace(/\D/g, '');
         
         const sendResult = await makeRequest(`/message/sendText/${instanceName}`, 'POST', {
