@@ -78,22 +78,28 @@ export default function DashboardNewCards({
       </div>
 
       {/* Card 3 - Projeção */}
-      <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white flex items-center gap-4">
-        <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
-          <TrendingUp className="h-6 w-6 text-[hsl(142,70%,45%)]" />
+      <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-1">
+            <TrendingUp className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+          </div>
+          <span className="text-sm text-muted-foreground">Valores a Receber</span>
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Valores Hoje</span>
+            <TrendingUp className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+            <span className="text-sm text-muted-foreground">Projeção Mensal</span>
+            <span className="text-[hsl(142,70%,45%)] font-semibold">{fmt(projecaoMensal)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[hsl(142,70%,45%)]">$</span>
+            <span className="text-sm text-muted-foreground">Hoje</span>
             <span className="text-[hsl(142,70%,45%)] font-semibold">{fmt(valoresHoje)}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Valores Amanhã</span>
+            <span className="text-sm text-[hsl(142,70%,45%)]">$</span>
+            <span className="text-sm text-muted-foreground">Amanhã</span>
             <span className="text-[hsl(142,70%,45%)] font-semibold">{fmt(valoresAmanha)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Projeção Mensal</span>
-            <span className="text-[hsl(142,70%,45%)] font-semibold">{fmt(projecaoMensal)}</span>
           </div>
         </div>
       </div>
