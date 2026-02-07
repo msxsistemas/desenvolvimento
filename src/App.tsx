@@ -24,6 +24,13 @@ import Tutoriais from "./pages/Tutoriais";
 import ParearWhatsapp from "./pages/ParearWhatsapp";
 import Checkout from "./pages/financeiro-extra/Checkout";
 import Assas from "./pages/financeiro-extra/Assas";
+// WhatsApp pages
+import GerenciarMensagens from "./pages/whatsapp/GerenciarMensagens";
+import FilaMensagens from "./pages/whatsapp/FilaMensagens";
+import EnviosEmMassa from "./pages/whatsapp/EnviosEmMassa";
+import GerenciarCampanhas from "./pages/whatsapp/GerenciarCampanhas";
+import ParearWhatsappNew from "./pages/whatsapp/ParearWhatsappNew";
+
 const queryClient = new QueryClient();
 import Auth from "./pages/auth/Auth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -60,6 +67,12 @@ const App = () => (
             <Route path="/clientes/integracoes" element={<ClientesIntegracoes />} />
             <Route path="/financeiro-extra/checkout" element={<Checkout />} />
             <Route path="/financeiro-extra/assas" element={<Assas />} />
+            {/* WhatsApp routes */}
+            <Route path="/whatsapp/gerenciar-mensagens" element={<GerenciarMensagens />} />
+            <Route path="/whatsapp/fila-mensagens" element={<FilaMensagens />} />
+            <Route path="/whatsapp/envios-em-massa" element={<EnviosEmMassa />} />
+            <Route path="/whatsapp/campanhas" element={<GerenciarCampanhas />} />
+            <Route path="/whatsapp/parear" element={<ParearWhatsappNew />} />
           </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -29,7 +29,9 @@ import {
   MoreHorizontal,
   ScrollText,
   ChevronRight,
+  ChevronDown,
   Play,
+  Phone,
 } from "lucide-react";
 import { useState } from "react";
 import type { LucideProps } from "lucide-react";
@@ -57,7 +59,9 @@ export function AppSidebar() {
 
   // Estado dos submenus
   const clientesActive = currentPath === "/clientes" || currentPath.startsWith("/clientes/");
+  const whatsappActive = currentPath.startsWith("/whatsapp") || currentPath === "/parear-whatsapp";
   const [clientesOpen, setClientesOpen] = useState(clientesActive);
+  const [whatsappOpen, setWhatsappOpen] = useState(whatsappActive);
 
   const isActive = (path: string) => currentPath === path;
 
@@ -81,7 +85,7 @@ export function AppSidebar() {
     { to: "/financeiro-extra/checkout", icon: Globe, label: "V3Pay", badge: "Novo!" },
     { to: "/configuracoes", icon: Globe, label: "Gateways" },
     { to: "/configuracoes/ativar-cobrancas", icon: Webhook, label: "WebHook" },
-    { to: "/parear-whatsapp", icon: WhatsAppIcon, label: "WhatsApp" },
+    { to: "/whatsapp", icon: WhatsAppIcon, label: "WhatsApp", hasWhatsappSubmenu: true },
     { to: "/mensagens-enviadas", icon: MessageSquare, label: "SMS" },
     { to: "/configuracoes/mensagens-cobranca", icon: Share2, label: "Indicações" },
     { to: "/configuracoes/mensagens-padroes", icon: MoreHorizontal, label: "Outros" },
@@ -96,6 +100,15 @@ export function AppSidebar() {
     { to: "/clientes/aplicativos", label: "Aplicativos" },
     { to: "/clientes/metricas", label: "Métricas" },
     { to: "/clientes/integracoes", label: "Integrações" },
+  ];
+
+  // Subitens do WhatsApp
+  const whatsappSubItems = [
+    { to: "/whatsapp/gerenciar-mensagens", label: "Gerenciar Mensagens" },
+    { to: "/whatsapp/fila-mensagens", label: "Fila de Mensagens" },
+    { to: "/whatsapp/envios-em-massa", label: "Envios em Massa" },
+    { to: "/whatsapp/campanhas", label: "Gerenciar Campanhas" },
+    { to: "/whatsapp/parear", label: "Parear Whatsapp" },
   ];
 
   return (
@@ -137,6 +150,53 @@ export function AppSidebar() {
                       {clientesOpen && !isCollapsed && (
                         <SidebarMenuSub className="ml-10 mt-1 space-y-0 border-l border-[#2a2a3c] pl-4">
                           {clientesSubItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.to}>
+                              <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
+                                <NavLink
+                                  to={subItem.to}
+                                  end
+                                  className={`py-1.5 text-[13px] transition-colors ${
+                                    isActive(subItem.to) ? "text-white" : "text-[#8b8b9a] hover:text-white"
+                                  }`}
+                                >
+                                  {subItem.label}
+                                </NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                }
+
+                // Item WhatsApp com submenu
+                if (item.hasWhatsappSubmenu) {
+                  return (
+                    <SidebarMenuItem key={item.to}>
+                      <SidebarMenuButton
+                        onClick={() => setWhatsappOpen((o) => !o)}
+                        className={`h-auto p-0 hover:bg-transparent rounded-none ${whatsappActive ? "" : ""}`}
+                      >
+                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
+                          whatsappActive 
+                            ? "bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg mx-2" 
+                            : "text-[#8b8b9a] hover:text-white"
+                        }`}>
+                          <div className="flex items-center gap-3">
+                            <Phone className="h-5 w-5" />
+                            {!isCollapsed && <span className="text-[14px] font-medium">{item.label}</span>}
+                          </div>
+                          {!isCollapsed && (
+                            <ChevronDown
+                              className={`h-4 w-4 transition-transform ${whatsappOpen ? "rotate-180" : ""}`}
+                            />
+                          )}
+                        </div>
+                      </SidebarMenuButton>
+                      {whatsappOpen && !isCollapsed && (
+                        <SidebarMenuSub className="ml-10 mt-1 space-y-0 border-l border-[#2a2a3c] pl-4">
+                          {whatsappSubItems.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.to}>
                               <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
                                 <NavLink
