@@ -540,7 +540,9 @@ export default function FilaMensagens() {
                     paginatedMensagens.map((msg) => (
                       <TableRow key={msg.id} className="border-b border-border hover:bg-secondary/30">
                         <TableCell className="text-[hsl(var(--brand-2))] font-medium whitespace-nowrap">{msg.cliente}</TableCell>
-                        <TableCell className="text-foreground whitespace-nowrap font-mono text-sm">{msg.whatsapp}</TableCell>
+                        <TableCell className="text-foreground whitespace-nowrap font-mono text-sm">
+                          {msg.whatsapp.startsWith('55') ? `+${msg.whatsapp}` : `+55${msg.whatsapp}`}
+                        </TableCell>
                         <TableCell className="text-muted-foreground text-sm max-w-[350px]">
                           <div className="line-clamp-2">{msg.mensagem}</div>
                         </TableCell>

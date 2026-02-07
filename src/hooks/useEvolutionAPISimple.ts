@@ -280,14 +280,28 @@ export const useEvolutionAPISimple = () => {
     }
   }, [callEvolutionAPI]);
 
+  // Função para normalizar número de telefone com código do país
+  const normalizePhoneNumber = (phone: string): string => {
+    // Remove tudo que não é dígito
+    const digitsOnly = phone.replace(/\D/g, '');
+    // Se não começar com 55, adiciona
+    if (!digitsOnly.startsWith('55') && digitsOnly.length >= 10) {
+      return '55' + digitsOnly;
+    }
+    return digitsOnly;
+  };
+
   const sendMessage = useCallback(async (phone: string, message: string) => {
     if (!userId) {
       throw new Error('Você precisa estar logado');
     }
 
+    // Normalizar número antes de enviar
+    const normalizedPhone = normalizePhoneNumber(phone);
+
     setLoading(true);
     try {
-      const data = await callEvolutionAPI('sendMessage', { phone, message });
+      const data = await callEvolutionAPI('sendMessage', { phone: normalizedPhone, message });
       
       if (data.success) {
         toast.success('Mensagem enviada com sucesso!');
