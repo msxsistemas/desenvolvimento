@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Home } from "lucide-react";
+import { Home, Video, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -30,6 +30,7 @@ const defaultMensagens: MensagensPadroes = {
 export default function GerenciarMensagens() {
   const [mensagens, setMensagens] = useState<MensagensPadroes>(defaultMensagens);
   const [saving, setSaving] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<keyof MensagensPadroes>("vence_hoje");
   const { user } = useCurrentUser();
 
   useEffect(() => {
@@ -46,7 +47,6 @@ export default function GerenciarMensagens() {
         .single();
       
       if (data) {
-        // Map existing fields if they exist
         setMensagens(prev => ({
           ...prev,
           ...(data.confirmacao_cliente && { bem_vindo: data.confirmacao_cliente }),
@@ -60,7 +60,6 @@ export default function GerenciarMensagens() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Save to database - you'll need to create appropriate columns
       toast.success("Mensagens salvas com sucesso!");
     } catch (error) {
       toast.error("Erro ao salvar mensagens");
@@ -76,11 +75,43 @@ export default function GerenciarMensagens() {
     "{vencimento}", "{hora_vencimento}", "{info1}", "{info2}", "{info3}"
   ];
 
+  // Function to render preview with sample data
+  const renderPreview = () => {
+    const sampleData: Record<string, string> = {
+      "{saudacao}": "Bom dia",
+      "{nome_cliente}": "Fulano",
+      "{vencimento}": "10/10/2025",
+      "{nome_plano}": "Plano Completo de Demonstração: R$ 40,00",
+      "{desconto}": "R$ 5,00",
+      "{subtotal}": "R$ 35,00",
+      "{link_fatura}": "https://gestorv3.com.br/central/ver_fatura?r=C999000999009900",
+      "{area_cliente}": "https://gestorv3.com.br/central",
+      "{usuario}": "usuario123",
+      "{senha}": "****",
+      "{pix}": "pix@techplay.com",
+    };
+
+    let preview = mensagens[selectedTemplate];
+    
+    // Replace variables with sample data
+    Object.entries(sampleData).forEach(([key, value]) => {
+      preview = preview.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+    });
+    
+    // Replace {br} with line breaks
+    preview = preview.replace(/{br}/g, '\n');
+    
+    // Format bold text (remove asterisks, we'll style differently)
+    preview = preview.replace(/\*([^*]+)\*/g, '$1');
+    
+    return preview;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Bom Dia, Tech Play!</h1>
+        <h1 className="text-2xl font-bold text-foreground">Bom Dia, Tech Play!</h1>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
           <Home className="h-4 w-4" />
           <span>/</span>
@@ -89,15 +120,15 @@ export default function GerenciarMensagens() {
       </div>
 
       {/* Main Content */}
-      <Card className="bg-[#1a1a2e] border-[#2a2a3c]">
+      <Card className="bg-card border-border">
         <CardContent className="p-6">
-          <h2 className="text-xl font-semibold text-white mb-2">Gerenciar Mensagens Do WhatsApp</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Gerenciar Mensagens Do WhatsApp</h2>
           <p className="text-muted-foreground text-sm mb-4">Utilize as seguintes chaves para obter os valores:</p>
           
           {/* Available Keys */}
           <div className="mb-6">
             <p className="text-sm text-muted-foreground mb-2">Utilize as seguintes chaves para obter os valores:</p>
-            <div className="flex flex-wrap gap-1 mb-2">
+            <div className="flex flex-wrap gap-1 mb-3">
               {availableKeys.map((key) => (
                 <span key={key} className="text-orange-400 text-xs">{key}</span>
               ))}
@@ -114,79 +145,86 @@ export default function GerenciarMensagens() {
             {/* Message Templates */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-white font-medium mb-2 text-center">Bem Vindo:</h3>
+                <h3 className="text-foreground font-medium mb-2 text-center">Bem Vindo:</h3>
                 <Textarea
                   value={mensagens.bem_vindo}
                   onChange={(e) => setMensagens(prev => ({ ...prev, bem_vindo: e.target.value }))}
-                  className="bg-[#252538] border-[#3a3a4c] text-white min-h-[100px] text-sm"
+                  onFocus={() => setSelectedTemplate("bem_vindo")}
+                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
                 />
               </div>
 
               <div>
-                <h3 className="text-white font-medium mb-2 text-center">Fatura Criada:</h3>
+                <h3 className="text-foreground font-medium mb-2 text-center">Fatura Criada:</h3>
                 <Textarea
                   value={mensagens.fatura_criada}
                   onChange={(e) => setMensagens(prev => ({ ...prev, fatura_criada: e.target.value }))}
-                  className="bg-[#252538] border-[#3a3a4c] text-white min-h-[100px] text-sm"
+                  onFocus={() => setSelectedTemplate("fatura_criada")}
+                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
                 />
               </div>
 
               <div>
-                <h3 className="text-white font-medium mb-2 text-center">Próximo de Vencer:</h3>
+                <h3 className="text-foreground font-medium mb-2 text-center">Próximo de Vencer:</h3>
                 <Textarea
                   value={mensagens.proximo_vencer}
                   onChange={(e) => setMensagens(prev => ({ ...prev, proximo_vencer: e.target.value }))}
-                  className="bg-[#252538] border-[#3a3a4c] text-white min-h-[80px] text-sm"
+                  onFocus={() => setSelectedTemplate("proximo_vencer")}
+                  className="bg-muted border-border text-foreground min-h-[80px] text-sm"
                 />
               </div>
 
               <div>
-                <h3 className="text-white font-medium mb-2 text-center">Vence Hoje:</h3>
+                <h3 className="text-foreground font-medium mb-2 text-center">Vence Hoje:</h3>
                 <Textarea
                   value={mensagens.vence_hoje}
                   onChange={(e) => setMensagens(prev => ({ ...prev, vence_hoje: e.target.value }))}
-                  className="bg-[#252538] border-[#3a3a4c] text-white min-h-[100px] text-sm"
+                  onFocus={() => setSelectedTemplate("vence_hoje")}
+                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
                 />
               </div>
 
               <div>
-                <h3 className="text-white font-medium mb-2 text-center">Vencido:</h3>
+                <h3 className="text-foreground font-medium mb-2 text-center">Vencido:</h3>
                 <Textarea
                   value={mensagens.vencido}
                   onChange={(e) => setMensagens(prev => ({ ...prev, vencido: e.target.value }))}
-                  className="bg-[#252538] border-[#3a3a4c] text-white min-h-[100px] text-sm"
+                  onFocus={() => setSelectedTemplate("vencido")}
+                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
                 />
               </div>
 
               <div>
-                <h3 className="text-white font-medium mb-2 text-center">Confirmação Pagamento:</h3>
+                <h3 className="text-foreground font-medium mb-2 text-center">Confirmação Pagamento:</h3>
                 <Textarea
                   value={mensagens.confirmacao_pagamento}
                   onChange={(e) => setMensagens(prev => ({ ...prev, confirmacao_pagamento: e.target.value }))}
-                  className="bg-[#252538] border-[#3a3a4c] text-white min-h-[100px] text-sm"
+                  onFocus={() => setSelectedTemplate("confirmacao_pagamento")}
+                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
                 />
               </div>
 
               <div>
-                <h3 className="text-white font-medium mb-2 text-center">Dados do Cliente:</h3>
+                <h3 className="text-foreground font-medium mb-2 text-center">Dados do Cliente:</h3>
                 <Textarea
                   value={mensagens.dados_cliente}
                   onChange={(e) => setMensagens(prev => ({ ...prev, dados_cliente: e.target.value }))}
-                  className="bg-[#252538] border-[#3a3a4c] text-white min-h-[100px] text-sm"
+                  onFocus={() => setSelectedTemplate("dados_cliente")}
+                  className="bg-muted border-border text-foreground min-h-[100px] text-sm"
                 />
               </div>
             </div>
 
             {/* WhatsApp Preview */}
-            <div className="flex justify-center">
-              <div className="w-[280px] bg-[#111b21] rounded-2xl overflow-hidden shadow-xl">
-                {/* Phone Header */}
+            <div className="flex justify-center lg:sticky lg:top-6">
+              <div className="w-[300px] bg-[#111b21] rounded-2xl overflow-hidden shadow-xl">
+                {/* Phone Status Bar */}
                 <div className="bg-[#202c33] px-4 py-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-white text-xs">TIM</span>
+                    <span className="text-white text-xs font-medium">TIM</span>
                     <span className="text-white text-xs">📶</span>
                   </div>
-                  <span className="text-white text-xs">20:00</span>
+                  <span className="text-white text-xs font-medium">20:00</span>
                   <div className="flex items-center gap-1">
                     <span className="text-white text-xs">📡</span>
                     <span className="text-white text-xs">🔋 22%</span>
@@ -196,37 +234,45 @@ export default function GerenciarMensagens() {
                 {/* WhatsApp Header */}
                 <div className="bg-[#202c33] px-4 py-3 flex items-center gap-3 border-b border-[#2a3942]">
                   <div className="w-10 h-10 bg-[#25d366] rounded-full flex items-center justify-center">
-                    <span className="text-white text-lg">🅖</span>
+                    <span className="text-white text-xl">⊙</span>
                   </div>
                   <div className="flex-1">
                     <span className="text-white font-medium">GESTORv3</span>
                   </div>
-                  <div className="flex items-center gap-3 text-[#8696a0]">
-                    <span>📹</span>
-                    <span>📞</span>
+                  <div className="flex items-center gap-4 text-[#8696a0]">
+                    <Video className="w-5 h-5" />
+                    <Phone className="w-5 h-5" />
                   </div>
                 </div>
 
                 {/* Chat Area */}
-                <div className="h-[400px] bg-[#0b141a] p-4 overflow-y-auto" 
+                <div className="h-[420px] bg-[#0b141a] p-3 overflow-y-auto" 
                      style={{ backgroundImage: "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FABGxAg0lKKvmAAAAAElFTkSuQmCC')", backgroundRepeat: "repeat" }}>
-                  <div className="bg-[#005c4b] rounded-lg p-3 max-w-[90%] ml-auto">
-                    <p className="text-white text-xs">Bom dia, Fulano.</p>
-                    <p className="text-white text-xs mt-2">⚠️ SEU VENCIMENTO É HOJE! Pra continuar aproveitando seus canais, realize o pagamento o quanto antes.</p>
-                    <p className="text-white text-xs mt-2 font-bold">DADOS DA FATURA</p>
+                  <div className="bg-[#005c4b] rounded-lg p-3 max-w-[95%] ml-auto">
+                    <p className="text-white text-xs font-medium">Bom dia, Fulano.</p>
+                    <p className="text-white text-xs mt-2">
+                      <span className="text-yellow-300">⚠️</span> <strong>SEU VENCIMENTO É HOJE!</strong> Pra continuar aproveitando seus canais, realize o pagamento o quanto antes.
+                    </p>
+                    <p className="text-white text-xs mt-3 font-bold text-red-400">DADOS DA FATURA</p>
                     <p className="text-white text-xs mt-1">◆ Vencimento: 10/10/2025</p>
                     <p className="text-white text-xs">◆ Plano Completo de Demonstração: R$ 40,00</p>
                     <p className="text-white text-xs">◆ Desconto: R$ 5,00</p>
                     <p className="text-white text-xs">◆ Total a pagar: R$ 35,00</p>
-                    <p className="text-white text-xs mt-2">💸 Pagamento rápido em 1 clique:</p>
-                    <p className="text-[#53bdeb] text-xs underline">https://gestorv3.com.br/central/ver_fatura?r=C999000999009900</p>
-                    <p className="text-white text-xs mt-2">Abra o link de cima, clique em "Pagar com PIX" copie o código completo gerado e cole no aplicativo do banco.</p>
+                    <p className="text-white text-xs mt-3">
+                      <span className="text-green-300">💸</span> Pagamento rápido em 1 clique:
+                    </p>
+                    <p className="text-[#53bdeb] text-xs underline break-all">
+                      https://gestorv3.com.br/central/ver_fatura?r=C999000999009900
+                    </p>
+                    <p className="text-white text-xs mt-3">
+                      Abra o link de cima, clique em "Pagar com PIX" copie o código completo gerado e cole no aplicativo do banco.
+                    </p>
                   </div>
                 </div>
 
                 {/* Input Area */}
-                <div className="bg-[#202c33] px-4 py-3 flex items-center gap-2">
-                  <span className="text-[#8696a0]">+</span>
+                <div className="bg-[#202c33] px-4 py-3 flex items-center gap-3">
+                  <span className="text-[#8696a0] text-xl">+</span>
                   <div className="flex-1 bg-[#2a3942] rounded-full px-4 py-2">
                     <span className="text-[#8696a0] text-sm">Message</span>
                   </div>
