@@ -155,10 +155,14 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, loadin
           <tbody>
             {paginated.map((cliente) => {
               const status = getStatus(cliente.data_vencimento);
+              const formattedPhone = cliente.whatsapp ? `+55${cliente.whatsapp.replace(/\D/g, "")}` : "-";
               return (
                 <tr key={cliente.id} className="border-b border-border hover:bg-muted/50">
                   <td className="p-3">
-                    <span className="text-[hsl(270,70%,60%)] font-medium">{cliente.nome}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[hsl(270,70%,60%)] font-medium">{cliente.nome}</span>
+                      <span className="text-xs text-muted-foreground">{formattedPhone}</span>
+                    </div>
                   </td>
                   <td className="p-3">
                     <span className="text-[hsl(270,70%,60%)]">{cliente.usuario || "-"}</span>
