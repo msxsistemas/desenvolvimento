@@ -47,11 +47,11 @@ export default function DashboardClientCards({
           <div className="absolute -right-4 -bottom-8 h-32 w-32 rounded-full bg-white/5" />
 
           <div className="relative z-10">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-2">
               <card.icon className="h-5 w-5 text-white/80" />
               <p className="text-sm font-medium text-white/90">{card.label}</p>
             </div>
-            <p className="text-xl font-bold mt-2">{card.value}</p>
+            <p className="text-xl font-bold">{card.value}</p>
           </div>
         </div>
       ))}
