@@ -101,21 +101,31 @@ export default function GerenciarMensagens() {
 
   useEffect(() => {
     document.title = "Gerenciar Mensagens WhatsApp | Tech Play";
-    loadMensagens();
-  }, []);
+    if (user?.id) {
+      loadMensagens();
+    }
+  }, [user?.id]);
 
   const loadMensagens = async () => {
+    if (!user?.id) return;
+    
     try {
       const { data, error } = await supabase
         .from("mensagens_padroes")
         .select("*")
-        .eq("user_id", user?.id)
-        .single();
+        .eq("user_id", user.id)
+        .maybeSingle();
       
       if (data) {
         setMensagens(prev => ({
           ...prev,
-          ...(data.confirmacao_cliente && { bem_vindo: data.confirmacao_cliente }),
+          ...(data.bem_vindo && { bem_vindo: data.bem_vindo }),
+          ...(data.fatura_criada && { fatura_criada: data.fatura_criada }),
+          ...(data.proximo_vencer && { proximo_vencer: data.proximo_vencer }),
+          ...(data.vence_hoje && { vence_hoje: data.vence_hoje }),
+          ...(data.vencido && { vencido: data.vencido }),
+          ...(data.confirmacao_pagamento && { confirmacao_pagamento: data.confirmacao_pagamento }),
+          ...(data.dados_cliente && { dados_cliente: data.dados_cliente }),
         }));
       }
     } catch (error) {
@@ -124,10 +134,58 @@ export default function GerenciarMensagens() {
   };
 
   const handleSave = async () => {
+    if (!user?.id) {
+      toast.error("Você precisa estar logado para salvar");
+      return;
+    }
+    
     setSaving(true);
     try {
+      // Verificar se já existe registro para o usuário
+      const { data: existingData } = await supabase
+        .from("mensagens_padroes")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingData) {
+        // Atualizar registro existente
+        const { error } = await supabase
+          .from("mensagens_padroes")
+          .update({
+            bem_vindo: mensagens.bem_vindo,
+            fatura_criada: mensagens.fatura_criada,
+            proximo_vencer: mensagens.proximo_vencer,
+            vence_hoje: mensagens.vence_hoje,
+            vencido: mensagens.vencido,
+            confirmacao_pagamento: mensagens.confirmacao_pagamento,
+            dados_cliente: mensagens.dados_cliente,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+      } else {
+        // Criar novo registro
+        const { error } = await supabase
+          .from("mensagens_padroes")
+          .insert({
+            user_id: user.id,
+            bem_vindo: mensagens.bem_vindo,
+            fatura_criada: mensagens.fatura_criada,
+            proximo_vencer: mensagens.proximo_vencer,
+            vence_hoje: mensagens.vence_hoje,
+            vencido: mensagens.vencido,
+            confirmacao_pagamento: mensagens.confirmacao_pagamento,
+            dados_cliente: mensagens.dados_cliente,
+          });
+
+        if (error) throw error;
+      }
+
       toast.success("Mensagens salvas com sucesso!");
     } catch (error) {
+      console.error("Erro ao salvar mensagens:", error);
       toast.error("Erro ao salvar mensagens");
     } finally {
       setSaving(false);

@@ -185,27 +185,48 @@ export type Database = {
       mensagens_padroes: {
         Row: {
           aniversario_cliente: string | null
+          bem_vindo: string | null
           confirmacao_cliente: string | null
+          confirmacao_pagamento: string | null
+          dados_cliente: string | null
           expiracao_app: string | null
+          fatura_criada: string | null
           id: number
+          proximo_vencer: string | null
           updated_at: string | null
           user_id: string | null
+          vence_hoje: string | null
+          vencido: string | null
         }
         Insert: {
           aniversario_cliente?: string | null
+          bem_vindo?: string | null
           confirmacao_cliente?: string | null
+          confirmacao_pagamento?: string | null
+          dados_cliente?: string | null
           expiracao_app?: string | null
+          fatura_criada?: string | null
           id?: number
+          proximo_vencer?: string | null
           updated_at?: string | null
           user_id?: string | null
+          vence_hoje?: string | null
+          vencido?: string | null
         }
         Update: {
           aniversario_cliente?: string | null
+          bem_vindo?: string | null
           confirmacao_cliente?: string | null
+          confirmacao_pagamento?: string | null
+          dados_cliente?: string | null
           expiracao_app?: string | null
+          fatura_criada?: string | null
           id?: number
+          proximo_vencer?: string | null
           updated_at?: string | null
           user_id?: string | null
+          vence_hoje?: string | null
+          vencido?: string | null
         }
         Relationships: []
       }
