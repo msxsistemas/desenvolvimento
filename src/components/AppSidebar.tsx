@@ -13,24 +13,26 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 import {
   Home,
   Users,
   DollarSign,
   Wallet,
   MessageSquare,
-  Megaphone,
-  BookOpen,
-  Settings,
   ChevronDown,
   Circle,
-  Bell,
   Link2,
+  LayoutGrid,
+  Package,
+  Smartphone,
+  BarChart3,
+  CreditCard,
+  ShoppingCart,
+  Settings,
 } from "lucide-react";
 import { useState } from "react";
 import type { LucideProps } from "lucide-react";
-import { LogoutButton } from "./auth/LogoutButton";
+
 // Custom WhatsApp icon to match sidebar icon API
 const WhatsAppIcon = (props: LucideProps) => (
   <svg
@@ -46,18 +48,11 @@ const WhatsAppIcon = (props: LucideProps) => (
   </svg>
 );
 
-const itemsMain = [
-  { title: "Financeiro", url: "/financeiro", icon: DollarSign },
-];
-
-const itemsConfig = [
-  { title: "Mensagens de Cobrança", url: "/configuracoes/mensagens-cobranca", icon: MessageSquare },
-];
-
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
+  const isCollapsed = state === "collapsed";
 
   // Estado do submenu Clientes
   const clientesActive =
@@ -70,32 +65,53 @@ export function AppSidebar() {
   const [pagamentosOpen, setPagamentosOpen] = useState(pagamentosActive);
 
   const isActive = (path: string) => currentPath === path;
+
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50";
+    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all ${
+      isActive 
+        ? "bg-sidebar-accent text-sidebar-primary font-medium" 
+        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+    }`;
+
+  const getSubNavCls = (active: boolean) =>
+    `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-all ${
+      active 
+        ? "bg-sidebar-accent text-sidebar-primary font-medium" 
+        : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+    }`;
 
   return (
-    <Sidebar className="w-64" collapsible="icon">
-      <SidebarContent>
-        <div className="h-14 px-4 border-b flex items-center justify-center">
-          <h2 className="text-lg font-bold text-foreground">
-            {state === "collapsed" ? "TP" : "GESTOR TP"}
-          </h2>
+    <Sidebar className="border-r-0" collapsible="icon">
+      <SidebarContent className="bg-sidebar-background">
+        {/* Logo/Brand Header */}
+        <div className="h-16 px-4 flex items-center gap-3 border-b border-sidebar-border">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--brand))] to-[hsl(var(--brand-2))] flex items-center justify-center shadow-lg">
+            <span className="text-white font-bold text-lg">G</span>
+          </div>
+          {!isCollapsed && (
+            <div className="flex flex-col">
+              <span className="font-bold text-sidebar-foreground text-base tracking-tight">GESTOR TP</span>
+              <span className="text-[10px] text-sidebar-foreground/50 uppercase tracking-widest">Painel Admin</span>
+            </div>
+          )}
         </div>
 
-        {/* Dashboard section */}
-        <SidebarGroup>
+        {/* Main Navigation */}
+        <SidebarGroup className="px-3 py-4">
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="p-0">
                   <NavLink
                     to="/"
                     end
                     className={getNavCls}
                     aria-current={isActive("/") ? "page" : undefined}
                   >
-                    <Home className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
+                    <div className="w-8 h-8 rounded-lg bg-[hsl(var(--dashboard-cyan))]/20 flex items-center justify-center">
+                      <Home className="h-4 w-4 text-[hsl(var(--dashboard-cyan))]" />
+                    </div>
+                    {!isCollapsed && <span>Dashboard</span>}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -103,72 +119,81 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <div className="px-4 my-2">
-          <Separator />
-        </div>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Gerenciamento</SidebarGroupLabel>
+        {/* Gerenciamento Section */}
+        <SidebarGroup className="px-3">
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-sidebar-foreground/40 font-semibold px-3 mb-2">
+            Gerenciamento
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {/* Grupo Clientes com submenu */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setClientesOpen((o) => !o)}
-                  isActive={clientesActive}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all w-full ${
+                    clientesActive 
+                      ? "bg-sidebar-accent text-sidebar-primary font-medium" 
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  }`}
                   aria-expanded={clientesOpen}
                   aria-controls="submenu-clientes"
                 >
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>Clientes</span>
-                  <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${clientesOpen ? "rotate-180" : ""}`} />
+                  <div className="w-8 h-8 rounded-lg bg-[hsl(var(--dashboard-green))]/20 flex items-center justify-center">
+                    <Users className="h-4 w-4 text-[hsl(var(--dashboard-green))]" />
+                  </div>
+                  {!isCollapsed && (
+                    <>
+                      <span className="flex-1 text-left">Clientes</span>
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${clientesOpen ? "rotate-180" : ""}`} />
+                    </>
+                  )}
                 </SidebarMenuButton>
-                {clientesOpen && (
-                  <SidebarMenuSub id="submenu-clientes">
+                {clientesOpen && !isCollapsed && (
+                  <SidebarMenuSub id="submenu-clientes" className="ml-5 mt-1 space-y-0.5 border-l border-sidebar-border pl-3">
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild isActive={isActive("/clientes")}>
-                        <NavLink to="/clientes" end>
-                          <Circle className="h-3 w-3" />
+                      <SidebarMenuSubButton asChild className="p-0">
+                        <NavLink to="/clientes" end className={getSubNavCls(isActive("/clientes"))}>
+                          <LayoutGrid className="h-3.5 w-3.5" />
                           <span>Listar/Criar</span>
                         </NavLink>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild isActive={isActive("/clientes/planos")}>
-                        <NavLink to="/clientes/planos" end>
-                          <Circle className="h-3 w-3" />
+                      <SidebarMenuSubButton asChild className="p-0">
+                        <NavLink to="/clientes/planos" end className={getSubNavCls(isActive("/clientes/planos"))}>
+                          <Package className="h-3.5 w-3.5" />
                           <span>Planos</span>
                         </NavLink>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild isActive={isActive("/clientes/produtos")}>
-                        <NavLink to="/clientes/produtos" end>
-                          <Circle className="h-3 w-3" />
+                      <SidebarMenuSubButton asChild className="p-0">
+                        <NavLink to="/clientes/produtos" end className={getSubNavCls(isActive("/clientes/produtos"))}>
+                          <ShoppingCart className="h-3.5 w-3.5" />
                           <span>Produtos</span>
                         </NavLink>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild isActive={isActive("/clientes/aplicativos")}>
-                        <NavLink to="/clientes/aplicativos" end>
-                          <Circle className="h-3 w-3" />
+                      <SidebarMenuSubButton asChild className="p-0">
+                        <NavLink to="/clientes/aplicativos" end className={getSubNavCls(isActive("/clientes/aplicativos"))}>
+                          <Smartphone className="h-3.5 w-3.5" />
                           <span>Aplicativos</span>
                         </NavLink>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild isActive={isActive("/clientes/metricas")}>
-                        <NavLink to="/clientes/metricas" end>
-                          <Circle className="h-3 w-3" />
+                      <SidebarMenuSubButton asChild className="p-0">
+                        <NavLink to="/clientes/metricas" end className={getSubNavCls(isActive("/clientes/metricas"))}>
+                          <BarChart3 className="h-3.5 w-3.5" />
                           <span>Métricas</span>
                         </NavLink>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild isActive={isActive("/clientes/integracoes")}>
-                        <NavLink to="/clientes/integracoes" end>
-                          <Link2 className="h-3 w-3" />
+                      <SidebarMenuSubButton asChild className="p-0">
+                        <NavLink to="/clientes/integracoes" end className={getSubNavCls(isActive("/clientes/integracoes"))}>
+                          <Link2 className="h-3.5 w-3.5" />
                           <span>Integrações</span>
                         </NavLink>
                       </SidebarMenuSubButton>
@@ -177,59 +202,69 @@ export function AppSidebar() {
                 )}
               </SidebarMenuItem>
 
-              {itemsMain.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className={getNavCls}
-                      aria-current={isActive(item.url) ? "page" : undefined}
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {/* Financeiro */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className="p-0">
+                  <NavLink
+                    to="/financeiro"
+                    end
+                    className={getNavCls}
+                    aria-current={isActive("/financeiro") ? "page" : undefined}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-[hsl(var(--warning))]/20 flex items-center justify-center">
+                      <DollarSign className="h-4 w-4 text-[hsl(var(--warning))]" />
+                    </div>
+                    {!isCollapsed && <span>Financeiro</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <div className="px-4 my-2">
-          <Separator />
-        </div>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Configurações</SidebarGroupLabel>
+        {/* Configurações Section */}
+        <SidebarGroup className="px-3 mt-2">
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-sidebar-foreground/40 font-semibold px-3 mb-2">
+            Configurações
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {/* Pagamentos com submenu */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setPagamentosOpen((o) => !o)}
-                  isActive={pagamentosActive}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all w-full ${
+                    pagamentosActive 
+                      ? "bg-sidebar-accent text-sidebar-primary font-medium" 
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  }`}
                   aria-expanded={pagamentosOpen}
                   aria-controls="submenu-pagamentos"
                 >
-                  <Wallet className="mr-2 h-4 w-4" />
-                  <span>Pagamentos</span>
-                  <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${pagamentosOpen ? "rotate-180" : ""}`} />
+                  <div className="w-8 h-8 rounded-lg bg-[hsl(var(--dashboard-purple))]/20 flex items-center justify-center">
+                    <Wallet className="h-4 w-4 text-[hsl(var(--dashboard-purple))]" />
+                  </div>
+                  {!isCollapsed && (
+                    <>
+                      <span className="flex-1 text-left">Pagamentos</span>
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${pagamentosOpen ? "rotate-180" : ""}`} />
+                    </>
+                  )}
                 </SidebarMenuButton>
-                {pagamentosOpen && (
-                  <SidebarMenuSub id="submenu-pagamentos">
+                {pagamentosOpen && !isCollapsed && (
+                  <SidebarMenuSub id="submenu-pagamentos" className="ml-5 mt-1 space-y-0.5 border-l border-sidebar-border pl-3">
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild isActive={isActive("/financeiro-extra/assas")}>
-                        <NavLink to="/financeiro-extra/assas" end>
-                          <Circle className="h-3 w-3" />
+                      <SidebarMenuSubButton asChild className="p-0">
+                        <NavLink to="/financeiro-extra/assas" end className={getSubNavCls(isActive("/financeiro-extra/assas"))}>
+                          <CreditCard className="h-3.5 w-3.5" />
                           <span>Assas</span>
                         </NavLink>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild isActive={isActive("/financeiro-extra/checkout")}>
-                        <NavLink to="/financeiro-extra/checkout" end>
-                          <Circle className="h-3 w-3" />
+                      <SidebarMenuSubButton asChild className="p-0">
+                        <NavLink to="/financeiro-extra/checkout" end className={getSubNavCls(isActive("/financeiro-extra/checkout"))}>
+                          <ShoppingCart className="h-3.5 w-3.5" />
                           <span>Checkout</span>
                         </NavLink>
                       </SidebarMenuSubButton>
@@ -240,43 +275,61 @@ export function AppSidebar() {
 
               {/* WhatsApp */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="p-0">
                   <NavLink
                     to="/parear-whatsapp"
                     end
                     className={getNavCls}
                     aria-current={isActive("/parear-whatsapp") ? "page" : undefined}
                   >
-                    <WhatsAppIcon className="mr-2 h-4 w-4" />
-                    <span>WhatsApp</span>
+                    <div className="w-8 h-8 rounded-lg bg-[#25D366]/20 flex items-center justify-center">
+                      <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
+                    </div>
+                    {!isCollapsed && <span>WhatsApp</span>}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {itemsConfig.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className={getNavCls}
-                      aria-current={isActive(item.url) ? "page" : undefined}
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {/* Mensagens de Cobrança */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className="p-0">
+                  <NavLink
+                    to="/configuracoes/mensagens-cobranca"
+                    end
+                    className={getNavCls}
+                    aria-current={isActive("/configuracoes/mensagens-cobranca") ? "page" : undefined}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-[hsl(var(--dashboard-red))]/20 flex items-center justify-center">
+                      <MessageSquare className="h-4 w-4 text-[hsl(var(--dashboard-red))]" />
+                    </div>
+                    {!isCollapsed && <span>Mensagens de Cobrança</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Spacer to push footer down */}
+        <div className="flex-1" />
+
+        {/* Footer */}
+        <div className="p-3 border-t border-sidebar-border">
+          <NavLink
+            to="/configuracoes"
+            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all ${
+              isActive("/configuracoes")
+                ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            }`}
+          >
+            <div className="w-8 h-8 rounded-lg bg-sidebar-accent flex items-center justify-center">
+              <Settings className="h-4 w-4 text-sidebar-foreground/70" />
+            </div>
+            {!isCollapsed && <span>Configurações</span>}
+          </NavLink>
+        </div>
       </SidebarContent>
-      
-      {/* Footer com logout */}
-      <div className="p-4 border-t">
-        <LogoutButton />
-      </div>
     </Sidebar>
   );
 }
