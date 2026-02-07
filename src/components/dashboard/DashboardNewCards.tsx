@@ -1,0 +1,123 @@
+import { Users, TrendingUp } from "lucide-react";
+
+interface Props {
+  novosClientesHoje: number;
+  novosClientesSemana: number;
+  novosClientesMes: number;
+  clientesVencendoHoje: number;
+  clientesVencendo3Dias: number;
+  clientesSemRenovar: number;
+  clientesRecuperadosMes: number;
+  totalClientesRecuperados: number;
+  valoresHoje: number;
+  valoresAmanha: number;
+  projecaoMensal: number;
+}
+
+const fmt = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+
+export default function DashboardNewCards({
+  novosClientesHoje,
+  novosClientesSemana,
+  novosClientesMes,
+  clientesVencendoHoje,
+  clientesVencendo3Dias,
+  clientesSemRenovar,
+  clientesRecuperadosMes,
+  totalClientesRecuperados,
+  valoresHoje,
+  valoresAmanha,
+  projecaoMensal,
+}: Props) {
+  return (
+    <section className="grid gap-4 grid-cols-1 md:grid-cols-3">
+      {/* Card 1 - Novos Clientes */}
+      <div className="relative overflow-hidden rounded-xl bg-[hsl(220,40%,13%)] border border-[hsl(220,30%,20%)] p-5 text-white">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-3">
+            <Users className="h-8 w-8 text-[hsl(142,70%,45%)]" />
+          </div>
+        </div>
+        <div className="relative z-10 space-y-2 pr-16">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+            <span className="text-sm text-muted-foreground">Novos Clientes Hoje</span>
+            <span className="text-[hsl(142,70%,45%)] font-semibold">{novosClientesHoje}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+            <span className="text-sm text-muted-foreground">Novos Clientes Esta Semana</span>
+            <span className="text-[hsl(142,70%,45%)] font-semibold">{novosClientesSemana}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+            <span className="text-sm text-muted-foreground">Novos Clientes Este Mês</span>
+            <span className="text-[hsl(142,70%,45%)] font-semibold">{novosClientesMes}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Card 2 - Clientes Vencendo */}
+      <div className="relative overflow-hidden rounded-xl bg-[hsl(220,40%,13%)] border border-[hsl(220,30%,20%)] p-5 text-white">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-3">
+            <Users className="h-8 w-8 text-[hsl(142,70%,45%)]" />
+          </div>
+        </div>
+        <div className="relative z-10 space-y-1.5 pr-16">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-[hsl(142,70%,45%)]">Clientes Vencendo Hoje</span>
+            <span className="text-muted-foreground">{clientesVencendoHoje}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-[hsl(142,70%,45%)]">Clientes Vencendo em 3 Dias</span>
+            <span className="text-muted-foreground">{clientesVencendo3Dias}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-[hsl(142,70%,45%)]">Clientes sem Renovar este Mês</span>
+            <span className="text-muted-foreground">{clientesSemRenovar}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-[hsl(142,70%,45%)]">Clientes Recuperados este Mês</span>
+            <span className="text-muted-foreground">{clientesRecuperadosMes}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-[hsl(142,70%,45%)]">Total de Clientes Recuperados</span>
+            <span className="text-muted-foreground">{totalClientesRecuperados}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Card 3 - Valores a Receber */}
+      <div className="relative overflow-hidden rounded-xl bg-[hsl(220,40%,13%)] border border-[hsl(220,30%,20%)] p-5 text-white">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-3">
+            <TrendingUp className="h-8 w-8 text-[hsl(142,70%,45%)]" />
+          </div>
+        </div>
+        <div className="relative z-10 space-y-2 pr-16">
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+            <span className="text-sm font-semibold text-[hsl(142,70%,45%)]">Valores a Receber</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[hsl(142,70%,45%)]">↗</span>
+            <span className="text-sm text-muted-foreground">Projeção Mensal</span>
+            <span className="text-white font-semibold">{fmt(projecaoMensal)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[hsl(45,90%,50%)]">$</span>
+            <span className="text-sm text-muted-foreground">Hoje</span>
+            <span className="text-white font-semibold">{fmt(valoresHoje)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[hsl(45,90%,50%)]">$</span>
+            <span className="text-sm text-muted-foreground">Amanhã</span>
+            <span className="text-white font-semibold">{fmt(valoresAmanha)}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

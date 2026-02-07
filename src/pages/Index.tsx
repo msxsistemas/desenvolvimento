@@ -4,10 +4,12 @@ import {
   useMetricasPagamentos,
   useMetricasRenovacoes,
 } from "@/hooks/useMetricas";
+import { useMetricasExtras } from "@/hooks/useMetricasExtras";
 import DashboardClientCards from "@/components/dashboard/DashboardClientCards";
 import DashboardFinanceCards from "@/components/dashboard/DashboardFinanceCards";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import DashboardExpiredAlert from "@/components/dashboard/DashboardExpiredAlert";
+import DashboardNewCards from "@/components/dashboard/DashboardNewCards";
 
 export default function Index() {
   const { entradas, saidas, lucros, loading: loadingFinanceiro } = useFinanceiro();
@@ -31,8 +33,10 @@ export default function Index() {
     loading: loadingRenovacoes,
   } = useMetricasRenovacoes();
 
+  const metricasExtras = useMetricasExtras();
+
   const isLoading =
-    loadingFinanceiro || loadingClientes || loadingPagamentos || loadingRenovacoes;
+    loadingFinanceiro || loadingClientes || loadingPagamentos || loadingRenovacoes || metricasExtras.loading;
 
   if (isLoading) {
     return (
@@ -79,6 +83,21 @@ export default function Index() {
         clientesAtivos={clientesAtivos}
         clientesVencidos={clientesVencidos}
         clientesDesativados={0}
+      />
+
+      {/* Nova linha — Cards extras */}
+      <DashboardNewCards
+        novosClientesHoje={metricasExtras.novosClientesHoje}
+        novosClientesSemana={metricasExtras.novosClientesSemana}
+        novosClientesMes={metricasExtras.novosClientesMes}
+        clientesVencendoHoje={metricasExtras.clientesVencendoHoje}
+        clientesVencendo3Dias={metricasExtras.clientesVencendo3Dias}
+        clientesSemRenovar={metricasExtras.clientesSemRenovar}
+        clientesRecuperadosMes={metricasExtras.clientesRecuperadosMes}
+        totalClientesRecuperados={metricasExtras.totalClientesRecuperados}
+        valoresHoje={metricasExtras.valoresHoje}
+        valoresAmanha={metricasExtras.valoresAmanha}
+        projecaoMensal={metricasExtras.projecaoMensal}
       />
 
       {/* 2ª linha — Financeiro (2 cards) */}
