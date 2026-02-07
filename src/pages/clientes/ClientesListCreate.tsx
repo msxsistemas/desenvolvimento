@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { useClientes, usePlanos, useProdutos, useAplicativos, useTemplatesCobranca } from "@/hooks/useDatabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Edit, Trash, Plus, Send, RefreshCw, Copy, ChevronDown, Settings } from "lucide-react";
+import { MessageSquare, Edit, Trash, Plus, Send, RefreshCw, Copy } from "lucide-react";
 import { format } from "date-fns";
 import type { Cliente } from "@/types/database";
 import { Input } from "@/components/ui/input";
@@ -34,12 +34,6 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/lib/supabase";
@@ -667,29 +661,12 @@ export default function ClientesListCreate() {
           <h1 className="text-2xl font-semibold tracking-tight">Meus Clientes</h1>
           <p className="text-sm text-muted-foreground">Lista com todos os seus clientes</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Settings className="h-4 w-4" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="bg-pink-600 hover:bg-pink-700 text-white">
-                Ações
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => { resetModal(); setOpen(true); }}>
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Cliente
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Send className="mr-2 h-4 w-4" />
-                Enviar Mensagem
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <Button 
+          onClick={() => { resetModal(); setOpen(true); }}
+          className="bg-pink-600 hover:bg-pink-700 text-white"
+        >
+          Adicionar Cliente +
+        </Button>
       </div>
 
       {/* Seção de Filtros */}
