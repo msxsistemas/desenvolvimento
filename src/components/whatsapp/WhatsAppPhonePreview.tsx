@@ -1,4 +1,4 @@
-import { Video, Phone } from "lucide-react";
+import { Video, Phone, FileText, Image } from "lucide-react";
 
 interface WhatsAppPhonePreviewProps {
   message: string;
@@ -7,6 +7,8 @@ interface WhatsAppPhonePreviewProps {
   time?: string;
   carrier?: string;
   battery?: string;
+  mediaPreview?: string | null;
+  mediaType?: 'imagem' | 'video' | 'documento';
 }
 
 // Sample data for variable replacement
@@ -32,7 +34,9 @@ export function WhatsAppPhonePreview({
   contactName = "Gestor MSX",
   time = "09:00",
   carrier = "Vivo",
-  battery = "100%"
+  battery = "100%",
+  mediaPreview,
+  mediaType
 }: WhatsAppPhonePreviewProps) {
   
   // Process message with sample data
@@ -53,6 +57,56 @@ export function WhatsAppPhonePreview({
   };
 
   const previewText = renderPreview();
+
+  const renderMediaPreview = () => {
+    if (!mediaPreview) return null;
+
+    if (mediaType === 'imagem') {
+      return (
+        <div className="mb-2 rounded-lg overflow-hidden">
+          <img 
+            src={mediaPreview} 
+            alt="Preview" 
+            className="w-full max-h-48 object-cover rounded-lg"
+          />
+        </div>
+      );
+    }
+
+    if (mediaType === 'video') {
+      return (
+        <div className="mb-2 rounded-lg overflow-hidden relative">
+          <video 
+            src={mediaPreview} 
+            className="w-full max-h-48 object-cover rounded-lg"
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+            <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-[#075e54] ml-1" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (mediaType === 'documento') {
+      return (
+        <div className="mb-2 bg-[#025144] rounded-lg p-3 flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#00a884] rounded-lg flex items-center justify-center">
+            <FileText className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-white text-sm font-medium">Documento</p>
+            <p className="text-[#8696a0] text-xs">PDF, DOC, XLS...</p>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="flex justify-center lg:sticky lg:top-6 self-start h-fit">
@@ -118,40 +172,48 @@ export function WhatsAppPhonePreview({
             backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23182229\" fill-opacity=\"0.4\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" 
           }}
         >
-          {previewText ? (
+          {(previewText || mediaPreview) ? (
             <div className="bg-[#005c4b] rounded-lg p-3 max-w-[90%] ml-auto shadow-lg relative">
               <div className="absolute -right-1 top-0 w-3 h-3 bg-[#005c4b]" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}></div>
-              <p className="text-white text-[13px] whitespace-pre-wrap leading-relaxed">
-                {previewText.split('\n').map((line, index) => {
-                  // Process bold text
-                  const processedLine = line.split(/\*([^*]+)\*/g).map((part, i) => 
-                    i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-                  );
-                  
-                  // Check for URLs
-                  const urlMatch = line.match(/(https?:\/\/[^\s]+)/);
-                  if (urlMatch) {
+              
+              {/* Media Preview */}
+              {renderMediaPreview()}
+              
+              {/* Text Content */}
+              {previewText && (
+                <p className="text-white text-[13px] whitespace-pre-wrap leading-relaxed">
+                  {previewText.split('\n').map((line, index) => {
+                    // Process bold text
+                    const processedLine = line.split(/\*([^*]+)\*/g).map((part, i) => 
+                      i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                    );
+                    
+                    // Check for URLs
+                    const urlMatch = line.match(/(https?:\/\/[^\s]+)/);
+                    if (urlMatch) {
+                      return (
+                        <span key={index}>
+                          {line.split(urlMatch[0]).map((part, i) => (
+                            <span key={i}>
+                              {part}
+                              {i === 0 && <span className="text-[#53bdeb] underline break-all">{urlMatch[0]}</span>}
+                            </span>
+                          ))}
+                          {index < previewText.split('\n').length - 1 && <br />}
+                        </span>
+                      );
+                    }
+                    
                     return (
                       <span key={index}>
-                        {line.split(urlMatch[0]).map((part, i) => (
-                          <span key={i}>
-                            {part}
-                            {i === 0 && <span className="text-[#53bdeb] underline break-all">{urlMatch[0]}</span>}
-                          </span>
-                        ))}
+                        {processedLine}
                         {index < previewText.split('\n').length - 1 && <br />}
                       </span>
                     );
-                  }
-                  
-                  return (
-                    <span key={index}>
-                      {processedLine}
-                      {index < previewText.split('\n').length - 1 && <br />}
-                    </span>
-                  );
-                })}
-              </p>
+                  })}
+                </p>
+              )}
+              
               <div className="flex justify-end items-center gap-1 mt-1">
                 <span className="text-[10px] text-[#ffffff99]">{time}</span>
                 <svg className="w-4 h-4 text-[#53bdeb]" viewBox="0 0 16 15" fill="currentColor">
