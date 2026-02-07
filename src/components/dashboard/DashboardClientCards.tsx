@@ -46,13 +46,13 @@ export default function DashboardClientCards({
           <div className="absolute right-4 top-1/2 -translate-y-1/2 h-24 w-24 rounded-full bg-white/10" />
           <div className="absolute -right-4 -bottom-8 h-32 w-32 rounded-full bg-white/5" />
 
-          <div className="relative z-10 flex items-center gap-4">
-            <div className={`rounded-lg ${card.iconBgColor} p-3`}>
-              <card.icon className="h-6 w-6 text-white" />
+          <div className="relative z-10 flex items-center gap-3">
+            <div className={`rounded-lg ${card.iconBgColor} p-2`}>
+              <card.icon className="h-5 w-5 text-white" />
             </div>
             <div>
               <p className="text-sm font-medium text-white/90">{card.label}</p>
-              <p className="text-3xl font-bold">{card.value}</p>
+              <p className="text-2xl font-bold">{card.value}</p>
             </div>
           </div>
         </div>
