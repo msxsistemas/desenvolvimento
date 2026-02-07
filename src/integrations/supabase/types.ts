@@ -195,6 +195,7 @@ export type Database = {
           proximo_vencer: string | null
           updated_at: string | null
           user_id: string | null
+          uuid_id: string | null
           vence_hoje: string | null
           vencido: string | null
         }
@@ -210,6 +211,7 @@ export type Database = {
           proximo_vencer?: string | null
           updated_at?: string | null
           user_id?: string | null
+          uuid_id?: string | null
           vence_hoje?: string | null
           vencido?: string | null
         }
@@ -225,6 +227,7 @@ export type Database = {
           proximo_vencer?: string | null
           updated_at?: string | null
           user_id?: string | null
+          uuid_id?: string | null
           vence_hoje?: string | null
           vencido?: string | null
         }
