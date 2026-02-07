@@ -794,18 +794,19 @@ export default function ClientesListCreate() {
               <TableHead className="font-medium">Status:</TableHead>
               <TableHead className="font-medium">Plano:</TableHead>
               <TableHead className="font-medium">Servidor:</TableHead>
+              <TableHead className="font-medium text-right">Ações:</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loadingClientes ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <span className="text-muted-foreground">Carregando clientes...</span>
                 </TableCell>
               </TableRow>
             ) : clientesFiltrados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <span className="text-muted-foreground">Nenhum cliente encontrado</span>
                 </TableCell>
               </TableRow>
@@ -859,6 +860,72 @@ export default function ClientesListCreate() {
                         <Badge variant="outline" className="bg-card border-border">
                           {getProdutoNome(cliente.produto)}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopiarMensagem(cliente);
+                            }}
+                            title="Copiar mensagem"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (cliente.whatsapp) {
+                                window.open(`https://wa.me/${cliente.whatsapp.replace(/\D/g, '')}`, '_blank');
+                              }
+                            }}
+                            title="Enviar WhatsApp"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRenovarPlano(cliente);
+                            }}
+                            title="Renovar plano"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditCliente(cliente);
+                            }}
+                            title="Editar cliente"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteCliente(cliente.id!);
+                            }}
+                            title="Excluir cliente"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
