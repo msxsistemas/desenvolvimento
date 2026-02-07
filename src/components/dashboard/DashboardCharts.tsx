@@ -36,8 +36,6 @@ export default function DashboardCharts({
   const financeData = pagamentosData.map((d) => ({
     day: d.day,
     Vendas: d.valor,
-    Entradas: d.valor * 0.8,
-    Saídas: d.valor * (saidas / (entradas || 1)) * 0.5,
     "Custos Servidor": d.valor * 0.1,
   }));
 
@@ -127,10 +125,6 @@ export default function DashboardCharts({
                     <stop offset="5%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.6} />
                     <stop offset="95%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.1} />
                   </linearGradient>
-                  <linearGradient id="gEntradas" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.1} />
-                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" opacity={0.3} />
                 <XAxis 
@@ -156,20 +150,6 @@ export default function DashboardCharts({
                   dataKey="Vendas"
                   stroke="hsl(142, 70%, 45%)"
                   fill="url(#gVendas)"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="Entradas"
-                  stroke="hsl(38, 92%, 50%)"
-                  fill="url(#gEntradas)"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="Saídas"
-                  stroke="hsl(0, 72%, 51%)"
-                  fill="transparent"
                   strokeWidth={2}
                 />
                 <Area
