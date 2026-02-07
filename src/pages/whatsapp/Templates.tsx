@@ -20,90 +20,69 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Pencil, Copy, Trash2 } from "lucide-react";
-import { toast } from "sonner";
-
-interface Template {
-  id: string;
-  nome: string;
-  mensagem: string;
-  midia: boolean;
-  padrao: boolean;
-}
-
-const defaultTemplates: Template[] = [
-  { id: "1", nome: "Dados de acesso do cliente", mensagem: "{saudacao} *{nome_cliente}*.{br}Segue suas informações abaixo:{br}{br}Login: *{usuario}*{br}Senha: *{senha}*", midia: false, padrao: false },
-  { id: "2", nome: "Confirmação de Pagamento", mensagem: "Olá, *{nome_cliente}*. {br}{br} ✅ *Seu pagamento foi realizado!*", midia: false, padrao: false },
-  { id: "3", nome: "Plano Venceu Ontem", mensagem: "{saudacao}. *{nome_cliente}*. {br}{br} 🟥 *SEU PLANO VENCEU*", midia: false, padrao: false },
-  { id: "4", nome: "Plano Vencendo Hoje", mensagem: "{saudacao}. *{nome_cliente}*. {br}{br} ⚠️ *SEU VENCIMENTO É HOJE!*", midia: false, padrao: false },
-  { id: "5", nome: "Plano Vencendo Amanhã", mensagem: "{saudacao}. *{nome_cliente}*. {br}{br} 📅 *SEU PLANO VENCE AMANHÃ!*", midia: false, padrao: false },
-  { id: "6", nome: "Fatura Criada", mensagem: "{saudacao}. *{nome_cliente}*. {br}{br}* 📄 Sua fatura foi gerada com sucesso!*", midia: false, padrao: false },
-  { id: "7", nome: "Bem vindo", mensagem: "{saudacao} *{nome_cliente}*. {br}{br}🎉 Seja bem-vindo(a) à *Tech Play!*", midia: false, padrao: false },
-];
+import { Pencil, Copy, Trash2, Loader2 } from "lucide-react";
+import { useTemplatesMensagens, TemplateMensagem } from "@/hooks/useTemplatesMensagens";
 
 export default function Templates() {
-  const [templates, setTemplates] = useState<Template[]>(defaultTemplates);
+  const { 
+    templates, 
+    loading, 
+    createTemplate, 
+    updateTemplate, 
+    deleteTemplate, 
+    duplicateTemplate, 
+    restoreDefaults 
+  } = useTemplatesMensagens();
+  
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<TemplateMensagem | null>(null);
   const [formData, setFormData] = useState({ nome: "", mensagem: "" });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     document.title = "Templates | Tech Play";
   }, []);
 
-  const handleEdit = (template: Template) => {
+  const handleEdit = (template: TemplateMensagem) => {
     setEditingTemplate(template);
     setFormData({ nome: template.nome, mensagem: template.mensagem });
     setDialogOpen(true);
   };
 
-  const handleCopy = (template: Template) => {
-    const newTemplate: Template = {
-      ...template,
-      id: Date.now().toString(),
-      nome: `${template.nome} (cópia)`,
-    };
-    setTemplates([...templates, newTemplate]);
-    toast.success("Template duplicado com sucesso!");
+  const handleCopy = async (template: TemplateMensagem) => {
+    await duplicateTemplate(template);
   };
 
-  const handleDelete = (id: string) => {
-    setTemplates(templates.filter((t) => t.id !== id));
-    toast.success("Template excluído com sucesso!");
+  const handleDelete = async (id: string) => {
+    await deleteTemplate(id);
   };
 
-  const handleTogglePadrao = (id: string) => {
-    setTemplates(
-      templates.map((t) =>
-        t.id === id ? { ...t, padrao: !t.padrao } : t
-      )
-    );
+  const handleTogglePadrao = async (template: TemplateMensagem) => {
+    await updateTemplate(template.id, { padrao: !template.padrao });
   };
 
-  const handleSave = () => {
-    if (editingTemplate) {
-      setTemplates(
-        templates.map((t) =>
-          t.id === editingTemplate.id
-            ? { ...t, nome: formData.nome, mensagem: formData.mensagem }
-            : t
-        )
-      );
-      toast.success("Template atualizado com sucesso!");
-    } else {
-      const newTemplate: Template = {
-        id: Date.now().toString(),
-        nome: formData.nome,
-        mensagem: formData.mensagem,
-        midia: false,
-        padrao: false,
-      };
-      setTemplates([...templates, newTemplate]);
-      toast.success("Template criado com sucesso!");
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (editingTemplate) {
+        await updateTemplate(editingTemplate.id, { 
+          nome: formData.nome, 
+          mensagem: formData.mensagem 
+        });
+      } else {
+        await createTemplate({
+          nome: formData.nome,
+          mensagem: formData.mensagem,
+          midia: false,
+          padrao: false,
+        });
+      }
+      setDialogOpen(false);
+      setEditingTemplate(null);
+      setFormData({ nome: "", mensagem: "" });
+    } finally {
+      setSaving(false);
     }
-    setDialogOpen(false);
-    setEditingTemplate(null);
-    setFormData({ nome: "", mensagem: "" });
   };
 
   const handleNew = () => {
@@ -112,10 +91,17 @@ export default function Templates() {
     setDialogOpen(true);
   };
 
-  const handleRestaurarPadrao = () => {
-    setTemplates(defaultTemplates);
-    toast.success("Templates restaurados para o padrão!");
+  const handleRestaurarPadrao = async () => {
+    await restoreDefaults();
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -158,7 +144,7 @@ export default function Templates() {
                   <TableCell className="text-center">
                     <Checkbox
                       checked={template.padrao}
-                      onCheckedChange={() => handleTogglePadrao(template.id)}
+                      onCheckedChange={() => handleTogglePadrao(template)}
                     />
                   </TableCell>
                   <TableCell className="text-center">
@@ -238,7 +224,12 @@ export default function Templates() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSave} className="bg-cyan-500 hover:bg-cyan-600">
+            <Button 
+              onClick={handleSave} 
+              className="bg-cyan-500 hover:bg-cyan-600"
+              disabled={saving || !formData.nome || !formData.mensagem}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Salvar
             </Button>
           </DialogFooter>
