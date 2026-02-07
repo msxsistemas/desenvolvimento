@@ -372,7 +372,7 @@ export default function FilaMensagens() {
           <Button 
             onClick={handleForcarEnvio} 
             size="sm" 
-            disabled={actionLoading || !isConnected}
+            disabled={actionLoading}
             className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-white rounded-full px-4"
           >
             {actionLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
