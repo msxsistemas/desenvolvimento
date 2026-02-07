@@ -536,18 +536,16 @@ export default function FilaMensagens() {
                         <TableCell>{getStatusBadge(msg)}</TableCell>
                         <TableCell>
                           <div className="flex flex-col items-center gap-1">
-                            {/* Botão lixeira - apenas para mensagens enviadas */}
-                            {msg.status === "enviada" && (
-                              <Button 
-                                size="icon" 
-                                variant="ghost"
-                                disabled={actionLoading}
-                                className="h-8 w-8 text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"
-                                onClick={() => handleDelete(msg.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
+                            {/* Botão lixeira - sempre visível */}
+                            <Button 
+                              size="icon" 
+                              variant="ghost"
+                              disabled={actionLoading}
+                              className="h-8 w-8 text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"
+                              onClick={() => handleDelete(msg.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                             {/* Botão reenviar - apenas para mensagens enviadas ou com erro */}
                             {(msg.status === "enviada" || msg.status === "erro") && (
                               <Button 
