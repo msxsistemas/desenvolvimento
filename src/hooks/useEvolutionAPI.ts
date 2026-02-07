@@ -18,6 +18,7 @@ interface EvolutionConfig {
 }
 
 const STORAGE_KEY = 'evolution_api_config';
+const SESSION_STORAGE_KEY = 'evolution_api_session';
 
 export const useEvolutionAPI = () => {
   const { userId } = useCurrentUser();
@@ -26,13 +27,24 @@ export const useEvolutionAPI = () => {
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [statusInterval, setStatusInterval] = useState<NodeJS.Timeout | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
-  // Carregar configuração do usuário
+  // Carregar configuração e sessão do usuário
   useEffect(() => {
     if (userId) {
       loadConfig();
+      loadSession();
     }
   }, [userId]);
+
+  // Verificar status real da conexão após carregar a sessão
+  useEffect(() => {
+    if (config && session?.status === 'connected' && !initialized) {
+      setInitialized(true);
+      // Verificar se realmente está conectado
+      verifyConnectionOnLoad();
+    }
+  }, [config, session, initialized]);
 
   // Limpar interval ao desmontar
   useEffect(() => {
@@ -40,6 +52,28 @@ export const useEvolutionAPI = () => {
       if (statusInterval) clearInterval(statusInterval);
     };
   }, [statusInterval]);
+
+  // Persistir sessão sempre que mudar
+  useEffect(() => {
+    if (userId && session) {
+      localStorage.setItem(`${SESSION_STORAGE_KEY}_${userId}`, JSON.stringify(session));
+    }
+  }, [userId, session]);
+
+  const loadSession = () => {
+    if (!userId) return;
+    
+    try {
+      const stored = localStorage.getItem(`${SESSION_STORAGE_KEY}_${userId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Restaurar sessão salva
+        setSession(parsed);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar sessão:', error);
+    }
+  };
 
   const loadConfig = () => {
     if (!userId) return;
@@ -56,6 +90,46 @@ export const useEvolutionAPI = () => {
       }
     } catch (error) {
       console.error('Erro ao carregar configuração:', error);
+    }
+  };
+
+  // Verificar conexão ao carregar (sem mostrar toasts)
+  const verifyConnectionOnLoad = async () => {
+    if (!config) return;
+
+    try {
+      const response = await fetch(`${config.apiUrl}/instance/connectionState/${config.instanceName}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': config.apiKey,
+        },
+      });
+
+      if (response.ok) {
+        const statusData = await response.json();
+        const state = statusData.instance?.state || statusData.state;
+
+        if (state === 'open') {
+          // Ainda conectado, manter sessão
+          console.log('✅ WhatsApp ainda conectado');
+        } else {
+          // Desconectou, limpar sessão
+          console.log('⚠️ WhatsApp desconectado, limpando sessão');
+          setSession(null);
+          if (userId) {
+            localStorage.removeItem(`${SESSION_STORAGE_KEY}_${userId}`);
+          }
+        }
+      } else {
+        // Erro ao verificar, limpar sessão
+        setSession(null);
+        if (userId) {
+          localStorage.removeItem(`${SESSION_STORAGE_KEY}_${userId}`);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao verificar conexão:', error);
+      // Em caso de erro de rede, manter a sessão para tentar novamente depois
     }
   };
 
@@ -407,14 +481,21 @@ export const useEvolutionAPI = () => {
         console.log('Delete falhou:', e);
       }
       
+      // Limpar sessão do estado e localStorage
       setSession(null);
+      if (userId) {
+        localStorage.removeItem(`${SESSION_STORAGE_KEY}_${userId}`);
+      }
       toast.success('WhatsApp desconectado! Clique em "Conectar" para gerar novo QR Code.');
     } catch (error: any) {
       console.error('Erro ao desconectar:', error);
       setSession(null);
+      if (userId) {
+        localStorage.removeItem(`${SESSION_STORAGE_KEY}_${userId}`);
+      }
       toast.success('WhatsApp desconectado');
     }
-  }, [config, makeRequest, statusInterval]);
+  }, [config, makeRequest, statusInterval, userId]);
 
   // Reiniciar instância
   const restartInstance = useCallback(async () => {
