@@ -30,6 +30,7 @@ import FilaMensagens from "./pages/whatsapp/FilaMensagens";
 import EnviosEmMassa from "./pages/whatsapp/EnviosEmMassa";
 import GerenciarCampanhas from "./pages/whatsapp/GerenciarCampanhas";
 import ParearWhatsappNew from "./pages/whatsapp/ParearWhatsappNew";
+import Templates from "./pages/whatsapp/Templates";
 
 const queryClient = new QueryClient();
 import Auth from "./pages/auth/Auth";
@@ -71,7 +72,7 @@ const App = () => (
             <Route path="/whatsapp/gerenciar-mensagens" element={<GerenciarMensagens />} />
             <Route path="/whatsapp/fila-mensagens" element={<FilaMensagens />} />
             <Route path="/whatsapp/envios-em-massa" element={<EnviosEmMassa />} />
-            <Route path="/whatsapp/campanhas" element={<GerenciarCampanhas />} />
+            <Route path="/whatsapp/templates" element={<Templates />} />
             <Route path="/whatsapp/parear" element={<ParearWhatsappNew />} />
           </Route>
 

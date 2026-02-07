@@ -107,7 +107,7 @@ export function AppSidebar() {
     { to: "/whatsapp/gerenciar-mensagens", label: "Gerenciar Mensagens" },
     { to: "/whatsapp/fila-mensagens", label: "Fila de Mensagens" },
     { to: "/whatsapp/envios-em-massa", label: "Envios em Massa" },
-    { to: "/whatsapp/campanhas", label: "Gerenciar Campanhas" },
+    { to: "/whatsapp/templates", label: "Templates" },
     { to: "/whatsapp/parear", label: "Parear Whatsapp" },
   ];
 
