@@ -25,11 +25,10 @@ export default function DashboardCharts({
   entradas,
   saidas,
 }: Props) {
-  // Client movement data - blue/cyan tones
+  // Client movement data - blue/green tones
   const clientData = clientesNovosData.map((d, i) => ({
     day: d.day,
     "Clientes Ativados": d.total,
-    "Apenas Cadastrados": Math.floor(d.total * 0.3),
     "Clientes Renovados": renovacoesData[i]?.total ?? 0,
   }));
 
@@ -68,10 +67,6 @@ export default function DashboardCharts({
                     <stop offset="5%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.6} />
                     <stop offset="95%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.1} />
                   </linearGradient>
-                  <linearGradient id="gCadastrados" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.1} />
-                  </linearGradient>
                   <linearGradient id="gRenovados" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.6} />
                     <stop offset="95%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.1} />
@@ -101,13 +96,6 @@ export default function DashboardCharts({
                   dataKey="Clientes Ativados"
                   stroke="hsl(199, 89%, 48%)"
                   fill="url(#gAtivados)"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="Apenas Cadastrados"
-                  stroke="hsl(38, 92%, 50%)"
-                  fill="url(#gCadastrados)"
                   strokeWidth={2}
                 />
                 <Area
