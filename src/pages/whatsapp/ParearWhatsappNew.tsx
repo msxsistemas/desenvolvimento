@@ -12,11 +12,11 @@ export default function ParearWhatsappNew() {
     disconnect,
     checkStatus,
     isConnected,
+    hydrated,
   } = useEvolutionAPISimple();
 
   useEffect(() => {
     document.title = "Parear WhatsApp | Tech Play";
-    checkStatus();
   }, []);
 
   return (
@@ -46,7 +46,12 @@ export default function ParearWhatsappNew() {
           <div className="flex flex-col items-center justify-center">
             <h2 className="text-2xl font-bold text-foreground mb-2">Api WhatsApp</h2>
             
-            {isConnected ? (
+            {!hydrated ? (
+              <>
+                <p className="text-muted-foreground mb-6">Carregando status da sessão...</p>
+                <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin" />
+              </>
+            ) : isConnected ? (
               <>
                 <p className="text-muted-foreground mb-6">Sessão já conectada.</p>
                 {session?.phoneNumber && (

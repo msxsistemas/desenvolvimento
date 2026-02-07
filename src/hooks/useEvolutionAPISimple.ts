@@ -16,7 +16,10 @@ export const useEvolutionAPISimple = () => {
   const [session, setSession] = useState<EvolutionSession | null>(null);
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const statusIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const STORAGE_KEY = userId ? `evolution_api_simple_session_${userId}` : null;
 
   // Cleanup interval on unmount
   useEffect(() => {
@@ -27,10 +30,19 @@ export const useEvolutionAPISimple = () => {
     };
   }, []);
 
-  // Check status on mount
+  // Hydrate session from localStorage (sem checar API ao entrar na página)
   useEffect(() => {
-    if (userId) {
-      checkStatus();
+    if (!userId) return;
+
+    try {
+      const stored = localStorage.getItem(`evolution_api_simple_session_${userId}`);
+      if (stored) {
+        setSession(JSON.parse(stored));
+      }
+    } catch (e) {
+      // ignore
+    } finally {
+      setHydrated(true);
     }
   }, [userId]);
 
@@ -50,6 +62,56 @@ export const useEvolutionAPISimple = () => {
 
     return data;
   }, []);
+
+  // Persistir sessão localmente
+  useEffect(() => {
+    if (!userId) return;
+
+    try {
+      if (session) {
+        localStorage.setItem(`evolution_api_simple_session_${userId}`, JSON.stringify(session));
+      } else {
+        localStorage.removeItem(`evolution_api_simple_session_${userId}`);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [userId, session]);
+
+  // Monitorar desconexão na Evolution API (sem checar ao entrar na página)
+  useEffect(() => {
+    if (!userId) return;
+
+    // Só monitora quando estiver conectado
+    if (session?.status !== 'connected') {
+      if (statusIntervalRef.current) {
+        clearInterval(statusIntervalRef.current);
+        statusIntervalRef.current = null;
+      }
+      return;
+    }
+
+    if (statusIntervalRef.current) return;
+
+    // Checagem leve em background para detectar desconexão externa
+    statusIntervalRef.current = setInterval(async () => {
+      try {
+        const data = await callEvolutionAPI('status');
+        if (data.status !== 'connected') {
+          setSession(null);
+        }
+      } catch {
+        // se falhar, não derruba estado (evita piscar)
+      }
+    }, 60000);
+
+    return () => {
+      if (statusIntervalRef.current) {
+        clearInterval(statusIntervalRef.current);
+        statusIntervalRef.current = null;
+      }
+    };
+  }, [userId, session?.status, callEvolutionAPI]);
 
   const checkStatus = useCallback(async () => {
     if (!userId) return null;
@@ -188,6 +250,7 @@ export const useEvolutionAPISimple = () => {
     session,
     loading,
     connecting,
+    hydrated,
     connect,
     disconnect,
     checkStatus,
