@@ -167,52 +167,59 @@ export default function FilaMensagens() {
     let enviadas = 0;
     let erros = 0;
 
-    for (let i = 0; i < paraEnviar.length; i++) {
-      const msg = paraEnviar[i];
-      
-      // Atualizar toast com progresso
-      toast.loading(`Enviando ${i + 1}/${paraEnviar.length} mensagens...`, { id: toastId });
-      
-      try {
-        await sendMessage(msg.whatsapp, msg.mensagem);
+    try {
+      for (let i = 0; i < paraEnviar.length; i++) {
+        const msg = paraEnviar[i];
         
-        // Atualizar status no banco
-        await supabase
-          .from("whatsapp_messages")
-          .update({ status: 'sent', scheduled_for: null } as any)
-          .eq("id", msg.id);
+        // Atualizar toast com progresso
+        toast.loading(`Enviando ${i + 1}/${paraEnviar.length} mensagens...`, { id: toastId });
         
-        enviadas++;
-      } catch (error) {
-        console.error(`Erro ao enviar para ${msg.whatsapp}:`, error);
-        
-        // Marcar como erro no banco
-        await supabase
-          .from("whatsapp_messages")
-          .update({ status: 'failed', error_message: String(error), scheduled_for: null } as any)
-          .eq("id", msg.id);
-        
-        erros++;
+        try {
+          await sendMessage(msg.whatsapp, msg.mensagem);
+          
+          // Atualizar status no banco
+          await supabase
+            .from("whatsapp_messages")
+            .update({ status: 'sent', scheduled_for: null } as any)
+            .eq("id", msg.id);
+          
+          enviadas++;
+        } catch (error) {
+          console.error(`Erro ao enviar para ${msg.whatsapp}:`, error);
+          
+          // Marcar como erro no banco
+          await supabase
+            .from("whatsapp_messages")
+            .update({ status: 'failed', error_message: String(error), scheduled_for: null } as any)
+            .eq("id", msg.id);
+          
+          erros++;
+        }
+
+        // Delay variável entre mensagens para evitar bloqueio do WhatsApp
+        // Base de 17-25 segundos + variação de 1-10 segundos
+        if (i < paraEnviar.length - 1) {
+          const baseDelay = Math.floor(Math.random() * (25 - 17 + 1)) + 17; // 17-25 segundos
+          const variation = Math.floor(Math.random() * 10) + 1; // 1-10 segundos
+          const totalDelay = (baseDelay + variation) * 1000; // Converter para ms
+          await new Promise(resolve => setTimeout(resolve, totalDelay));
+        }
       }
 
-      // Delay variável entre mensagens para evitar bloqueio do WhatsApp
-      // Base de 17-25 segundos + variação de 1-10 segundos
-      if (i < paraEnviar.length - 1) {
-        const baseDelay = Math.floor(Math.random() * (25 - 17 + 1)) + 17; // 17-25 segundos
-        const variation = Math.floor(Math.random() * 10) + 1; // 1-10 segundos
-        const totalDelay = (baseDelay + variation) * 1000; // Converter para ms
-        await new Promise(resolve => setTimeout(resolve, totalDelay));
+      toast.dismiss(toastId);
+      
+      if (erros === 0) {
+        toast.success(`${enviadas} mensagens enviadas com sucesso!`);
+      } else {
+        toast.warning(`${enviadas} enviadas, ${erros} com erro`);
       }
-    }
-
-    toast.dismiss(toastId);
-    setActionLoading(false);
-    await loadMensagens();
-    
-    if (erros === 0) {
-      toast.success(`${enviadas} mensagens enviadas com sucesso!`);
-    } else {
-      toast.warning(`${enviadas} enviadas, ${erros} com erro`);
+    } catch (error) {
+      console.error("Erro geral ao forçar envio:", error);
+      toast.dismiss(toastId);
+      toast.error("Erro ao processar envio de mensagens");
+    } finally {
+      setActionLoading(false);
+      await loadMensagens();
     }
   };
 
@@ -529,24 +536,30 @@ export default function FilaMensagens() {
                         <TableCell>{getStatusBadge(msg)}</TableCell>
                         <TableCell>
                           <div className="flex flex-col items-center gap-1">
-                            <Button 
-                              size="icon" 
-                              variant="ghost"
-                              disabled={actionLoading}
-                              className="h-8 w-8 text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"
-                              onClick={() => handleDelete(msg.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost"
-                              disabled={actionLoading || !isConnected}
-                              className="h-8 w-8 text-[hsl(var(--success))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10"
-                              onClick={() => handleResend(msg.id)}
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                            </Button>
+                            {/* Botão lixeira - apenas para mensagens enviadas */}
+                            {msg.status === "enviada" && (
+                              <Button 
+                                size="icon" 
+                                variant="ghost"
+                                disabled={actionLoading}
+                                className="h-8 w-8 text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"
+                                onClick={() => handleDelete(msg.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {/* Botão reenviar - apenas para mensagens enviadas ou com erro */}
+                            {(msg.status === "enviada" || msg.status === "erro") && (
+                              <Button 
+                                size="icon" 
+                                variant="ghost"
+                                disabled={actionLoading || !isConnected}
+                                className="h-8 w-8 text-[hsl(var(--success))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10"
+                                onClick={() => handleResend(msg.id)}
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
