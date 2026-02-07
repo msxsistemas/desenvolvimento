@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,10 +28,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Home, Send, Trash2, RefreshCw } from "lucide-react";
+import { Home, Send, Trash2, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useEvolutionAPI } from "@/hooks/useEvolutionAPI";
 import { format } from "date-fns";
 
 interface Mensagem {
@@ -49,104 +50,72 @@ export default function FilaMensagens() {
   const [busca, setBusca] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState("10");
   const [currentPage, setCurrentPage] = useState(1);
-  const [reativarDialog, setReativarDialog] = useState<string | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<{ type: 'single' | 'enviadas' | 'todas'; id?: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const { user } = useCurrentUser();
+  const { sendMessage, isConnected, config } = useEvolutionAPI();
 
   useEffect(() => {
     document.title = "Fila de Mensagens | Tech Play";
-    loadMensagens();
   }, []);
 
+  useEffect(() => {
+    if (user?.id) {
+      loadMensagens();
+    }
+  }, [user?.id]);
+
   const loadMensagens = async () => {
+    if (!user?.id) return;
+    
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Buscar mensagens do WhatsApp
+      const { data: messagesData, error: messagesError } = await supabase
         .from("whatsapp_messages")
         .select("*")
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .order("sent_at", { ascending: false });
-      
-      if (data) {
-        setMensagens(data.map(m => ({
-          id: m.id,
-          cliente: m.phone, // Will need to join with clients table
-          whatsapp: m.phone,
-          mensagem: m.message,
-          data_hora: m.sent_at,
-          status: m.status as "enviada" | "aguardando" | "erro"
-        })));
+
+      if (messagesError) {
+        console.error("Erro ao carregar mensagens:", messagesError);
+        toast.error("Erro ao carregar mensagens");
+        return;
+      }
+
+      // Buscar clientes para associar nomes
+      const { data: clientesData } = await supabase
+        .from("clientes")
+        .select("nome, whatsapp")
+        .eq("user_id", user.id);
+
+      const clientesMap = new Map(
+        clientesData?.map(c => [c.whatsapp.replace(/\D/g, ''), c.nome]) || []
+      );
+
+      if (messagesData) {
+        setMensagens(messagesData.map(m => {
+          const phoneClean = m.phone.replace(/\D/g, '');
+          return {
+            id: m.id,
+            cliente: clientesMap.get(phoneClean) || m.phone,
+            whatsapp: m.phone,
+            mensagem: m.message,
+            data_hora: m.sent_at,
+            status: m.status === 'sent' ? 'enviada' : m.status === 'pending' ? 'aguardando' : m.status === 'failed' ? 'erro' : m.status as "enviada" | "aguardando" | "erro"
+          };
+        }));
       }
     } catch (error) {
       console.error("Erro ao carregar mensagens:", error);
+      toast.error("Erro ao carregar mensagens");
     } finally {
       setLoading(false);
     }
   };
 
-  // Sample data for demonstration
-  const sampleMensagens: Mensagem[] = [
-    {
-      id: "1",
-      cliente: "Paulo",
-      whatsapp: "5511986989550",
-      mensagem: "Olá, *Paulo*. \\n\\n ✅ *Seu pagamento foi realizado e o seu acesso será renovado em alguns minutos!*.\\n\\nPróximo vencimento: *06/03/2026* !\\n\\nQualquer dúvida, estamos por aqui!\\n\\n *Obrigado!*",
-      data_hora: "2026-02-06T20:54:23",
-      status: "enviada"
-    },
-    {
-      id: "2",
-      cliente: "Campanha",
-      whatsapp: "5583921461789",
-      mensagem: "O cliente *Paulo Diniz* (*paulo*), WhatsApp (*5511986989550*) do servidor **RBOYS GF** pagou a fatura no valor de R$ 44.9 referente ao plano *Plano Mensal - 2 Telas* pelo Gestor Pay via *GestorV3*",
-      data_hora: "2026-02-06T20:54:23",
-      status: "enviada"
-    },
-    {
-      id: "3",
-      cliente: "Paulo",
-      whatsapp: "5511986989550",
-      mensagem: "Bom dia, *Paulo*. \\n\\n 🟥 *SEU PLANO VENCEU*\\nPra continuar aproveitando seus canais, realize o pagamento o quanto antes. \\n\\n *DADOS DA FATURA*\\n--------------------------------\\n",
-      data_hora: "2026-02-06T08:00:07",
-      status: "enviada"
-    },
-    {
-      id: "4",
-      cliente: "Blener",
-      whatsapp: "556284095137",
-      mensagem: "Bom dia, *Blener*. \\n\\n 📄 Sua fatura foi gerada com sucesso!* \\n\\n *DADOS DA FATURA*\\n--------------------------------\\n ◆ *Vencimento:* *09/02/2026*\\n ◆ Plano Mensal - 1 Telas: *R$ 29,90*\\n ◆ Desconto: *~R$ 0,00~*\\n ◆ Total a pagar: *R$ 29,90*\\n--------------------------------\\n\\n 💸 *Pagamento rápido em 1 clique:*\\nhttps://gestorv3.pro/techplay/central/ver_fatura?r=C6985c9b786573143\\n\\nAbra o link de cima, clique em \"Pagar com PIX\"\\n copie o código completo gerado e cole no aplicativo do banco. \\n\\n ⚠️ Qualquer dúvida ou dificuldade, é só nos avisar aqui no mesmo instante!",
-      data_hora: "2026-02-06T08:00:07",
-      status: "enviada"
-    },
-    {
-      id: "5",
-      cliente: "Jessica",
-      whatsapp: "559491952921",
-      mensagem: "Bom dia, *Jessica*. \\n\\n 📄 Sua fatura foi gerada com sucesso!* \\n\\n *DADOS DA FATURA*\\n--------------------------------\\n",
-      data_hora: "2026-02-06T08:00:07",
-      status: "enviada"
-    },
-    {
-      id: "6",
-      cliente: "Alice",
-      whatsapp: "558881646676",
-      mensagem: "Bom dia, *Alice*. \\n\\n 📄 Sua fatura foi gerada com sucesso!* \\n\\n *DADOS DA FATURA*\\n--------------------------------\\n ◆ *Vencimento:* *09/02/2026*\\n ◆ Plano Mensal: *R$ 25,00*\\n ◆ Desconto: *~R$ 0,00~*\\n ◆ Total a pagar: *R$ 25,00*\\n--------------------------------\\n\\n 💸 *Pagamento rápido em 1 clique:*\\nhttps://gestorv3.pro/techplay/central/ver_fatura?r=C6985c9b77f71262\\n\\nAbra o link de cima, clique em \"Pagar com PIX\"\\n copie o código completo gerado e cole no aplicativo do banco. \\n\\n ⚠️ Qualquer dúvida ou dificuldade, é só nos avisar aqui no mesmo instante!",
-      data_hora: "2026-02-06T08:00:07",
-      status: "enviada"
-    },
-    {
-      id: "7",
-      cliente: "Mara",
-      whatsapp: "5583982192845",
-      mensagem: "Olá, *Mara*. \\n\\n ✅ *Seu pagamento foi realizado e o seu acesso será renovado em alguns minutos!*.\\n\\nPróximo vencimento: *05/03/2026* !\\n\\nQualquer dúvida, estamos por aqui!\\n\\n *Obrigado!*",
-      data_hora: "2026-02-05T22:59:28",
-      status: "enviada"
-    }
-  ];
-
-  const displayMensagens = mensagens.length > 0 ? mensagens : sampleMensagens;
-
-  const filteredMensagens = displayMensagens.filter(m => {
+  const filteredMensagens = mensagens.filter(m => {
     if (filtro === "aguardando" && m.status !== "aguardando") return false;
     if (filtro === "enviadas" && m.status !== "enviada") return false;
     if (filtro === "erro" && m.status !== "erro") return false;
@@ -154,46 +123,183 @@ export default function FilaMensagens() {
     return true;
   });
 
-  const totalPages = Math.ceil(filteredMensagens.length / parseInt(entriesPerPage));
+  const totalPages = Math.ceil(filteredMensagens.length / parseInt(entriesPerPage)) || 1;
   const paginatedMensagens = filteredMensagens.slice(
     (currentPage - 1) * parseInt(entriesPerPage),
     currentPage * parseInt(entriesPerPage)
   );
 
   const counts = {
-    todas: displayMensagens.length,
-    aguardando: displayMensagens.filter(m => m.status === "aguardando").length,
-    enviadas: displayMensagens.filter(m => m.status === "enviada").length,
-    erro: displayMensagens.filter(m => m.status === "erro").length,
+    todas: mensagens.length,
+    aguardando: mensagens.filter(m => m.status === "aguardando").length,
+    enviadas: mensagens.filter(m => m.status === "enviada").length,
+    erro: mensagens.filter(m => m.status === "erro").length,
   };
 
-  const handleForcarEnvio = () => {
-    toast.success("Forçando envio das mensagens pendentes...");
+  // Forçar envio de todas as mensagens aguardando
+  const handleForcarEnvio = async () => {
+    if (!isConnected) {
+      toast.error("WhatsApp não está conectado. Conecte primeiro em 'Parear WhatsApp'");
+      return;
+    }
+
+    const aguardando = mensagens.filter(m => m.status === "aguardando");
+    if (aguardando.length === 0) {
+      toast.info("Não há mensagens aguardando envio");
+      return;
+    }
+
+    setActionLoading(true);
+    toast.info(`Enviando ${aguardando.length} mensagens...`);
+
+    let enviadas = 0;
+    let erros = 0;
+
+    for (const msg of aguardando) {
+      try {
+        await sendMessage(msg.whatsapp, msg.mensagem);
+        
+        // Atualizar status no banco
+        await supabase
+          .from("whatsapp_messages")
+          .update({ status: 'sent' })
+          .eq("id", msg.id);
+        
+        enviadas++;
+      } catch (error) {
+        console.error(`Erro ao enviar para ${msg.whatsapp}:`, error);
+        
+        // Marcar como erro no banco
+        await supabase
+          .from("whatsapp_messages")
+          .update({ status: 'failed', error_message: String(error) })
+          .eq("id", msg.id);
+        
+        erros++;
+      }
+
+      // Delay entre mensagens para evitar bloqueio
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    setActionLoading(false);
+    await loadMensagens();
+    
+    if (erros === 0) {
+      toast.success(`${enviadas} mensagens enviadas com sucesso!`);
+    } else {
+      toast.warning(`${enviadas} enviadas, ${erros} com erro`);
+    }
   };
 
-  const handleExcluirEnviadas = () => {
-    toast.success("Mensagens enviadas excluídas!");
+  // Excluir mensagens enviadas
+  const handleExcluirEnviadas = async () => {
+    setDeleteDialog({ type: 'enviadas' });
   };
 
-  const handleExcluirTodas = () => {
-    toast.success("Todas as mensagens excluídas!");
+  // Excluir todas as mensagens
+  const handleExcluirTodas = async () => {
+    setDeleteDialog({ type: 'todas' });
   };
 
-  const handleReativar = (id: string) => {
-    setReativarDialog(id);
+  // Confirmar exclusão
+  const confirmDelete = async () => {
+    if (!deleteDialog || !user?.id) return;
+
+    setActionLoading(true);
+    try {
+      if (deleteDialog.type === 'single' && deleteDialog.id) {
+        await supabase
+          .from("whatsapp_messages")
+          .delete()
+          .eq("id", deleteDialog.id)
+          .eq("user_id", user.id);
+        toast.success("Mensagem excluída!");
+      } else if (deleteDialog.type === 'enviadas') {
+        await supabase
+          .from("whatsapp_messages")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("status", "sent");
+        toast.success("Mensagens enviadas excluídas!");
+      } else if (deleteDialog.type === 'todas') {
+        await supabase
+          .from("whatsapp_messages")
+          .delete()
+          .eq("user_id", user.id);
+        toast.success("Todas as mensagens excluídas!");
+      }
+      
+      await loadMensagens();
+    } catch (error) {
+      console.error("Erro ao excluir:", error);
+      toast.error("Erro ao excluir mensagens");
+    } finally {
+      setActionLoading(false);
+      setDeleteDialog(null);
+    }
   };
 
-  const confirmReativar = () => {
-    toast.success("Mensagem reativada com sucesso!");
-    setReativarDialog(null);
+  // Reativar mensagens com erro (colocar de volta na fila)
+  const handleReativarMensagens = async () => {
+    if (!user?.id) return;
+
+    const comErro = mensagens.filter(m => m.status === "erro");
+    if (comErro.length === 0) {
+      toast.info("Não há mensagens com erro para reativar");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await supabase
+        .from("whatsapp_messages")
+        .update({ status: 'pending', error_message: null })
+        .eq("user_id", user.id)
+        .eq("status", "failed");
+
+      toast.success(`${comErro.length} mensagens reativadas e colocadas na fila!`);
+      await loadMensagens();
+    } catch (error) {
+      console.error("Erro ao reativar:", error);
+      toast.error("Erro ao reativar mensagens");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
+  // Excluir mensagem individual
   const handleDelete = (id: string) => {
-    toast.success("Mensagem excluída!");
+    setDeleteDialog({ type: 'single', id });
   };
 
-  const handleResend = (id: string) => {
-    toast.success("Mensagem reenviada!");
+  // Reenviar mensagem individual
+  const handleResend = async (id: string) => {
+    if (!isConnected) {
+      toast.error("WhatsApp não está conectado");
+      return;
+    }
+
+    const msg = mensagens.find(m => m.id === id);
+    if (!msg) return;
+
+    setActionLoading(true);
+    try {
+      await sendMessage(msg.whatsapp, msg.mensagem);
+      
+      await supabase
+        .from("whatsapp_messages")
+        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .eq("id", id);
+
+      toast.success("Mensagem reenviada com sucesso!");
+      await loadMensagens();
+    } catch (error) {
+      console.error("Erro ao reenviar:", error);
+      toast.error("Erro ao reenviar mensagem");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -222,15 +328,30 @@ export default function FilaMensagens() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={handleForcarEnvio} size="sm" className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-white rounded-full px-4">
-            <Send className="h-4 w-4 mr-1" />
+          <Button 
+            onClick={handleForcarEnvio} 
+            size="sm" 
+            disabled={actionLoading || !isConnected}
+            className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-white rounded-full px-4"
+          >
+            {actionLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
             Forçar Envio
           </Button>
-          <Button onClick={handleExcluirEnviadas} size="sm" className="bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/90 text-white rounded-full px-4">
+          <Button 
+            onClick={handleExcluirEnviadas} 
+            size="sm" 
+            disabled={actionLoading}
+            className="bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/90 text-white rounded-full px-4"
+          >
             <Trash2 className="h-4 w-4 mr-1" />
             Excluir Enviadas
           </Button>
-          <Button onClick={handleExcluirTodas} size="sm" className="bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/90 text-white rounded-full px-4">
+          <Button 
+            onClick={handleExcluirTodas} 
+            size="sm" 
+            disabled={actionLoading}
+            className="bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/90 text-white rounded-full px-4"
+          >
             <Trash2 className="h-4 w-4 mr-1" />
             Excluir Todas
           </Button>
@@ -248,7 +369,9 @@ export default function FilaMensagens() {
             <Button 
               size="sm"
               onClick={() => setFiltro("todas")}
-              className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-white rounded-full px-4"
+              className={filtro === "todas" 
+                ? "bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-white rounded-full px-4"
+                : "bg-secondary hover:bg-secondary/80 text-foreground rounded-full px-4"}
             >
               Todas ({counts.todas})
             </Button>
@@ -274,17 +397,20 @@ export default function FilaMensagens() {
             <Button 
               size="sm"
               onClick={() => setFiltro("erro")}
-              className="bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/90 text-white rounded-full px-4"
+              className={filtro === "erro"
+                ? "bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/90 text-white rounded-full px-4"
+                : "bg-[hsl(var(--destructive))]/20 hover:bg-[hsl(var(--destructive))]/30 text-[hsl(var(--destructive))] rounded-full px-4"}
             >
               Mensagens com Erro ({counts.erro})
             </Button>
             <Button 
               size="sm"
               variant="outline"
-              onClick={() => {}}
+              onClick={handleReativarMensagens}
+              disabled={actionLoading || counts.erro === 0}
               className="border-[hsl(var(--success))] text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10 rounded-full px-4"
             >
-              <RefreshCw className="h-4 w-4 mr-1" />
+              <RefreshCw className={`h-4 w-4 mr-1 ${actionLoading ? 'animate-spin' : ''}`} />
               Reativar Mensagens
             </Button>
           </div>
@@ -332,39 +458,56 @@ export default function FilaMensagens() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedMensagens.map((msg) => (
-                    <TableRow key={msg.id} className="border-b border-border hover:bg-secondary/30">
-                      <TableCell className="text-[hsl(var(--brand-2))] font-medium whitespace-nowrap">{msg.cliente}</TableCell>
-                      <TableCell className="text-foreground whitespace-nowrap font-mono text-sm">{msg.whatsapp}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm max-w-[350px]">
-                        <div className="line-clamp-2">{msg.mensagem}</div>
-                      </TableCell>
-                      <TableCell className="text-foreground text-sm whitespace-nowrap">
-                        {format(new Date(msg.data_hora), "dd/MM/yyyy - HH:mm:ss")}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(msg.status)}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col items-center gap-1">
-                          <Button 
-                            size="icon" 
-                            variant="ghost"
-                            className="h-8 w-8 text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"
-                            onClick={() => handleDelete(msg.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="icon" 
-                            variant="ghost"
-                            className="h-8 w-8 text-[hsl(var(--success))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10"
-                            onClick={() => handleResend(msg.id)}
-                          >
-                            <RefreshCw className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+                        <p className="text-muted-foreground mt-2">Carregando mensagens...</p>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : paginatedMensagens.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Nenhuma mensagem encontrada
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedMensagens.map((msg) => (
+                      <TableRow key={msg.id} className="border-b border-border hover:bg-secondary/30">
+                        <TableCell className="text-[hsl(var(--brand-2))] font-medium whitespace-nowrap">{msg.cliente}</TableCell>
+                        <TableCell className="text-foreground whitespace-nowrap font-mono text-sm">{msg.whatsapp}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm max-w-[350px]">
+                          <div className="line-clamp-2">{msg.mensagem}</div>
+                        </TableCell>
+                        <TableCell className="text-foreground text-sm whitespace-nowrap">
+                          {format(new Date(msg.data_hora), "dd/MM/yyyy - HH:mm:ss")}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(msg.status)}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col items-center gap-1">
+                            <Button 
+                              size="icon" 
+                              variant="ghost"
+                              disabled={actionLoading}
+                              className="h-8 w-8 text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"
+                              onClick={() => handleDelete(msg.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="ghost"
+                              disabled={actionLoading || !isConnected}
+                              className="h-8 w-8 text-[hsl(var(--success))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10"
+                              onClick={() => handleResend(msg.id)}
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -373,7 +516,7 @@ export default function FilaMensagens() {
           {/* Pagination Footer */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
             <span className="text-muted-foreground text-sm">
-              Mostrando {((currentPage - 1) * parseInt(entriesPerPage)) + 1} a {Math.min(currentPage * parseInt(entriesPerPage), filteredMensagens.length)} de {filteredMensagens.length} entradas
+              Mostrando {filteredMensagens.length > 0 ? ((currentPage - 1) * parseInt(entriesPerPage)) + 1 : 0} a {Math.min(currentPage * parseInt(entriesPerPage), filteredMensagens.length)} de {filteredMensagens.length} entradas
             </span>
             <div className="flex items-center gap-1">
               <Button 
@@ -423,24 +566,32 @@ export default function FilaMensagens() {
         </CardContent>
       </Card>
 
-      {/* Reactivate Dialog */}
-      <AlertDialog open={!!reativarDialog} onOpenChange={() => setReativarDialog(null)}>
-        <AlertDialogContent className="bg-[#1a1a2e] border-[#2a2a3c]">
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteDialog} onOpenChange={() => setDeleteDialog(null)}>
+        <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white text-center text-xl">Reativar essa mensagem?</AlertDialogTitle>
+            <AlertDialogTitle className="text-foreground text-center text-xl">
+              {deleteDialog?.type === 'single' && "Excluir esta mensagem?"}
+              {deleteDialog?.type === 'enviadas' && "Excluir mensagens enviadas?"}
+              {deleteDialog?.type === 'todas' && "Excluir TODAS as mensagens?"}
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              Deseja realmente reativar essa mensagem?
+              {deleteDialog?.type === 'single' && "Deseja realmente excluir esta mensagem? Esta ação não pode ser desfeita."}
+              {deleteDialog?.type === 'enviadas' && `Deseja excluir ${counts.enviadas} mensagens enviadas? Esta ação não pode ser desfeita.`}
+              {deleteDialog?.type === 'todas' && `Deseja excluir TODAS as ${counts.todas} mensagens? Esta ação não pode ser desfeita.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex justify-center gap-4">
             <AlertDialogAction 
-              onClick={confirmReativar}
-              className="bg-green-600 hover:bg-green-700"
+              onClick={confirmDelete}
+              disabled={actionLoading}
+              className="bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/90"
             >
-              Sim, tenho certeza!
+              {actionLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Sim, excluir!
             </AlertDialogAction>
-            <AlertDialogCancel className="bg-red-600 hover:bg-red-700 text-white border-none">
-              Cancel
+            <AlertDialogCancel className="bg-secondary hover:bg-secondary/80 text-foreground border-none">
+              Cancelar
             </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
