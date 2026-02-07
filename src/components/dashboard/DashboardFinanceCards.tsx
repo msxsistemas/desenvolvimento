@@ -20,11 +20,11 @@ export default function DashboardFinanceCards({
 }: Props) {
   return (
     <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-      <Card className="bg-card border-border">
+      <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="rounded-full bg-green-500/10 p-3">
-              <TrendingUp className="h-6 w-6 text-green-500" />
+            <div className="rounded-xl bg-dashboard-green/10 p-3">
+              <TrendingUp className="h-6 w-6 text-dashboard-green" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Entradas</p>
@@ -34,11 +34,11 @@ export default function DashboardFinanceCards({
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="rounded-full bg-red-500/10 p-3">
-              <TrendingDown className="h-6 w-6 text-red-500" />
+            <div className="rounded-xl bg-dashboard-red/10 p-3">
+              <TrendingDown className="h-6 w-6 text-dashboard-red" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Saídas</p>
@@ -48,11 +48,11 @@ export default function DashboardFinanceCards({
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="rounded-full bg-blue-500/10 p-3">
-              <DollarSign className="h-6 w-6 text-blue-500" />
+            <div className="rounded-xl bg-primary/10 p-3">
+              <DollarSign className="h-6 w-6 text-primary" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Lucros</p>
@@ -62,11 +62,11 @@ export default function DashboardFinanceCards({
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="rounded-full bg-cyan-500/10 p-3">
-              <Wallet className="h-6 w-6 text-cyan-500" />
+            <div className="rounded-xl bg-dashboard-cyan/10 p-3">
+              <Wallet className="h-6 w-6 text-dashboard-cyan" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total do Mês</p>

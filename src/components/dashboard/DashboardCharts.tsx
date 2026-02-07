@@ -31,7 +31,7 @@ export default function DashboardCharts({
 
   return (
     <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-      <Card className="bg-card border-border">
+      <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-lg">Pagamentos por Dia</CardTitle>
         </CardHeader>
@@ -49,14 +49,14 @@ export default function DashboardCharts({
                     borderRadius: "8px"
                   }} 
                 />
-                <Bar dataKey="valor" fill="hsl(199, 89%, 48%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="valor" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="bg-card/50 border-border/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-lg">Clientes</CardTitle>
         </CardHeader>
@@ -75,8 +75,8 @@ export default function DashboardCharts({
                   }} 
                 />
                 <Legend />
-                <Bar dataKey="Novos Clientes" fill="hsl(142, 70%, 45%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Renovações" fill="hsl(38, 92%, 50%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Novos Clientes" fill="hsl(var(--dashboard-green))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Renovações" fill="hsl(var(--dashboard-warning))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
