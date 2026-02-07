@@ -31,7 +31,10 @@ export const useEvolutionAPISimple = () => {
 
   // Carregar sessão do banco de dados ao montar
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setHydrated(true);
+      return;
+    }
 
     const loadSessionFromDB = async () => {
       try {
