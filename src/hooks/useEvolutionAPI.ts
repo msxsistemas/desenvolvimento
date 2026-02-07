@@ -27,7 +27,6 @@ export const useEvolutionAPI = () => {
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [statusInterval, setStatusInterval] = useState<NodeJS.Timeout | null>(null);
-  const [initialized, setInitialized] = useState(false);
 
   // Carregar configuração e sessão do usuário
   useEffect(() => {
@@ -36,15 +35,6 @@ export const useEvolutionAPI = () => {
       loadSession();
     }
   }, [userId]);
-
-  // Verificar status real da conexão após carregar a sessão
-  useEffect(() => {
-    if (config && session?.status === 'connected' && !initialized) {
-      setInitialized(true);
-      // Verificar se realmente está conectado
-      verifyConnectionOnLoad();
-    }
-  }, [config, session, initialized]);
 
   // Limpar interval ao desmontar
   useEffect(() => {
@@ -93,45 +83,6 @@ export const useEvolutionAPI = () => {
     }
   };
 
-  // Verificar conexão ao carregar (sem mostrar toasts)
-  const verifyConnectionOnLoad = async () => {
-    if (!config) return;
-
-    try {
-      const response = await fetch(`${config.apiUrl}/instance/connectionState/${config.instanceName}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': config.apiKey,
-        },
-      });
-
-      if (response.ok) {
-        const statusData = await response.json();
-        const state = statusData.instance?.state || statusData.state;
-
-        if (state === 'open') {
-          // Ainda conectado, manter sessão
-          console.log('✅ WhatsApp ainda conectado');
-        } else {
-          // Desconectou, limpar sessão
-          console.log('⚠️ WhatsApp desconectado, limpando sessão');
-          setSession(null);
-          if (userId) {
-            localStorage.removeItem(`${SESSION_STORAGE_KEY}_${userId}`);
-          }
-        }
-      } else {
-        // Erro ao verificar, limpar sessão
-        setSession(null);
-        if (userId) {
-          localStorage.removeItem(`${SESSION_STORAGE_KEY}_${userId}`);
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao verificar conexão:', error);
-      // Em caso de erro de rede, manter a sessão para tentar novamente depois
-    }
-  };
 
   const saveConfig = async (newConfig: EvolutionConfig) => {
     if (!userId) {
