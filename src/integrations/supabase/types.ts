@@ -356,6 +356,39 @@ export type Database = {
         }
         Relationships: []
       }
+      templates_mensagens: {
+        Row: {
+          created_at: string | null
+          id: string
+          mensagem: string
+          midia: boolean | null
+          nome: string
+          padrao: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mensagem: string
+          midia?: boolean | null
+          nome: string
+          padrao?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mensagem?: string
+          midia?: boolean | null
+          nome?: string
+          padrao?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       whatsapp_messages: {
         Row: {
           created_at: string
