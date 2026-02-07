@@ -76,6 +76,27 @@ export default function DashboardNewCards({
           </div>
         </div>
       </div>
+
+      {/* Card 3 - Projeção */}
+      <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white flex items-center gap-4">
+        <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
+          <TrendingUp className="h-6 w-6 text-[hsl(142,70%,45%)]" />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Valores Hoje</span>
+            <span className="text-[hsl(142,70%,45%)] font-semibold">{fmt(valoresHoje)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Valores Amanhã</span>
+            <span className="text-[hsl(142,70%,45%)] font-semibold">{fmt(valoresAmanha)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Projeção Mensal</span>
+            <span className="text-[hsl(142,70%,45%)] font-semibold">{fmt(projecaoMensal)}</span>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
