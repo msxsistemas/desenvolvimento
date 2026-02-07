@@ -249,10 +249,6 @@ export default function EnviosEmMassa() {
             <WhatsAppPhonePreview 
               message={mensagem}
               templateLabel={destinatarios ? getDestinatarioLabel(destinatarios) : undefined}
-              contactName="GESTORv3"
-              time="20:00"
-              carrier="TIM"
-              battery="22%"
             />
           </div>
         </CardContent>
