@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, RefreshCw } from "lucide-react";
 import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
-import QRCode from "react-qr-code";
 
 export default function ParearWhatsappNew() {
   const {
@@ -77,7 +76,11 @@ export default function ParearWhatsappNew() {
             
             {session?.qrCode ? (
               <div className="bg-white p-4 rounded-lg">
-                <QRCode value={session.qrCode} size={200} />
+                <img 
+                  src={session.qrCode.startsWith('data:') ? session.qrCode : `data:image/png;base64,${session.qrCode}`}
+                  alt="QR Code WhatsApp"
+                  className="w-[200px] h-[200px]"
+                />
               </div>
             ) : (
               <div className="w-[200px] h-[200px] bg-muted rounded-lg flex items-center justify-center">
