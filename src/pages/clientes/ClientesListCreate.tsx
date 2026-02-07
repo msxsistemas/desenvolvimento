@@ -790,8 +790,6 @@ export default function ClientesListCreate() {
             <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableHead className="w-10"></TableHead>
               <TableHead className="font-medium">Nome do Cliente:</TableHead>
-              <TableHead className="font-medium">Saldo:</TableHead>
-              <TableHead className="font-medium">Gerou Teste:</TableHead>
               <TableHead className="font-medium">Vencimento:</TableHead>
               <TableHead className="font-medium">Status:</TableHead>
               <TableHead className="font-medium">Plano:</TableHead>
@@ -801,13 +799,13 @@ export default function ClientesListCreate() {
           <TableBody>
             {loadingClientes ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   <span className="text-muted-foreground">Carregando clientes...</span>
                 </TableCell>
               </TableRow>
             ) : clientesFiltrados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   <span className="text-muted-foreground">Nenhum cliente encontrado</span>
                 </TableCell>
               </TableRow>
@@ -834,17 +832,6 @@ export default function ClientesListCreate() {
                             </span>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-red-500 font-medium">R$ 0,00</span>
-                        <span className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500">
-                          <MessageSquare className="h-3 w-3 text-white" />
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-muted-foreground">
-                          Não
-                        </Badge>
                       </TableCell>
                       <TableCell>
                         {cliente.data_vencimento 
