@@ -1,15 +1,17 @@
-import { Users, AlertTriangle, UserX } from "lucide-react";
+import { Users, AlertTriangle, UserX, UserPlus } from "lucide-react";
 
 interface Props {
   clientesAtivos: number;
   clientesVencidos: number;
   clientesDesativados?: number;
+  clientesNovosNoMes?: number;
 }
 
 export default function DashboardClientCards({
   clientesAtivos,
   clientesVencidos,
   clientesDesativados = 0,
+  clientesNovosNoMes = 0,
 }: Props) {
   const cards = [
     {
@@ -33,10 +35,17 @@ export default function DashboardClientCards({
       bgColor: "bg-[hsl(300,70%,40%)]",
       iconBgColor: "bg-[hsl(300,60%,30%)]",
     },
+    {
+      label: "Novos no Mês",
+      value: clientesNovosNoMes,
+      icon: UserPlus,
+      bgColor: "bg-[hsl(200,70%,50%)]",
+      iconBgColor: "bg-[hsl(200,60%,40%)]",
+    },
   ];
 
   return (
-    <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+    <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (
         <div
           key={card.label}
