@@ -141,47 +141,24 @@ export default function GerenciarMensagens() {
     
     setSaving(true);
     try {
-      // Verificar se já existe registro para o usuário
-      const { data: existingData } = await supabase
+      // Usar upsert para inserir ou atualizar com base no user_id
+      const { error } = await supabase
         .from("mensagens_padroes")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .upsert({
+          user_id: user.id,
+          bem_vindo: mensagens.bem_vindo,
+          fatura_criada: mensagens.fatura_criada,
+          proximo_vencer: mensagens.proximo_vencer,
+          vence_hoje: mensagens.vence_hoje,
+          vencido: mensagens.vencido,
+          confirmacao_pagamento: mensagens.confirmacao_pagamento,
+          dados_cliente: mensagens.dados_cliente,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id'
+        });
 
-      if (existingData) {
-        // Atualizar registro existente
-        const { error } = await supabase
-          .from("mensagens_padroes")
-          .update({
-            bem_vindo: mensagens.bem_vindo,
-            fatura_criada: mensagens.fatura_criada,
-            proximo_vencer: mensagens.proximo_vencer,
-            vence_hoje: mensagens.vence_hoje,
-            vencido: mensagens.vencido,
-            confirmacao_pagamento: mensagens.confirmacao_pagamento,
-            dados_cliente: mensagens.dados_cliente,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", user.id);
-
-        if (error) throw error;
-      } else {
-        // Criar novo registro
-        const { error } = await supabase
-          .from("mensagens_padroes")
-          .insert({
-            user_id: user.id,
-            bem_vindo: mensagens.bem_vindo,
-            fatura_criada: mensagens.fatura_criada,
-            proximo_vencer: mensagens.proximo_vencer,
-            vence_hoje: mensagens.vence_hoje,
-            vencido: mensagens.vencido,
-            confirmacao_pagamento: mensagens.confirmacao_pagamento,
-            dados_cliente: mensagens.dados_cliente,
-          });
-
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast.success("Mensagens salvas com sucesso!");
     } catch (error) {
@@ -190,6 +167,11 @@ export default function GerenciarMensagens() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleRestaurarPadrao = () => {
+    setMensagens(defaultMensagens);
+    toast.success("Mensagens restauradas para o padrão!");
   };
 
   const availableKeys = [
@@ -485,8 +467,14 @@ export default function GerenciarMensagens() {
             </div>
           </div>
 
-          {/* Save Button */}
-          <div className="flex justify-center mt-8">
+          {/* Save Buttons */}
+          <div className="flex justify-center gap-4 mt-8">
+            <Button 
+              variant="outline"
+              onClick={handleRestaurarPadrao}
+            >
+              Restaurar Padrão
+            </Button>
             <Button 
               onClick={handleSave}
               disabled={saving}
