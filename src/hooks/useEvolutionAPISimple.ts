@@ -12,11 +12,12 @@ interface EvolutionSession {
 }
 
 export const useEvolutionAPISimple = () => {
-  const { userId } = useCurrentUser();
+  const { userId, user } = useCurrentUser();
   const [session, setSession] = useState<EvolutionSession | null>(null);
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const statusIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const savingRef = useRef(false);
 
@@ -29,8 +30,22 @@ export const useEvolutionAPISimple = () => {
     };
   }, []);
 
+  // Marcar que auth foi verificado (userId pode ser null se não logado, ou ter valor se logado)
+  useEffect(() => {
+    // Esperar o Supabase verificar a autenticação
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setAuthChecked(true);
+    };
+    checkAuth();
+  }, []);
+
   // Carregar sessão do banco de dados ao montar
   useEffect(() => {
+    // Só executar depois que auth foi verificado
+    if (!authChecked) return;
+
+    // Se não tem usuário logado, marcar como hidratado
     if (!userId) {
       setHydrated(true);
       return;
@@ -61,7 +76,7 @@ export const useEvolutionAPISimple = () => {
     };
 
     loadSessionFromDB();
-  }, [userId]);
+  }, [userId, authChecked]);
 
   const callEvolutionAPI = useCallback(async (action: string, extraData?: any) => {
     const { data, error } = await supabase.functions.invoke('evolution-api', {
