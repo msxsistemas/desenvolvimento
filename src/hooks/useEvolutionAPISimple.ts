@@ -18,8 +18,7 @@ export const useEvolutionAPISimple = () => {
   const [connecting, setConnecting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const statusIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const STORAGE_KEY = userId ? `evolution_api_simple_session_${userId}` : null;
+  const savingRef = useRef(false);
 
   // Cleanup interval on unmount
   useEffect(() => {
@@ -30,20 +29,35 @@ export const useEvolutionAPISimple = () => {
     };
   }, []);
 
-  // Hydrate session from localStorage (sem checar API ao entrar na página)
+  // Carregar sessão do banco de dados ao montar
   useEffect(() => {
     if (!userId) return;
 
-    try {
-      const stored = localStorage.getItem(`evolution_api_simple_session_${userId}`);
-      if (stored) {
-        setSession(JSON.parse(stored));
+    const loadSessionFromDB = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('whatsapp_sessions')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Erro ao carregar sessão do banco:', error);
+        } else if (data && data.status === 'connected') {
+          setSession({
+            status: 'connected',
+            phoneNumber: data.phone_number || undefined,
+            profileName: data.device_name || undefined,
+          });
+        }
+      } catch (e) {
+        console.error('Erro ao carregar sessão:', e);
+      } finally {
+        setHydrated(true);
       }
-    } catch (e) {
-      // ignore
-    } finally {
-      setHydrated(true);
-    }
+    };
+
+    loadSessionFromDB();
   }, [userId]);
 
   const callEvolutionAPI = useCallback(async (action: string, extraData?: any) => {
@@ -63,20 +77,47 @@ export const useEvolutionAPISimple = () => {
     return data;
   }, []);
 
-  // Persistir sessão localmente
+  // Salvar sessão no banco de dados quando mudar
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !hydrated || savingRef.current) return;
 
-    try {
-      if (session) {
-        localStorage.setItem(`evolution_api_simple_session_${userId}`, JSON.stringify(session));
-      } else {
-        localStorage.removeItem(`evolution_api_simple_session_${userId}`);
+    const saveSessionToDB = async () => {
+      savingRef.current = true;
+      try {
+        if (session?.status === 'connected') {
+          // Upsert: inserir ou atualizar
+          const { error } = await supabase
+            .from('whatsapp_sessions')
+            .upsert({
+              user_id: userId,
+              session_id: `user_${userId}`,
+              status: 'connected',
+              phone_number: session.phoneNumber || null,
+              device_name: session.profileName || null,
+              last_activity: new Date().toISOString(),
+            }, {
+              onConflict: 'session_id',
+            });
+
+          if (error) {
+            console.error('Erro ao salvar sessão no banco:', error);
+          }
+        } else if (session === null) {
+          // Remover sessão do banco
+          await supabase
+            .from('whatsapp_sessions')
+            .delete()
+            .eq('user_id', userId);
+        }
+      } catch (e) {
+        console.error('Erro ao salvar sessão:', e);
+      } finally {
+        savingRef.current = false;
       }
-    } catch (e) {
-      // ignore
-    }
-  }, [userId, session]);
+    };
+
+    saveSessionToDB();
+  }, [userId, session, hydrated]);
 
   // Monitorar desconexão na Evolution API (sem checar ao entrar na página)
   useEffect(() => {
