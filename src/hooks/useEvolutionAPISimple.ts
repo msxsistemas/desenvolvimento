@@ -12,14 +12,14 @@ interface EvolutionSession {
 }
 
 export const useEvolutionAPISimple = () => {
-  const { userId, user } = useCurrentUser();
+  const { userId } = useCurrentUser();
   const [session, setSession] = useState<EvolutionSession | null>(null);
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
   const statusIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const savingRef = useRef(false);
+  const hasLoadedRef = useRef(false);
 
   // Cleanup interval on unmount
   useEffect(() => {
@@ -30,33 +30,18 @@ export const useEvolutionAPISimple = () => {
     };
   }, []);
 
-  // Marcar que auth foi verificado (userId pode ser null se não logado, ou ter valor se logado)
+  // Carregar sessão do banco de dados ao montar - apenas uma vez quando userId estiver disponível
   useEffect(() => {
-    // Esperar o Supabase verificar a autenticação
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setAuthChecked(true);
-    };
-    checkAuth();
-  }, []);
+    // Se já carregou, não carrega novamente
+    if (hasLoadedRef.current) return;
 
-  // Carregar sessão do banco de dados ao montar
-  useEffect(() => {
-    // Só executar depois que auth foi verificado
-    if (!authChecked) return;
-
-    // Se não tem usuário logado, marcar como hidratado
-    if (!userId) {
-      setHydrated(true);
-      return;
-    }
-
-    const loadSessionFromDB = async () => {
+    // Função para carregar do banco
+    const loadSessionFromDB = async (uid: string) => {
       try {
         const { data, error } = await supabase
           .from('whatsapp_sessions')
           .select('*')
-          .eq('user_id', userId)
+          .eq('user_id', uid)
           .maybeSingle();
 
         if (error) {
@@ -72,11 +57,25 @@ export const useEvolutionAPISimple = () => {
         console.error('Erro ao carregar sessão:', e);
       } finally {
         setHydrated(true);
+        hasLoadedRef.current = true;
       }
     };
 
-    loadSessionFromDB();
-  }, [userId, authChecked]);
+    // Se tem userId, carrega do banco
+    if (userId) {
+      loadSessionFromDB(userId);
+    } else {
+      // Verificar diretamente se há usuário logado
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          loadSessionFromDB(user.id);
+        } else {
+          setHydrated(true);
+          hasLoadedRef.current = true;
+        }
+      });
+    }
+  }, [userId]);
 
   const callEvolutionAPI = useCallback(async (action: string, extraData?: any) => {
     const { data, error } = await supabase.functions.invoke('evolution-api', {
