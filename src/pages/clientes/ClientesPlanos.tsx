@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, X, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus, Home, Eye } from "lucide-react";
 import type { Plano } from "@/types/database";
 
 const formatCurrencyBRL = (value: string) => {
@@ -22,6 +22,7 @@ const formatCurrencyBRL = (value: string) => {
 export default function ClientesPlanos() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("todos");
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -30,7 +31,10 @@ export default function ClientesPlanos() {
     valor: "",
     tipo: "meses",
     quantidade: "",
-    descricao: ""
+    descricao: "",
+    valor_indicacao: "0",
+    indicacao_recorrente: "desativado",
+    tipo_painel: ""
   });
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [editingPlano, setEditingPlano] = useState<Plano | null>(null);
@@ -57,7 +61,6 @@ export default function ClientesPlanos() {
     setLoading(true);
     try {
       if (editingPlano) {
-        // Editar plano existente
         const atualizado = await atualizar(editingPlano.id!, formData);
         if (atualizado) {
           setPlanos((prev) => 
@@ -67,7 +70,6 @@ export default function ClientesPlanos() {
           setShowSuccessDialog(true);
         }
       } else {
-        // Criar novo plano
         const novo = await criar(formData);
         if (novo) {
           setPlanos((prev) => [novo, ...prev]);
@@ -83,7 +85,10 @@ export default function ClientesPlanos() {
         valor: "",
         tipo: "meses",
         quantidade: "",
-        descricao: ""
+        descricao: "",
+        valor_indicacao: "0",
+        indicacao_recorrente: "desativado",
+        tipo_painel: ""
       });
     } catch (error) {
       console.error("Erro ao salvar plano:", error);
@@ -99,7 +104,10 @@ export default function ClientesPlanos() {
       valor: plano.valor ? (plano.valor.toString().trim().startsWith("R$") ? plano.valor : formatCurrencyBRL(plano.valor.toString())) : "",
       tipo: plano.tipo || "meses",
       quantidade: plano.quantidade || "",
-      descricao: plano.descricao || ""
+      descricao: plano.descricao || "",
+      valor_indicacao: "0",
+      indicacao_recorrente: "desativado",
+      tipo_painel: ""
     });
     setIsDialogOpen(true);
   };
@@ -112,7 +120,10 @@ export default function ClientesPlanos() {
       valor: "",
       tipo: "meses",
       quantidade: "",
-      descricao: ""
+      descricao: "",
+      valor_indicacao: "0",
+      indicacao_recorrente: "desativado",
+      tipo_painel: ""
     });
   };
 
@@ -125,200 +136,165 @@ export default function ClientesPlanos() {
     }
   };
 
+  const filteredPlanos = planos.filter((p) => 
+    p.nome?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getPeriodo = (plano: Plano) => {
+    const qtd = plano.quantidade || "1";
+    const tipo = plano.tipo === 'dias' ? 'Dia(s)' : 'Mês(es)';
+    return `${qtd} ${tipo}`;
+  };
+
   return (
-    <main className="space-y-4">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Planos</h1>
-          <p className="text-muted-foreground text-sm">Planos dos clientes</p>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
-              Novo
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md bg-slate-800 border-slate-700 text-white">
-            <DialogHeader>
-              <DialogTitle className="text-white">
-                {editingPlano ? "Editar produto" : "Novo produto"}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="nome" className="text-white">Nome</Label>
-                <Input
-                  id="nome"
-                  value={formData.nome}
-                  onChange={(e) => handleInputChange("nome", e.target.value)}
-                  className="bg-slate-700 border-slate-600 text-white"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="valor" className="text-white">Valor</Label>
-                <Input
-                  id="valor"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder="R$ 0,00"
-                  value={formData.valor}
-                  onChange={(e) => handleInputChange("valor", formatCurrencyBRL(e.target.value))}
-                  className="bg-slate-700 border-slate-600 text-white"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <RadioGroup 
-                  value={formData.tipo} 
-                  onValueChange={(value) => handleInputChange("tipo", value)}
-                  className="flex gap-6"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="meses" id="meses" />
-                    <Label htmlFor="meses" className="text-white">Meses</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="dias" id="dias" />
-                    <Label htmlFor="dias" className="text-white">Dias</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="quantidade" className="text-white">
-                  Escolha a quantidade de {formData.tipo}
-                </Label>
-                <Input
-                  id="quantidade"
-                  type="number"
-                  min="1"
-                  value={formData.quantidade}
-                  onChange={(e) => handleInputChange("quantidade", e.target.value)}
-                  className="bg-slate-700 border-slate-600 text-white"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="descricao" className="text-white">Descrição</Label>
-                <Textarea
-                  id="descricao"
-                  value={formData.descricao}
-                  onChange={(e) => handleInputChange("descricao", e.target.value)}
-                  className="bg-slate-700 border-slate-600 text-white min-h-[120px]"
-                />
-              </div>
-              
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={handleCancel} className="border-slate-600 text-white hover:bg-slate-700">
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleSave} 
-                  disabled={loading}
-                  className="bg-cyan-500 hover:bg-cyan-600 text-white"
-                >
-                  {loading ? "Salvando..." : "Salvar"}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </header>
+    <main className="space-y-6">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm">
+        <Home className="h-4 w-4 text-slate-400" />
+        <span className="text-slate-400">/</span>
+        <span className="text-green-400">Gerenciar planos</span>
+      </div>
 
-      <section className="bg-slate-900 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-            <Input
-              placeholder="Procurar..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-slate-800 border-slate-700 text-white placeholder:text-slate-400"
-            />
-            {searchTerm && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSearchTerm("")}
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 text-slate-400 hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
+      {/* Header with Add Button */}
+      <div className="flex items-center justify-between">
+        <div />
+        <Button 
+          onClick={() => setIsDialogOpen(true)}
+          className="bg-purple-600 hover:bg-purple-700 text-white"
+        >
+          Adicionar Plano <Plus className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Main Card */}
+      <section className="bg-[#1e1e2d] rounded-lg border border-[#2d2d3d]">
+        {/* Card Header */}
+        <div className="p-6 border-b border-[#2d2d3d] flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Meus Planos</h2>
+            <p className="text-slate-400 text-sm">Lista com todos os seus planos</p>
           </div>
-          <span className="text-slate-400 text-sm">10</span>
+          <button className="text-slate-400 hover:text-white">
+            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+            </svg>
+          </button>
         </div>
 
-        <div className="border border-slate-700 rounded-lg overflow-hidden">
+        {/* Search Section */}
+        <div className="p-6 border-b border-[#2d2d3d]">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="space-y-2">
+              <Label className="text-slate-300">Busca</Label>
+              <Input
+                placeholder=""
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-48 bg-[#13131a] border-[#2d2d3d] text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40 bg-[#13131a] border-[#2d2d3d] text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e1e2d] border-[#2d2d3d]">
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="ativado">Ativado</SelectItem>
+                  <SelectItem value="desativado">Desativado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6">
+              Buscar
+            </Button>
+          </div>
+        </div>
+
+        {/* Results Counter */}
+        <div className="px-6 py-3 text-right">
+          <span className="text-slate-400 text-sm">
+            Mostrando {filteredPlanos.length} de {planos.length} registros.
+          </span>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="border-slate-700 hover:bg-slate-800">
-                <TableHead className="text-slate-300">id</TableHead>
-                <TableHead className="text-slate-300">Nome</TableHead>
-                <TableHead className="text-slate-300">Clientes vinculados</TableHead>
-                <TableHead className="text-slate-300">Valor</TableHead>
-                <TableHead className="text-slate-300">Qdt</TableHead>
-                <TableHead className="text-slate-300">Descrição</TableHead>
-                <TableHead className="text-slate-300">Action</TableHead>
+              <TableRow className="border-[#2d2d3d] hover:bg-transparent">
+                <TableHead className="text-slate-400 font-medium">ID:</TableHead>
+                <TableHead className="text-slate-400 font-medium">Nome:</TableHead>
+                <TableHead className="text-slate-400 font-medium">Valor:</TableHead>
+                <TableHead className="text-slate-400 font-medium">Período:</TableHead>
+                <TableHead className="text-slate-400 font-medium">Pacote:</TableHead>
+                <TableHead className="text-slate-400 font-medium">Status:</TableHead>
+                <TableHead className="text-slate-400 font-medium">Ações:</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {planos.length ? (
-                planos
-                  .filter((p) => p.nome?.toLowerCase().includes(searchTerm.toLowerCase()))
-                  .map((p) => (
-                    <TableRow key={p.id} className="border-slate-700">
-                      <TableCell className="text-slate-300">{p.id?.slice(0, 8)}</TableCell>
-                      <TableCell className="text-slate-300">{p.nome}</TableCell>
-                      <TableCell className="text-slate-300">0</TableCell>
-                      <TableCell className="text-slate-300">
-                        <span className="inline-flex items-center rounded-md bg-cyan-500 px-2 py-1 text-xs font-medium text-white">
-                          {typeof p.valor === "string" && p.valor.trim().startsWith("R$") ? p.valor : `R$ ${p.valor}`}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-slate-300">{p.tipo === 'dias' ? 'Dias' : 'Meses'}: {p.quantidade}</TableCell>
-                      <TableCell className="text-slate-300">{p.descricao}</TableCell>
-                       <TableCell className="text-slate-300">
-                         <div className="flex gap-2">
-                           <Button
-                             variant="ghost"
-                             size="sm"
-                             onClick={() => handleEdit(p)}
-                             className="h-8 w-8 p-0 text-cyan-400 hover:text-cyan-300 hover:bg-slate-700"
-                           >
-                             <Pencil className="h-4 w-4" />
-                           </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-slate-700"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                               <AlertDialogContent className="bg-slate-800 border-slate-700 text-white">
-                                 <AlertDialogHeader>
-                                   <AlertDialogTitle>Excluir plano</AlertDialogTitle>
-                                   <AlertDialogDescription>
-                                     Tem certeza que deseja excluir o plano "{p.nome}"? Esta ação não pode ser desfeita.
-                                   </AlertDialogDescription>
-                                 </AlertDialogHeader>
-                                 <AlertDialogFooter>
-                                   <AlertDialogCancel className="border-slate-600 text-white hover:bg-slate-700">Cancelar</AlertDialogCancel>
-                                   <AlertDialogAction onClick={() => handleDelete(p.id!)} className="bg-red-500 hover:bg-red-600 text-white">Excluir</AlertDialogAction>
-                                 </AlertDialogFooter>
-                               </AlertDialogContent>
-                            </AlertDialog>
-                         </div>
-                       </TableCell>
-                    </TableRow>
-                  ))
+              {filteredPlanos.length ? (
+                filteredPlanos.map((p, index) => (
+                  <TableRow key={p.id} className="border-[#2d2d3d] hover:bg-[#252536]">
+                    <TableCell className="text-slate-300">{planos.length - index}</TableCell>
+                    <TableCell className="text-purple-400">{p.nome}</TableCell>
+                    <TableCell className="text-slate-300">
+                      {typeof p.valor === "string" && p.valor.trim().startsWith("R$") ? p.valor : `R$ ${p.valor}`}
+                    </TableCell>
+                    <TableCell className="text-slate-300">{getPeriodo(p)}</TableCell>
+                    <TableCell className="text-slate-300">Sem Pacote</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center rounded-md bg-green-600 px-3 py-1 text-xs font-medium text-white">
+                        Ativado
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(p)}
+                          className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700 text-white rounded"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 bg-orange-500 hover:bg-orange-600 text-white rounded"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-[#1e1e2d] border-[#2d2d3d] text-white">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir plano</AlertDialogTitle>
+                              <AlertDialogDescription className="text-slate-400">
+                                Tem certeza que deseja excluir o plano "{p.nome}"? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="border-[#2d2d3d] text-white hover:bg-[#252536]">Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(p.id!)} className="bg-red-500 hover:bg-red-600 text-white">Excluir</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 bg-red-500 hover:bg-red-600 text-white rounded"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : (
-                <TableRow className="border-slate-700">
+                <TableRow className="border-[#2d2d3d]">
                   <TableCell colSpan={7} className="text-center text-slate-400 py-8">
                     Nada para mostrar
                   </TableCell>
@@ -327,15 +303,129 @@ export default function ClientesPlanos() {
             </TableBody>
           </Table>
         </div>
-
-        <div className="mt-4 text-slate-400 text-sm">
-          Mostrando {planos.length} resultado(s)
-        </div>
       </section>
 
-      {/* Dialog de Sucesso */}
+      {/* Create/Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-2xl bg-[#1e1e2d] border-[#2d2d3d] text-white">
+          <DialogHeader className="border-b border-[#2d2d3d] pb-4">
+            <DialogTitle className="text-white text-xl">
+              {editingPlano ? "Editar Plano" : "Cadastrar Novo Plano"}
+            </DialogTitle>
+            <p className="text-green-400 text-sm mt-1">
+              Cadastre seus planos agora mesmo!
+            </p>
+            <div className="mt-2 text-xs space-y-1">
+              <p className="text-slate-400">
+                1 - O consumo de créditos para renovação nos paineis com integração é baseado no{" "}
+                <span className="text-purple-400">Período do Plano do Cliente</span> configurado. Tenha bastante atenção ao configurar seus Planos
+              </p>
+              <p className="text-red-400">
+                2 - NÃO NOS RESPONSABILIZAMOS PELOS CRÉDITOS UTILIZADOS EM SEU PAINEL, POIS O GASTO É DE ACORDO COM A QUANTIDADE DO PERÍODO CADASTRADO NOS PLANOS
+              </p>
+            </div>
+          </DialogHeader>
+          
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label className="text-slate-300">Nome do plano</Label>
+              <Input
+                placeholder="Nome do seu plano"
+                value={formData.nome}
+                onChange={(e) => handleInputChange("nome", e.target.value)}
+                className="bg-[#13131a] border-[#2d2d3d] text-white"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-slate-300">Valor do plano</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder="Valor do seu plano"
+                value={formData.valor}
+                onChange={(e) => handleInputChange("valor", formatCurrencyBRL(e.target.value))}
+                className="bg-[#13131a] border-[#2d2d3d] text-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-300">Valor da Indicação:</Label>
+              <Input
+                type="text"
+                value={formData.valor_indicacao}
+                onChange={(e) => handleInputChange("valor_indicacao", e.target.value)}
+                className="bg-[#13131a] border-[#2d2d3d] text-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-300">
+                Indicação Recorrente? <span className="text-yellow-400">(essa opção vai adicionar comissão para quem indicou todas as vezes que seu cliente renovar)</span>
+              </Label>
+              <Select value={formData.indicacao_recorrente} onValueChange={(value) => handleInputChange("indicacao_recorrente", value)}>
+                <SelectTrigger className="bg-[#13131a] border-[#2d2d3d] text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e1e2d] border-[#2d2d3d]">
+                  <SelectItem value="desativado">Desativado</SelectItem>
+                  <SelectItem value="ativado">Ativado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-300">Tipo do Painel</Label>
+              <Select value={formData.tipo_painel} onValueChange={(value) => handleInputChange("tipo_painel", value)}>
+                <SelectTrigger className="bg-[#13131a] border-[#2d2d3d] text-white">
+                  <SelectValue placeholder="Selecionar o tipo" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e1e2d] border-[#2d2d3d]">
+                  <SelectItem value="meses">Meses</SelectItem>
+                  <SelectItem value="dias">Dias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-300">Quantidade de {formData.tipo_painel || "meses"}</Label>
+              <Input
+                type="number"
+                min="1"
+                value={formData.quantidade}
+                onChange={(e) => handleInputChange("quantidade", e.target.value)}
+                className="bg-[#13131a] border-[#2d2d3d] text-white"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-slate-300">Descrição</Label>
+              <Textarea
+                value={formData.descricao}
+                onChange={(e) => handleInputChange("descricao", e.target.value)}
+                className="bg-[#13131a] border-[#2d2d3d] text-white min-h-[100px]"
+              />
+            </div>
+            
+            <div className="flex gap-2 pt-2">
+              <Button 
+                onClick={handleSave} 
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {loading ? "Salvando..." : "Cadastrar"}
+              </Button>
+              <Button variant="outline" onClick={handleCancel} className="border-[#2d2d3d] text-white hover:bg-[#252536]">
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Dialog */}
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <DialogContent className="sm:max-w-md bg-slate-800 border-slate-700 text-white text-center">
+        <DialogContent className="sm:max-w-md bg-[#1e1e2d] border-[#2d2d3d] text-white text-center">
           <div className="flex flex-col items-center space-y-4 py-6">
             <div className="w-16 h-16 rounded-full border-2 border-green-500 flex items-center justify-center">
               <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
