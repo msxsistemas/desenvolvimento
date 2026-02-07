@@ -74,12 +74,11 @@ export default function Index() {
         {saudacao}, Tech Play!
       </h1>
 
-      {/* 1ª linha — Cards de clientes (4 cards) */}
+      {/* 1ª linha — Cards de clientes (3 cards) */}
       <DashboardClientCards
         clientesAtivos={clientesAtivos}
         clientesVencidos={clientesVencidos}
         clientesDesativados={0}
-        clientesNovosNoMes={totalClientes}
       />
 
       {/* 2ª linha — Financeiro (2 cards) */}
