@@ -15,24 +15,26 @@ import {
 import {
   Home,
   Users,
-  DollarSign,
-  Wallet,
-  MessageSquare,
-  ChevronRight,
-  Link2,
-  LayoutGrid,
+  Server,
+  List,
   Package,
-  Smartphone,
-  BarChart3,
-  CreditCard,
-  ShoppingCart,
-  Settings,
+  DollarSign,
+  ArrowLeftRight,
+  Filter,
+  Tag,
+  Globe,
+  Webhook,
+  MessageSquare,
+  Share2,
+  MoreHorizontal,
+  ScrollText,
+  ChevronRight,
   Play,
 } from "lucide-react";
 import { useState } from "react";
 import type { LucideProps } from "lucide-react";
 
-// Custom WhatsApp icon to match sidebar icon API
+// Custom WhatsApp icon
 const WhatsAppIcon = (props: LucideProps) => (
   <svg
     viewBox="0 0 24 24"
@@ -53,33 +55,56 @@ export function AppSidebar() {
   const currentPath = location.pathname;
   const isCollapsed = state === "collapsed";
 
-  // Estado do submenu Clientes
-  const clientesActive =
-    currentPath === "/clientes" || currentPath.startsWith("/clientes/");
+  // Estado dos submenus
+  const clientesActive = currentPath === "/clientes" || currentPath.startsWith("/clientes/");
   const [clientesOpen, setClientesOpen] = useState(clientesActive);
-
-  // Estado do submenu Pagamentos
-  const pagamentosActive =
-    currentPath === "/financeiro-extra" || currentPath.startsWith("/financeiro-extra/");
-  const [pagamentosOpen, setPagamentosOpen] = useState(pagamentosActive);
 
   const isActive = (path: string) => currentPath === path;
 
-  // Estilo base dos itens - plano sem background
+  // Estilo base dos itens
   const menuItemClass = (active: boolean) =>
-    `flex items-center justify-between w-full px-5 py-3.5 transition-colors border-0 rounded-none ${
-      active 
-        ? "text-white" 
-        : "text-[#8b8b9a] hover:text-white"
+    `flex items-center justify-between w-full px-5 py-3 transition-colors border-0 rounded-none ${
+      active ? "text-white" : "text-[#8b8b9a] hover:text-white"
     }`;
+
+  // Menu items baseado na imagem de referência
+  const menuItems = [
+    { to: "/", icon: Home, label: "Dashboard" },
+    { to: "/clientes", icon: Users, label: "Clientes", hasSubmenu: true },
+    { to: "/clientes/integracoes", icon: Server, label: "Servidores" },
+    { to: "/clientes/planos", icon: List, label: "Planos" },
+    { to: "/clientes/produtos", icon: Package, label: "Produtos" },
+    { to: "/financeiro", icon: DollarSign, label: "Financeiro" },
+    { to: "/financeiro-extra/assas", icon: ArrowLeftRight, label: "Movimentações" },
+    { to: "/clientes/metricas", icon: Filter, label: "Relatórios" },
+    { to: "/marketing", icon: Tag, label: "Tags" },
+    { to: "/financeiro-extra/checkout", icon: Globe, label: "V3Pay", badge: "Novo!" },
+    { to: "/configuracoes", icon: Globe, label: "Gateways" },
+    { to: "/configuracoes/ativar-cobrancas", icon: Webhook, label: "WebHook" },
+    { to: "/parear-whatsapp", icon: WhatsAppIcon, label: "WhatsApp" },
+    { to: "/mensagens-enviadas", icon: MessageSquare, label: "SMS" },
+    { to: "/configuracoes/mensagens-cobranca", icon: Share2, label: "Indicações" },
+    { to: "/configuracoes/mensagens-padroes", icon: MoreHorizontal, label: "Outros" },
+    { to: "/tutoriais", icon: ScrollText, label: "Logs" },
+  ];
+
+  // Subitens do Clientes
+  const clientesSubItems = [
+    { to: "/clientes", label: "Listar/Criar" },
+    { to: "/clientes/planos", label: "Planos" },
+    { to: "/clientes/produtos", label: "Produtos" },
+    { to: "/clientes/aplicativos", label: "Aplicativos" },
+    { to: "/clientes/metricas", label: "Métricas" },
+    { to: "/clientes/integracoes", label: "Integrações" },
+  ];
 
   return (
     <Sidebar className="border-r border-[#2a2a3c]" collapsible="icon">
       <SidebarContent className="bg-[#1a1a2e]">
-        {/* Logo Header - Centered */}
-        <div className="flex justify-center py-10">
-          <div className="w-24 h-24 rounded-full bg-[#ff4d4d] flex items-center justify-center">
-            <Play className="h-12 w-12 text-white fill-white ml-1" />
+        {/* Logo Header */}
+        <div className="flex justify-center py-8">
+          <div className="w-20 h-20 rounded-full bg-[#ff4d4d] flex items-center justify-center shadow-lg shadow-[#ff4d4d]/30">
+            <Play className="h-10 w-10 text-white fill-white ml-1" />
           </div>
         </div>
 
@@ -87,157 +112,72 @@ export function AppSidebar() {
         <SidebarGroup className="px-0">
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0">
-              {/* Dashboard */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
-                  <NavLink to="/" end className={menuItemClass(isActive("/"))}>
-                    <div className="flex items-center gap-4">
-                      <Home className="h-5 w-5" />
-                      {!isCollapsed && <span className="text-[15px]">Dashboard</span>}
-                    </div>
-                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-40" />}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {menuItems.map((item) => {
+                // Item Clientes com submenu
+                if (item.hasSubmenu) {
+                  return (
+                    <SidebarMenuItem key={item.to}>
+                      <SidebarMenuButton
+                        onClick={() => setClientesOpen((o) => !o)}
+                        className={`${menuItemClass(clientesActive)} hover:bg-transparent`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="h-5 w-5" />
+                          {!isCollapsed && <span className="text-[14px]">{item.label}</span>}
+                        </div>
+                        {!isCollapsed && (
+                          <ChevronRight
+                            className={`h-4 w-4 opacity-50 transition-transform ${clientesOpen ? "rotate-90" : ""}`}
+                          />
+                        )}
+                      </SidebarMenuButton>
+                      {clientesOpen && !isCollapsed && (
+                        <SidebarMenuSub className="ml-10 mt-1 space-y-0 border-l border-[#2a2a3c] pl-4">
+                          {clientesSubItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.to}>
+                              <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
+                                <NavLink
+                                  to={subItem.to}
+                                  end
+                                  className={`py-1.5 text-[13px] transition-colors ${
+                                    isActive(subItem.to) ? "text-white" : "text-[#8b8b9a] hover:text-white"
+                                  }`}
+                                >
+                                  {subItem.label}
+                                </NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                }
 
-              {/* Clientes */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setClientesOpen((o) => !o)}
-                  className={`${menuItemClass(clientesActive)} hover:bg-transparent`}
-                >
-                  <div className="flex items-center gap-4">
-                    <Users className="h-5 w-5" />
-                    {!isCollapsed && <span className="text-[15px]">Clientes</span>}
-                  </div>
-                  {!isCollapsed && <ChevronRight className={`h-4 w-4 opacity-40 transition-transform ${clientesOpen ? "rotate-90" : ""}`} />}
-                </SidebarMenuButton>
-                {clientesOpen && !isCollapsed && (
-                  <SidebarMenuSub className="ml-12 mt-1 space-y-1 border-l border-[#2a2a3c] pl-4">
-                    {[
-                      { to: "/clientes", label: "Listar/Criar" },
-                      { to: "/clientes/planos", label: "Planos" },
-                      { to: "/clientes/produtos", label: "Produtos" },
-                      { to: "/clientes/aplicativos", label: "Aplicativos" },
-                      { to: "/clientes/metricas", label: "Métricas" },
-                      { to: "/clientes/integracoes", label: "Integrações" },
-                    ].map((item) => (
-                      <SidebarMenuSubItem key={item.to}>
-                        <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
-                          <NavLink
-                            to={item.to}
-                            end
-                            className={`py-2 text-[14px] transition-colors ${
-                              isActive(item.to)
-                                ? "text-white"
-                                : "text-[#8b8b9a] hover:text-white"
-                            }`}
-                          >
-                            {item.label}
-                          </NavLink>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                )}
-              </SidebarMenuItem>
-
-              {/* Financeiro */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
-                  <NavLink to="/financeiro" end className={menuItemClass(isActive("/financeiro"))}>
-                    <div className="flex items-center gap-4">
-                      <DollarSign className="h-5 w-5" />
-                      {!isCollapsed && <span className="text-[15px]">Financeiro</span>}
-                    </div>
-                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-40" />}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* Pagamentos */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setPagamentosOpen((o) => !o)}
-                  className={`${menuItemClass(pagamentosActive)} hover:bg-transparent`}
-                >
-                  <div className="flex items-center gap-4">
-                    <Wallet className="h-5 w-5" />
-                    {!isCollapsed && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-[15px]">Pagamentos</span>
-                        <span className="bg-[#22c55e] text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
-                          Novo
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {!isCollapsed && <ChevronRight className={`h-4 w-4 opacity-40 transition-transform ${pagamentosOpen ? "rotate-90" : ""}`} />}
-                </SidebarMenuButton>
-                {pagamentosOpen && !isCollapsed && (
-                  <SidebarMenuSub className="ml-12 mt-1 space-y-1 border-l border-[#2a2a3c] pl-4">
-                    {[
-                      { to: "/financeiro-extra/assas", label: "Assas" },
-                      { to: "/financeiro-extra/checkout", label: "Checkout" },
-                    ].map((item) => (
-                      <SidebarMenuSubItem key={item.to}>
-                        <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
-                          <NavLink
-                            to={item.to}
-                            end
-                            className={`py-2 text-[14px] transition-colors ${
-                              isActive(item.to)
-                                ? "text-white"
-                                : "text-[#8b8b9a] hover:text-white"
-                            }`}
-                          >
-                            {item.label}
-                          </NavLink>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                )}
-              </SidebarMenuItem>
-
-              {/* WhatsApp */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
-                  <NavLink to="/parear-whatsapp" end className={menuItemClass(isActive("/parear-whatsapp"))}>
-                    <div className="flex items-center gap-4">
-                      <WhatsAppIcon className="h-5 w-5" />
-                      {!isCollapsed && <span className="text-[15px]">WhatsApp</span>}
-                    </div>
-                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-40" />}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* Mensagens */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
-                  <NavLink to="/configuracoes/mensagens-cobranca" end className={menuItemClass(isActive("/configuracoes/mensagens-cobranca"))}>
-                    <div className="flex items-center gap-4">
-                      <MessageSquare className="h-5 w-5" />
-                      {!isCollapsed && <span className="text-[15px]">Mensagens</span>}
-                    </div>
-                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-40" />}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* Configurações */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
-                  <NavLink to="/configuracoes" end className={menuItemClass(isActive("/configuracoes"))}>
-                    <div className="flex items-center gap-4">
-                      <Settings className="h-5 w-5" />
-                      {!isCollapsed && <span className="text-[15px]">Configurações</span>}
-                    </div>
-                    {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-40" />}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+                // Items normais
+                return (
+                  <SidebarMenuItem key={item.to}>
+                    <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
+                      <NavLink to={item.to} end className={menuItemClass(isActive(item.to))}>
+                        <div className="flex items-center gap-3">
+                          <item.icon className="h-5 w-5" />
+                          {!isCollapsed && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[14px]">{item.label}</span>
+                              {item.badge && (
+                                <span className="bg-[#22c55e] text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-50" />}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
