@@ -199,96 +199,109 @@ export default function FilaMensagens() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "enviada":
-        return <Badge className="bg-green-600 text-white text-xs">Mensagem Enviada</Badge>;
+        return <Badge className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white text-xs px-3 py-1">Mensagem Enviada</Badge>;
       case "aguardando":
-        return <Badge className="bg-yellow-600 text-white text-xs">Aguardando</Badge>;
+        return <Badge className="bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))] text-black text-xs px-3 py-1">Aguardando</Badge>;
       case "erro":
-        return <Badge className="bg-red-600 text-white text-xs">Erro</Badge>;
+        return <Badge className="bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))] text-white text-xs px-3 py-1">Erro</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Bom Dia, Tech Play!</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Bom Tarde, Tech Play!</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
             <Home className="h-4 w-4" />
             <span>/</span>
-            <span className="text-purple-400">Envios WhatsApp</span>
+            <span className="text-[hsl(var(--brand-2))]">Envios WhatsApp</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={handleForcarEnvio} className="bg-green-600 hover:bg-green-700">
-            <Send className="h-4 w-4 mr-2" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={handleForcarEnvio} size="sm" className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-white">
+            <Send className="h-4 w-4 mr-1" />
             Forçar Envio
           </Button>
-          <Button onClick={handleExcluirEnviadas} className="bg-red-600 hover:bg-red-700">
-            <Trash2 className="h-4 w-4 mr-2" />
+          <Button onClick={handleExcluirEnviadas} size="sm" className="bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/90 text-white">
+            <Trash2 className="h-4 w-4 mr-1" />
             Excluir Enviadas
           </Button>
-          <Button onClick={handleExcluirTodas} variant="outline" className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white">
-            <Trash2 className="h-4 w-4 mr-2" />
+          <Button onClick={handleExcluirTodas} size="sm" className="bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/90 text-white">
+            <Trash2 className="h-4 w-4 mr-1" />
             Excluir Todas
           </Button>
         </div>
       </div>
 
       {/* Main Content */}
-      <Card className="bg-[#1a1a2e] border-[#2a2a3c]">
-        <CardContent className="p-6">
-          <h2 className="text-xl font-semibold text-white mb-2">Envios De Notificações</h2>
-          <p className="text-muted-foreground text-sm mb-6">Fique por dentro das mensagens que são enviadas aos seus clientes</p>
+      <Card className="bg-card border-border">
+        <CardContent className="p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-semibold text-foreground mb-1">Envios De Notificações</h2>
+          <p className="text-muted-foreground text-sm mb-5">Fique por dentro das mensagens que são enviadas aos seus clientes</p>
 
           {/* Filter Tabs */}
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-5">
             <Button 
+              size="sm"
               variant={filtro === "todas" ? "default" : "outline"}
               onClick={() => setFiltro("todas")}
-              className={filtro === "todas" ? "bg-purple-600" : "border-purple-600 text-purple-400"}
+              className={filtro === "todas" 
+                ? "bg-[hsl(300,70%,40%)] hover:bg-[hsl(300,70%,35%)] text-white" 
+                : "border-[hsl(300,70%,40%)] text-[hsl(300,70%,60%)] hover:bg-[hsl(300,70%,40%)]/10"}
             >
               Todas ({counts.todas})
             </Button>
             <Button 
+              size="sm"
               variant={filtro === "aguardando" ? "default" : "outline"}
               onClick={() => setFiltro("aguardando")}
-              className={filtro === "aguardando" ? "bg-purple-600" : "border-purple-600 text-purple-400"}
+              className={filtro === "aguardando" 
+                ? "bg-[hsl(300,70%,40%)] hover:bg-[hsl(300,70%,35%)] text-white" 
+                : "border-[hsl(300,70%,40%)] text-[hsl(300,70%,60%)] hover:bg-[hsl(300,70%,40%)]/10"}
             >
               Aguardando Envio ({counts.aguardando})
             </Button>
             <Button 
+              size="sm"
               variant={filtro === "enviadas" ? "default" : "outline"}
               onClick={() => setFiltro("enviadas")}
-              className={filtro === "enviadas" ? "bg-purple-600" : "border-purple-600 text-purple-400"}
+              className={filtro === "enviadas" 
+                ? "bg-[hsl(300,70%,40%)] hover:bg-[hsl(300,70%,35%)] text-white" 
+                : "border-[hsl(300,70%,40%)] text-[hsl(300,70%,60%)] hover:bg-[hsl(300,70%,40%)]/10"}
             >
               Mensagens Enviadas ({counts.enviadas})
             </Button>
             <Button 
+              size="sm"
               variant={filtro === "erro" ? "default" : "outline"}
               onClick={() => setFiltro("erro")}
-              className={filtro === "erro" ? "bg-red-600" : "border-red-600 text-red-400"}
+              className={filtro === "erro" 
+                ? "bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/90 text-white" 
+                : "border-[hsl(var(--destructive))] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"}
             >
               Mensagens com Erro ({counts.erro})
             </Button>
             <Button 
+              size="sm"
               variant="outline"
               onClick={() => {}}
-              className="border-green-600 text-green-400"
+              className="border-[hsl(var(--success))] text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-4 w-4 mr-1" />
               Reativar Mensagens
             </Button>
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground text-sm">Mostrar</span>
               <Select value={entriesPerPage} onValueChange={setEntriesPerPage}>
-                <SelectTrigger className="w-20 bg-[#252538] border-[#3a3a4c]">
+                <SelectTrigger className="w-20 bg-secondary border-border h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -305,65 +318,67 @@ export default function FilaMensagens() {
               <Input
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                className="w-48 bg-[#252538] border-[#3a3a4c]"
+                className="w-48 bg-secondary border-border h-9"
                 placeholder="Buscar..."
               />
             </div>
           </div>
 
           {/* Table */}
-          <div className="rounded-md border border-[#2a2a3c] overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-[#2a2a3c] hover:bg-transparent">
-                  <TableHead className="text-white">Cliente: ↕</TableHead>
-                  <TableHead className="text-white">WhatsApp: ↕</TableHead>
-                  <TableHead className="text-white">Mensagem:</TableHead>
-                  <TableHead className="text-white">↕</TableHead>
-                  <TableHead className="text-white">Data/Hora: ↓</TableHead>
-                  <TableHead className="text-white">Status: ↕</TableHead>
-                  <TableHead className="text-white">Ação: ↕</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedMensagens.map((msg) => (
-                  <TableRow key={msg.id} className="border-b border-[#2a2a3c] hover:bg-[#252538]">
-                    <TableCell className="text-cyan-400 font-medium">{msg.cliente}</TableCell>
-                    <TableCell className="text-white">{msg.whatsapp}</TableCell>
-                    <TableCell className="text-white text-xs max-w-[400px] truncate">{msg.mensagem}</TableCell>
-                    <TableCell></TableCell>
-                    <TableCell className="text-white text-sm">
-                      {format(new Date(msg.data_hora), "dd/MM/yyyy - HH:mm:ss")}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(msg.status)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button 
-                          size="icon" 
-                          variant="ghost"
-                          className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                          onClick={() => handleDelete(msg.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost"
-                          className="h-8 w-8 text-green-500 hover:text-green-400 hover:bg-green-500/10"
-                          onClick={() => handleResend(msg.id)}
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          <div className="rounded-lg border border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b border-border bg-secondary/50 hover:bg-secondary/50">
+                    <TableHead className="text-foreground font-semibold whitespace-nowrap">Cliente: ↕</TableHead>
+                    <TableHead className="text-foreground font-semibold whitespace-nowrap">WhatsApp: ↕</TableHead>
+                    <TableHead className="text-foreground font-semibold">Mensagem:</TableHead>
+                    <TableHead className="text-foreground font-semibold whitespace-nowrap">Data/Hora: ↓</TableHead>
+                    <TableHead className="text-foreground font-semibold whitespace-nowrap">Status: ↕</TableHead>
+                    <TableHead className="text-foreground font-semibold whitespace-nowrap">Ações: ↕</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedMensagens.map((msg) => (
+                    <TableRow key={msg.id} className="border-b border-border hover:bg-secondary/30">
+                      <TableCell className="text-[hsl(var(--brand-2))] font-medium whitespace-nowrap">{msg.cliente}</TableCell>
+                      <TableCell className="text-foreground whitespace-nowrap font-mono text-sm">{msg.whatsapp}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm max-w-[350px]">
+                        <div className="line-clamp-2">{msg.mensagem}</div>
+                      </TableCell>
+                      <TableCell className="text-foreground text-sm whitespace-nowrap">
+                        {format(new Date(msg.data_hora), "dd/MM/yyyy - HH:mm:ss")}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(msg.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            size="icon" 
+                            variant="ghost"
+                            className="h-8 w-8 text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10"
+                            onClick={() => handleDelete(msg.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost"
+                            className="h-8 w-8 text-[hsl(var(--success))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10"
+                            onClick={() => handleResend(msg.id)}
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
 
           {/* Pagination Footer */}
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
             <span className="text-muted-foreground text-sm">
               Mostrando {((currentPage - 1) * parseInt(entriesPerPage)) + 1} a {Math.min(currentPage * parseInt(entriesPerPage), filteredMensagens.length)} de {filteredMensagens.length} entradas
             </span>
@@ -373,7 +388,7 @@ export default function FilaMensagens() {
                 size="sm"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="border-[#3a3a4c]"
+                className="border-border"
               >
                 Anterior
               </Button>
@@ -383,7 +398,7 @@ export default function FilaMensagens() {
                   variant={currentPage === page ? "default" : "outline"}
                   size="sm"
                   onClick={() => setCurrentPage(page)}
-                  className={currentPage === page ? "bg-purple-600" : "border-[#3a3a4c]"}
+                  className={currentPage === page ? "bg-[hsl(300,70%,40%)] hover:bg-[hsl(300,70%,35%)]" : "border-border"}
                 >
                   {page}
                 </Button>
@@ -395,7 +410,7 @@ export default function FilaMensagens() {
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage(totalPages)}
-                    className="border-[#3a3a4c]"
+                    className="border-border"
                   >
                     {totalPages}
                   </Button>
@@ -406,7 +421,7 @@ export default function FilaMensagens() {
                 size="sm"
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="border-[#3a3a4c]"
+                className="border-border"
               >
                 Próximo
               </Button>
