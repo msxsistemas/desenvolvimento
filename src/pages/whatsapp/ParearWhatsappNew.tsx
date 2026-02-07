@@ -44,7 +44,7 @@ export default function ParearWhatsappNew() {
       <Card className="bg-card border-border">
         <CardContent className="p-8">
           <div className="flex flex-col items-center justify-center">
-            <h2 className="text-2xl font-bold text-foreground mb-2">Nova Api WhatsApp GestorV3</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Api WhatsApp</h2>
             
             {isConnected ? (
               <>
