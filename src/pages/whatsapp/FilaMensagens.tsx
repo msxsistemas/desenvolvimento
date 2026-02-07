@@ -146,33 +146,40 @@ export default function FilaMensagens() {
     erro: mensagens.filter(m => m.status === "erro").length,
   };
 
-  // Forçar envio de todas as mensagens aguardando
+  // Forçar envio de todas as mensagens aguardando e agendadas
   const handleForcarEnvio = async () => {
     if (!isConnected) {
       toast.error("WhatsApp não está conectado. Conecte primeiro em 'Parear WhatsApp'");
       return;
     }
 
-    const aguardando = mensagens.filter(m => m.status === "aguardando");
-    if (aguardando.length === 0) {
+    // Incluir mensagens aguardando E agendadas
+    const paraEnviar = mensagens.filter(m => m.status === "aguardando" || m.status === "agendada");
+    if (paraEnviar.length === 0) {
       toast.info("Não há mensagens aguardando envio");
       return;
     }
 
     setActionLoading(true);
-    toast.info(`Enviando ${aguardando.length} mensagens...`);
+    
+    const toastId = toast.loading(`Enviando 0/${paraEnviar.length} mensagens...`);
 
     let enviadas = 0;
     let erros = 0;
 
-    for (const msg of aguardando) {
+    for (let i = 0; i < paraEnviar.length; i++) {
+      const msg = paraEnviar[i];
+      
+      // Atualizar toast com progresso
+      toast.loading(`Enviando ${i + 1}/${paraEnviar.length} mensagens...`, { id: toastId });
+      
       try {
         await sendMessage(msg.whatsapp, msg.mensagem);
         
         // Atualizar status no banco
         await supabase
           .from("whatsapp_messages")
-          .update({ status: 'sent' })
+          .update({ status: 'sent', scheduled_for: null } as any)
           .eq("id", msg.id);
         
         enviadas++;
@@ -182,16 +189,19 @@ export default function FilaMensagens() {
         // Marcar como erro no banco
         await supabase
           .from("whatsapp_messages")
-          .update({ status: 'failed', error_message: String(error) })
+          .update({ status: 'failed', error_message: String(error), scheduled_for: null } as any)
           .eq("id", msg.id);
         
         erros++;
       }
 
-      // Delay entre mensagens para evitar bloqueio
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Delay de 3 segundos entre mensagens para evitar bloqueio
+      if (i < paraEnviar.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
     }
 
+    toast.dismiss(toastId);
     setActionLoading(false);
     await loadMensagens();
     
