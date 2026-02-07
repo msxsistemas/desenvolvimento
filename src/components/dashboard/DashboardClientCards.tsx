@@ -40,13 +40,9 @@ export default function DashboardClientCards({
       {cards.map((card) => (
         <div
           key={card.label}
-          className={`relative overflow-hidden rounded-xl ${card.bgColor} p-5 text-white transition-transform duration-200 hover:scale-[1.02]`}
+          className={`rounded-xl ${card.bgColor} p-5 text-white transition-transform duration-200 hover:scale-[1.02] shadow-lg`}
         >
-          {/* Subtle glow effect */}
-          <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-white/8 to-transparent" />
-          <div className="absolute -right-6 top-1/2 -translate-y-1/2 h-16 w-16 rounded-full bg-white/10 blur-xl" />
-
-          <div className="relative z-10 flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <card.icon className="h-6 w-6 text-white/80" />
             <div>
               <p className="text-sm font-medium text-white/90">{card.label}</p>
