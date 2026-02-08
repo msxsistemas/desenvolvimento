@@ -2,55 +2,23 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Ticket, Plus, Trash2, Pencil, Search } from "lucide-react";
-import { toast } from "sonner";
-
-interface Cupom {
-  id: string;
-  codigo: string;
-  desconto: number;
-  tipo: "percentual" | "fixo";
-  usos: number;
-  limiteUsos: number | null;
-  ativo: boolean;
-  validade: string | null;
-}
+import { Ticket, Plus, Trash2, Pencil, Search, Loader2 } from "lucide-react";
+import { useCupons, type CupomInsert } from "@/hooks/useCupons";
 
 export default function Cupom() {
-  const [cupons, setCupons] = useState<Cupom[]>([
-    {
-      id: "1",
-      codigo: "BEMVINDO10",
-      desconto: 10,
-      tipo: "percentual",
-      usos: 5,
-      limiteUsos: 100,
-      ativo: true,
-      validade: "2025-12-31",
-    },
-    {
-      id: "2",
-      codigo: "PROMO20",
-      desconto: 20,
-      tipo: "fixo",
-      usos: 12,
-      limiteUsos: null,
-      ativo: true,
-      validade: null,
-    },
-  ]);
+  const { cupons, isLoading, createCupom, updateCupom, deleteCupom } = useCupons();
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingCupom, setEditingCupom] = useState<Cupom | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     codigo: "",
     desconto: "",
-    tipo: "percentual" as "percentual" | "fixo",
-    limiteUsos: "",
+    tipo_desconto: "percentual" as "percentual" | "fixo",
+    limite_uso: "",
     validade: "",
   });
 
@@ -58,78 +26,63 @@ export default function Cupom() {
     document.title = "Cupons | Tech Play";
   }, []);
 
-  const filteredCupons = cupons.filter(c =>
+  const filteredCupons = cupons.filter((c) =>
     c.codigo.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSubmit = () => {
-    if (!formData.codigo || !formData.desconto) {
-      toast.error("Preencha os campos obrigatórios");
-      return;
-    }
+  const handleSubmit = async () => {
+    if (!formData.codigo || !formData.desconto) return;
 
-    if (editingCupom) {
-      setCupons(prev =>
-        prev.map(c =>
-          c.id === editingCupom.id
-            ? {
-                ...c,
-                codigo: formData.codigo.toUpperCase(),
-                desconto: Number(formData.desconto),
-                tipo: formData.tipo,
-                limiteUsos: formData.limiteUsos ? Number(formData.limiteUsos) : null,
-                validade: formData.validade || null,
-              }
-            : c
-        )
-      );
-      toast.success("Cupom atualizado!");
+    const cupomData: CupomInsert = {
+      codigo: formData.codigo.toUpperCase(),
+      desconto: Number(formData.desconto),
+      tipo_desconto: formData.tipo_desconto,
+      limite_uso: formData.limite_uso ? Number(formData.limite_uso) : null,
+      validade: formData.validade || null,
+    };
+
+    if (editingId) {
+      await updateCupom.mutateAsync({ id: editingId, ...cupomData });
     } else {
-      const newCupom: Cupom = {
-        id: Math.random().toString(36).substring(7),
-        codigo: formData.codigo.toUpperCase(),
-        desconto: Number(formData.desconto),
-        tipo: formData.tipo,
-        usos: 0,
-        limiteUsos: formData.limiteUsos ? Number(formData.limiteUsos) : null,
-        ativo: true,
-        validade: formData.validade || null,
-      };
-      setCupons(prev => [...prev, newCupom]);
-      toast.success("Cupom criado!");
+      await createCupom.mutateAsync(cupomData);
     }
 
     resetForm();
   };
 
   const resetForm = () => {
-    setFormData({ codigo: "", desconto: "", tipo: "percentual", limiteUsos: "", validade: "" });
-    setEditingCupom(null);
+    setFormData({ codigo: "", desconto: "", tipo_desconto: "percentual", limite_uso: "", validade: "" });
+    setEditingId(null);
     setIsDialogOpen(false);
   };
 
-  const handleEdit = (cupom: Cupom) => {
-    setEditingCupom(cupom);
+  const handleEdit = (cupom: typeof cupons[0]) => {
+    setEditingId(cupom.id);
     setFormData({
       codigo: cupom.codigo,
       desconto: cupom.desconto.toString(),
-      tipo: cupom.tipo,
-      limiteUsos: cupom.limiteUsos?.toString() || "",
-      validade: cupom.validade || "",
+      tipo_desconto: cupom.tipo_desconto as "percentual" | "fixo",
+      limite_uso: cupom.limite_uso?.toString() || "",
+      validade: cupom.validade ? cupom.validade.split("T")[0] : "",
     });
     setIsDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    setCupons(prev => prev.filter(c => c.id !== id));
-    toast.success("Cupom removido!");
+    deleteCupom.mutate(id);
   };
 
-  const toggleAtivo = (id: string) => {
-    setCupons(prev =>
-      prev.map(c => (c.id === id ? { ...c, ativo: !c.ativo } : c))
-    );
+  const toggleAtivo = (cupom: typeof cupons[0]) => {
+    updateCupom.mutate({ id: cupom.id, ativo: !cupom.ativo });
   };
+
+  if (isLoading) {
+    return (
+      <main className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </main>
+    );
+  }
 
   return (
     <main className="space-y-4">
@@ -153,7 +106,7 @@ export default function Cupom() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingCupom ? "Editar Cupom" : "Novo Cupom"}</DialogTitle>
+              <DialogTitle>{editingId ? "Editar Cupom" : "Novo Cupom"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
@@ -180,16 +133,16 @@ export default function Cupom() {
                     <Button
                       type="button"
                       size="sm"
-                      variant={formData.tipo === "percentual" ? "default" : "outline"}
-                      onClick={() => setFormData({ ...formData, tipo: "percentual" })}
+                      variant={formData.tipo_desconto === "percentual" ? "default" : "outline"}
+                      onClick={() => setFormData({ ...formData, tipo_desconto: "percentual" })}
                     >
                       %
                     </Button>
                     <Button
                       type="button"
                       size="sm"
-                      variant={formData.tipo === "fixo" ? "default" : "outline"}
-                      onClick={() => setFormData({ ...formData, tipo: "fixo" })}
+                      variant={formData.tipo_desconto === "fixo" ? "default" : "outline"}
+                      onClick={() => setFormData({ ...formData, tipo_desconto: "fixo" })}
                     >
                       R$
                     </Button>
@@ -201,8 +154,8 @@ export default function Cupom() {
                   <Label>Limite de Usos</Label>
                   <Input
                     type="number"
-                    value={formData.limiteUsos}
-                    onChange={(e) => setFormData({ ...formData, limiteUsos: e.target.value })}
+                    value={formData.limite_uso}
+                    onChange={(e) => setFormData({ ...formData, limite_uso: e.target.value })}
                     placeholder="Ilimitado"
                   />
                 </div>
@@ -215,8 +168,15 @@ export default function Cupom() {
                   />
                 </div>
               </div>
-              <Button onClick={handleSubmit} className="w-full">
-                {editingCupom ? "Salvar Alterações" : "Criar Cupom"}
+              <Button
+                onClick={handleSubmit}
+                className="w-full"
+                disabled={createCupom.isPending || updateCupom.isPending}
+              >
+                {(createCupom.isPending || updateCupom.isPending) && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
+                {editingId ? "Salvar Alterações" : "Criar Cupom"}
               </Button>
             </div>
           </DialogContent>
@@ -269,10 +229,13 @@ export default function Cupom() {
                   <TableRow key={cupom.id}>
                     <TableCell className="font-mono font-medium">{cupom.codigo}</TableCell>
                     <TableCell>
-                      {cupom.tipo === "percentual" ? `${cupom.desconto}%` : `R$ ${cupom.desconto.toFixed(2)}`}
+                      {cupom.tipo_desconto === "percentual"
+                        ? `${cupom.desconto}%`
+                        : `R$ ${Number(cupom.desconto).toFixed(2)}`}
                     </TableCell>
                     <TableCell>
-                      {cupom.usos}{cupom.limiteUsos ? `/${cupom.limiteUsos}` : ""}
+                      {cupom.usos_atuais}
+                      {cupom.limite_uso ? `/${cupom.limite_uso}` : ""}
                     </TableCell>
                     <TableCell>
                       {cupom.validade
@@ -283,7 +246,7 @@ export default function Cupom() {
                       <Badge
                         variant={cupom.ativo ? "default" : "secondary"}
                         className="cursor-pointer"
-                        onClick={() => toggleAtivo(cupom.id)}
+                        onClick={() => toggleAtivo(cupom)}
                       >
                         {cupom.ativo ? "Ativo" : "Inativo"}
                       </Badge>
@@ -303,6 +266,7 @@ export default function Cupom() {
                           size="icon"
                           onClick={() => handleDelete(cupom.id)}
                           className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                          disabled={deleteCupom.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

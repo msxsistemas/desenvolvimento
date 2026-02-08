@@ -188,6 +188,89 @@ export type Database = {
         }
         Relationships: []
       }
+      cupons: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          desconto: number
+          id: string
+          limite_uso: number | null
+          tipo_desconto: string
+          updated_at: string
+          user_id: string
+          usos_atuais: number
+          validade: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          desconto?: number
+          id?: string
+          limite_uso?: number | null
+          tipo_desconto?: string
+          updated_at?: string
+          user_id: string
+          usos_atuais?: number
+          validade?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          desconto?: number
+          id?: string
+          limite_uso?: number | null
+          tipo_desconto?: string
+          updated_at?: string
+          user_id?: string
+          usos_atuais?: number
+          validade?: string | null
+        }
+        Relationships: []
+      }
+      indicacoes: {
+        Row: {
+          bonus: number
+          cliente_indicado_id: string | null
+          codigo_indicacao: string
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bonus?: number
+          cliente_indicado_id?: string | null
+          codigo_indicacao: string
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bonus?: number
+          cliente_indicado_id?: string | null
+          codigo_indicacao?: string
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indicacoes_cliente_indicado_id_fkey"
+            columns: ["cliente_indicado_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       logs_painel: {
         Row: {
           acao: string

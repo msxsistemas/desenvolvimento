@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { 
   Wallet, 
   UserPlus, 
@@ -15,30 +17,21 @@ import {
   Copy,
   Check,
   Link as LinkIcon,
-  Share2
+  Share2,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useIndicacoes } from "@/hooks/useIndicacoes";
 
 export default function IndicacoesSistema() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const { indicacoes, clientesIndicados, stats, isLoading } = useIndicacoes();
   
-  // Mock data - would come from database in production
-  const stats = {
-    saldoDisponivel: 0,
-    totalIndicacoes: 0,
-    resgatesPagos: 0,
-    nivel: "INICIANTE",
-    progressoNivel: 0,
-    proximoNivel: "Intermediário",
-    indicacoesParaProximo: 5,
-  };
-
   // Gera código único baseado no ID do usuário
   const userCode = useMemo(() => {
     if (!userId) return "CARREGANDO...";
-    // Usa os primeiros 12 caracteres do UUID do usuário para criar um código único
     return "REF_" + userId.replace(/-/g, "").substring(0, 12).toUpperCase();
   }, [userId]);
 
@@ -52,7 +45,6 @@ export default function IndicacoesSistema() {
   useEffect(() => {
     document.title = "Indique e Ganhe | Tech Play";
     
-    // Busca o ID do usuário autenticado
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -75,6 +67,17 @@ export default function IndicacoesSistema() {
       setTimeout(() => setCopiedLink(null), 2000);
     } catch (error) {
       toast.error("Erro ao copiar link");
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "aprovado":
+        return <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">Aprovado</Badge>;
+      case "pago":
+        return <Badge className="bg-primary/10 text-primary hover:bg-primary/20">Pago</Badge>;
+      default:
+        return <Badge variant="secondary">Pendente</Badge>;
     }
   };
 
@@ -120,9 +123,6 @@ export default function IndicacoesSistema() {
               <p className="text-xs text-muted-foreground">Total de Indicações</p>
               <div className="flex items-center gap-2">
                 <p className="text-lg font-bold text-foreground">{stats.totalIndicacoes}</p>
-                <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-primary/10 text-primary">
-                  {stats.nivel}
-                </span>
               </div>
             </div>
           </div>
@@ -135,7 +135,7 @@ export default function IndicacoesSistema() {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Resgates Pagos</p>
-              <p className="text-lg font-bold text-foreground">{stats.resgatesPagos}</p>
+              <p className="text-lg font-bold text-foreground">R$ {stats.resgatesPagos.toFixed(2).replace('.', ',')}</p>
             </div>
           </div>
         </div>
@@ -143,21 +143,11 @@ export default function IndicacoesSistema() {
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
-              <Trophy className="h-4 w-4 text-primary" />
+              <Users className="h-4 w-4 text-primary" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground">Progresso de Nível</p>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex-1 bg-muted rounded-full h-1.5">
-                  <div 
-                    className="bg-primary h-1.5 rounded-full transition-all" 
-                    style={{ width: `${stats.progressoNivel}%` }}
-                  />
-                </div>
-                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                  {stats.indicacoesParaProximo}/{stats.indicacoesParaProximo}
-                </span>
-              </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Clientes Indicados</p>
+              <p className="text-lg font-bold text-foreground">{clientesIndicados.length}</p>
             </div>
           </div>
         </div>
@@ -289,9 +279,40 @@ export default function IndicacoesSistema() {
         {/* Tab: Suas Indicações */}
         <TabsContent value="indicacoes" className="mt-3">
           <Card>
-            <CardContent className="p-6 text-center">
-              <Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
-              <p className="text-sm text-muted-foreground">Nenhuma indicação ainda. Compartilhe seu link!</p>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : clientesIndicados.length === 0 ? (
+                <div className="p-6 text-center">
+                  <Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground">Nenhuma indicação ainda. Compartilhe seu link!</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>WhatsApp</TableHead>
+                      <TableHead>Plano</TableHead>
+                      <TableHead>Data</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {clientesIndicados.map((cliente) => (
+                      <TableRow key={cliente.id}>
+                        <TableCell className="font-medium">{cliente.nome}</TableCell>
+                        <TableCell>{cliente.whatsapp}</TableCell>
+                        <TableCell>{cliente.plano || "-"}</TableCell>
+                        <TableCell>
+                          {new Date(cliente.created_at).toLocaleDateString("pt-BR")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -299,9 +320,40 @@ export default function IndicacoesSistema() {
         {/* Tab: Histórico de Resgates */}
         <TabsContent value="historico" className="mt-3">
           <Card>
-            <CardContent className="p-6 text-center">
-              <History className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
-              <p className="text-sm text-muted-foreground">Nenhum resgate realizado ainda.</p>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : indicacoes.length === 0 ? (
+                <div className="p-6 text-center">
+                  <History className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground">Nenhum resgate realizado ainda.</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Bônus</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Data</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {indicacoes.map((ind) => (
+                      <TableRow key={ind.id}>
+                        <TableCell className="font-mono text-sm">{ind.codigo_indicacao}</TableCell>
+                        <TableCell>R$ {Number(ind.bonus).toFixed(2).replace('.', ',')}</TableCell>
+                        <TableCell>{getStatusBadge(ind.status)}</TableCell>
+                        <TableCell>
+                          {new Date(ind.created_at).toLocaleDateString("pt-BR")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
