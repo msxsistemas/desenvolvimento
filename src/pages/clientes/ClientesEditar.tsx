@@ -317,7 +317,7 @@ export default function ClientesEditar() {
         <Button 
           variant="outline" 
           onClick={() => navigate("/clientes")}
-          className="gap-2"
+          className="gap-2 border-border/50 hover:bg-accent hover:text-accent-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
