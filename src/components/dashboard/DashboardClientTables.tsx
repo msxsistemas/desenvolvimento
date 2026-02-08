@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Send } from "lucide-react";
+import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
+import { Send, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -11,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Cliente {
   id: string;
@@ -26,19 +28,24 @@ interface Plano {
   nome: string;
 }
 
+type NotificationType = "vencido" | "vence_hoje" | "proximo_vencer";
+
 interface ClientTableProps {
   title: string;
   subtitle: string;
   clientes: Cliente[];
   planosMap: Map<string, Plano>;
   headerColor: "red" | "green" | "yellow";
+  notificationType: NotificationType;
   loading?: boolean;
+  onNotify: (cliente: Cliente, type: NotificationType) => Promise<void>;
 }
 
-function ClientTable({ title, subtitle, clientes, planosMap, headerColor, loading }: ClientTableProps) {
+function ClientTable({ title, subtitle, clientes, planosMap, headerColor, notificationType, loading, onNotify }: ClientTableProps) {
   const [search, setSearch] = useState("");
   const [perPage, setPerPage] = useState("10");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   const headerStyles = {
     red: "bg-[hsl(0,72%,51%)]",
@@ -180,8 +187,18 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, loadin
                       size="icon"
                       className="h-8 w-8 bg-[hsl(270,70%,50%)] hover:bg-[hsl(270,70%,40%)]"
                       title="Notificar vencimento"
+                      disabled={sendingId === cliente.id}
+                      onClick={async () => {
+                        setSendingId(cliente.id);
+                        await onNotify(cliente, notificationType);
+                        setSendingId(null);
+                      }}
                     >
-                      <Send className="h-4 w-4" />
+                      {sendingId === cliente.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
                     </Button>
                   </td>
                 </tr>
@@ -256,11 +273,13 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, loadin
 
 export default function DashboardClientTables() {
   const { userId } = useCurrentUser();
+  const { sendMessage, isConnected, hydrated } = useEvolutionAPISimple();
   const [loading, setLoading] = useState(true);
   const [vencidos, setVencidos] = useState<Cliente[]>([]);
   const [vencendoHoje, setVencendoHoje] = useState<Cliente[]>([]);
   const [proximoVencer, setProximoVencer] = useState<Cliente[]>([]);
   const [planosMap, setPlanosMap] = useState<Map<string, Plano>>(new Map());
+  const [templates, setTemplates] = useState<any[]>([]);
 
   useEffect(() => {
     if (userId) {
@@ -270,9 +289,10 @@ export default function DashboardClientTables() {
 
   const carregarDados = async () => {
     try {
-      const [clientesRes, planosRes] = await Promise.all([
+      const [clientesRes, planosRes, templatesRes] = await Promise.all([
         supabase.from("clientes").select("*").eq("user_id", userId),
         supabase.from("planos").select("*").eq("user_id", userId),
+        supabase.from("templates_mensagens").select("*").eq("user_id", userId),
       ]);
 
       if (clientesRes.error) throw clientesRes.error;
@@ -282,6 +302,7 @@ export default function DashboardClientTables() {
       const planos = planosRes.data || [];
 
       setPlanosMap(new Map(planos.map((p) => [p.id, p])));
+      setTemplates(templatesRes.data || []);
 
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
@@ -318,6 +339,76 @@ export default function DashboardClientTables() {
     }
   };
 
+  const getSaudacao = () => {
+    const hora = new Date().getHours();
+    if (hora < 12) return "Bom dia";
+    if (hora < 18) return "Boa tarde";
+    return "Boa noite";
+  };
+
+  const processarMensagem = (mensagem: string, cliente: Cliente) => {
+    const planoNome = cliente.plano ? planosMap.get(cliente.plano)?.nome || "" : "";
+    const vencimento = cliente.data_vencimento
+      ? new Date(cliente.data_vencimento).toLocaleDateString("pt-BR")
+      : "";
+
+    return mensagem
+      .replace(/{nome_cliente}/g, cliente.nome)
+      .replace(/{usuario}/g, cliente.usuario || "")
+      .replace(/{vencimento}/g, vencimento)
+      .replace(/{plano}/g, planoNome)
+      .replace(/{saudacao}/g, getSaudacao())
+      .replace(/{br}/g, "\n");
+  };
+
+  const handleNotify = async (cliente: Cliente, type: NotificationType) => {
+    if (!hydrated) {
+      toast.error("Aguarde o carregamento...");
+      return;
+    }
+
+    if (!isConnected) {
+      toast.error("WhatsApp não está conectado. Vá em Parear WhatsApp para conectar.");
+      return;
+    }
+
+    // Mapear tipo para nome do template
+    const templateNames: Record<NotificationType, string> = {
+      vencido: "Plano Venceu Ontem",
+      vence_hoje: "Plano Vencendo Hoje",
+      proximo_vencer: "Plano Vencendo Amanhã",
+    };
+
+    const templateNome = templateNames[type];
+    const template = templates.find((t) => t.nome === templateNome);
+
+    if (!template) {
+      toast.error(`Template "${templateNome}" não encontrado. Configure em Templates.`);
+      return;
+    }
+
+    const mensagemProcessada = processarMensagem(template.mensagem, cliente);
+
+    try {
+      // Inserir na fila de mensagens
+      const { error } = await supabase.from("whatsapp_messages").insert({
+        user_id: userId,
+        phone: cliente.whatsapp,
+        message: mensagemProcessada,
+        session_id: `user_${userId}`,
+        status: "pending",
+        scheduled_for: new Date(Date.now() + 5000).toISOString(), // 5 segundos
+      });
+
+      if (error) throw error;
+
+      toast.success(`Notificação enviada para ${cliente.nome}!`);
+    } catch (error) {
+      console.error("Erro ao enviar notificação:", error);
+      toast.error("Erro ao enviar notificação");
+    }
+  };
+
   return (
     <section className="space-y-6">
       <ClientTable
@@ -326,7 +417,9 @@ export default function DashboardClientTables() {
         clientes={vencidos}
         planosMap={planosMap}
         headerColor="red"
+        notificationType="vencido"
         loading={loading}
+        onNotify={handleNotify}
       />
 
       <ClientTable
@@ -335,7 +428,9 @@ export default function DashboardClientTables() {
         clientes={vencendoHoje}
         planosMap={planosMap}
         headerColor="green"
+        notificationType="vence_hoje"
         loading={loading}
+        onNotify={handleNotify}
       />
 
       <ClientTable
@@ -344,7 +439,9 @@ export default function DashboardClientTables() {
         clientes={proximoVencer}
         planosMap={planosMap}
         headerColor="yellow"
+        notificationType="proximo_vencer"
         loading={loading}
+        onNotify={handleNotify}
       />
     </section>
   );
