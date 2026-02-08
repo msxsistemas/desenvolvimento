@@ -231,7 +231,7 @@ export default function Financeiro() {
       </header>
 
       {/* Cards de métricas */}
-      <section className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+      <section className="grid gap-4 grid-cols-1 md:grid-cols-3">
         <Card className="bg-card border-border">
           <CardContent className="flex items-center gap-3 p-4">
             <div className="rounded-full bg-emerald-500/20 p-2.5">
