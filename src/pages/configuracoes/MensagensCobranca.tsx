@@ -65,13 +65,6 @@ export default function MensagensCobranca() {
     if (!userId) return;
     
     const inicializar = async () => {
-      const templatesAtuais = await buscar();
-      
-      // Se não há templates ou não tem os templates padrões, restaurar
-      if (!templatesAtuais || templatesAtuais.length === 0) {
-        await restaurarPadroes();
-      }
-      
       await carregarTemplates();
       await carregarDados();
     };

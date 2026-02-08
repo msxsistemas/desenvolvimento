@@ -351,10 +351,28 @@ export const useProdutos = () => {
 // Hook para Templates de Cobrança
 export const useTemplatesCobranca = () => {
   const { userId } = useCurrentUser();
+  const SEED_DISABLED_KEY = 'templates_cobranca_seed_disabled';
+
+  const isSeedDisabled = () => {
+    try {
+      return localStorage.getItem(SEED_DISABLED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  };
+
+  const disableSeed = () => {
+    try {
+      localStorage.setItem(SEED_DISABLED_KEY, '1');
+    } catch {
+      // ignore (ex: privacy mode)
+    }
+  };
+
   const criar = async (template: Omit<TemplateCobranca, 'id' | 'created_at' | 'user_id'>) => {
     try {
       if (!userId) throw new Error('Usuário não autenticado');
-      
+
       const { data, error } = await supabase
         .from('templates_cobranca')
         .insert([{ ...template, user_id: userId }])
@@ -362,7 +380,7 @@ export const useTemplatesCobranca = () => {
         .single();
 
       if (error) throw error;
-      
+
       toast.success('Template criado com sucesso!');
       return data;
     } catch (error) {
@@ -382,7 +400,7 @@ export const useTemplatesCobranca = () => {
         .single();
 
       if (error) throw error;
-      
+
       toast.success('Template atualizado com sucesso!');
       return data;
     } catch (error) {
@@ -395,7 +413,7 @@ export const useTemplatesCobranca = () => {
   const criarTemplatesPadroes = async (uid?: string) => {
     const usuarioAlvo = uid || userId;
     if (!usuarioAlvo) return;
-    
+
     const templatesPadroes = [
       {
         nome: 'Dados de acesso do cliente',
@@ -403,7 +421,7 @@ export const useTemplatesCobranca = () => {
         incluir_cartao: false,
         incluir_chave_pix: false,
         chave_pix: '',
-        user_id: usuarioAlvo
+        user_id: usuarioAlvo,
       },
       {
         nome: 'Confirmação de Pagamento',
@@ -411,7 +429,7 @@ export const useTemplatesCobranca = () => {
         incluir_cartao: false,
         incluir_chave_pix: false,
         chave_pix: '',
-        user_id: usuarioAlvo
+        user_id: usuarioAlvo,
       },
       {
         nome: 'Plano Venceu Ontem',
@@ -419,7 +437,7 @@ export const useTemplatesCobranca = () => {
         incluir_cartao: false,
         incluir_chave_pix: true,
         chave_pix: '',
-        user_id: usuarioAlvo
+        user_id: usuarioAlvo,
       },
       {
         nome: 'Plano Vencendo Hoje',
@@ -427,7 +445,7 @@ export const useTemplatesCobranca = () => {
         incluir_cartao: false,
         incluir_chave_pix: true,
         chave_pix: '',
-        user_id: usuarioAlvo
+        user_id: usuarioAlvo,
       },
       {
         nome: 'Plano Vencendo Amanhã',
@@ -435,7 +453,7 @@ export const useTemplatesCobranca = () => {
         incluir_cartao: false,
         incluir_chave_pix: true,
         chave_pix: '',
-        user_id: usuarioAlvo
+        user_id: usuarioAlvo,
       },
       {
         nome: 'Fatura Criada',
@@ -443,7 +461,7 @@ export const useTemplatesCobranca = () => {
         incluir_cartao: false,
         incluir_chave_pix: true,
         chave_pix: '',
-        user_id: usuarioAlvo
+        user_id: usuarioAlvo,
       },
       {
         nome: 'Bem vindo',
@@ -451,8 +469,8 @@ export const useTemplatesCobranca = () => {
         incluir_cartao: false,
         incluir_chave_pix: false,
         chave_pix: '',
-        user_id: usuarioAlvo
-      }
+        user_id: usuarioAlvo,
+      },
     ];
 
     try {
@@ -470,7 +488,7 @@ export const useTemplatesCobranca = () => {
         uid = data.user?.id || null;
       }
       if (!uid) return [];
-      
+
       const { data, error } = await supabase
         .from('templates_cobranca')
         .select('*')
@@ -479,8 +497,10 @@ export const useTemplatesCobranca = () => {
 
       if (error) throw error;
 
-      // Se o usuário não tem templates, criar os padrões
+      // Se o usuário não tem templates, criar os padrões (a menos que ele tenha optado por deixar vazio)
       if (!data || data.length === 0) {
+        if (isSeedDisabled()) return [];
+
         await criarTemplatesPadroes(uid);
         // Buscar novamente após criar
         const { data: newData } = await supabase
@@ -501,7 +521,7 @@ export const useTemplatesCobranca = () => {
   const deletar = async (id: string) => {
     try {
       if (!userId) throw new Error('Usuário não autenticado');
-      
+
       const { error } = await supabase
         .from('templates_cobranca')
         .delete()
@@ -518,11 +538,11 @@ export const useTemplatesCobranca = () => {
     }
   };
 
+  // OBS: botão "Restaurar Padrão" no app, na prática, deve LIMPAR a lista
   const restaurarPadroes = async () => {
     try {
       if (!userId) throw new Error('Usuário não autenticado');
-      
-      // Deletar todos os templates do usuário
+
       const { error: deleteError } = await supabase
         .from('templates_cobranca')
         .delete()
@@ -530,10 +550,10 @@ export const useTemplatesCobranca = () => {
 
       if (deleteError) throw deleteError;
 
-      // Criar os templates padrões
-      await criarTemplatesPadroes();
+      // Evita recriar padrões automaticamente após o usuário optar por deixar vazio
+      disableSeed();
 
-      toast.success('Templates restaurados com sucesso!');
+      toast.success('Templates removidos com sucesso!');
     } catch (error) {
       console.error('Erro ao restaurar templates:', error);
       toast.error('Erro ao restaurar templates');
@@ -543,6 +563,7 @@ export const useTemplatesCobranca = () => {
 
   return { criar, atualizar, buscar, deletar, restaurarPadroes };
 };
+
 
 // Hook para Mensagens Padrões
 export const useMensagensPadroes = () => {
