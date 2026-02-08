@@ -46,6 +46,8 @@ export default function ClientesCadastro() {
       usuario: "",
       senha: "",
       produto: "",
+      idUsuario: "",
+      tipoUsuario: "",
       plano: "",
       app: "",
       dataVencApp: "",
@@ -281,6 +283,42 @@ export default function ClientesCadastro() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Campos condicionais - aparecem quando servidor é selecionado */}
+            {form.watch("produto") && (
+              <>
+                {/* ID Usuário */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    ID Usuário <span className="text-muted-foreground font-normal">(Obrigatório se precisar para renovação automática)</span>
+                  </Label>
+                  <Input 
+                    placeholder="Código Usuário" 
+                    className="bg-background border-border"
+                    {...form.register("idUsuario")}
+                  />
+                </div>
+
+                {/* Tipo Usuário */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Tipo Usuário <span className="text-muted-foreground font-normal">(Obrigatório se precisar para renovação automática)</span>
+                  </Label>
+                  <Select 
+                    value={form.watch("tipoUsuario")} 
+                    onValueChange={(v) => form.setValue("tipoUsuario", v)}
+                  >
+                    <SelectTrigger className="bg-background border-border">
+                      <SelectValue placeholder="Selecionar o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="iptv">IPTV</SelectItem>
+                      <SelectItem value="p2p">P2P</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
 
             {/* Nome */}
             <div className="space-y-2">
