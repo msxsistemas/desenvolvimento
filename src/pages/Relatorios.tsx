@@ -149,12 +149,17 @@ export default function Relatorios() {
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      backgroundColor: '#1e293b', 
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      color: '#f8fafc'
                     }}
-                    labelStyle={{ color: 'hsl(var(--foreground))' }}
-                    formatter={(value: number) => formatarValor(value)}
+                    labelStyle={{ color: '#f8fafc' }}
+                    formatter={(value: number, name: string) => {
+                      const color = name === 'Vendas' ? '#22c55e' : '#d946ef';
+                      return [<span style={{ color }}>{formatarValor(value)}</span>, <span style={{ color }}>{name}</span>];
+                    }}
+                    cursor={{ fill: 'transparent' }}
                   />
                   <Legend />
                   <Bar dataKey="vendas" name="Vendas" fill="#22c55e" radius={[4, 4, 0, 0]} />
