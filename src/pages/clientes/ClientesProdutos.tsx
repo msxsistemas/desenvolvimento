@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, X, Settings, AlertTriangle, Plus, Pencil, Trash2 } from "lucide-react";
+import { Search, X, Settings, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Produto } from "@/types/database";
 
@@ -273,29 +273,34 @@ export default function ClientesProdutos() {
   return (
     <main className="space-y-4">
       {/* Header */}
-      <header className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">Produtos</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="bg-primary hover:bg-primary/90">
-              <Plus className="h-4 w-4 mr-1" />
-              Novo
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Novo Produto</DialogTitle>
-            </DialogHeader>
-            {renderFormFields(formData, handleInputChange)}
-            <div className="flex gap-2 justify-end pt-2">
-              <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={loading}>
-                {loading ? "Salvando..." : "Salvar"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Meus Produtos</h1>
+          <p className="text-sm text-muted-foreground">Lista com todos os seus produtos</p>
+        </div>
+        <Button 
+          onClick={() => setIsDialogOpen(true)}
+          className="bg-primary hover:bg-primary/90"
+        >
+          Adicionar Produto +
+        </Button>
       </header>
+
+      {/* Create Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Produto</DialogTitle>
+          </DialogHeader>
+          {renderFormFields(formData, handleInputChange)}
+          <div className="flex gap-2 justify-end pt-2">
+            <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Search & Table */}
       <div className="rounded-lg border border-border bg-card">
