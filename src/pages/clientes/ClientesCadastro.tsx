@@ -310,9 +310,7 @@ export default function ClientesCadastro() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="whatsapp">Selecionar tipo do número</SelectItem>
-                  <SelectItem value="celular">Celular</SelectItem>
-                  <SelectItem value="fixo">Fixo</SelectItem>
+                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
                 </SelectContent>
               </Select>
             </div>
