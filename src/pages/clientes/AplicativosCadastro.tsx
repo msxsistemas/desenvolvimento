@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Package } from "lucide-react";
+import { Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAplicativos } from "@/hooks/useDatabase";
 
@@ -64,17 +64,6 @@ export default function AplicativosCadastro() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-end">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate("/aplicativos")}
-          className="gap-2 border-border/50 hover:bg-accent hover:text-accent-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
-      </div>
 
       {/* Card do Formulário */}
       <Card className="bg-card border border-border/30">

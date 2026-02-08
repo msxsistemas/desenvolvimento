@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, List } from "lucide-react";
+import { List } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePlanos } from "@/hooks/useDatabase";
 
@@ -84,17 +84,6 @@ export default function PlanosCadastro() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-end">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate("/planos")}
-          className="gap-2 border-border/50 hover:bg-accent hover:text-accent-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
-      </div>
 
       {/* Card do Formulário */}
       <Card className="bg-card border border-border/30">

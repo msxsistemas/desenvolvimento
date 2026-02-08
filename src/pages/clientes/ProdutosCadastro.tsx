@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Package, Settings, AlertTriangle } from "lucide-react";
+import { Package, Settings, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProdutos } from "@/hooks/useDatabase";
 
@@ -95,17 +95,6 @@ export default function ProdutosCadastro() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-end">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate("/produtos")}
-          className="gap-2 border-border/50 hover:bg-accent hover:text-accent-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
-      </div>
 
       {/* Card do Formulário */}
       <Card className="bg-card border border-border/30">
