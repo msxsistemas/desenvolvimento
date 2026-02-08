@@ -525,37 +525,6 @@ export default function ClientesCadastro() {
               </div>
             </div>
 
-            {/* Seção: Notificações */}
-            <SectionHeader icon={Bell} title="Notificações" color="text-yellow-400" />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Mensagem de Boas-vindas</Label>
-                <Select 
-                  value={form.watch("mensagemBoasVindas")} 
-                  onValueChange={(v) => form.setValue("mensagemBoasVindas", v)}
-                >
-                  <SelectTrigger className="bg-background border-border">
-                    <SelectValue placeholder="Selecione uma opção" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="nao_enviar">Não enviar mensagem</SelectItem>
-                    <SelectItem value="padrao">Mensagem padrão</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Ativar Cobranças</Label>
-                <div className="flex items-center gap-3 pt-2">
-                  <Switch
-                    checked={form.watch("ativarCobrancas")}
-                    onCheckedChange={(checked) => form.setValue("ativarCobrancas", checked)}
-                  />
-                  <span className="text-sm text-muted-foreground">Ativar</span>
-                </div>
-              </div>
-            </div>
 
             {/* Collapsible: Acessos Adicionais */}
             <Collapsible className="mt-3">
