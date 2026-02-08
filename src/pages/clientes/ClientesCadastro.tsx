@@ -475,15 +475,15 @@ export default function ClientesCadastro() {
 
             {/* Collapsible: Acessos Adicionais */}
             <Collapsible defaultOpen className="mt-3 rounded-lg border border-border/50 overflow-hidden">
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/40 hover:bg-muted/50 transition-colors">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/40 hover:bg-muted/50 transition-colors group">
                 <div className="flex items-center gap-2">
                   <Key className="h-4 w-4 text-cyan-400" />
                   <span className="text-sm font-medium">Acessos Adicionais</span>
                   <span className="text-xs text-muted-foreground">(Opcional)</span>
                 </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-data-[state=open]:rotate-180" />
               </CollapsibleTrigger>
-              <CollapsibleContent>
+              <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                 <div className="p-4 bg-muted/20 space-y-4">
                 {acessosAdicionais.map((acesso, index) => (
                   <div key={index} className="space-y-4 pt-4 border-t border-border/30 first:border-t-0 first:pt-0">
@@ -633,15 +633,15 @@ export default function ClientesCadastro() {
 
             {/* Collapsible: Aplicativos Adicionais */}
             <Collapsible defaultOpen className="mt-3 rounded-lg border border-border/50 overflow-hidden">
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/40 hover:bg-muted/50 transition-colors">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/40 hover:bg-muted/50 transition-colors group">
                 <div className="flex items-center gap-2">
                   <Smartphone className="h-4 w-4 text-cyan-400" />
                   <span className="text-sm font-medium">Aplicativos Adicionais</span>
                   <span className="text-xs text-muted-foreground">(Opcional)</span>
                 </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-data-[state=open]:rotate-180" />
               </CollapsibleTrigger>
-              <CollapsibleContent>
+              <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                 <div className="p-4 bg-muted/20 space-y-4">
                 {aplicativosAdicionais.map((appItem, index) => (
                   <div key={index} className="space-y-4 pt-4 border-t border-border/30 first:border-t-0 first:pt-0">
