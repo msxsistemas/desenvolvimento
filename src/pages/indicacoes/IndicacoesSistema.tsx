@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Wallet, 
@@ -14,7 +14,8 @@ import {
   History,
   Copy,
   Check,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Share2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -56,191 +57,209 @@ export default function IndicacoesSistema() {
   };
 
   return (
-    <main className="space-y-6">
-      {/* Header com gradiente */}
-      <div className="rounded-xl bg-gradient-to-r from-primary/80 via-primary to-primary/80 p-6 text-center">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Users className="h-6 w-6 text-primary-foreground" />
-          <h1 className="text-2xl font-bold text-primary-foreground">Sistema "Indique e Ganhe"</h1>
+    <main className="space-y-4">
+      {/* Header */}
+      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Share2 className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">Indique e Ganhe</h1>
+            <p className="text-sm text-muted-foreground">Ganhe comissões indicando novos clientes</p>
+          </div>
         </div>
-        <p className="text-primary-foreground/80">Ganhe comissões indicando novos clientes!</p>
-      </div>
+        <Button className="bg-primary hover:bg-primary/90">
+          <DollarSign className="h-4 w-4 mr-2" />
+          Solicitar Resgate
+        </Button>
+      </header>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Wallet className="h-5 w-5 text-primary" />
-              </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Wallet className="h-4 w-4 text-primary" />
             </div>
-            <p className="text-2xl font-bold text-foreground">R$ {stats.saldoDisponivel.toFixed(2).replace('.', ',')}</p>
-            <p className="text-sm text-muted-foreground">Saldo Disponível</p>
-          </CardContent>
-        </Card>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Saldo Disponível</p>
+              <p className="text-lg font-bold text-foreground">R$ {stats.saldoDisponivel.toFixed(2).replace('.', ',')}</p>
+            </div>
+          </div>
+        </div>
 
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <UserPlus className="h-5 w-5 text-primary" />
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <UserPlus className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Total de Indicações</p>
+              <div className="flex items-center gap-2">
+                <p className="text-lg font-bold text-foreground">{stats.totalIndicacoes}</p>
+                <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-primary/10 text-primary">
+                  {stats.nivel}
+                </span>
               </div>
             </div>
-            <p className="text-2xl font-bold text-foreground">{stats.totalIndicacoes}</p>
-            <p className="text-sm text-muted-foreground">Total de Indicações</p>
-            <span className="inline-block mt-2 px-3 py-1 text-xs font-semibold rounded-full bg-primary text-primary-foreground">
-              {stats.nivel}
-            </span>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <DollarSign className="h-5 w-5 text-primary" />
-              </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <DollarSign className="h-4 w-4 text-primary" />
             </div>
-            <p className="text-2xl font-bold text-foreground">{stats.resgatesPagos}</p>
-            <p className="text-sm text-muted-foreground">Resgates Pagos</p>
-            <p className="text-xs text-muted-foreground mt-2">Aguardando primeiro pagamento</p>
-          </CardContent>
-        </Card>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Resgates Pagos</p>
+              <p className="text-lg font-bold text-foreground">{stats.resgatesPagos}</p>
+            </div>
+          </div>
+        </div>
 
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Trophy className="h-5 w-5 text-primary" />
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Trophy className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground">Progresso de Nível</p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex-1 bg-muted rounded-full h-1.5">
+                  <div 
+                    className="bg-primary h-1.5 rounded-full transition-all" 
+                    style={{ width: `${stats.progressoNivel}%` }}
+                  />
+                </div>
+                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                  {stats.indicacoesParaProximo}/{stats.indicacoesParaProximo}
+                </span>
               </div>
             </div>
-            <p className="text-lg font-bold text-foreground">Progresso de Nível</p>
-            <div className="w-full bg-muted rounded-full h-2 mt-3 mb-2">
-              <div 
-                className="bg-primary h-2 rounded-full transition-all" 
-                style={{ width: `${stats.progressoNivel}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">{stats.indicacoesParaProximo} para {stats.proximoNivel}</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs Content */}
       <Tabs defaultValue="indique" className="w-full">
-        <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
-          <TabsTrigger value="indique" className="flex-1 min-w-[140px] gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Gift className="h-4 w-4" />
-            Indique & Ganhe!
+        <TabsList className="w-full grid grid-cols-2 md:grid-cols-5 h-auto gap-1 bg-muted/50 p-1 rounded-lg">
+          <TabsTrigger value="indique" className="gap-1.5 text-xs py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Gift className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Indique & Ganhe</span>
+            <span className="sm:hidden">Indicar</span>
           </TabsTrigger>
-          <TabsTrigger value="materiais" className="flex-1 min-w-[140px] gap-2">
-            <FileText className="h-4 w-4" />
-            Materiais de Divulgação
+          <TabsTrigger value="materiais" className="gap-1.5 text-xs py-2">
+            <FileText className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Materiais</span>
+            <span className="sm:hidden">Mídias</span>
           </TabsTrigger>
-          <TabsTrigger value="modelos" className="flex-1 min-w-[140px] gap-2">
-            <MessageSquare className="h-4 w-4" />
-            Modelos de Mensagem
+          <TabsTrigger value="modelos" className="gap-1.5 text-xs py-2">
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Mensagens</span>
+            <span className="sm:hidden">Msgs</span>
           </TabsTrigger>
-          <TabsTrigger value="indicacoes" className="flex-1 min-w-[140px] gap-2">
-            <Users className="h-4 w-4" />
-            Suas Indicações
+          <TabsTrigger value="indicacoes" className="gap-1.5 text-xs py-2">
+            <Users className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Suas Indicações</span>
+            <span className="sm:hidden">Lista</span>
           </TabsTrigger>
-          <TabsTrigger value="historico" className="flex-1 min-w-[140px] gap-2">
-            <History className="h-4 w-4" />
-            Histórico de Resgates
+          <TabsTrigger value="historico" className="gap-1.5 text-xs py-2">
+            <History className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Histórico</span>
+            <span className="sm:hidden">Hist.</span>
           </TabsTrigger>
         </TabsList>
 
         {/* Tab: Indique & Ganhe! */}
-        <TabsContent value="indique" className="mt-4 space-y-4">
+        <TabsContent value="indique" className="mt-3 space-y-3">
           <Card>
-            <CardContent className="p-4 space-y-4">
-              <div className="flex items-center gap-2">
-                <LinkIcon className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-foreground">Link da Página de Vendas:</h3>
-              </div>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <LinkIcon className="h-4 w-4 text-primary" />
+                Link da Página de Vendas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
               <div className="flex gap-2">
-                <div className="flex-1 bg-muted rounded-lg px-4 py-3 text-sm text-muted-foreground font-mono break-all">
+                <div className="flex-1 bg-muted rounded-md px-3 py-2 text-xs text-muted-foreground font-mono truncate">
                   {links.vendas}
                 </div>
                 <Button 
+                  size="sm"
                   onClick={() => handleCopy(links.vendas, 'vendas')}
-                  className="shrink-0"
                 >
-                  {copiedLink === 'vendas' ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-                  Copiar
+                  {copiedLink === 'vendas' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <span className="text-primary">★</span>
-                Ideal para divulgação! Leva para a página de apresentação completa do sistema com seu código de indicação.
+              <p className="text-[11px] text-muted-foreground">
+                ★ Ideal para divulgação! Leva para a página de apresentação completa.
               </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-4 space-y-4">
-              <div className="flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-foreground">Link de Cadastro Direto:</h3>
-              </div>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-primary" />
+                Link de Cadastro Direto
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
               <div className="flex gap-2">
-                <div className="flex-1 bg-muted rounded-lg px-4 py-3 text-sm text-muted-foreground font-mono break-all">
+                <div className="flex-1 bg-muted rounded-md px-3 py-2 text-xs text-muted-foreground font-mono truncate">
                   {links.cadastro}
                 </div>
                 <Button 
+                  size="sm"
                   onClick={() => handleCopy(links.cadastro, 'cadastro')}
-                  className="shrink-0"
                 >
-                  {copiedLink === 'cadastro' ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-                  Copiar
+                  {copiedLink === 'cadastro' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <span className="text-primary">ⓘ</span>
-                Leva direto para a página de cadastro - ideal para quem já conhece o sistema.
+              <p className="text-[11px] text-muted-foreground">
+                ⓘ Leva direto para o cadastro - ideal para quem já conhece o sistema.
               </p>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Tab: Materiais de Divulgação */}
-        <TabsContent value="materiais" className="mt-4">
+        <TabsContent value="materiais" className="mt-3">
           <Card>
-            <CardContent className="p-8 text-center">
-              <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Em breve você terá acesso a banners, imagens e materiais para divulgação.</p>
+            <CardContent className="p-6 text-center">
+              <FileText className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-sm text-muted-foreground">Em breve: banners e materiais para divulgação.</p>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Tab: Modelos de Mensagem */}
-        <TabsContent value="modelos" className="mt-4">
+        <TabsContent value="modelos" className="mt-3">
           <Card>
-            <CardContent className="p-8 text-center">
-              <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Em breve você terá modelos de mensagens prontas para enviar aos seus contatos.</p>
+            <CardContent className="p-6 text-center">
+              <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-sm text-muted-foreground">Em breve: modelos de mensagens prontas.</p>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Tab: Suas Indicações */}
-        <TabsContent value="indicacoes" className="mt-4">
+        <TabsContent value="indicacoes" className="mt-3">
           <Card>
-            <CardContent className="p-8 text-center">
-              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Você ainda não possui indicações. Compartilhe seu link e comece a ganhar!</p>
+            <CardContent className="p-6 text-center">
+              <Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-sm text-muted-foreground">Nenhuma indicação ainda. Compartilhe seu link!</p>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Tab: Histórico de Resgates */}
-        <TabsContent value="historico" className="mt-4">
+        <TabsContent value="historico" className="mt-3">
           <Card>
-            <CardContent className="p-8 text-center">
-              <History className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhum resgate realizado ainda. Quando você solicitar um resgate, ele aparecerá aqui.</p>
+            <CardContent className="p-6 text-center">
+              <History className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-sm text-muted-foreground">Nenhum resgate realizado ainda.</p>
             </CardContent>
           </Card>
         </TabsContent>
