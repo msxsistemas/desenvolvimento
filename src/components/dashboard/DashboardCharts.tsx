@@ -62,12 +62,12 @@ export default function DashboardCharts({
               <AreaChart data={clientData}>
                 <defs>
                   <linearGradient id="gAtivados" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.1} />
-                  </linearGradient>
-                  <linearGradient id="gRenovados" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.6} />
                     <stop offset="95%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient id="gRenovados" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.6} />
+                    <stop offset="95%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" opacity={0.3} />
@@ -92,14 +92,14 @@ export default function DashboardCharts({
                 <Area
                   type="monotone"
                   dataKey="Clientes Ativados"
-                  stroke="hsl(199, 89%, 48%)"
+                  stroke="hsl(142, 70%, 45%)"
                   fill="url(#gAtivados)"
                   strokeWidth={2}
                 />
                 <Area
                   type="monotone"
                   dataKey="Clientes Renovados"
-                  stroke="hsl(142, 70%, 45%)"
+                  stroke="hsl(199, 89%, 48%)"
                   fill="url(#gRenovados)"
                   strokeWidth={2}
                 />
