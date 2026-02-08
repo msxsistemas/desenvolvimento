@@ -474,7 +474,7 @@ export default function ClientesCadastro() {
             </div>
 
             {/* Collapsible: Acessos Adicionais */}
-            <Collapsible defaultOpen className="mt-3 rounded-lg border border-border/50 overflow-hidden">
+            <Collapsible className="mt-3 rounded-lg border border-border/50 overflow-hidden">
               <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/40 hover:bg-muted/50 transition-colors group">
                 <div className="flex items-center gap-2">
                   <Key className="h-4 w-4 text-cyan-400" />
@@ -644,7 +644,7 @@ export default function ClientesCadastro() {
             </div>
 
             {/* Collapsible: Aplicativos Adicionais */}
-            <Collapsible defaultOpen className="mt-3 rounded-lg border border-border/50 overflow-hidden">
+            <Collapsible className="mt-3 rounded-lg border border-border/50 overflow-hidden">
               <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/40 hover:bg-muted/50 transition-colors group">
                 <div className="flex items-center gap-2">
                   <Smartphone className="h-4 w-4 text-cyan-400" />
