@@ -21,7 +21,7 @@ import {
   DollarSign,
   ArrowLeftRight,
   Filter,
-  Tag,
+  
   Globe,
   MessageSquare,
   Share2,
@@ -86,8 +86,6 @@ export function AppSidebar() {
     { to: "/financeiro", icon: DollarSign, label: "Financeiro" },
     
     { to: "/relatorios", icon: Filter, label: "Relatórios" },
-    { to: "/marketing", icon: Tag, label: "Tags" },
-    { to: "/financeiro-extra/checkout", icon: Globe, label: "V3Pay", badge: "Novo!" },
     { to: "/configuracoes", icon: Globe, label: "Gateways" },
     { to: "/whatsapp", icon: WhatsAppIcon, label: "WhatsApp", hasWhatsappSubmenu: true },
     { to: "/configuracoes/mensagens-cobranca", icon: Share2, label: "Indicações" },
@@ -235,16 +233,7 @@ export function AppSidebar() {
                       <NavLink to={item.to} end className={menuItemClass(isActive(item.to))}>
                         <div className="flex items-center gap-3">
                           <item.icon className="h-5 w-5" />
-                          {!isCollapsed && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-[14px]">{item.label}</span>
-                              {item.badge && (
-                                <span className="bg-[#22c55e] text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
-                                  {item.badge}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                          {!isCollapsed && <span className="text-[14px]">{item.label}</span>}
                         </div>
                         {/* Não mostrar seta no Dashboard */}
                         {!isCollapsed && item.to !== "/" && <ChevronRight className="h-4 w-4 opacity-50" />}
