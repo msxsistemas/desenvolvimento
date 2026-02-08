@@ -95,7 +95,20 @@ export default function ClientesAplicativos() {
     }
   };
 
+  const [desativarTarget, setDesativarTarget] = useState<Aplicativo | null>(null);
+
   const handleToggleAtivo = async (app: Aplicativo) => {
+    const isActive = (app as any).ativo !== false;
+    
+    if (isActive) {
+      setDesativarTarget(app);
+      return;
+    }
+    
+    await executarToggle(app);
+  };
+
+  const executarToggle = async (app: Aplicativo) => {
     const isActive = (app as any).ativo !== false;
     try {
       const atualizado = await atualizar(app.id!, { ativo: !isActive } as any);
@@ -105,6 +118,12 @@ export default function ClientesAplicativos() {
     } catch (error) {
       console.error("Erro ao alterar status:", error);
     }
+  };
+
+  const confirmarDesativar = async () => {
+    if (!desativarTarget) return;
+    await executarToggle(desativarTarget);
+    setDesativarTarget(null);
   };
 
   const handleCancel = () => {
@@ -331,6 +350,23 @@ export default function ClientesAplicativos() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Desativar Confirmation Dialog */}
+      <AlertDialog open={!!desativarTarget} onOpenChange={() => setDesativarTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar aplicativo</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja desativar o aplicativo "{desativarTarget?.nome}"?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarDesativar} className="bg-amber-600 hover:bg-amber-700">
+              Desativar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

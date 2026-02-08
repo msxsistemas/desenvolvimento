@@ -174,7 +174,20 @@ export default function ClientesProdutos() {
     }
   };
 
+  const [desativarTarget, setDesativarTarget] = useState<Produto | null>(null);
+
   const handleToggleAtivo = async (produto: Produto) => {
+    const isActive = (produto as any).ativo !== false;
+    
+    if (isActive) {
+      setDesativarTarget(produto);
+      return;
+    }
+    
+    await executarToggle(produto);
+  };
+
+  const executarToggle = async (produto: Produto) => {
     const isActive = (produto as any).ativo !== false;
     try {
       const atualizado = await atualizar(produto.id as string, { ativo: !isActive } as any);
@@ -184,6 +197,12 @@ export default function ClientesProdutos() {
     } catch (error) {
       console.error("Erro ao alterar status:", error);
     }
+  };
+
+  const confirmarDesativar = async () => {
+    if (!desativarTarget) return;
+    await executarToggle(desativarTarget);
+    setDesativarTarget(null);
   };
 
   const filteredProdutos = produtos.filter((p) => {
@@ -493,6 +512,23 @@ export default function ClientesProdutos() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Desativar Confirmation Dialog */}
+      <AlertDialog open={!!desativarTarget} onOpenChange={() => setDesativarTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar produto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja desativar o produto "{desativarTarget?.nome}"?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarDesativar} className="bg-amber-600 hover:bg-amber-700">
+              Desativar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

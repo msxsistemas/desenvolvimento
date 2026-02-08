@@ -452,23 +452,33 @@ export default function ClientesListCreate() {
   };
 
   // Função para abrir diálogo de toggle ativo/inativo
-  const handleToggleAtivo = (cliente: Cliente) => {
+  const handleToggleAtivo = async (cliente: Cliente) => {
     if (!cliente || !cliente.id) return;
-    setClienteParaToggle(cliente);
-    setToggleDialogOpen(true);
+    
+    const isActive = (cliente as any).ativo !== false;
+    
+    // Se está ativo e vai desativar, pede confirmação
+    if (isActive) {
+      setClienteParaToggle(cliente);
+      setToggleDialogOpen(true);
+      return;
+    }
+    
+    // Se está inativo, ativa direto sem confirmação
+    await executarToggleCliente(cliente);
   };
 
-  // Função para confirmar toggle ativo/inativo
-  const confirmarToggleAtivo = async () => {
-    if (!clienteParaToggle?.id) return;
+  // Função para executar o toggle diretamente
+  const executarToggleCliente = async (cliente: Cliente) => {
+    if (!cliente?.id) return;
     
     try {
-      const novoStatus = !(clienteParaToggle as any).ativo;
+      const novoStatus = !(cliente as any).ativo;
       
       const { error } = await supabase
         .from('clientes')
         .update({ ativo: novoStatus })
-        .eq('id', clienteParaToggle.id);
+        .eq('id', cliente.id);
 
       if (error) {
         console.error('Erro ao alterar status:', error);
@@ -482,7 +492,7 @@ export default function ClientesListCreate() {
 
       // Atualizar lista local
       setClientes(prev => prev.map(c => 
-        c.id === clienteParaToggle.id 
+        c.id === cliente.id 
           ? { ...c, ativo: novoStatus } as any
           : c
       ));
@@ -499,10 +509,15 @@ export default function ClientesListCreate() {
         description: "Erro ao alterar status do cliente",
         variant: "destructive",
       });
-    } finally {
-      setToggleDialogOpen(false);
-      setClienteParaToggle(null);
     }
+  };
+
+  // Função para confirmar toggle ativo/inativo (desativar)
+  const confirmarToggleAtivo = async () => {
+    if (!clienteParaToggle?.id) return;
+    await executarToggleCliente(clienteParaToggle);
+    setToggleDialogOpen(false);
+    setClienteParaToggle(null);
   };
 
   // Função para abrir diálogo de templates

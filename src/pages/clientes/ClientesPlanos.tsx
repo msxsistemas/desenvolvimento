@@ -137,7 +137,22 @@ export default function ClientesPlanos() {
     }
   };
 
+  const [desativarTarget, setDesativarTarget] = useState<Plano | null>(null);
+
   const handleToggleAtivo = async (plano: Plano) => {
+    const isActive = (plano as any).ativo !== false;
+    
+    // Se está ativo e vai desativar, pede confirmação
+    if (isActive) {
+      setDesativarTarget(plano);
+      return;
+    }
+    
+    // Se está inativo, ativa direto sem confirmação
+    await executarToggle(plano);
+  };
+
+  const executarToggle = async (plano: Plano) => {
     const isActive = (plano as any).ativo !== false;
     try {
       const atualizado = await atualizar(plano.id!, { ativo: !isActive } as any);
@@ -147,6 +162,12 @@ export default function ClientesPlanos() {
     } catch (error) {
       console.error("Erro ao alterar status:", error);
     }
+  };
+
+  const confirmarDesativar = async () => {
+    if (!desativarTarget) return;
+    await executarToggle(desativarTarget);
+    setDesativarTarget(null);
   };
 
   const filteredPlanos = planos.filter((p) => {
@@ -414,6 +435,23 @@ export default function ClientesPlanos() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Desativar Confirmation Dialog */}
+      <AlertDialog open={!!desativarTarget} onOpenChange={() => setDesativarTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar plano</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja desativar o plano "{desativarTarget?.nome}"?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarDesativar} className="bg-amber-600 hover:bg-amber-700">
+              Desativar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
