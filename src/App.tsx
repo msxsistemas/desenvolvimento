@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AppLayout from "./components/layout/AppLayout";
 import ClientesListCreate from "./pages/clientes/ClientesListCreate";
+import ClientesCadastro from "./pages/clientes/ClientesCadastro";
 import ClientesPlanos from "./pages/clientes/ClientesPlanos";
 import ClientesProdutos from "./pages/clientes/ClientesProdutos";
 import ClientesAplicativos from "./pages/clientes/ClientesAplicativos";
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/configuracoes/templates-cobranca" element={<TemplatesCobranca />} />
             <Route path="/configuracoes/ativar-cobrancas" element={<AtivarCobrancas />} />
             <Route path="/clientes" element={<ClientesListCreate />} />
+            <Route path="/clientes/cadastro" element={<ClientesCadastro />} />
             <Route path="/clientes/planos" element={<ClientesPlanos />} />
             <Route path="/clientes/produtos" element={<ClientesProdutos />} />
             <Route path="/clientes/aplicativos" element={<ClientesAplicativos />} />
