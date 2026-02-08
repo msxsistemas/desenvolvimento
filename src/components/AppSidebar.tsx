@@ -99,6 +99,10 @@ export function AppSidebar() {
   const clientesSubItems = [
     { to: "/clientes/cadastro", label: "Adicionar" },
     { to: "/clientes", label: "Gerenciar" },
+    { to: "/clientes/integracoes", label: "Servidores" },
+    { to: "/clientes/planos", label: "Planos" },
+    { to: "/clientes/produtos", label: "Produtos" },
+    { to: "/clientes/metricas", label: "Relatórios" },
   ];
 
   // Subitens do WhatsApp
