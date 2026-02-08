@@ -19,7 +19,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Home, User, Package, Key, Smartphone, DollarSign, Bell, Users, ChevronDown } from "lucide-react";
+import { Home, User, Package, Key, Smartphone, DollarSign, Bell, Users, ChevronDown, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useClientes, usePlanos, useProdutos, useAplicativos } from "@/hooks/useDatabase";
@@ -39,6 +39,13 @@ export default function ClientesCadastro() {
   const [produtos, setProdutos] = useState<any[]>([]);
   const [aplicativos, setAplicativos] = useState<any[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
+  const [acessosAdicionais, setAcessosAdicionais] = useState<Array<{
+    usuario: string;
+    senha: string;
+    mac: string;
+    key: string;
+    dispositivo: string;
+  }>>([]);
 
   const form = useForm({
     defaultValues: {
@@ -561,10 +568,113 @@ export default function ClientesCadastro() {
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-4 space-y-4">
+                {acessosAdicionais.map((acesso, index) => (
+                  <div key={index} className="space-y-4 p-4 bg-muted/20 rounded-lg border border-border/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Key className="h-4 w-4 text-cyan-400" />
+                        <span className="text-sm font-medium text-cyan-400">Credenciais de Acesso</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          setAcessosAdicionais(prev => prev.filter((_, i) => i !== index));
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Usuário</Label>
+                        <Input 
+                          placeholder="Nome de usuário no painel" 
+                          className="bg-background border-border"
+                          value={acesso.usuario}
+                          onChange={(e) => {
+                            setAcessosAdicionais(prev => prev.map((a, i) => 
+                              i === index ? { ...a, usuario: e.target.value } : a
+                            ));
+                          }}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Senha</Label>
+                        <Input 
+                          placeholder="Senha de acesso" 
+                          className="bg-background border-border"
+                          value={acesso.senha}
+                          onChange={(e) => {
+                            setAcessosAdicionais(prev => prev.map((a, i) => 
+                              i === index ? { ...a, senha: e.target.value } : a
+                            ));
+                          }}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">MAC Address / Email</Label>
+                        <Input 
+                          placeholder="Ex: 00:1A:2B:3C:4D:5E ou email@clouddy.com" 
+                          className="bg-background border-border"
+                          value={acesso.mac}
+                          onChange={(e) => {
+                            setAcessosAdicionais(prev => prev.map((a, i) => 
+                              i === index ? { ...a, mac: e.target.value } : a
+                            ));
+                          }}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Key / OTP</Label>
+                        <Input 
+                          placeholder="Chave de ativação ou OTP" 
+                          className="bg-background border-border"
+                          value={acesso.key}
+                          onChange={(e) => {
+                            setAcessosAdicionais(prev => prev.map((a, i) => 
+                              i === index ? { ...a, key: e.target.value } : a
+                            ));
+                          }}
+                        />
+                      </div>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <Label className="text-sm font-medium">Dispositivos</Label>
+                        <Input 
+                          placeholder="Ex: Smart TV, TV Box, Celular..." 
+                          className="bg-background border-border"
+                          value={acesso.dispositivo}
+                          onChange={(e) => {
+                            setAcessosAdicionais(prev => prev.map((a, i) => 
+                              i === index ? { ...a, dispositivo: e.target.value } : a
+                            ));
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
                 <Button
                   type="button"
                   variant="outline"
                   className="border-primary/50 text-primary hover:bg-primary/10"
+                  onClick={() => {
+                    setAcessosAdicionais(prev => [...prev, {
+                      usuario: "",
+                      senha: "",
+                      mac: "",
+                      key: "",
+                      dispositivo: ""
+                    }]);
+                  }}
                 >
                   + Adicionar Acesso
                 </Button>
