@@ -92,7 +92,8 @@ export function AppSidebar() {
 
   // Subitens do Clientes
   const clientesSubItems = [
-    { to: "/clientes", label: "Listar/Criar" },
+    { to: "/clientes/cadastro", label: "Adicionar" },
+    { to: "/clientes", label: "Gerenciar" },
   ];
 
   // Subitens do WhatsApp
@@ -141,17 +142,20 @@ export function AppSidebar() {
                         )}
                       </SidebarMenuButton>
                       {clientesOpen && !isCollapsed && (
-                        <SidebarMenuSub className="ml-10 mt-1 space-y-0 border-l border-[#2a2a3c] pl-4">
+                        <SidebarMenuSub className="ml-7 mt-2 space-y-0 border-l-2 border-[#7c3aed] pl-0">
                           {clientesSubItems.map((subItem) => (
-                            <SidebarMenuSubItem key={subItem.to}>
+                            <SidebarMenuSubItem key={subItem.to} className="relative">
                               <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
                                 <NavLink
                                   to={subItem.to}
                                   end
-                                  className={`py-1.5 text-[13px] transition-colors ${
+                                  className={`flex items-center py-2 pl-4 text-[13px] transition-colors ${
                                     isActive(subItem.to) ? "text-white" : "text-[#8b8b9a] hover:text-white"
                                   }`}
                                 >
+                                  <span className={`absolute left-[-5px] w-2 h-2 rounded-full ${
+                                    isActive(subItem.to) ? "bg-[#7c3aed]" : "bg-[#8b8b9a]"
+                                  }`} />
                                   {subItem.label}
                                 </NavLink>
                               </SidebarMenuSubButton>
