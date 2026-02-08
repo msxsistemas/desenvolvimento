@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -17,9 +18,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Pencil, Copy, Trash2, Loader2 } from "lucide-react";
 import { useTemplatesMensagens, TemplateMensagem } from "@/hooks/useTemplatesMensagens";
 
@@ -38,6 +47,7 @@ export default function Templates() {
   const [editingTemplate, setEditingTemplate] = useState<TemplateMensagem | null>(null);
   const [formData, setFormData] = useState({ nome: "", mensagem: "" });
   const [saving, setSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     document.title = "Templates | Tech Play";
@@ -55,10 +65,6 @@ export default function Templates() {
 
   const handleDelete = async (id: string) => {
     await deleteTemplate(id);
-  };
-
-  const handleTogglePadrao = async (template: TemplateMensagem) => {
-    await updateTemplate(template.id, { padrao: !template.padrao });
   };
 
   const handleSave = async () => {
@@ -95,6 +101,10 @@ export default function Templates() {
     await restoreDefaults();
   };
 
+  const filteredTemplates = templates.filter((t) =>
+    t.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -104,98 +114,143 @@ export default function Templates() {
   }
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Templates</h1>
-        <div className="flex gap-3">
+      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Templates de Mensagens</h1>
+          <p className="text-sm text-muted-foreground">Gerencie seus templates de mensagens</p>
+        </div>
+        <div className="flex gap-2">
           <Button variant="outline" onClick={handleRestaurarPadrao}>
             Restaurar Padrão
           </Button>
-          <Button onClick={handleNew} className="bg-cyan-500 hover:bg-cyan-600">
-            Novo
+          <Button onClick={handleNew} className="bg-primary hover:bg-primary/90">
+            Novo Template +
           </Button>
+        </div>
+      </header>
+
+      {/* Filters */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Busca</Label>
+            <Input
+              placeholder="Buscar template..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex items-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setSearchTerm("")}
+            >
+              Limpar
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Templates Table */}
-      <Card className="bg-card border-border">
-        <CardContent className="p-6">
-          <h2 className="text-lg font-medium text-foreground mb-4">Templates de mensagens</h2>
-          
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground">Nome</TableHead>
-                <TableHead className="text-muted-foreground text-center">Ação</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {templates.map((template) => (
-                <TableRow key={template.id} className="border-border hover:bg-muted/50">
-                  <TableCell className="text-foreground">{template.nome}</TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-2">
+      {/* Record count */}
+      <div className="text-right text-sm text-muted-foreground">
+        Mostrando {filteredTemplates.length} de {templates.length} registros.
+      </div>
+
+      {/* Table */}
+      <div className="rounded-lg border border-border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead className="w-[120px] text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredTemplates.length ? (
+              filteredTemplates.map((template) => (
+                <TableRow key={template.id}>
+                  <TableCell className="font-medium">{template.nome}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
                         onClick={() => handleEdit(template)}
+                        className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
                         onClick={() => handleCopy(template)}
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-500 hover:text-red-400"
-                        onClick={() => handleDelete(template.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir template</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir o template "{template.nome}"? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(template.id)} className="bg-destructive hover:bg-destructive/90">
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={2} className="h-24 text-center text-muted-foreground">
+                  Nenhum template encontrado
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-          <p className="text-muted-foreground text-sm mt-4">
-            Mostrando 1 até {templates.length} de {templates.length} resultados
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Edit/Create Dialog */}
+      {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-foreground">
+            <DialogTitle>
               {editingTemplate ? "Editar Template" : "Novo Template"}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nome">Nome do Template</Label>
+              <Label>Nome do Template</Label>
               <Input
-                id="nome"
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                 placeholder="Digite o nome do template"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="mensagem">Mensagem</Label>
+              <Label>Mensagem</Label>
               <Textarea
-                id="mensagem"
                 value={formData.mensagem}
                 onChange={(e) => setFormData({ ...formData, mensagem: e.target.value })}
                 placeholder="Digite a mensagem do template"
@@ -205,23 +260,21 @@ export default function Templates() {
                 Variáveis disponíveis: {"{nome_cliente}"}, {"{saudacao}"}, {"{vencimento}"}, {"{br}"} (quebra de linha)
               </p>
             </div>
+            
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                disabled={saving || !formData.nome || !formData.mensagem}
+              >
+                {saving ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
           </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              className="bg-cyan-500 hover:bg-cyan-600"
-              disabled={saving || !formData.nome || !formData.mensagem}
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Salvar
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   );
 }

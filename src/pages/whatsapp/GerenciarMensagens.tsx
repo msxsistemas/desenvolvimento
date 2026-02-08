@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Home } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -142,7 +141,6 @@ export default function GerenciarMensagens() {
     
     setSaving(true);
     try {
-      // Usar upsert para inserir ou atualizar com base no user_id
       const { error } = await supabase
         .from("mensagens_padroes")
         .upsert({
@@ -182,7 +180,6 @@ export default function GerenciarMensagens() {
     "{vencimento}", "{hora_vencimento}", "{info1}", "{info2}", "{info3}"
   ];
 
-  // Get template title
   const getTemplateTitle = () => {
     const titles: Record<keyof MensagensPadroes, string> = {
       bem_vindo: "Bem Vindo",
@@ -197,142 +194,125 @@ export default function GerenciarMensagens() {
   };
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-4">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Bom Dia, Tech Play!</h1>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-          <Home className="h-4 w-4" />
-          <span>/</span>
-          <span className="text-purple-400">Gerenciar Mensagens WhatsApp</span>
+      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Mensagens Automáticas</h1>
+          <p className="text-sm text-muted-foreground">Configure as mensagens padrão do sistema</p>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleRestaurarPadrao}>
+            Restaurar Padrão
+          </Button>
+          <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90">
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </div>
+      </header>
+
+      {/* Available Keys */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <Label className="text-muted-foreground mb-2 block">Chaves disponíveis:</Label>
+        <div className="flex flex-wrap gap-1">
+          {availableKeys.map((key) => (
+            <span key={key} className="text-primary text-xs bg-primary/10 px-2 py-1 rounded">{key}</span>
+          ))}
+        </div>
+        <p className="text-sm text-muted-foreground mt-2">
+          Use <span className="text-primary">{"{br}"}</span> para quebra de linha.
+        </p>
       </div>
 
-      {/* Main Content */}
-      <Card className="bg-card border-border">
-        <CardContent className="p-6">
-          <h2 className="text-xl font-semibold text-foreground mb-2">Gerenciar Mensagens Do WhatsApp</h2>
-          <p className="text-muted-foreground text-sm mb-4">Utilize as seguintes chaves para obter os valores:</p>
-          
-          {/* Available Keys */}
-          <div className="mb-6">
-            <p className="text-sm text-muted-foreground mb-2">Utilize as seguintes chaves para obter os valores:</p>
-            <div className="flex flex-wrap gap-1 mb-3">
-              {availableKeys.map((key) => (
-                <span key={key} className="text-orange-400 text-xs">{key}</span>
-              ))}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Utilize <span className="text-orange-400">{"{nome_cliente_indicado}"}</span> <span className="text-orange-400">{"{valor_indicacao}"}</span> somente na mensagem de indicação.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Use <span className="text-green-400">Enter</span> para quebra de linha ou <span className="text-orange-400">{"{br}"}</span> para compatibilidade.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            {/* Message Templates */}
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-foreground font-medium mb-2 text-center">Bem Vindo:</h3>
-                <Textarea
-                  value={mensagens.bem_vindo}
-                  onChange={(e) => setMensagens(prev => ({ ...prev, bem_vindo: e.target.value }))}
-                  onFocus={() => setSelectedTemplate("bem_vindo")}
-                  className="bg-muted border-border text-foreground min-h-[180px] text-sm"
-                />
-              </div>
-
-              <div>
-                <h3 className="text-foreground font-medium mb-2 text-center">Fatura Criada:</h3>
-                <Textarea
-                  value={mensagens.fatura_criada}
-                  onChange={(e) => setMensagens(prev => ({ ...prev, fatura_criada: e.target.value }))}
-                  onFocus={() => setSelectedTemplate("fatura_criada")}
-                  className="bg-muted border-border text-foreground min-h-[200px] text-sm"
-                />
-              </div>
-
-              <div>
-                <h3 className="text-foreground font-medium mb-2 text-center">Próximo de Vencer:</h3>
-                <Textarea
-                  value={mensagens.proximo_vencer}
-                  onChange={(e) => setMensagens(prev => ({ ...prev, proximo_vencer: e.target.value }))}
-                  onFocus={() => setSelectedTemplate("proximo_vencer")}
-                  className="bg-muted border-border text-foreground min-h-[180px] text-sm"
-                />
-              </div>
-
-              <div>
-                <h3 className="text-foreground font-medium mb-2 text-center">Vence Hoje:</h3>
-                <Textarea
-                  value={mensagens.vence_hoje}
-                  onChange={(e) => setMensagens(prev => ({ ...prev, vence_hoje: e.target.value }))}
-                  onFocus={() => setSelectedTemplate("vence_hoje")}
-                  className="bg-muted border-border text-foreground min-h-[200px] text-sm"
-                />
-              </div>
-
-              <div>
-                <h3 className="text-foreground font-medium mb-2 text-center">Vencido:</h3>
-                <Textarea
-                  value={mensagens.vencido}
-                  onChange={(e) => setMensagens(prev => ({ ...prev, vencido: e.target.value }))}
-                  onFocus={() => setSelectedTemplate("vencido")}
-                  className="bg-muted border-border text-foreground min-h-[200px] text-sm"
-                />
-              </div>
-
-              <div>
-                <h3 className="text-foreground font-medium mb-2 text-center">Confirmação Pagamento:</h3>
-                <Textarea
-                  value={mensagens.confirmacao_pagamento}
-                  onChange={(e) => setMensagens(prev => ({ ...prev, confirmacao_pagamento: e.target.value }))}
-                  onFocus={() => setSelectedTemplate("confirmacao_pagamento")}
-                  className="bg-muted border-border text-foreground min-h-[180px] text-sm"
-                />
-              </div>
-
-              <div>
-                <h3 className="text-foreground font-medium mb-2 text-center">Dados do Cliente:</h3>
-                <Textarea
-                  value={mensagens.dados_cliente}
-                  onChange={(e) => setMensagens(prev => ({ ...prev, dados_cliente: e.target.value }))}
-                  onFocus={() => setSelectedTemplate("dados_cliente")}
-                  className="bg-muted border-border text-foreground min-h-[180px] text-sm"
-                />
-              </div>
+      {/* Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Message Templates */}
+        <div className="space-y-4">
+          <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+            <div className="space-y-2">
+              <Label className="text-foreground font-medium">Bem Vindo:</Label>
+              <Textarea
+                value={mensagens.bem_vindo}
+                onChange={(e) => setMensagens(prev => ({ ...prev, bem_vindo: e.target.value }))}
+                onFocus={() => setSelectedTemplate("bem_vindo")}
+                className="min-h-[140px] text-sm"
+              />
             </div>
 
-            {/* WhatsApp Preview */}
-            <WhatsAppPhonePreview 
-              message={mensagens[selectedTemplate]}
-              templateLabel={getTemplateTitle()}
-              contactName="Gestor MSX"
-              time="09:00"
-              carrier="Vivo"
-              battery="100%"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label className="text-foreground font-medium">Fatura Criada:</Label>
+              <Textarea
+                value={mensagens.fatura_criada}
+                onChange={(e) => setMensagens(prev => ({ ...prev, fatura_criada: e.target.value }))}
+                onFocus={() => setSelectedTemplate("fatura_criada")}
+                className="min-h-[160px] text-sm"
+              />
+            </div>
 
-          {/* Save Buttons */}
-          <div className="flex justify-center gap-4 mt-8">
-            <Button 
-              variant="outline"
-              onClick={handleRestaurarPadrao}
-            >
-              Restaurar Padrão
-            </Button>
-            <Button 
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-purple-600 hover:bg-purple-700 px-8"
-            >
-              {saving ? "Salvando..." : "Salvar dados"}
-            </Button>
+            <div className="space-y-2">
+              <Label className="text-foreground font-medium">Próximo de Vencer:</Label>
+              <Textarea
+                value={mensagens.proximo_vencer}
+                onChange={(e) => setMensagens(prev => ({ ...prev, proximo_vencer: e.target.value }))}
+                onFocus={() => setSelectedTemplate("proximo_vencer")}
+                className="min-h-[140px] text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-foreground font-medium">Vence Hoje:</Label>
+              <Textarea
+                value={mensagens.vence_hoje}
+                onChange={(e) => setMensagens(prev => ({ ...prev, vence_hoje: e.target.value }))}
+                onFocus={() => setSelectedTemplate("vence_hoje")}
+                className="min-h-[160px] text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-foreground font-medium">Vencido:</Label>
+              <Textarea
+                value={mensagens.vencido}
+                onChange={(e) => setMensagens(prev => ({ ...prev, vencido: e.target.value }))}
+                onFocus={() => setSelectedTemplate("vencido")}
+                className="min-h-[160px] text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-foreground font-medium">Confirmação Pagamento:</Label>
+              <Textarea
+                value={mensagens.confirmacao_pagamento}
+                onChange={(e) => setMensagens(prev => ({ ...prev, confirmacao_pagamento: e.target.value }))}
+                onFocus={() => setSelectedTemplate("confirmacao_pagamento")}
+                className="min-h-[140px] text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-foreground font-medium">Dados do Cliente:</Label>
+              <Textarea
+                value={mensagens.dados_cliente}
+                onChange={(e) => setMensagens(prev => ({ ...prev, dados_cliente: e.target.value }))}
+                onFocus={() => setSelectedTemplate("dados_cliente")}
+                className="min-h-[140px] text-sm"
+              />
+            </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        {/* WhatsApp Preview */}
+        <div className="lg:sticky lg:top-4">
+          <WhatsAppPhonePreview 
+            message={mensagens[selectedTemplate]}
+            templateLabel={getTemplateTitle()}
+            contactName="Gestor MSX"
+            time="09:00"
+            carrier="Vivo"
+            battery="100%"
+          />
+        </div>
+      </div>
+    </main>
   );
 }
