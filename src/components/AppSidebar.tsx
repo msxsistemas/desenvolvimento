@@ -60,8 +60,9 @@ export function AppSidebar() {
   const clientesActive = currentPath === "/clientes" || currentPath.startsWith("/clientes/");
   const whatsappActive = currentPath.startsWith("/whatsapp") || currentPath === "/parear-whatsapp";
   const logsActive = currentPath.startsWith("/logs");
+  const indicacoesActive = currentPath.startsWith("/indicacoes");
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(
-    clientesActive ? "clientes" : whatsappActive ? "whatsapp" : logsActive ? "logs" : null
+    clientesActive ? "clientes" : whatsappActive ? "whatsapp" : logsActive ? "logs" : indicacoesActive ? "indicacoes" : null
   );
 
   const toggleSubmenu = (menu: string) => {
@@ -89,7 +90,7 @@ export function AppSidebar() {
     { to: "/relatorios", icon: Filter, label: "Relatórios" },
     { to: "/configuracoes", icon: Globe, label: "Gateways" },
     { to: "/whatsapp", icon: WhatsAppIcon, label: "WhatsApp", hasWhatsappSubmenu: true },
-    { to: "/indicacoes", icon: Share2, label: "Indicações" },
+    { to: "/indicacoes", icon: Share2, label: "Indicações", hasIndicacoesSubmenu: true },
     { to: "/configuracoes/mensagens-padroes", icon: MoreHorizontal, label: "Outros" },
     { to: "/logs", icon: ScrollText, label: "Logs", hasLogsSubmenu: true },
   ];
@@ -113,6 +114,12 @@ export function AppSidebar() {
   const logsSubItems = [
     { to: "/logs/painel", label: "Logs do Painel" },
     { to: "/logs/sistema", label: "Logs do Sistema" },
+  ];
+
+  // Subitens das Indicações
+  const indicacoesSubItems = [
+    { to: "/indicacoes/clientes", label: "Indicação de Clientes" },
+    { to: "/indicacoes/sistema", label: "Indicação do Sistema" },
   ];
 
   return (
@@ -254,6 +261,52 @@ export function AppSidebar() {
                       {openSubmenu === "logs" && !isCollapsed && (
                         <SidebarMenuSub className="ml-8 mt-2 space-y-1">
                           {logsSubItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.to}>
+                              <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
+                                <NavLink
+                                  to={subItem.to}
+                                  end
+                                  className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
+                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                  }`}
+                                >
+                                  <span className={`w-2 h-2 rounded-full border ${
+                                    isActive(subItem.to) 
+                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
+                                      : "border-[#8b8b9a] bg-transparent"
+                                  }`} />
+                                  {subItem.label}
+                                </NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                }
+
+                // Item Indicações com submenu
+                if (item.hasIndicacoesSubmenu) {
+                  return (
+                    <SidebarMenuItem key={item.to}>
+                      <SidebarMenuButton
+                        onClick={() => toggleSubmenu("indicacoes")}
+                        className={`${menuItemClass(indicacoesActive)} hover:bg-transparent`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="h-5 w-5" />
+                          {!isCollapsed && <span className="text-[14px]">{item.label}</span>}
+                        </div>
+                        {!isCollapsed && (
+                          <ChevronRight
+                            className={`h-4 w-4 opacity-50 transition-transform ${openSubmenu === "indicacoes" ? "rotate-90" : ""}`}
+                          />
+                        )}
+                      </SidebarMenuButton>
+                      {openSubmenu === "indicacoes" && !isCollapsed && (
+                        <SidebarMenuSub className="ml-8 mt-2 space-y-1">
+                          {indicacoesSubItems.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.to}>
                               <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
                                 <NavLink
