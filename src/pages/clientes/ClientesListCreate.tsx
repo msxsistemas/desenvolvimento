@@ -109,18 +109,22 @@ export default function ClientesListCreate() {
 
   // Função para determinar o status do cliente
   const getClienteStatus = (cliente: Cliente) => {
+    if ((cliente as any).ativo === false) {
+      return { status: 'Inativo', variant: 'secondary' as const, bgColor: 'bg-muted' };
+    }
+
     if (!cliente.data_vencimento) {
-      return { status: 'Sem data', variant: 'secondary' as const, bgColor: 'bg-gray-500' };
+      return { status: 'Sem data', variant: 'secondary' as const, bgColor: 'bg-muted' };
     }
 
     const dataVencimento = new Date(cliente.data_vencimento);
     const agora = new Date();
-    
+
     if (dataVencimento < agora) {
       return { status: 'Vencido', variant: 'destructive' as const, bgColor: 'bg-destructive' };
-    } else {
-      return { status: 'Ativo', variant: 'default' as const, bgColor: 'bg-green-500' };
     }
+
+    return { status: 'Ativo', variant: 'default' as const, bgColor: 'bg-muted' };
   };
 
   // Contagem de clientes por produto/servidor com ID para filtragem
@@ -707,19 +711,23 @@ export default function ClientesListCreate() {
       }
 
       if (filtrosValues.status && filtrosValues.status !== "todos") {
-        const hoje = new Date();
-        hoje.setHours(23, 59, 59, 999);
-        
+        const isInactive = (cliente as any).ativo === false;
+
         const inicioHoje = new Date();
         inicioHoje.setHours(0, 0, 0, 0);
-        
+
         const dataVenc = cliente.data_vencimento ? new Date(cliente.data_vencimento) : null;
-        
+
         switch (filtrosValues.status) {
+          case "inativo":
+            if (!isInactive) return false;
+            break;
           case "ativo":
+            if (isInactive) return false;
             if (!dataVenc || dataVenc < inicioHoje) return false;
             break;
           case "vencido":
+            if (isInactive) return false;
             if (!dataVenc || dataVenc >= inicioHoje) return false;
             break;
         }
@@ -1029,6 +1037,7 @@ export default function ClientesListCreate() {
                 <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="ativo">Ativo</SelectItem>
                 <SelectItem value="vencido">Vencido</SelectItem>
+                <SelectItem value="inativo">Inativo</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1184,7 +1193,9 @@ export default function ClientesListCreate() {
                       <TableCell>
                         <Badge 
                           variant="outline" 
-                          className={status === 'Vencido' 
+                          className={status === 'Inativo'
+                            ? 'bg-transparent border-amber-500 text-amber-500'
+                            : status === 'Vencido' 
                             ? 'bg-transparent border-yellow-500 text-yellow-500' 
                             : status === 'Ativo'
                             ? 'bg-transparent border-green-500 text-green-500'
