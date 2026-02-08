@@ -198,11 +198,11 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, loadin
         </span>
         <div className="flex items-center gap-1">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50"
+            className="border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
           >
             Anterior
           </Button>
@@ -214,10 +214,10 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, loadin
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(page)}
-                className={`w-8 ${
+                className={`w-8 border-border ${
                   currentPage === page 
-                    ? "bg-white text-slate-900 border-slate-300 hover:bg-white/90" 
-                    : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                    ? "bg-white text-black hover:bg-white/90" 
+                    : "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 {page}
@@ -230,21 +230,21 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, loadin
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage(totalPages)}
-              className={`w-8 ${
+              className={`w-8 border-border ${
                 currentPage === totalPages 
-                  ? "bg-white text-slate-900 border-slate-300 hover:bg-white/90" 
-                  : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                  ? "bg-white text-black hover:bg-white/90" 
+                  : "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
               {totalPages}
             </Button>
           )}
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages || totalPages === 0}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50"
+            className="border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
           >
             Próximo
           </Button>
