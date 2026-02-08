@@ -154,6 +154,13 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
+
+  /* Remove default list markers */
+  ul, ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 @layer utilities {
