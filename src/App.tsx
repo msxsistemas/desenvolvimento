@@ -34,6 +34,8 @@ import GerenciarCampanhas from "./pages/whatsapp/GerenciarCampanhas";
 import ParearWhatsappNew from "./pages/whatsapp/ParearWhatsappNew";
 import Templates from "./pages/whatsapp/Templates";
 import Relatorios from "./pages/Relatorios";
+import LogsPainel from "./pages/logs/LogsPainel";
+import LogsSistema from "./pages/logs/LogsSistema";
 
 const queryClient = new QueryClient();
 import Auth from "./pages/auth/Auth";
@@ -80,6 +82,9 @@ const App = () => (
             <Route path="/whatsapp/envios-em-massa" element={<EnviosEmMassa />} />
             <Route path="/whatsapp/templates" element={<Templates />} />
             <Route path="/whatsapp/parear" element={<ParearWhatsappNew />} />
+            {/* Logs routes */}
+            <Route path="/logs/painel" element={<LogsPainel />} />
+            <Route path="/logs/sistema" element={<LogsSistema />} />
           </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

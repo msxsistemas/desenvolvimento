@@ -59,8 +59,9 @@ export function AppSidebar() {
   // Estado dos submenus
   const clientesActive = currentPath === "/clientes" || currentPath.startsWith("/clientes/");
   const whatsappActive = currentPath.startsWith("/whatsapp") || currentPath === "/parear-whatsapp";
+  const logsActive = currentPath.startsWith("/logs");
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(
-    clientesActive ? "clientes" : whatsappActive ? "whatsapp" : null
+    clientesActive ? "clientes" : whatsappActive ? "whatsapp" : logsActive ? "logs" : null
   );
 
   const toggleSubmenu = (menu: string) => {
@@ -90,7 +91,7 @@ export function AppSidebar() {
     { to: "/whatsapp", icon: WhatsAppIcon, label: "WhatsApp", hasWhatsappSubmenu: true },
     { to: "/configuracoes/mensagens-cobranca", icon: Share2, label: "Indicações" },
     { to: "/configuracoes/mensagens-padroes", icon: MoreHorizontal, label: "Outros" },
-    { to: "/tutoriais", icon: ScrollText, label: "Logs" },
+    { to: "/logs", icon: ScrollText, label: "Logs", hasLogsSubmenu: true },
   ];
 
   // Subitens do Clientes
@@ -106,6 +107,12 @@ export function AppSidebar() {
     { to: "/whatsapp/envios-em-massa", label: "Envios em Massa" },
     { to: "/whatsapp/templates", label: "Templates" },
     { to: "/whatsapp/parear", label: "Parear Whatsapp" },
+  ];
+
+  // Subitens do Logs
+  const logsSubItems = [
+    { to: "/logs/painel", label: "Logs do Painel" },
+    { to: "/logs/sistema", label: "Logs do Sistema" },
   ];
 
   return (
@@ -210,6 +217,52 @@ export function AppSidebar() {
                                   }`}
                                 >
                                   {/* Círculo indicador */}
+                                  <span className={`w-2 h-2 rounded-full border ${
+                                    isActive(subItem.to) 
+                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
+                                      : "border-[#8b8b9a] bg-transparent"
+                                  }`} />
+                                  {subItem.label}
+                                </NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                }
+
+                // Item Logs com submenu
+                if (item.hasLogsSubmenu) {
+                  return (
+                    <SidebarMenuItem key={item.to}>
+                      <SidebarMenuButton
+                        onClick={() => toggleSubmenu("logs")}
+                        className={`${menuItemClass(logsActive)} hover:bg-transparent`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="h-5 w-5" />
+                          {!isCollapsed && <span className="text-[14px]">{item.label}</span>}
+                        </div>
+                        {!isCollapsed && (
+                          <ChevronRight
+                            className={`h-4 w-4 opacity-50 transition-transform ${openSubmenu === "logs" ? "rotate-90" : ""}`}
+                          />
+                        )}
+                      </SidebarMenuButton>
+                      {openSubmenu === "logs" && !isCollapsed && (
+                        <SidebarMenuSub className="ml-8 mt-2 space-y-1">
+                          {logsSubItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.to}>
+                              <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
+                                <NavLink
+                                  to={subItem.to}
+                                  end
+                                  className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
+                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                  }`}
+                                >
                                   <span className={`w-2 h-2 rounded-full border ${
                                     isActive(subItem.to) 
                                       ? "border-[#22d3ee] bg-[#22d3ee]" 
