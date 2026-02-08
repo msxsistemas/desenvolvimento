@@ -413,6 +413,39 @@ export type Database = {
         }
         Relationships: []
       }
+      transacoes: {
+        Row: {
+          created_at: string | null
+          data_transacao: string | null
+          descricao: string
+          id: string
+          tipo: string
+          updated_at: string | null
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string | null
+          data_transacao?: string | null
+          descricao: string
+          id?: string
+          tipo: string
+          updated_at?: string | null
+          user_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string | null
+          data_transacao?: string | null
+          descricao?: string
+          id?: string
+          tipo?: string
+          updated_at?: string | null
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       whatsapp_messages: {
         Row: {
           created_at: string
