@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,9 +18,11 @@ import {
   Share2
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function IndicacoesSistema() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   
   // Mock data - would come from database in production
   const stats = {
@@ -33,23 +35,43 @@ export default function IndicacoesSistema() {
     indicacoesParaProximo: 5,
   };
 
-  const userCode = "REF_" + Math.random().toString(36).substring(2, 14).toUpperCase();
+  // Gera código único baseado no ID do usuário
+  const userCode = useMemo(() => {
+    if (!userId) return "CARREGANDO...";
+    // Usa os primeiros 12 caracteres do UUID do usuário para criar um código único
+    return "REF_" + userId.replace(/-/g, "").substring(0, 12).toUpperCase();
+  }, [userId]);
+
   const baseUrl = window.location.origin;
   
-  const links = {
+  const links = useMemo(() => ({
     vendas: `${baseUrl}/site?ref=${userCode}`,
     cadastro: `${baseUrl}/register?ref=${userCode}`,
-  };
+  }), [baseUrl, userCode]);
 
   useEffect(() => {
     document.title = "Indique e Ganhe | Tech Play";
+    
+    // Busca o ID do usuário autenticado
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
   }, []);
 
   const handleCopy = async (text: string, type: string) => {
+    if (userCode === "CARREGANDO...") {
+      toast.error("Aguarde o carregamento do código");
+      return;
+    }
+    
     try {
       await navigator.clipboard.writeText(text);
       setCopiedLink(type);
-      toast.success("Link copiado!");
+      toast.success("Link copiado para a área de transferência!");
       setTimeout(() => setCopiedLink(null), 2000);
     } catch (error) {
       toast.error("Erro ao copiar link");
@@ -140,6 +162,26 @@ export default function IndicacoesSistema() {
           </div>
         </div>
       </div>
+
+      {/* Código do usuário */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Seu código de indicação:</p>
+              <p className="text-lg font-mono font-bold text-primary">{userCode}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleCopy(userCode, 'code')}
+            >
+              {copiedLink === 'code' ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+              Copiar Código
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabs Content */}
       <Tabs defaultValue="indique" className="w-full">

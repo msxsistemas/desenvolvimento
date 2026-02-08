@@ -38,6 +38,7 @@ import LogsPainel from "./pages/LogsPainel";
 import LogsSistema from "./pages/LogsSistema";
 import IndicacoesClientes from "./pages/indicacoes/IndicacoesClientes";
 import IndicacoesSistema from "./pages/indicacoes/IndicacoesSistema";
+import Cupom from "./pages/outros/Cupom";
 
 const queryClient = new QueryClient();
 import Auth from "./pages/auth/Auth";
@@ -89,6 +90,9 @@ const App = () => (
             <Route path="/logs/sistema" element={<LogsSistema />} />
             {/* Indicações routes */}
             <Route path="/indicacoes/clientes" element={<IndicacoesClientes />} />
+            <Route path="/indicacoes/sistema" element={<IndicacoesSistema />} />
+            {/* Outros routes */}
+            <Route path="/outros/cupom" element={<Cupom />} />
             <Route path="/indicacoes/sistema" element={<IndicacoesSistema />} />
           </Route>
 
