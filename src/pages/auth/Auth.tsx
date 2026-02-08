@@ -322,7 +322,7 @@ export default function Auth() {
             <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-4xl font-bold text-foreground mb-4">
-            Gestor Tech Play
+            Msx Gestor
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
             Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
@@ -344,7 +344,7 @@ export default function Auth() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg shadow-primary/20">
               <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Gestor Tech Play</h1>
+            <h1 className="text-2xl font-bold text-foreground">Msx Gestor</h1>
           </div>
 
           <div className="bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
