@@ -314,7 +314,7 @@ export default function MensagensCobranca() {
             onClick={() => setRestaurarDialogOpen(true)}
             variant="outline"
           >
-            Restaurar Padrão
+            Limpar Todos
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -413,9 +413,9 @@ export default function MensagensCobranca() {
       <AlertDialog open={restaurarDialogOpen} onOpenChange={setRestaurarDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Restaurar templates padrões?</AlertDialogTitle>
+            <AlertDialogTitle>Limpar todos os templates?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja restaurar os templates padrões? Todos os templates personalizados serão excluídos.
+              Tem certeza que deseja remover todos os templates? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -423,9 +423,9 @@ export default function MensagensCobranca() {
             <AlertDialogAction 
               onClick={handleRestaurarPadroes}
               disabled={restaurandoPadroes}
-              className="bg-cyan-500 hover:bg-cyan-600"
+              className="bg-destructive hover:bg-destructive/90"
             >
-              {restaurandoPadroes ? "Restaurando..." : "OK"}
+              {restaurandoPadroes ? "Removendo..." : "Limpar Todos"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

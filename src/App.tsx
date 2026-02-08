@@ -36,6 +36,7 @@ import Templates from "./pages/whatsapp/Templates";
 import Relatorios from "./pages/Relatorios";
 import LogsPainel from "./pages/LogsPainel";
 import LogsSistema from "./pages/LogsSistema";
+import Indicacoes from "./pages/Indicacoes";
 
 const queryClient = new QueryClient();
 import Auth from "./pages/auth/Auth";
@@ -85,6 +86,8 @@ const App = () => (
             {/* Logs routes */}
             <Route path="/logs/painel" element={<LogsPainel />} />
             <Route path="/logs/sistema" element={<LogsSistema />} />
+            {/* Indicações */}
+            <Route path="/indicacoes" element={<Indicacoes />} />
           </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
