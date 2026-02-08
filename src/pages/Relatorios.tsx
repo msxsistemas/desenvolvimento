@@ -133,15 +133,19 @@ export default function Relatorios() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dadosMensais} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis 
                     dataKey="mes" 
-                    stroke="hsl(var(--muted-foreground))"
+                    stroke="#eab308"
+                    axisLine={{ stroke: '#eab308', strokeWidth: 2 }}
+                    tickLine={{ stroke: '#eab308' }}
                     tick={{ fill: 'hsl(var(--muted-foreground))' }}
                   />
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))"
                     tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    axisLine={false}
+                    tickLine={false}
                   />
                   <Tooltip 
                     contentStyle={{ 
