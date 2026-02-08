@@ -863,7 +863,7 @@ export default function ClientesListCreate() {
           </div>
           <div className="space-y-2">
             <Label className="text-sm font-normal text-muted-foreground">Captação</Label>
-            <Select onValueChange={(v) => filtros.setValue("captacao", v)}>
+            <Select onValueChange={(v) => filtros.setValue("captacao", v)} value={filtros.watch("captacao") || "todos"}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
@@ -878,16 +878,23 @@ export default function ClientesListCreate() {
               </SelectContent>
             </Select>
           </div>
-        </div>
-
-        {/* Botão Buscar */}
-        <div>
-          <Button 
-            onClick={handleBuscar}
-            className="bg-pink-600 hover:bg-pink-700 text-white px-8"
-          >
-            Buscar
-          </Button>
+          <div className="flex items-end">
+            <Button 
+              variant="outline"
+              onClick={() => filtros.reset({
+                dataInicial: "",
+                dataFinal: "",
+                status: "",
+                plano: "",
+                produto: "",
+                search: "",
+                captacao: "",
+              })}
+              className="border-border text-muted-foreground hover:text-foreground"
+            >
+              Limpar
+            </Button>
+          </div>
         </div>
       </div>
 
