@@ -504,26 +504,26 @@ export default function ClientesIntegracoes() {
   };
 
   return (
-    <main className="space-y-6">
+    <main className="space-y-4">
       {/* Header Ciano */}
-      <div className="bg-cyan-500 rounded-lg p-6 text-white">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
+      <div className="bg-primary rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-5 h-5 bg-white/20 rounded flex items-center justify-center">
             <span className="text-xs">≡</span>
           </div>
-          <h1 className="text-lg font-semibold">Credenciais Dos Servidores IPTV</h1>
+          <h1 className="text-base font-semibold text-primary-foreground">Credenciais Dos Servidores IPTV</h1>
         </div>
-        <p className="text-sm text-white/90">Configure e gerencie seus painéis IPTV</p>
+        <p className="text-sm text-primary-foreground/80">Configure e gerencie seus painéis IPTV</p>
       </div>
 
       {/* Barra de Busca */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Buscar provedor..."
-          className="pl-10 bg-card border-border"
+          className="pl-10 h-9"
         />
       </div>
 
@@ -535,11 +535,11 @@ export default function ClientesIntegracoes() {
             variant={selectedProvider === provedor.id ? "default" : "outline"}
             size="sm"
             onClick={() => setSelectedProvider(provedor.id)}
-            className={
+            className={`h-8 text-xs font-medium ${
               selectedProvider === provedor.id
-                ? "bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500"
-                : "border-border text-foreground hover:bg-muted"
-            }
+                ? "bg-primary hover:bg-primary/90"
+                : "hover:bg-muted"
+            }`}
           >
             {provedor.nome}
           </Button>
@@ -548,31 +548,31 @@ export default function ClientesIntegracoes() {
 
       {/* Card do Provedor Selecionado */}
       {currentProvider && (
-        <div className="border border-amber-500/50 rounded-lg p-4 bg-card">
+        <div className="rounded-lg p-4 bg-card border border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <Play className="w-4 h-4 text-white" />
+                <Play className="w-4 h-4 text-white fill-white" />
               </div>
               <div>
                 <h3 className="font-semibold text-foreground">{currentProvider.nome}</h3>
-                <p className="text-sm text-cyan-400">{currentProvider.descricao}</p>
+                <p className="text-sm text-muted-foreground">{currentProvider.descricao}</p>
               </div>
             </div>
 
             {/* Estatísticas */}
-            <div className="flex gap-3">
-              <div className="border border-cyan-500/50 rounded-lg px-4 py-2 text-center min-w-[80px]">
-                <div className="text-xl font-bold text-cyan-400">{providerStats.total}</div>
-                <div className="text-xs text-muted-foreground">Total</div>
+            <div className="flex gap-2">
+              <div className="border border-primary/50 rounded-lg px-4 py-2 text-center min-w-[70px]">
+                <div className="text-lg font-bold text-primary">{providerStats.total}</div>
+                <div className="text-[10px] text-muted-foreground">Total</div>
               </div>
-              <div className="border border-green-500/50 rounded-lg px-4 py-2 text-center min-w-[80px]">
-                <div className="text-xl font-bold text-green-400">{providerStats.ativos}</div>
-                <div className="text-xs text-muted-foreground">Ativos</div>
+              <div className="border border-green-500/50 rounded-lg px-4 py-2 text-center min-w-[70px]">
+                <div className="text-lg font-bold text-green-500">{providerStats.ativos}</div>
+                <div className="text-[10px] text-muted-foreground">Ativos</div>
               </div>
-              <div className="border border-red-500/50 rounded-lg px-4 py-2 text-center min-w-[80px]">
-                <div className="text-xl font-bold text-red-400">{providerStats.inativos}</div>
-                <div className="text-xs text-muted-foreground">Inativos</div>
+              <div className="border border-destructive/50 bg-destructive/5 rounded-lg px-4 py-2 text-center min-w-[70px]">
+                <div className="text-lg font-bold text-destructive">{providerStats.inativos}</div>
+                <div className="text-[10px] text-muted-foreground">Inativos</div>
               </div>
             </div>
           </div>
@@ -580,14 +580,16 @@ export default function ClientesIntegracoes() {
       )}
 
       {/* Área de Painéis Configurados */}
-      <div className="border border-amber-500/30 rounded-lg p-8 bg-card min-h-[200px] flex flex-col items-center justify-center">
+      <div className="border-2 border-dashed border-border rounded-lg p-8 bg-card/50 min-h-[200px] flex flex-col items-center justify-center">
         {providerPanels.length === 0 ? (
           <>
-            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center mb-4">
-              <Monitor className="w-8 h-8 text-muted-foreground" />
+            <div className="w-14 h-14 bg-muted rounded-lg flex items-center justify-center mb-4">
+              <Monitor className="w-7 h-7 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground mb-2">Nenhum painel configurado</p>
-            <p className="text-sm text-muted-foreground mb-4">Configure seu primeiro painel {currentProvider?.nome} para começar</p>
+            <p className="text-foreground font-medium mb-1">Nenhum painel configurado</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Configure seu <span className="text-primary">primeiro painel {currentProvider?.nome}</span> para começar
+            </p>
             <Button 
               onClick={() => setIsConfigModalOpen(true)}
               className="bg-green-500 hover:bg-green-600 text-white"
@@ -613,12 +615,12 @@ export default function ClientesIntegracoes() {
               {providerPanels.map((p) => (
                 <div key={p.id} className="flex items-center justify-between py-3">
                   <div className="flex items-start gap-3">
-                    <div className={`w-6 h-6 ${p.status === 'Ativo' ? 'bg-green-500' : 'bg-gray-500'} rounded-full flex items-center justify-center mt-0.5`}>
+                    <div className={`w-6 h-6 ${p.status === 'Ativo' ? 'bg-green-500' : 'bg-muted'} rounded-full flex items-center justify-center mt-0.5`}>
                       <Check className="w-4 h-4 text-white" />
                     </div>
                     <div>
                       <div className="text-foreground font-medium">{p.nome}</div>
-                      <a href={p.url} target="_blank" rel="noreferrer" className="text-cyan-400 text-xs hover:underline">
+                      <a href={p.url} target="_blank" rel="noreferrer" className="text-primary text-xs hover:underline">
                         {p.url}
                       </a>
                     </div>
@@ -628,10 +630,10 @@ export default function ClientesIntegracoes() {
                       {p.status}
                     </Badge>
                     <div className="flex gap-1">
-                      <Button onClick={() => startEditPanel(p)} variant="outline" size="icon" className="h-8 w-8 border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"><Edit className="h-4 w-4" /></Button>
-                      <Button onClick={() => handleToggleStatus(p.id)} variant="outline" size="icon" className="h-8 w-8 border-cyan-500 text-cyan-400 hover:bg-cyan-500/10">{p.status === 'Ativo' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</Button>
-                      <Button onClick={() => testPanel(p)} title="Testar conexão" disabled={isTestingConnection} variant="outline" size="icon" className="h-8 w-8 border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"><RefreshCw className="h-4 w-4" /></Button>
-                      <Button onClick={() => openDeleteConfirm(p)} variant="outline" size="icon" className="h-8 w-8 border-red-500 text-red-400 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button>
+                      <Button onClick={() => startEditPanel(p)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"><Edit className="h-4 w-4" /></Button>
+                      <Button onClick={() => handleToggleStatus(p.id)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10">{p.status === 'Ativo' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</Button>
+                      <Button onClick={() => testPanel(p)} title="Testar conexão" disabled={isTestingConnection} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"><RefreshCw className="h-4 w-4" /></Button>
+                      <Button onClick={() => openDeleteConfirm(p)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
                 </div>
