@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, X, Pencil, Trash2, Plus } from "lucide-react";
+import { Search, X, Pencil, Trash2 } from "lucide-react";
 import type { Aplicativo } from "@/types/database";
 import { useAplicativos } from "@/hooks/useDatabase";
 
@@ -105,53 +105,58 @@ export default function ClientesAplicativos() {
   return (
     <main className="space-y-4">
       {/* Header */}
-      <header className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">Aplicativos</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="bg-primary hover:bg-primary/90">
-              <Plus className="h-4 w-4 mr-1" />
-              Novo
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{editingApp ? "Editar Aplicativo" : "Novo Aplicativo"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="nome">Nome</Label>
-                <Input
-                  id="nome"
-                  value={formData.nome}
-                  onChange={(e) => handleInputChange("nome", e.target.value)}
-                  placeholder="Nome do aplicativo"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="descricao">Descrição</Label>
-                <Textarea
-                  id="descricao"
-                  value={formData.descricao}
-                  onChange={(e) => handleInputChange("descricao", e.target.value)}
-                  placeholder="Descrição do aplicativo"
-                  className="min-h-[100px] resize-none"
-                />
-              </div>
-
-              <div className="flex gap-2 justify-end pt-2">
-                <Button variant="outline" onClick={handleCancel}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleSave} disabled={loading}>
-                  {loading ? "Salvando..." : "Salvar"}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Meus Aplicativos</h1>
+          <p className="text-sm text-muted-foreground">Lista com todos os seus aplicativos</p>
+        </div>
+        <Button 
+          onClick={() => setIsDialogOpen(true)}
+          className="bg-primary hover:bg-primary/90"
+        >
+          Adicionar Aplicativo +
+        </Button>
       </header>
+
+      {/* Edit/Create Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingApp ? "Editar Aplicativo" : "Novo Aplicativo"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome</Label>
+              <Input
+                id="nome"
+                value={formData.nome}
+                onChange={(e) => handleInputChange("nome", e.target.value)}
+                placeholder="Nome do aplicativo"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="descricao">Descrição</Label>
+              <Textarea
+                id="descricao"
+                value={formData.descricao}
+                onChange={(e) => handleInputChange("descricao", e.target.value)}
+                placeholder="Descrição do aplicativo"
+                className="min-h-[100px] resize-none"
+              />
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" onClick={handleCancel}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={loading}>
+                {loading ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Search & Table */}
       <div className="rounded-lg border border-border bg-card">
