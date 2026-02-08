@@ -612,11 +612,20 @@ export default function ClientesCadastro() {
                     <SelectValue placeholder="Selecione uma opção" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="indicacao">Indicação</SelectItem>
-                    <SelectItem value="instagram">Instagram</SelectItem>
                     <SelectItem value="facebook">Facebook</SelectItem>
-                    <SelectItem value="google">Google</SelectItem>
+                    <SelectItem value="instagram">Instagram</SelectItem>
                     <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    <SelectItem value="indicacao">Indicação</SelectItem>
+                    <SelectItem value="google_ads">Google Ads</SelectItem>
+                    <SelectItem value="youtube">YouTube</SelectItem>
+                    <SelectItem value="tiktok">TikTok</SelectItem>
+                    <SelectItem value="site">Site</SelectItem>
+                    <SelectItem value="panfleto">Panfleto</SelectItem>
+                    <SelectItem value="radio">Rádio</SelectItem>
+                    <SelectItem value="tv">TV</SelectItem>
+                    <SelectItem value="boca_a_boca">Boca a boca</SelectItem>
+                    <SelectItem value="evento">Evento</SelectItem>
+                    <SelectItem value="parceria">Parceria</SelectItem>
                     <SelectItem value="outro">Outro</SelectItem>
                   </SelectContent>
                 </Select>
