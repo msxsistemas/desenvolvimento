@@ -93,11 +93,6 @@ export function AppSidebar() {
   // Subitens do Clientes
   const clientesSubItems = [
     { to: "/clientes", label: "Listar/Criar" },
-    { to: "/clientes/planos", label: "Planos" },
-    { to: "/clientes/produtos", label: "Produtos" },
-    { to: "/clientes/aplicativos", label: "Aplicativos" },
-    { to: "/clientes/metricas", label: "Métricas" },
-    { to: "/clientes/integracoes", label: "Integrações" },
   ];
 
   // Subitens do WhatsApp
