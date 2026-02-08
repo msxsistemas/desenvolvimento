@@ -233,7 +233,8 @@ export function AppSidebar() {
                             </div>
                           )}
                         </div>
-                        {!isCollapsed && <ChevronRight className="h-4 w-4 opacity-50" />}
+                        {/* Não mostrar seta no Dashboard */}
+                        {!isCollapsed && item.to !== "/" && <ChevronRight className="h-4 w-4 opacity-50" />}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
