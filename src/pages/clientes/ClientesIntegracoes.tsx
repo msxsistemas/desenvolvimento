@@ -2,37 +2,11 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Info, Shield, Eye, CheckCircle, XCircle, Edit, Pause, RefreshCw, Trash2, Check, Play, Search, Monitor, Plus } from "lucide-react";
+import { Search, Server } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-// Lista de provedores IPTV disponíveis
-const PROVEDORES = [
-  { id: 'playfast', nome: 'PLAYFAST', descricao: 'Painel IPTV Playfast' },
-  { id: 'koffice-api', nome: 'KOFFICE API', descricao: 'Integração kOfficePanel API' },
-  { id: 'koffice-v2', nome: 'KOFFICE V2', descricao: 'Painel kOffice versão 2' },
-  { id: 'sigma-v2', nome: 'SIGMA/QPANEL V2 (NOVO)', descricao: 'Painel Sigma/QPanel versão 2' },
-  { id: 'sigma-backup', nome: 'SIGMA BACKUP', descricao: 'Backup do Painel Sigma' },
-  { id: 'now', nome: 'NOW', descricao: 'Painel NOW IPTV' },
-  { id: 'thebest', nome: 'THEBEST', descricao: 'Painel TheBest IPTV' },
-  { id: 'wplay', nome: 'WPLAY', descricao: 'Painel WPlay IPTV' },
-  { id: 'natv', nome: 'NATV', descricao: 'Painel NATV' },
-  { id: 'uniplay', nome: 'UNIPLAY E FRANQUIAS', descricao: 'Painel Uniplay e Franquias' },
-  { id: 'tvs', nome: 'TVS E FRANQUIAS', descricao: 'Painel TVS e Franquias' },
-  { id: 'mundogf', nome: 'MUNDOGF E FRANQUIAS', descricao: 'Painel MundoGF e Franquias' },
-  { id: 'painelfoda', nome: 'PAINELFODA', descricao: 'Painel Foda IPTV' },
-  { id: 'centralp2braz', nome: 'CENTRALP2BRAZ', descricao: 'Painel CentralP2Braz' },
-  { id: 'clubtv', nome: 'CLUBTV', descricao: 'Painel ClubTV' },
-  { id: 'easyplay', nome: 'EASYPLAY', descricao: 'Painel EasyPlay' },
-  { id: 'blade', nome: 'BLADE', descricao: 'Painel Blade IPTV' },
-  { id: 'live21', nome: 'LIVE21', descricao: 'Painel Live21' },
-  { id: 'elite-office', nome: 'ELITE OFFICE', descricao: 'Painel Elite Office' },
-  { id: 'unitv', nome: 'UNITV', descricao: 'Painel UniTV' },
-];
+import { PROVEDORES, ProvedoresList, ProviderCard, PanelsList, Panel } from "@/components/servidores/ProvedoresList";
+import { AddPanelModal, EditPanelModal, TestResultModal, DeleteConfirmModal, SuccessModal } from "@/components/servidores/ServidoresModals";
 
 export default function ClientesIntegracoes() {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
@@ -47,13 +21,11 @@ export default function ClientesIntegracoes() {
     success: boolean;
     message: string;
     details?: string;
-    type?: 'sigma' | 'koffice';
   }>({
     isOpen: false,
     success: false,
     message: "",
     details: "",
-    type: 'sigma'
   });
   
   const [formData, setFormData] = useState({
@@ -63,91 +35,9 @@ export default function ClientesIntegracoes() {
     senha: ""
   });
 
-  // kOfficePanel form data
-  const [kofficeFormData, setKofficeFormData] = useState({
-    nomeServidor: "",
-    linkPainel: "",
-    usuario: "",
-    chaveApi: ""
-  });
-  const [isKofficeModalOpen, setIsKofficeModalOpen] = useState(false);
-  const [isTestingKoffice, setIsTestingKoffice] = useState(false);
-  const [kofficeIntegrations, setKofficeIntegrations] = useState<Array<{
-    id: string;
-    nomeServidor: string;
-    linkPainel: string;
-    usuario: string;
-    chaveApi: string;
-  }>>([]);
-
-  // Testar conexão kOfficePanel API
-  const handleTestKofficeConnection = async () => {
-    if (!kofficeFormData.linkPainel.trim() || !kofficeFormData.usuario.trim() || !kofficeFormData.chaveApi.trim()) {
-      setTestResultModal({
-        isOpen: true,
-        success: false,
-        message: "Dados Obrigatórios Ausentes",
-        details: "❌ Preencha Link do Painel, Usuário e Chave API antes de testar.",
-        type: 'koffice'
-      });
-      return;
-    }
-
-    setIsTestingKoffice(true);
-    try {
-      const baseUrl = kofficeFormData.linkPainel.trim().replace(/\/$/, '');
-      
-      const response = await fetch(`${baseUrl}/api.php?action=user&sub=info&username=${encodeURIComponent(kofficeFormData.usuario)}&password=${encodeURIComponent(kofficeFormData.chaveApi)}`, {
-        method: "GET",
-        headers: {
-          "Accept": "application/json"
-        }
-      });
-
-      const data = await response.json();
-
-      if (response.ok && (data?.result === true || data?.user_data || data?.status === 'success' || !data?.error)) {
-        setTestResultModal({
-          isOpen: true,
-          success: true,
-          message: "CONEXÃO kOfficePanel BEM-SUCEDIDA!",
-          details: `✅ Servidor: ${kofficeFormData.nomeServidor || 'N/A'}\n🔗 Endpoint: ${baseUrl}/api.php\n👤 Usuário: ${kofficeFormData.usuario}\n📡 Status: OK\n\n${data?.user_data ? `Dados recebidos: ${JSON.stringify(data.user_data).slice(0, 100)}...` : 'API respondeu com sucesso!'}`,
-          type: 'koffice'
-        });
-      } else {
-        setTestResultModal({
-          isOpen: true,
-          success: false,
-          message: "FALHA NA AUTENTICAÇÃO kOfficePanel",
-          details: data?.message || data?.error || "Usuário/Chave API inválidos ou URL incorreta.",
-          type: 'koffice'
-        });
-      }
-    } catch (error: any) {
-      setTestResultModal({
-        isOpen: true,
-        success: false,
-        message: "Erro no Teste kOfficePanel",
-        details: `Erro inesperado durante o teste: ${error.message}\n\nVerifique se a URL está correta e acessível.`,
-        type: 'koffice'
-      });
-    } finally {
-      setIsTestingKoffice(false);
-    }
-  };
-
   const { toast, dismiss } = useToast();
 
-  const [panels, setPanels] = useState<Array<{
-    id: string;
-    nome: string;
-    url: string;
-    usuario: string;
-    senha: string;
-    status: 'Ativo' | 'Inativo';
-    autoRenovacao: boolean;
-    provedor?: string;
-  }>>([]);
+  const [panels, setPanels] = useState<Panel[]>([]);
 
   const [createResultModal, setCreateResultModal] = useState<{ isOpen: boolean; message: string }>({
     isOpen: false,
@@ -159,12 +49,15 @@ export default function ClientesIntegracoes() {
     panel: null,
   });
 
+  // Edit modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState<{ id: string; nome: string; url: string }>({ id: "", nome: "", url: "" });
+
   useEffect(() => {
-    document.title = "Clientes - Integrações | Gestor Tech Play";
+    document.title = "Servidores | Tech Play";
     loadPanels();
   }, []);
 
-  // Carregar painéis do banco de dados
   const loadPanels = async () => {
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -290,7 +183,6 @@ export default function ClientesIntegracoes() {
 
       if (response.ok && data?.token) {
         localStorage.setItem("auth_token", data.token);
-
         setTestResultModal({
           isOpen: true,
           success: true,
@@ -317,7 +209,7 @@ export default function ClientesIntegracoes() {
     }
   };
 
-  const testPanel = async (panel: { id: string; nome: string; url: string; usuario: string; senha: string }) => {
+  const testPanel = async (panel: Panel) => {
     setIsTestingConnection(true);
     try {
       const baseUrl = panel.url.trim().replace(/\/$/, '');
@@ -396,11 +288,7 @@ export default function ClientesIntegracoes() {
     }
   };
 
-  // Edit modal state and handlers
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editForm, setEditForm] = useState<{ id: string; nome: string; url: string }>({ id: "", nome: "", url: "" });
-
-  const startEditPanel = (panel: { id: string; nome: string; url: string; status: 'Ativo' | 'Inativo'; autoRenovacao: boolean; }) => {
+  const startEditPanel = (panel: Panel) => {
     setEditForm({ id: panel.id, nome: panel.nome, url: panel.url });
     setIsEditModalOpen(true);
   };
@@ -460,7 +348,7 @@ export default function ClientesIntegracoes() {
     }
   };
 
-  const openDeleteConfirm = (panel: { id: string; nome: string; url: string; status: 'Ativo' | 'Inativo'; autoRenovacao: boolean; }) => {
+  const openDeleteConfirm = (panel: Panel) => {
     setDeleteConfirmModal({ isOpen: true, panel: { id: panel.id, nome: panel.nome } });
   };
 
@@ -505,470 +393,109 @@ export default function ClientesIntegracoes() {
 
   return (
     <main className="space-y-4">
-      {/* Header Ciano */}
-      <div className="bg-primary rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-5 h-5 bg-white/20 rounded flex items-center justify-center">
-            <span className="text-xs">≡</span>
+      {/* Header */}
+      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
+        <div className="flex items-center gap-3">
+          <Server className="h-5 w-5 text-primary" />
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">Servidores IPTV</h1>
+            <p className="text-sm text-muted-foreground">Gerencie seus painéis de integração</p>
           </div>
-          <h1 className="text-base font-semibold text-primary-foreground">Credenciais Dos Servidores IPTV</h1>
         </div>
-        <p className="text-sm text-primary-foreground/80">Configure e gerencie seus painéis IPTV</p>
+      </header>
+
+      {/* Filters */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Buscar provedor</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar provedor..."
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <div className="flex items-end">
+            <Button variant="outline" onClick={() => setSearchTerm("")}>
+              Limpar
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Barra de Busca */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar provedor..."
-          className="pl-10 h-9"
-        />
-      </div>
+      {/* Provedores Grid */}
+      <ProvedoresList 
+        filteredProvedores={filteredProvedores}
+        selectedProvider={selectedProvider}
+        onSelectProvider={setSelectedProvider}
+      />
 
-      {/* Grid de Provedores */}
-      <div className="flex flex-wrap gap-2">
-        {filteredProvedores.map((provedor) => (
-          <button
-            key={provedor.id}
-            onClick={() => setSelectedProvider(provedor.id)}
-            className={`px-4 py-2 text-xs font-medium rounded-md transition-all ${
-              selectedProvider === provedor.id
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary/80 text-secondary-foreground/70 border border-border/30 hover:bg-secondary hover:text-secondary-foreground"
-            }`}
-          >
-            {provedor.nome}
-          </button>
-        ))}
-      </div>
-
-      {/* Card do Provedor Selecionado */}
+      {/* Provider Card */}
       {currentProvider && (
-        <div className="rounded-lg p-4 bg-card border border-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <Play className="w-4 h-4 text-white fill-white" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">{currentProvider.nome}</h3>
-                <p className="text-sm text-muted-foreground">{currentProvider.descricao}</p>
-              </div>
-            </div>
-
-            {/* Estatísticas */}
-            <div className="flex gap-2">
-              <div className="border border-primary/50 rounded-lg px-4 py-2 text-center min-w-[70px]">
-                <div className="text-lg font-bold text-primary">{providerStats.total}</div>
-                <div className="text-[10px] text-muted-foreground">Total</div>
-              </div>
-              <div className="border border-green-500/50 rounded-lg px-4 py-2 text-center min-w-[70px]">
-                <div className="text-lg font-bold text-green-500">{providerStats.ativos}</div>
-                <div className="text-[10px] text-muted-foreground">Ativos</div>
-              </div>
-              <div className="border border-destructive/50 bg-destructive/5 rounded-lg px-4 py-2 text-center min-w-[70px]">
-                <div className="text-lg font-bold text-destructive">{providerStats.inativos}</div>
-                <div className="text-[10px] text-muted-foreground">Inativos</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProviderCard provider={currentProvider} stats={providerStats} />
       )}
 
-      {/* Área de Painéis Configurados */}
-      <div className="border-2 border-dashed border-border rounded-lg p-8 bg-card/50 min-h-[200px] flex flex-col items-center justify-center">
-        {providerPanels.length === 0 ? (
-          <>
-            <div className="w-14 h-14 bg-muted rounded-lg flex items-center justify-center mb-4">
-              <Monitor className="w-7 h-7 text-muted-foreground" />
-            </div>
-            <p className="text-foreground font-medium mb-1">Nenhum painel configurado</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              Configure seu <span className="text-primary">primeiro painel {currentProvider?.nome}</span> para começar
-            </p>
-            <Button 
-              onClick={() => setIsConfigModalOpen(true)}
-              className="bg-green-500 hover:bg-green-600 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Painel {currentProvider?.nome}
-            </Button>
-          </>
-        ) : (
-          <div className="w-full">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground">Painéis Configurados</h3>
-              <Button 
-                onClick={() => setIsConfigModalOpen(true)}
-                className="bg-green-500 hover:bg-green-600 text-white"
-                size="sm"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Painel
-              </Button>
-            </div>
-            <div className="divide-y divide-border">
-              {providerPanels.map((p) => (
-                <div key={p.id} className="flex items-center justify-between py-3">
-                  <div className="flex items-start gap-3">
-                    <div className={`w-6 h-6 ${p.status === 'Ativo' ? 'bg-green-500' : 'bg-muted'} rounded-full flex items-center justify-center mt-0.5`}>
-                      <Check className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-foreground font-medium">{p.nome}</div>
-                      <a href={p.url} target="_blank" rel="noreferrer" className="text-primary text-xs hover:underline">
-                        {p.url}
-                      </a>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant={p.status === 'Ativo' ? 'default' : 'secondary'} className={p.status === 'Ativo' ? 'bg-green-500 hover:bg-green-500' : ''}>
-                      {p.status}
-                    </Badge>
-                    <div className="flex gap-1">
-                      <Button onClick={() => startEditPanel(p)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"><Edit className="h-4 w-4" /></Button>
-                      <Button onClick={() => handleToggleStatus(p.id)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10">{p.status === 'Ativo' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</Button>
-                      <Button onClick={() => testPanel(p)} title="Testar conexão" disabled={isTestingConnection} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"><RefreshCw className="h-4 w-4" /></Button>
-                      <Button onClick={() => openDeleteConfirm(p)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Panels List */}
+      <PanelsList
+        panels={providerPanels}
+        providerName={currentProvider?.nome || ''}
+        isTestingConnection={isTestingConnection}
+        onAddPanel={() => setIsConfigModalOpen(true)}
+        onEditPanel={startEditPanel}
+        onToggleStatus={handleToggleStatus}
+        onTestPanel={testPanel}
+        onDeletePanel={openDeleteConfirm}
+      />
 
-      {/* Configuration Modal */}
-      <Dialog open={isConfigModalOpen} onOpenChange={setIsConfigModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-800 border-slate-700">
-          <DialogHeader>
-            <DialogTitle className="sr-only">Configurar Painel {currentProvider?.nome}</DialogTitle>
-            <DialogDescription className="sr-only">Formulário de configuração do painel IPTV</DialogDescription>
-          </DialogHeader>
-          
-          {/* Header */}
-          <div className="bg-cyan-500 -m-6 mb-6 p-6 text-white">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
-                <span className="text-xs">≡</span>
-              </div>
-              <h1 className="text-lg font-semibold">Adicionar Painel {currentProvider?.nome}</h1>
-            </div>
-            <p className="text-sm text-white/90">Configure suas credenciais para integração</p>
-          </div>
+      {/* Modals */}
+      <AddPanelModal
+        isOpen={isConfigModalOpen}
+        onOpenChange={setIsConfigModalOpen}
+        providerName={currentProvider?.nome || ''}
+        formData={formData}
+        setFormData={setFormData}
+        showPassword={showPassword}
+        setShowPassword={setShowPassword}
+        autoRenewal={autoRenewal}
+        setAutoRenewal={setAutoRenewal}
+        isTestingConnection={isTestingConnection}
+        onCreatePanel={handleCreatePanel}
+        onTestConnection={handleTestConnection}
+      />
 
-          {/* Breadcrumb */}
-          <div className="flex items-center justify-between gap-2 text-sm mb-6">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400">Dashboard</span>
-              <span className="text-gray-400">&gt;</span>
-              <span className="text-white">{currentProvider?.nome}</span>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setIsConfigModalOpen(false)}
-              className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-          </div>
+      <EditPanelModal
+        isOpen={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        editForm={editForm}
+        setEditForm={setEditForm}
+        onSave={handleSaveEditPanel}
+      />
 
-          {/* Add New Panel Section */}
-          <div className="bg-green-500 rounded-lg p-4 text-white mb-6">
-            <div className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              <span className="font-medium">Adicionar Novo Painel {currentProvider?.nome}</span>
-            </div>
-          </div>
+      <TestResultModal
+        isOpen={testResultModal.isOpen}
+        onOpenChange={(open) => setTestResultModal(prev => ({ ...prev, isOpen: open }))}
+        success={testResultModal.success}
+        message={testResultModal.message}
+        details={testResultModal.details}
+      />
 
-          {/* Warning */}
-          <div className="flex items-center justify-between bg-orange-500/10 border border-orange-500/20 rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-2">
-              <span className="text-orange-400 text-xs">⚠️</span>
-              <span className="text-sm font-medium text-orange-400">IMPORTANTE:</span>
-              <span className="text-sm text-gray-300">Desabilite 2FA no painel se necessário</span>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10">
-                <Info className="w-4 h-4" />
-              </Button>
-              <Button size="sm" variant="outline" className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10">
-                <Shield className="w-4 h-4 mr-2" />
-                AES-256 Criptografado
-              </Button>
-            </div>
-          </div>
+      <DeleteConfirmModal
+        isOpen={deleteConfirmModal.isOpen}
+        onOpenChange={(open) => setDeleteConfirmModal(prev => ({ ...prev, isOpen: open }))}
+        panelName={deleteConfirmModal.panel?.nome || ''}
+        onConfirm={handleDeletePanel}
+      />
 
-          {/* Form */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="space-y-2">
-              <Label className="text-cyan-400 flex items-center gap-2">
-                <span className="text-cyan-400">💼</span>
-                Nome do Painel *
-              </Label>
-              <Input
-                value={formData.nomePainel}
-                onChange={(e) => setFormData(prev => ({ ...prev, nomePainel: e.target.value }))}
-                placeholder="Ex: Meu Painel Principal"
-                className="bg-slate-700 border-slate-600 text-white"
-              />
-              <p className="text-xs text-gray-400">Nome para identificar este painel</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-cyan-400 flex items-center gap-2">
-                <span className="text-cyan-400">🔗</span>
-                URL do Painel *
-              </Label>
-              <Input
-                value={formData.urlPainel}
-                onChange={(e) => setFormData(prev => ({ ...prev, urlPainel: e.target.value }))}
-                placeholder="https://painel.exemplo.com"
-                className="bg-slate-700 border-slate-600 text-white"
-              />
-              <p className="text-xs text-gray-400">URL do seu painel</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-cyan-400 flex items-center gap-2">
-                <span className="text-cyan-400">👤</span>
-                Usuário do Painel *
-              </Label>
-              <Input
-                value={formData.usuario}
-                onChange={(e) => setFormData(prev => ({ ...prev, usuario: e.target.value }))}
-                placeholder="seu_usuario"
-                className="bg-slate-700 border-slate-600 text-white"
-              />
-              <p className="text-xs text-gray-400">Username usado para acessar o painel</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-red-400 flex items-center gap-2">
-                <span className="text-red-400">🔒</span>
-                Senha do Painel *
-              </Label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={formData.senha}
-                  onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
-                  placeholder="sua_senha"
-                  className="bg-slate-700 border-slate-600 text-white pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 text-gray-400 hover:text-white"
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-gray-400">Senha para acessar o painel</p>
-            </div>
-          </div>
-
-          {/* Configurações Section */}
-          <div className="space-y-4 mb-6">
-            <div className="flex items-center gap-2 text-cyan-400">
-              <span className="text-sm">⚙️</span>
-              <h3 className="font-medium">Configurações</h3>
-            </div>
-            
-            <div className="flex items-center justify-between bg-slate-700/50 rounded-lg p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">🔄</span>
-                </div>
-                <div>
-                  <p className="text-white font-medium">Renovação Automática</p>
-                  <p className="text-sm text-gray-400">Clientes serão renovados automaticamente neste painel</p>
-                </div>
-              </div>
-              <Switch 
-                checked={autoRenewal}
-                onCheckedChange={setAutoRenewal}
-              />
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4">
-            <Button 
-              onClick={handleCreatePanel}
-              className="bg-green-500 hover:bg-green-600 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Criar Painel
-            </Button>
-            
-            <Button 
-              onClick={handleTestConnection}
-              variant="outline" 
-              className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"
-              disabled={isTestingConnection}
-            >
-              <span className="mr-2">🔧</span>
-              {isTestingConnection ? "Testando..." : "Testar Conexão"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Create Result Modal */}
-      <Dialog open={createResultModal.isOpen} onOpenChange={(open) => setCreateResultModal((prev) => ({ ...prev, isOpen: open }))}>
-        <DialogContent className="max-w-md bg-slate-800 border-slate-700">
-          <DialogHeader>
-            <DialogTitle className="sr-only">Resultado da Operação</DialogTitle>
-            <DialogDescription className="sr-only">Mensagem de sucesso</DialogDescription>
-          </DialogHeader>
-          <div className="text-center p-6">
-            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold text-green-400 mb-2">Sucesso</h3>
-            <p className="text-sm text-green-300 mb-6">{createResultModal.message}</p>
-            <Button 
-              onClick={() => {
-                setCreateResultModal((prev) => ({ ...prev, isOpen: false }));
-                setIsConfigModalOpen(false);
-              }} 
-              className="w-full bg-green-500 hover:bg-green-600 text-white"
-            >
-              OK
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Panel Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-lg bg-slate-800 border-slate-700">
-          <DialogHeader>
-            <DialogTitle className="text-white">Editar Painel</DialogTitle>
-            <DialogDescription className="text-gray-300">Atualize as informações do painel selecionado</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-cyan-400">Nome do Painel</Label>
-              <Input
-                value={editForm.nome}
-                onChange={(e) => setEditForm((prev) => ({ ...prev, nome: e.target.value }))}
-                className="bg-slate-700 border-slate-600 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-cyan-400">URL do Painel</Label>
-              <Input
-                value={editForm.url}
-                onChange={(e) => setEditForm((prev) => ({ ...prev, url: e.target.value }))}
-                className="bg-slate-700 border-slate-600 text-white"
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
-              <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={handleSaveEditPanel}>Salvar</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Test Result Modal */}
-      <Dialog open={testResultModal.isOpen} onOpenChange={(open) => setTestResultModal(prev => ({ ...prev, isOpen: open }))}>
-        <DialogContent className="max-w-md bg-slate-800 border-slate-700">
-          <DialogHeader>
-            <DialogTitle className="sr-only">Resultado do Teste de Conexão</DialogTitle>
-            <DialogDescription className="sr-only">Resultado do teste de conexão com o painel</DialogDescription>
-          </DialogHeader>
-          
-          <div className="text-center p-6">
-            <div className="mb-4">
-              {testResultModal.success ? (
-                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8 text-white" />
-                </div>
-              ) : (
-                <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <XCircle className="w-8 h-8 text-white" />
-                </div>
-              )}
-            </div>
-            
-            <h3 className={`text-lg font-semibold mb-2 ${testResultModal.success ? 'text-green-400' : 'text-red-400'}`}>
-              {testResultModal.success ? "Teste - Sucesso" : "Teste - Erro"}
-            </h3>
-            
-            <p className={`text-sm mb-4 ${testResultModal.success ? 'text-green-300' : 'text-red-300'}`}>
-              {testResultModal.message}
-            </p>
-            
-            {testResultModal.details && (
-              <div className="bg-slate-700/50 rounded-lg p-3 mb-4 text-left">
-                <pre className="text-xs text-gray-300 whitespace-pre-wrap">
-                  {testResultModal.details}
-                </pre>
-              </div>
-            )}
-            
-            <Button 
-              onClick={() => setTestResultModal(prev => ({ ...prev, isOpen: false }))}
-              className={`w-full ${testResultModal.success ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-600 hover:bg-gray-700'} text-white`}
-            >
-              OK
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Modal */}
-      <Dialog open={deleteConfirmModal.isOpen} onOpenChange={(open) => setDeleteConfirmModal(prev => ({ ...prev, isOpen: open }))}>
-        <DialogContent className="max-w-md bg-slate-800 border-slate-700">
-          <DialogHeader>
-            <DialogTitle className="text-white">Confirmar Exclusão</DialogTitle>
-            <DialogDescription className="text-gray-300">
-              Esta ação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="text-center p-4">
-            <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="w-8 h-8 text-white" />
-            </div>
-            
-            <h3 className="text-lg font-semibold mb-2 text-red-400">
-              Excluir Painel
-            </h3>
-            
-            <p className="text-sm mb-4 text-gray-300">
-              Tem certeza que deseja excluir o painel "{deleteConfirmModal.panel?.nome}"?
-            </p>
-            
-            <div className="flex gap-2 justify-center">
-              <Button 
-                variant="outline" 
-                onClick={() => setDeleteConfirmModal({ isOpen: false, panel: null })}
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleDeletePanel}
-                className="bg-red-500 hover:bg-red-600 text-white"
-              >
-                Excluir
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <SuccessModal
+        isOpen={createResultModal.isOpen}
+        onOpenChange={(open) => setCreateResultModal(prev => ({ ...prev, isOpen: open }))}
+        message={createResultModal.message}
+        onClose={() => setIsConfigModalOpen(false)}
+      />
     </main>
   );
 }
