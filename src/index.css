@@ -286,9 +286,9 @@ All colors MUST be HSL.
 }
 
 [data-radix-collapsible-content][data-state="open"] {
-  animation: collapsible-down 0.3s ease-out;
+  animation: collapsible-down 0.5s ease-out;
 }
 
 [data-radix-collapsible-content][data-state="closed"] {
-  animation: collapsible-up 0.3s ease-out;
+  animation: collapsible-up 0.4s ease-out;
 }
