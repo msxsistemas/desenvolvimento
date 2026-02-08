@@ -313,25 +313,6 @@ export default function ClientesCadastro() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium">E-mail</Label>
-                <Input 
-                  type="email"
-                  placeholder="email@exemplo.com" 
-                  className="bg-background border-border"
-                  {...form.register("email")}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">CPF/CNPJ</Label>
-                <Input 
-                  placeholder="CPF ou CNPJ" 
-                  className="bg-background border-border"
-                  {...form.register("cpfCnpj")}
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label className="text-sm font-medium">Data de Aniversário</Label>
                 <Input 
                   type="date"
@@ -514,20 +495,6 @@ export default function ClientesCadastro() {
               </div>
             </div>
 
-            {/* Collapsible: Aplicativos Adicionais */}
-            <Collapsible className="mt-4">
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/30 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-2">
-                  <Smartphone className="h-4 w-4 text-cyan-400" />
-                  <span className="text-sm font-medium">Aplicativos Adicionais</span>
-                  <span className="text-xs text-muted-foreground">(Opcional)</span>
-                </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-4">
-                <p className="text-sm text-muted-foreground">Funcionalidade em desenvolvimento...</p>
-              </CollapsibleContent>
-            </Collapsible>
 
             {/* Seção: Financeiro */}
             <SectionHeader icon={DollarSign} title="Financeiro" color="text-green-400" />
@@ -593,8 +560,14 @@ export default function ClientesCadastro() {
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </CollapsibleTrigger>
-              <CollapsibleContent className="pt-4">
-                <p className="text-sm text-muted-foreground">Funcionalidade em desenvolvimento...</p>
+              <CollapsibleContent className="pt-4 space-y-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:bg-primary/10"
+                >
+                  + Adicionar Acesso
+                </Button>
               </CollapsibleContent>
             </Collapsible>
 
