@@ -19,7 +19,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Home, User, Package, Key, Smartphone, Users, ChevronDown, Trash2 } from "lucide-react";
+import { Home, User, Package, Key, Smartphone, Users, ChevronDown, Trash2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useClientes, usePlanos, useProdutos, useAplicativos } from "@/hooks/useDatabase";
@@ -305,13 +305,23 @@ export default function ClientesEditar() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{saudacao}, Tech Play!</h1>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-          <Home className="h-4 w-4" />
-          <span>/</span>
-          <span className="text-[hsl(var(--brand-2))]">Editar cliente</span>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{saudacao}, Tech Play!</h1>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+            <Home className="h-4 w-4" />
+            <span>/</span>
+            <span className="text-[hsl(var(--brand-2))]">Editar cliente</span>
+          </div>
         </div>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate("/clientes")}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
       </div>
 
       {/* Card do Formulário */}
