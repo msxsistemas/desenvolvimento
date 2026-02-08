@@ -195,17 +195,23 @@ export function AppSidebar() {
                         </div>
                       </SidebarMenuButton>
                       {whatsappOpen && !isCollapsed && (
-                        <SidebarMenuSub className="ml-10 mt-1 space-y-0 border-l border-[#2a2a3c] pl-4">
+                        <SidebarMenuSub className="ml-8 mt-2 space-y-1">
                           {whatsappSubItems.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.to}>
                               <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
                                 <NavLink
                                   to={subItem.to}
                                   end
-                                  className={`py-1.5 text-[13px] transition-colors ${
-                                    isActive(subItem.to) ? "text-white" : "text-[#8b8b9a] hover:text-white"
+                                  className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
+                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
                                   }`}
                                 >
+                                  {/* Círculo indicador */}
+                                  <span className={`w-2 h-2 rounded-full border ${
+                                    isActive(subItem.to) 
+                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
+                                      : "border-[#8b8b9a] bg-transparent"
+                                  }`} />
                                   {subItem.label}
                                 </NavLink>
                               </SidebarMenuSubButton>
