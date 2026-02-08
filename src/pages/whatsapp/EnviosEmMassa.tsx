@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -71,10 +69,8 @@ export default function EnviosEmMassa() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type based on message type
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
-    const isDocument = !isImage && !isVideo;
 
     if (tipoMensagem === 'imagem' && !isImage) {
       toast.error("Por favor, selecione uma imagem");
@@ -85,7 +81,6 @@ export default function EnviosEmMassa() {
       return;
     }
 
-    // Check file size (max 16MB for WhatsApp)
     if (file.size > 16 * 1024 * 1024) {
       toast.error("Arquivo muito grande. Máximo permitido: 16MB");
       return;
@@ -93,7 +88,6 @@ export default function EnviosEmMassa() {
 
     setMediaFile(file);
 
-    // Create preview for images
     if (isImage) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -148,7 +142,6 @@ export default function EnviosEmMassa() {
     try {
       let mediaUrl = null;
 
-      // Upload media if present
       if (mediaFile) {
         setUploading(true);
         const fileExt = mediaFile.name.split('.').pop();
@@ -160,7 +153,6 @@ export default function EnviosEmMassa() {
 
         if (uploadError) {
           console.error("Erro no upload:", uploadError);
-          // Continue without media if bucket doesn't exist
           if (!uploadError.message.includes('bucket')) {
             throw uploadError;
           }
@@ -173,10 +165,8 @@ export default function EnviosEmMassa() {
         setUploading(false);
       }
 
-      // Buscar clientes baseado no filtro
       let query = supabase.from("clientes").select("*").eq("user_id", user.id);
 
-      // Aplicar filtros
       const today = new Date().toISOString().split('T')[0];
       
       switch (destinatarios) {
@@ -199,7 +189,6 @@ export default function EnviosEmMassa() {
           query = query.gte("data_vencimento", today);
           break;
         case "todos":
-          // No filter, get all
           break;
       }
 
@@ -213,7 +202,6 @@ export default function EnviosEmMassa() {
         return;
       }
 
-      // Adicionar mensagens à fila
       const mensagensParaEnviar = clientes.map(cliente => ({
         user_id: user.id,
         phone: cliente.whatsapp,
@@ -255,192 +243,165 @@ export default function EnviosEmMassa() {
   const showMediaUpload = tipoMensagem && tipoMensagem !== 'texto';
 
   return (
-    <div className="space-y-4">
-      {/* Main Content */}
-      <Card className="bg-card border-border">
-        <CardContent className="p-4 md:p-6">
-          <h2 className="text-lg md:text-xl font-semibold text-foreground mb-1">Envios De Mensagens Em Massa</h2>
-          <p className="text-muted-foreground text-sm mb-6">Faça envio de mensagens para os seus clientes!</p>
+    <main className="space-y-4">
+      {/* Header */}
+      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Envios em Massa</h1>
+          <p className="text-sm text-muted-foreground">Envie mensagens para múltiplos clientes</p>
+        </div>
+      </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            {/* Form Section */}
-            <div className="space-y-5">
-              {/* Message Type */}
-              <div className="space-y-2">
-                <Label className="text-foreground">Escolha o tipo de mensagem que deseja enviar!</Label>
-                <Select value={tipoMensagem} onValueChange={(value) => {
-                  setTipoMensagem(value);
-                  removeMedia(); // Clear media when type changes
-                }}>
-                  <SelectTrigger className="bg-secondary border-border text-foreground">
-                    <SelectValue placeholder="Clique aqui para escolher" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tiposMensagem.map((tipo) => (
-                      <SelectItem key={tipo.value} value={tipo.value}>
-                        <div className="flex items-center gap-2">
-                          <tipo.icon className="h-4 w-4" />
-                          {tipo.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+      {/* Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Form Section */}
+        <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+          {/* Message Type */}
+          <div className="space-y-2">
+            <Label className="text-foreground">Tipo de mensagem</Label>
+            <Select value={tipoMensagem} onValueChange={(value) => {
+              setTipoMensagem(value);
+              removeMedia();
+            }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {tiposMensagem.map((tipo) => (
+                  <SelectItem key={tipo.value} value={tipo.value}>
+                    <div className="flex items-center gap-2">
+                      <tipo.icon className="h-4 w-4" />
+                      {tipo.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-              {/* Media Upload - Show when type is not "texto" */}
-              {showMediaUpload && (
-                <div className="space-y-2">
-                  <Label className="text-foreground">
-                    {tipoMensagem === 'imagem' && 'Selecione uma imagem'}
-                    {tipoMensagem === 'video' && 'Selecione um vídeo'}
-                    {tipoMensagem === 'documento' && 'Selecione um documento'}
-                  </Label>
+          {/* Media Upload */}
+          {showMediaUpload && (
+            <div className="space-y-2">
+              <Label className="text-foreground">
+                {tipoMensagem === 'imagem' && 'Selecione uma imagem'}
+                {tipoMensagem === 'video' && 'Selecione um vídeo'}
+                {tipoMensagem === 'documento' && 'Selecione um documento'}
+              </Label>
+              
+              {!mediaFile ? (
+                <div 
+                  className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">Clique para selecionar</p>
+                  <p className="text-xs text-muted-foreground mt-1">Máximo: 16MB</p>
+                </div>
+              ) : (
+                <div className="relative bg-secondary rounded-lg p-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 h-6 w-6"
+                    onClick={removeMedia}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                   
-                  {!mediaFile ? (
-                    <div 
-                      className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        Clique para selecionar ou arraste o arquivo aqui
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Máximo: 16MB
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="relative bg-secondary rounded-lg p-4">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2 h-6 w-6"
-                        onClick={removeMedia}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                      
-                      {tipoMensagem === 'imagem' && mediaPreview && (
-                        <img 
-                          src={mediaPreview} 
-                          alt="Preview" 
-                          className="max-h-32 mx-auto rounded"
-                        />
-                      )}
-                      
-                      {tipoMensagem === 'video' && mediaPreview && (
-                        <video 
-                          src={mediaPreview} 
-                          className="max-h-32 mx-auto rounded"
-                          controls
-                        />
-                      )}
-                      
-                      {tipoMensagem === 'documento' && (
-                        <div className="flex items-center gap-2 justify-center">
-                          <FileText className="h-8 w-8 text-muted-foreground" />
-                          <span className="text-sm text-foreground">{mediaFile.name}</span>
-                        </div>
-                      )}
-                    </div>
+                  {tipoMensagem === 'imagem' && mediaPreview && (
+                    <img src={mediaPreview} alt="Preview" className="max-h-32 mx-auto rounded" />
                   )}
                   
-                  <Input
-                    ref={fileInputRef}
-                    type="file"
-                    accept={getAcceptTypes()}
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
+                  {tipoMensagem === 'video' && mediaPreview && (
+                    <video src={mediaPreview} className="max-h-32 mx-auto rounded" controls />
+                  )}
+                  
+                  {tipoMensagem === 'documento' && (
+                    <div className="flex items-center gap-2 justify-center">
+                      <FileText className="h-8 w-8 text-muted-foreground" />
+                      <span className="text-sm text-foreground">{mediaFile.name}</span>
+                    </div>
+                  )}
                 </div>
               )}
-
-              {/* Recipients */}
-              <div className="space-y-2">
-                <Label className="text-foreground">Para quem deseja enviar a mensagem?</Label>
-                <Select value={destinatarios} onValueChange={setDestinatarios}>
-                  <SelectTrigger className="bg-secondary border-border text-foreground">
-                    <SelectValue placeholder="Clique aqui para selecionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {destinatariosOptions.map((dest) => (
-                      <SelectItem key={dest.value} value={dest.value}>{dest.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Tipo Badge */}
-              {destinatarios && (
-                <div className="space-y-2">
-                  <Label className="text-foreground">Tipo</Label>
-                  <div className="bg-[hsl(var(--brand-2))] text-white px-4 py-2 rounded-md text-sm font-medium">
-                    {getDestinatarioLabel(destinatarios)}
-                  </div>
-                </div>
-              )}
-
-              {/* Message */}
-              <div className="space-y-2">
-                <Label className="text-foreground font-semibold">Mensagem</Label>
-                <p className="text-sm text-muted-foreground">Utilize as seguintes chaves para obter os valores:</p>
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {availableKeys.map((key) => (
-                    <span 
-                      key={key} 
-                      className="text-[hsl(var(--brand))] text-xs cursor-pointer hover:underline"
-                      onClick={() => setMensagem(prev => prev + key)}
-                    >
-                      {key}
-                    </span>
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Utilize <span className="text-[hsl(var(--brand))]">{"{nome_cliente_indicado}"}</span> <span className="text-[hsl(var(--brand))]">{"{valor_indicacao}"}</span> somente na mensagem de indicação.
-                </p>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Utilize <span className="text-[hsl(var(--brand))]">{"{br}"}</span> para quebra de linha.
-                </p>
-                <Textarea
-                  value={mensagem}
-                  onChange={(e) => setMensagem(e.target.value)}
-                  className="bg-secondary border-border text-foreground min-h-[180px]"
-                  placeholder="Digite sua mensagem aqui..."
-                />
-              </div>
-
-
-              {/* Send Button */}
-              <Button 
-                onClick={handleEnviar}
-                disabled={sending || uploading || !tipoMensagem || !destinatarios || !mensagem || (showMediaUpload && !mediaFile)}
-                className="bg-[hsl(300,70%,40%)] hover:bg-[hsl(300,70%,35%)] text-white rounded-full px-6"
-              >
-                {sending || uploading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {uploading ? 'Enviando mídia...' : 'Enviando...'}
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Adicionar Mensagem
-                  </>
-                )}
-              </Button>
+              
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept={getAcceptTypes()}
+                onChange={handleFileSelect}
+                className="hidden"
+              />
             </div>
+          )}
 
-            {/* WhatsApp Preview */}
-            <WhatsAppPhonePreview 
-              message={mensagem}
-              templateLabel={destinatarios ? getDestinatarioLabel(destinatarios) : undefined}
-              mediaPreview={mediaPreview}
-              mediaType={tipoMensagem as 'imagem' | 'video' | 'documento' | undefined}
+          {/* Recipients */}
+          <div className="space-y-2">
+            <Label className="text-foreground">Destinatários</Label>
+            <Select value={destinatarios} onValueChange={setDestinatarios}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione os destinatários" />
+              </SelectTrigger>
+              <SelectContent>
+                {destinatariosOptions.map((dest) => (
+                  <SelectItem key={dest.value} value={dest.value}>{dest.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Message */}
+          <div className="space-y-2">
+            <Label className="text-foreground">Mensagem</Label>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {availableKeys.map((key) => (
+                <span 
+                  key={key} 
+                  className="text-primary text-xs bg-primary/10 px-2 py-1 rounded cursor-pointer hover:bg-primary/20"
+                  onClick={() => setMensagem(prev => prev + key)}
+                >
+                  {key}
+                </span>
+              ))}
+            </div>
+            <Textarea
+              value={mensagem}
+              onChange={(e) => setMensagem(e.target.value)}
+              className="min-h-[180px]"
+              placeholder="Digite sua mensagem aqui..."
             />
           </div>
-        </CardContent>
-      </Card>
-    </div>
+
+          {/* Send Button */}
+          <Button 
+            onClick={handleEnviar}
+            disabled={sending || uploading || !tipoMensagem || !destinatarios || !mensagem || (showMediaUpload && !mediaFile)}
+            className="w-full bg-primary hover:bg-primary/90"
+          >
+            {sending || uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {uploading ? 'Enviando mídia...' : 'Enviando...'}
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-2" />
+                Adicionar à Fila
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* WhatsApp Preview */}
+        <div className="lg:sticky lg:top-4">
+          <WhatsAppPhonePreview 
+            message={mensagem}
+            templateLabel={destinatarios ? getDestinatarioLabel(destinatarios) : undefined}
+            mediaPreview={mediaPreview}
+            mediaType={tipoMensagem as 'imagem' | 'video' | 'documento' | undefined}
+          />
+        </div>
+      </div>
+    </main>
   );
 }
