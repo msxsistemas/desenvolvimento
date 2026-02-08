@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useClientes, usePlanos, useProdutos, useAplicativos, useTemplatesCobranca } from "@/hooks/useDatabase";
+import { useEvolutionAPI } from "@/hooks/useEvolutionAPI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash, Plus, Send, RefreshCw, Power, Copy } from "lucide-react";
@@ -62,6 +63,7 @@ export default function ClientesListCreate() {
   const { buscar: buscarProdutos } = useProdutos();
   const { buscar: buscarAplicativos } = useAplicativos();
   const { buscar: buscarTemplates } = useTemplatesCobranca();
+  const { sendMessage, session: whatsappSession, loading: sendingMessage } = useEvolutionAPI();
   const { dismiss, toast } = useToast();
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -383,15 +385,33 @@ export default function ClientesListCreate() {
   };
 
   // Função para confirmar envio de WhatsApp
-  const confirmarEnvioWhatsApp = () => {
-    if (clienteParaWhatsapp?.whatsapp) {
-      const mensagemCodificada = encodeURIComponent(whatsappMensagem);
-      window.open(`https://wa.me/${clienteParaWhatsapp.whatsapp.replace(/\D/g, '')}${whatsappMensagem ? `?text=${mensagemCodificada}` : ''}`, '_blank');
+  const confirmarEnvioWhatsApp = async () => {
+    if (!clienteParaWhatsapp?.whatsapp || !whatsappMensagem.trim()) {
+      toast({
+        title: "Erro",
+        description: "Digite uma mensagem para enviar",
+        variant: "destructive",
+      });
+      return;
     }
-    setWhatsappDialogOpen(false);
-    setClienteParaWhatsapp(null);
-    setWhatsappTemplate("");
-    setWhatsappMensagem("");
+
+    try {
+      await sendMessage(clienteParaWhatsapp.whatsapp, whatsappMensagem);
+      toast({
+        title: "Sucesso",
+        description: "Mensagem enviada com sucesso!",
+      });
+      setWhatsappDialogOpen(false);
+      setClienteParaWhatsapp(null);
+      setWhatsappTemplate("");
+      setWhatsappMensagem("");
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao enviar mensagem",
+        variant: "destructive",
+      });
+    }
   };
 
   // Função para abrir diálogo de toggle ativo/inativo
@@ -1597,6 +1617,12 @@ export default function ClientesListCreate() {
               Enviando para: <span className="font-medium text-foreground">{clienteParaWhatsapp?.nome}</span>
             </div>
 
+            {whatsappSession?.status !== 'connected' && (
+              <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 text-sm">
+                ⚠️ WhatsApp não está conectado. <a href="/whatsapp/parear" className="underline font-medium">Conectar agora</a>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>Escolha um template (opcional)</Label>
               <Select 
@@ -1645,9 +1671,10 @@ export default function ClientesListCreate() {
               <Button
                 onClick={confirmarEnvioWhatsApp}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                disabled={sendingMessage || !whatsappMensagem.trim()}
               >
                 <Send className="h-4 w-4 mr-2" />
-                Abrir WhatsApp
+                {sendingMessage ? "Enviando..." : "Enviar Mensagem"}
               </Button>
             </div>
           </div>
