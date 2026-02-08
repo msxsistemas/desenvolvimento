@@ -116,7 +116,7 @@ export default function Relatorios() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-foreground">Gráfico Financeiro</h2>
-              <p className="text-sm text-muted-foreground">Abaixo está o total das suas Vendas, Entradas e Saídas.</p>
+              <p className="text-sm text-muted-foreground">Abaixo está o total das suas Vendas e Custos por Servidor.</p>
             </div>
             <Button variant="ghost" size="icon" className="text-muted-foreground">
               <Settings className="h-5 w-5" />
@@ -152,8 +152,6 @@ export default function Relatorios() {
                   />
                   <Legend />
                   <Bar dataKey="vendas" name="Vendas" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="entradas" name="Entradas" fill="#f97316" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="saidas" name="Saídas" fill="#ec4899" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="custosServidor" name="Custos Servidores" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -168,7 +166,7 @@ export default function Relatorios() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-semibold text-foreground">Total Financeiro Detalhado</h2>
-              <p className="text-sm text-muted-foreground">Abaixo está o total das suas Vendas, Entradas e Saídas.</p>
+              <p className="text-sm text-muted-foreground">Abaixo está o total das suas Vendas e Custos por Servidor.</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Escolha o ano:</span>
@@ -199,14 +197,6 @@ export default function Relatorios() {
                     <div className="flex justify-between">
                       <span className="text-emerald-500">Vendas:</span>
                       <span className="text-emerald-500">{formatarValor(mes.vendas)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-amber-500">Entradas:</span>
-                      <span className="text-amber-500">{formatarValor(mes.entradas)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-pink-500">Saídas:</span>
-                      <span className="text-pink-500">{formatarValor(mes.saidas)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Custos Servidor:</span>
