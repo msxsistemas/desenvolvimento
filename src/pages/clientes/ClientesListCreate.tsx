@@ -77,6 +77,12 @@ export default function ClientesListCreate() {
   const [clienteParaMensagem, setClienteParaMensagem] = useState<Cliente | null>(null);
   const [templateSelecionado, setTemplateSelecionado] = useState<string>("");
   const [mensagemGerada, setMensagemGerada] = useState("");
+  
+  // Estados para WhatsApp e toggle
+  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
+  const [clienteParaWhatsapp, setClienteParaWhatsapp] = useState<Cliente | null>(null);
+  const [toggleDialogOpen, setToggleDialogOpen] = useState(false);
+  const [clienteParaToggle, setClienteParaToggle] = useState<Cliente | null>(null);
 
   // Funções auxiliares para obter nomes
   const getProdutoNome = (produtoId: string) => {
@@ -284,6 +290,76 @@ export default function ClientesListCreate() {
       aniversario: "",
       observacao: "",
     });
+  };
+
+  // Função para abrir diálogo de WhatsApp
+  const handleEnviarWhatsApp = (cliente: Cliente) => {
+    if (!cliente || !cliente.whatsapp) return;
+    setClienteParaWhatsapp(cliente);
+    setWhatsappDialogOpen(true);
+  };
+
+  // Função para confirmar envio de WhatsApp
+  const confirmarEnvioWhatsApp = () => {
+    if (clienteParaWhatsapp?.whatsapp) {
+      window.open(`https://wa.me/${clienteParaWhatsapp.whatsapp.replace(/\D/g, '')}`, '_blank');
+    }
+    setWhatsappDialogOpen(false);
+    setClienteParaWhatsapp(null);
+  };
+
+  // Função para abrir diálogo de toggle ativo/inativo
+  const handleToggleAtivo = (cliente: Cliente) => {
+    if (!cliente || !cliente.id) return;
+    setClienteParaToggle(cliente);
+    setToggleDialogOpen(true);
+  };
+
+  // Função para confirmar toggle ativo/inativo
+  const confirmarToggleAtivo = async () => {
+    if (!clienteParaToggle?.id) return;
+    
+    try {
+      const novoStatus = !(clienteParaToggle as any).ativo;
+      
+      const { error } = await supabase
+        .from('clientes')
+        .update({ ativo: novoStatus })
+        .eq('id', clienteParaToggle.id);
+
+      if (error) {
+        console.error('Erro ao alterar status:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao alterar status do cliente",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Atualizar lista local
+      setClientes(prev => prev.map(c => 
+        c.id === clienteParaToggle.id 
+          ? { ...c, ativo: novoStatus } as any
+          : c
+      ));
+
+      toast({
+        title: "Sucesso",
+        description: `Cliente ${novoStatus ? 'ativado' : 'desativado'} com sucesso!`,
+      });
+
+    } catch (error) {
+      console.error('Erro ao alterar status:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao alterar status do cliente",
+        variant: "destructive",
+      });
+    } finally {
+      setToggleDialogOpen(false);
+      setClienteParaToggle(null);
+    }
   };
 
   // Função para abrir diálogo de templates
@@ -1019,9 +1095,7 @@ export default function ClientesListCreate() {
                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (cliente.whatsapp) {
-                                window.open(`https://wa.me/${cliente.whatsapp.replace(/\D/g, '')}`, '_blank');
-                              }
+                              handleEnviarWhatsApp(cliente);
                             }}
                             title="Enviar WhatsApp"
                           >
@@ -1030,12 +1104,12 @@ export default function ClientesListCreate() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            className={`h-8 w-8 ${(cliente as any).ativo === false ? 'text-destructive hover:text-destructive' : 'text-muted-foreground hover:text-foreground'}`}
                             onClick={(e) => {
                               e.stopPropagation();
-                              // TODO: Implementar toggle ativo/inativo
+                              handleToggleAtivo(cliente);
                             }}
-                            title="Ativar/Desativar cliente"
+                            title={(cliente as any).ativo === false ? "Ativar cliente" : "Desativar cliente"}
                           >
                             <Power className="h-4 w-4" />
                           </Button>
@@ -1417,6 +1491,69 @@ export default function ClientesListCreate() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmar envio de WhatsApp */}
+      <AlertDialog open={whatsappDialogOpen} onOpenChange={setWhatsappDialogOpen}>
+        <AlertDialogContent className="bg-card border-border text-foreground">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enviar mensagem no WhatsApp</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Deseja abrir o WhatsApp para enviar mensagem para "{clienteParaWhatsapp?.nome}"?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              className="border-border hover:bg-muted"
+              onClick={() => {
+                setWhatsappDialogOpen(false);
+                setClienteParaWhatsapp(null);
+              }}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmarEnvioWhatsApp}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Abrir WhatsApp
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmar ativar/desativar cliente */}
+      <AlertDialog open={toggleDialogOpen} onOpenChange={setToggleDialogOpen}>
+        <AlertDialogContent className="bg-card border-border text-foreground">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {(clienteParaToggle as any)?.ativo === false ? "Ativar" : "Desativar"} cliente
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Deseja {(clienteParaToggle as any)?.ativo === false ? "ativar" : "desativar"} o cliente "{clienteParaToggle?.nome}"?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              className="border-border hover:bg-muted"
+              onClick={() => {
+                setToggleDialogOpen(false);
+                setClienteParaToggle(null);
+              }}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmarToggleAtivo}
+              className={(clienteParaToggle as any)?.ativo === false 
+                ? "bg-green-600 hover:bg-green-700 text-white" 
+                : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              }
+            >
+              {(clienteParaToggle as any)?.ativo === false ? "Ativar" : "Desativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

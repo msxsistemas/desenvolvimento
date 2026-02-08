@@ -99,6 +99,7 @@ export type Database = {
         Row: {
           aniversario: string | null
           app: string | null
+          ativo: boolean | null
           created_at: string | null
           data_venc_app: string | null
           data_vencimento: string | null
@@ -127,6 +128,7 @@ export type Database = {
         Insert: {
           aniversario?: string | null
           app?: string | null
+          ativo?: boolean | null
           created_at?: string | null
           data_venc_app?: string | null
           data_vencimento?: string | null
@@ -155,6 +157,7 @@ export type Database = {
         Update: {
           aniversario?: string | null
           app?: string | null
+          ativo?: boolean | null
           created_at?: string | null
           data_venc_app?: string | null
           data_vencimento?: string | null
