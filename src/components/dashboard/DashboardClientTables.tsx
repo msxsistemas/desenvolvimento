@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Send, MessageCircle, CreditCard, Settings } from "lucide-react";
+import { Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -104,12 +104,9 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, loadin
   return (
     <div className="rounded-xl border border-border overflow-hidden">
       {/* Header */}
-      <div className={`${headerStyles[headerColor]} p-4 flex items-center justify-between`}>
-        <div>
-          <h3 className="font-semibold text-white">{title}</h3>
-          <p className="text-sm text-white/80">{subtitle}</p>
-        </div>
-        <Settings className="h-5 w-5 text-white/80" />
+      <div className={`${headerStyles[headerColor]} p-4`}>
+        <h3 className="font-semibold text-white">{title}</h3>
+        <p className="text-sm text-white/80">{subtitle}</p>
       </div>
 
       {/* Filters */}
@@ -179,30 +176,13 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, loadin
                     </span>
                   </td>
                   <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="icon"
-                        className="h-8 w-8 bg-[hsl(270,70%,50%)] hover:bg-[hsl(270,70%,40%)]"
-                        title="Enviar mensagem"
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        className="h-8 w-8 bg-[hsl(142,70%,45%)] hover:bg-[hsl(142,70%,35%)]"
-                        onClick={() => openWhatsApp(cliente.whatsapp)}
-                        title="WhatsApp"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        className="h-8 w-8 bg-[hsl(270,70%,50%)] hover:bg-[hsl(270,70%,40%)]"
-                        title="Renovar"
-                      >
-                        <CreditCard className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      size="icon"
+                      className="h-8 w-8 bg-[hsl(270,70%,50%)] hover:bg-[hsl(270,70%,40%)]"
+                      title="Notificar vencimento"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
                   </td>
                 </tr>
               );
