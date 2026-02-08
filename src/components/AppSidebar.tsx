@@ -23,18 +23,17 @@ import {
   Filter,
   Tag,
   Globe,
-  Webhook,
   MessageSquare,
   Share2,
   MoreHorizontal,
   ScrollText,
   ChevronRight,
   ChevronDown,
-  Play,
   Phone,
 } from "lucide-react";
 import { useState } from "react";
 import type { LucideProps } from "lucide-react";
+import logoMsx from "@/assets/logo-msx.png";
 
 // Custom WhatsApp icon
 const WhatsAppIcon = (props: LucideProps) => (
@@ -116,9 +115,7 @@ export function AppSidebar() {
       <SidebarContent className="bg-background">
         {/* Logo Header */}
         <div className="flex justify-center py-8">
-          <div className="w-20 h-20 rounded-full bg-[#e63946] flex items-center justify-center shadow-lg shadow-[#e63946]/30">
-            <Play className="h-10 w-10 text-white fill-white ml-1" />
-          </div>
+          <img src={logoMsx} alt="MSX Logo" className="w-20 h-20 rounded-full shadow-lg" />
         </div>
 
         {/* Separator Line */}
