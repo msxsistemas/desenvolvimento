@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import AppLayout from "./components/layout/AppLayout";
 import ClientesListCreate from "./pages/clientes/ClientesListCreate";
 import ClientesCadastro from "./pages/clientes/ClientesCadastro";
+import ClientesEditar from "./pages/clientes/ClientesEditar";
 import ClientesPlanos from "./pages/clientes/ClientesPlanos";
 import ClientesProdutos from "./pages/clientes/ClientesProdutos";
 import ClientesAplicativos from "./pages/clientes/ClientesAplicativos";
@@ -63,7 +64,7 @@ const App = () => (
             <Route path="/configuracoes/ativar-cobrancas" element={<AtivarCobrancas />} />
             <Route path="/clientes" element={<ClientesListCreate />} />
             <Route path="/clientes/cadastro" element={<ClientesCadastro />} />
-            <Route path="/clientes/cadastro/:id" element={<ClientesCadastro />} />
+            <Route path="/clientes/editar/:id" element={<ClientesEditar />} />
             <Route path="/clientes/planos" element={<ClientesPlanos />} />
             <Route path="/clientes/produtos" element={<ClientesProdutos />} />
             <Route path="/clientes/aplicativos" element={<ClientesAplicativos />} />

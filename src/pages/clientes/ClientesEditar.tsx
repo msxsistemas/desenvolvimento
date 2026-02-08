@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,15 +19,15 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Home, User, Package, Key, Smartphone, DollarSign, Bell, Users, ChevronDown, Trash2 } from "lucide-react";
+import { Home, User, Package, Key, Smartphone, Users, ChevronDown, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useClientes, usePlanos, useProdutos, useAplicativos } from "@/hooks/useDatabase";
-import { format } from "date-fns";
 
-export default function ClientesCadastro() {
+export default function ClientesEditar() {
   const navigate = useNavigate();
-  const { criar } = useClientes();
+  const { id } = useParams<{ id: string }>();
+  const { editar, buscarPorId } = useClientes();
   const { buscar: buscarPlanos } = usePlanos();
   const { buscar: buscarProdutos } = useProdutos();
   const { buscar: buscarAplicativos } = useAplicativos();
@@ -35,6 +35,7 @@ export default function ClientesCadastro() {
 
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [loadingCliente, setLoadingCliente] = useState(true);
   const [planos, setPlanos] = useState<any[]>([]);
   const [produtos, setProdutos] = useState<any[]>([]);
   const [aplicativos, setAplicativos] = useState<any[]>([]);
@@ -71,8 +72,6 @@ export default function ClientesCadastro() {
       dataVencApp: "",
       desconto: "0,00",
       descontoRecorrente: false,
-      mensagemBoasVindas: "nao_enviar",
-      ativarCobrancas: false,
       comoConheceu: "",
       indicador: "",
       observacao: "",
@@ -82,9 +81,80 @@ export default function ClientesCadastro() {
   });
 
   useEffect(() => {
-    document.title = "Adicionar Cliente | Tech Play";
+    document.title = "Editar Cliente | Tech Play";
     carregarDados();
   }, []);
+
+  // Carregar dados do cliente
+  useEffect(() => {
+    const carregarCliente = async () => {
+      if (!id) {
+        navigate("/clientes");
+        return;
+      }
+      
+      setLoadingCliente(true);
+      try {
+        const cliente = await buscarPorId(id);
+        if (cliente) {
+          // Remover o +55 do início para exibir no formulário
+          let whatsappSemPrefixo = cliente.whatsapp || "";
+          if (whatsappSemPrefixo.startsWith('55') && whatsappSemPrefixo.length > 11) {
+            whatsappSemPrefixo = whatsappSemPrefixo.substring(2);
+          }
+          
+          form.reset({
+            nome: cliente.nome || "",
+            whatsapp: whatsappSemPrefixo,
+            aniversario: cliente.aniversario || "",
+            produto: cliente.produto || "",
+            plano: cliente.plano || "",
+            telas: cliente.telas || 1,
+            fatura: cliente.fatura || "Pago",
+            dataVenc: cliente.data_vencimento ? cliente.data_vencimento.slice(0, 10) : "",
+            fixo: cliente.fixo || false,
+            usuario: cliente.usuario || "",
+            senha: cliente.senha || "",
+            mac: cliente.mac || "",
+            key: cliente.key || "",
+            dispositivo: cliente.dispositivo || "",
+            app: cliente.app || "",
+            dataVencApp: cliente.data_venc_app ? cliente.data_venc_app.slice(0, 10) : "",
+            desconto: cliente.desconto || "0,00",
+            descontoRecorrente: cliente.desconto_recorrente || false,
+            comoConheceu: cliente.indicador ? (
+              ["Indicação", "Instagram", "Facebook", "Google", "WhatsApp", "Outro"].includes(cliente.indicador) 
+                ? cliente.indicador 
+                : "Indicação"
+            ) : "",
+            indicador: cliente.indicador || "",
+            observacao: cliente.observacao || "",
+            lembretes: cliente.lembretes || false,
+            mensagem: cliente.mensagem || "",
+          });
+        } else {
+          toast({
+            title: "Erro",
+            description: "Cliente não encontrado",
+            variant: "destructive",
+          });
+          navigate("/clientes");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar cliente:", error);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar dados do cliente",
+          variant: "destructive",
+        });
+        navigate("/clientes");
+      } finally {
+        setLoadingCliente(false);
+      }
+    };
+
+    carregarCliente();
+  }, [id, buscarPorId, form, toast, navigate]);
 
   const carregarDados = async () => {
     setLoadingData(true);
@@ -121,6 +191,8 @@ export default function ClientesCadastro() {
   };
 
   const onSubmit = form.handleSubmit(async (data) => {
+    if (!id) return;
+
     if (!data.nome || data.nome.trim() === '') {
       toast({
         title: "Erro",
@@ -152,7 +224,7 @@ export default function ClientesCadastro() {
 
     setLoading(true);
     try {
-      const clienteData = {
+      await editar(id, {
         nome: data.nome,
         whatsapp: whatsappFormatado,
         email: null,
@@ -176,87 +248,19 @@ export default function ClientesCadastro() {
         desconto_recorrente: data.descontoRecorrente,
         aniversario: data.aniversario,
         observacao: data.observacao
-      };
-
-      // Modo criação
-      const novoCliente = await criar(clienteData);
-
-      // Enviar mensagem de boas-vindas se configurado
-      if (novoCliente.whatsapp && data.mensagemBoasVindas !== 'nao_enviar') {
-        try {
-          const { data: user } = await supabase.auth.getUser();
-          if (user?.user?.id) {
-            const { data: mensagensPadroes } = await supabase
-              .from('mensagens_padroes')
-              .select('bem_vindo')
-              .eq('user_id', user.user.id)
-              .maybeSingle();
-
-            if (mensagensPadroes?.bem_vindo) {
-              const plano = planos.find(p => String(p.id) === novoCliente.plano || p.nome === novoCliente.plano);
-              const planoNome = plano?.nome || novoCliente.plano || '';
-              const valorPlano = plano?.valor || '0,00';
-
-              const hora = new Date().getHours();
-              let saudacao = "Bom dia";
-              if (hora >= 12 && hora < 18) saudacao = "Boa tarde";
-              else if (hora >= 18) saudacao = "Boa noite";
-
-              let dataVencimento = '';
-              if (novoCliente.data_vencimento) {
-                try {
-                  dataVencimento = format(new Date(novoCliente.data_vencimento), "dd/MM/yyyy");
-                } catch {
-                  dataVencimento = novoCliente.data_vencimento;
-                }
-              }
-
-              let mensagemFinal = mensagensPadroes.bem_vindo
-                .replace(/{saudacao}/g, saudacao)
-                .replace(/{nome_cliente}/g, novoCliente.nome || '')
-                .replace(/{nome}/g, novoCliente.nome || '')
-                .replace(/{usuario}/g, novoCliente.usuario || '')
-                .replace(/{senha}/g, novoCliente.senha || '')
-                .replace(/{vencimento}/g, dataVencimento)
-                .replace(/{nome_plano}/g, planoNome)
-                .replace(/{valor_plano}/g, valorPlano)
-                .replace(/{br}/g, '\n');
-
-              const scheduledTime = new Date();
-              scheduledTime.setSeconds(scheduledTime.getSeconds() + 30);
-
-              await supabase.from('whatsapp_messages').insert({
-                user_id: user.user.id,
-                phone: novoCliente.whatsapp,
-                message: mensagemFinal,
-                status: 'scheduled',
-                session_id: 'welcome_' + Date.now(),
-                sent_at: new Date().toISOString(),
-                scheduled_for: scheduledTime.toISOString(),
-              } as any);
-
-              toast({
-                title: "Mensagem de boas-vindas",
-                description: "Mensagem agendada para envio em 30 segundos",
-              });
-            }
-          }
-        } catch (welcomeError) {
-          console.error("Erro ao enviar mensagem de boas-vindas:", welcomeError);
-        }
-      }
+      });
 
       toast({
         title: "Sucesso",
-        description: "Cliente cadastrado com sucesso!",
+        description: "Cliente atualizado com sucesso!",
       });
       
       navigate("/clientes");
     } catch (error) {
-      console.error("Erro ao salvar cliente:", error);
+      console.error("Erro ao atualizar cliente:", error);
       toast({
         title: "Erro",
-        description: "Erro ao cadastrar cliente",
+        description: "Erro ao atualizar cliente",
         variant: "destructive",
       });
     } finally {
@@ -274,6 +278,28 @@ export default function ClientesCadastro() {
     </div>
   );
 
+  if (loadingCliente) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{saudacao}, Tech Play!</h1>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+            <Home className="h-4 w-4" />
+            <span>/</span>
+            <span className="text-[hsl(var(--brand-2))]">Editar cliente</span>
+          </div>
+        </div>
+        <Card className="bg-card border border-border/30">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center py-8">
+              <span className="text-muted-foreground">Carregando dados do cliente...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -282,14 +308,14 @@ export default function ClientesCadastro() {
         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
           <Home className="h-4 w-4" />
           <span>/</span>
-          <span className="text-[hsl(var(--brand-2))]">Adicionar cliente</span>
+          <span className="text-[hsl(var(--brand-2))]">Editar cliente</span>
         </div>
       </div>
 
       {/* Card do Formulário */}
       <Card className="bg-card border border-border/30">
         <CardContent className="p-6">
-          <h2 className="text-xl font-semibold text-foreground mb-6">Cadastrar Novo Cliente</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-6">Editar Cliente</h2>
 
           <form onSubmit={onSubmit} className="space-y-3">
             
@@ -828,7 +854,7 @@ export default function ClientesCadastro() {
                 disabled={loading}
                 className="bg-primary hover:bg-primary/90"
               >
-                {loading ? "Salvando..." : "Salvar Cliente"}
+                {loading ? "Salvando..." : "Atualizar Cliente"}
               </Button>
             </div>
           </form>

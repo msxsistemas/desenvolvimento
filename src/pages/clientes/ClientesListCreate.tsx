@@ -234,8 +234,8 @@ export default function ClientesListCreate() {
   // Funções para editar e deletar
   const handleEditCliente = (cliente: Cliente) => {
     if (!cliente || !cliente.id) return;
-    // Navegar para a página de cadastro com o ID do cliente para edição
-    navigate(`/clientes/cadastro/${cliente.id}`);
+    // Navegar para a página de edição com o ID do cliente
+    navigate(`/clientes/editar/${cliente.id}`);
   };
 
   const handleDeleteCliente = (clienteId: string) => {
