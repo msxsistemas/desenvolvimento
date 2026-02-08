@@ -483,7 +483,8 @@ export default function ClientesCadastro() {
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </CollapsibleTrigger>
-              <CollapsibleContent className="pt-4 space-y-4">
+              <CollapsibleContent className="pt-3">
+                <div className="p-4 bg-muted/20 rounded-lg border border-border/30 space-y-4">
                 {acessosAdicionais.map((acesso, index) => (
                   <div key={index} className="space-y-4 p-4 bg-muted/20 rounded-lg border border-border/30">
                     <div className="flex items-center justify-between">
@@ -594,6 +595,7 @@ export default function ClientesCadastro() {
                 >
                   + Adicionar Acesso
                 </Button>
+                </div>
               </CollapsibleContent>
             </Collapsible>
 
@@ -639,7 +641,8 @@ export default function ClientesCadastro() {
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </CollapsibleTrigger>
-              <CollapsibleContent className="pt-4 space-y-4">
+              <CollapsibleContent className="pt-3">
+                <div className="p-4 bg-muted/20 rounded-lg border border-border/30 space-y-4">
                 {aplicativosAdicionais.map((appItem, index) => (
                   <div key={index} className="space-y-4 p-4 bg-muted/20 rounded-lg border border-border/30">
                     <div className="flex items-center justify-between">
@@ -715,6 +718,7 @@ export default function ClientesCadastro() {
                 >
                   + Adicionar Aplicativo
                 </Button>
+                </div>
               </CollapsibleContent>
             </Collapsible>
 
