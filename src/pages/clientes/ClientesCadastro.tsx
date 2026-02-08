@@ -490,7 +490,7 @@ export default function ClientesCadastro() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Key className="h-4 w-4 text-cyan-400" />
-                        <span className="text-sm font-medium text-cyan-400">Credenciais de Acesso</span>
+                        <span className="text-sm font-medium text-cyan-400">Acesso {index + 2}</span>
                       </div>
                       <Button
                         type="button"
@@ -648,7 +648,7 @@ export default function ClientesCadastro() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Smartphone className="h-4 w-4 text-cyan-400" />
-                        <span className="text-sm font-medium text-cyan-400">Aplicativo {index + 1}</span>
+                        <span className="text-sm font-medium text-cyan-400">Aplicativo {index + 2}</span>
                       </div>
                       <Button
                         type="button"
