@@ -487,22 +487,9 @@ export default function ClientesCadastro() {
                 <div className="p-4 bg-muted/20 space-y-4">
                 {acessosAdicionais.map((acesso, index) => (
                   <div key={index} className="space-y-4 pt-4 border-t border-border/30 first:border-t-0 first:pt-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Key className="h-4 w-4 text-cyan-400" />
-                        <span className="text-sm font-medium text-cyan-400">Acesso {index + 2}</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => {
-                          setAcessosAdicionais(prev => prev.filter((_, i) => i !== index));
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <div className="flex items-center gap-2">
+                      <Key className="h-4 w-4 text-cyan-400" />
+                      <span className="text-sm font-medium text-cyan-400">Acesso {index + 2}</span>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -522,16 +509,29 @@ export default function ClientesCadastro() {
 
                       <div className="space-y-2">
                         <Label className="text-sm font-medium">Senha</Label>
-                        <Input 
-                          placeholder="Senha de acesso" 
-                          className="bg-background border-border"
-                          value={acesso.senha}
-                          onChange={(e) => {
-                            setAcessosAdicionais(prev => prev.map((a, i) => 
-                              i === index ? { ...a, senha: e.target.value } : a
-                            ));
-                          }}
-                        />
+                        <div className="flex gap-2">
+                          <Input 
+                            placeholder="Senha de acesso" 
+                            className="bg-background border-border flex-1"
+                            value={acesso.senha}
+                            onChange={(e) => {
+                              setAcessosAdicionais(prev => prev.map((a, i) => 
+                                i === index ? { ...a, senha: e.target.value } : a
+                              ));
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                            onClick={() => {
+                              setAcessosAdicionais(prev => prev.filter((_, i) => i !== index));
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
 
                       <div className="space-y-2">
@@ -645,22 +645,9 @@ export default function ClientesCadastro() {
                 <div className="p-4 bg-muted/20 space-y-4">
                 {aplicativosAdicionais.map((appItem, index) => (
                   <div key={index} className="space-y-4 pt-4 border-t border-border/30 first:border-t-0 first:pt-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Smartphone className="h-4 w-4 text-cyan-400" />
-                        <span className="text-sm font-medium text-cyan-400">Aplicativo {index + 2}</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => {
-                          setAplicativosAdicionais(prev => prev.filter((_, i) => i !== index));
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="h-4 w-4 text-cyan-400" />
+                      <span className="text-sm font-medium text-cyan-400">Aplicativo {index + 2}</span>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -690,16 +677,29 @@ export default function ClientesCadastro() {
 
                       <div className="space-y-2">
                         <Label className="text-sm font-medium">Vencimento do App</Label>
-                        <Input 
-                          type="date"
-                          className="bg-background border-border [&::-webkit-calendar-picker-indicator]:hidden"
-                          value={appItem.dataVencApp}
-                          onChange={(e) => {
-                            setAplicativosAdicionais(prev => prev.map((a, i) => 
-                              i === index ? { ...a, dataVencApp: e.target.value } : a
-                            ));
-                          }}
-                        />
+                        <div className="flex gap-2">
+                          <Input 
+                            type="date"
+                            className="bg-background border-border [&::-webkit-calendar-picker-indicator]:hidden flex-1"
+                            value={appItem.dataVencApp}
+                            onChange={(e) => {
+                              setAplicativosAdicionais(prev => prev.map((a, i) => 
+                                i === index ? { ...a, dataVencApp: e.target.value } : a
+                              ));
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                            onClick={() => {
+                              setAplicativosAdicionais(prev => prev.filter((_, i) => i !== index));
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
