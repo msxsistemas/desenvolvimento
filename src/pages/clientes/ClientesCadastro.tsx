@@ -282,8 +282,7 @@ export default function ClientesCadastro() {
       {/* Card do Formulário */}
       <Card className="bg-card border border-border/30">
         <CardContent className="p-6">
-          <h2 className="text-xl font-semibold text-foreground mb-1">Cadastrar Novo Cliente</h2>
-          <p className="text-sm text-muted-foreground mb-6">Cadastre seu cliente agora mesmo!</p>
+          <h2 className="text-xl font-semibold text-foreground mb-6">Cadastrar Novo Cliente</h2>
 
           <form onSubmit={onSubmit} className="space-y-1">
             
