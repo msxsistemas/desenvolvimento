@@ -216,7 +216,7 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, loadin
                 onClick={() => setCurrentPage(page)}
                 className={`w-8 border-border ${
                   currentPage === page 
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                    ? "bg-muted text-foreground hover:bg-muted/80" 
                     : "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
