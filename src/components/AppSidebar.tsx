@@ -59,12 +59,15 @@ export function AppSidebar() {
 
   // Estado dos submenus
   const clientesActive = currentPath === "/clientes" || currentPath.startsWith("/clientes/");
+  const planosActive = currentPath === "/planos" || currentPath.startsWith("/planos/");
+  const aplicativosActive = currentPath === "/aplicativos" || currentPath.startsWith("/aplicativos/");
+  const produtosActive = currentPath === "/produtos" || currentPath.startsWith("/produtos/");
   const whatsappActive = currentPath.startsWith("/whatsapp") || currentPath === "/parear-whatsapp";
   const logsActive = currentPath.startsWith("/logs");
   const indicacoesActive = currentPath.startsWith("/indicacoes");
   const outrosActive = currentPath.startsWith("/outros") || currentPath === "/configuracoes/mensagens-padroes";
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(
-    clientesActive ? "clientes" : whatsappActive ? "whatsapp" : logsActive ? "logs" : indicacoesActive ? "indicacoes" : outrosActive ? "outros" : null
+    clientesActive ? "clientes" : planosActive ? "planos" : aplicativosActive ? "aplicativos" : produtosActive ? "produtos" : whatsappActive ? "whatsapp" : logsActive ? "logs" : indicacoesActive ? "indicacoes" : outrosActive ? "outros" : null
   );
 
   const toggleSubmenu = (menu: string) => {
@@ -83,9 +86,9 @@ export function AppSidebar() {
   const menuItems = [
     { to: "/", icon: Home, label: "Dashboard" },
     { to: "/clientes", icon: Users, label: "Clientes", hasSubmenu: true },
-    { to: "/planos", icon: List, label: "Planos" },
-    { to: "/aplicativos", icon: Package, label: "Aplicativos" },
-    { to: "/produtos", icon: Package, label: "Produtos" },
+    { to: "/planos", icon: List, label: "Planos", hasPlanosSubmenu: true },
+    { to: "/aplicativos", icon: Package, label: "Aplicativos", hasAplicativosSubmenu: true },
+    { to: "/produtos", icon: Package, label: "Produtos", hasProdutosSubmenu: true },
     { to: "/servidores", icon: Server, label: "Servidores" },
     { to: "/financeiro", icon: DollarSign, label: "Financeiro" },
     
@@ -101,6 +104,24 @@ export function AppSidebar() {
   const clientesSubItems = [
     { to: "/clientes/cadastro", label: "Adicionar" },
     { to: "/clientes", label: "Gerenciar" },
+  ];
+
+  // Subitens do Planos
+  const planosSubItems = [
+    { to: "/planos/cadastro", label: "Adicionar" },
+    { to: "/planos", label: "Gerenciar" },
+  ];
+
+  // Subitens do Aplicativos
+  const aplicativosSubItems = [
+    { to: "/aplicativos/cadastro", label: "Adicionar" },
+    { to: "/aplicativos", label: "Gerenciar" },
+  ];
+
+  // Subitens do Produtos
+  const produtosSubItems = [
+    { to: "/produtos/cadastro", label: "Adicionar" },
+    { to: "/produtos", label: "Gerenciar" },
   ];
 
   // Subitens do WhatsApp
@@ -178,6 +199,144 @@ export function AppSidebar() {
                                   }`}
                                 >
                                   {/* Círculo indicador */}
+                                  <span className={`w-2 h-2 rounded-full border ${
+                                    isActive(subItem.to) 
+                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
+                                      : "border-[#8b8b9a] bg-transparent"
+                                  }`} />
+                                  {subItem.label}
+                                </NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                }
+
+                // Item Planos com submenu
+                if (item.hasPlanosSubmenu) {
+                  return (
+                    <SidebarMenuItem key={item.to}>
+                      <SidebarMenuButton
+                        onClick={() => toggleSubmenu("planos")}
+                        className={`${menuItemClass(planosActive)} hover:bg-transparent`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="h-5 w-5" />
+                          {!isCollapsed && <span className="text-[14px]">{item.label}</span>}
+                        </div>
+                        {!isCollapsed && (
+                          <ChevronRight
+                            className={`h-4 w-4 opacity-50 transition-transform ${openSubmenu === "planos" ? "rotate-90" : ""}`}
+                          />
+                        )}
+                      </SidebarMenuButton>
+                      {openSubmenu === "planos" && !isCollapsed && (
+                        <SidebarMenuSub className="ml-8 mt-2 space-y-1">
+                          {planosSubItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.to}>
+                              <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
+                                <NavLink
+                                  to={subItem.to}
+                                  end
+                                  className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
+                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                  }`}
+                                >
+                                  <span className={`w-2 h-2 rounded-full border ${
+                                    isActive(subItem.to) 
+                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
+                                      : "border-[#8b8b9a] bg-transparent"
+                                  }`} />
+                                  {subItem.label}
+                                </NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                }
+
+                // Item Aplicativos com submenu
+                if (item.hasAplicativosSubmenu) {
+                  return (
+                    <SidebarMenuItem key={item.to}>
+                      <SidebarMenuButton
+                        onClick={() => toggleSubmenu("aplicativos")}
+                        className={`${menuItemClass(aplicativosActive)} hover:bg-transparent`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="h-5 w-5" />
+                          {!isCollapsed && <span className="text-[14px]">{item.label}</span>}
+                        </div>
+                        {!isCollapsed && (
+                          <ChevronRight
+                            className={`h-4 w-4 opacity-50 transition-transform ${openSubmenu === "aplicativos" ? "rotate-90" : ""}`}
+                          />
+                        )}
+                      </SidebarMenuButton>
+                      {openSubmenu === "aplicativos" && !isCollapsed && (
+                        <SidebarMenuSub className="ml-8 mt-2 space-y-1">
+                          {aplicativosSubItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.to}>
+                              <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
+                                <NavLink
+                                  to={subItem.to}
+                                  end
+                                  className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
+                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                  }`}
+                                >
+                                  <span className={`w-2 h-2 rounded-full border ${
+                                    isActive(subItem.to) 
+                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
+                                      : "border-[#8b8b9a] bg-transparent"
+                                  }`} />
+                                  {subItem.label}
+                                </NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                }
+
+                // Item Produtos com submenu
+                if (item.hasProdutosSubmenu) {
+                  return (
+                    <SidebarMenuItem key={item.to}>
+                      <SidebarMenuButton
+                        onClick={() => toggleSubmenu("produtos")}
+                        className={`${menuItemClass(produtosActive)} hover:bg-transparent`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="h-5 w-5" />
+                          {!isCollapsed && <span className="text-[14px]">{item.label}</span>}
+                        </div>
+                        {!isCollapsed && (
+                          <ChevronRight
+                            className={`h-4 w-4 opacity-50 transition-transform ${openSubmenu === "produtos" ? "rotate-90" : ""}`}
+                          />
+                        )}
+                      </SidebarMenuButton>
+                      {openSubmenu === "produtos" && !isCollapsed && (
+                        <SidebarMenuSub className="ml-8 mt-2 space-y-1">
+                          {produtosSubItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.to}>
+                              <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
+                                <NavLink
+                                  to={subItem.to}
+                                  end
+                                  className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
+                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                  }`}
+                                >
                                   <span className={`w-2 h-2 rounded-full border ${
                                     isActive(subItem.to) 
                                       ? "border-[#22d3ee] bg-[#22d3ee]" 
