@@ -127,8 +127,6 @@ export default function Templates() {
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead className="text-muted-foreground">Nome</TableHead>
-                <TableHead className="text-muted-foreground text-center">Mídia</TableHead>
-                <TableHead className="text-muted-foreground text-center">Padrão</TableHead>
                 <TableHead className="text-muted-foreground text-center">Ação</TableHead>
               </TableRow>
             </TableHeader>
@@ -136,17 +134,6 @@ export default function Templates() {
               {templates.map((template) => (
                 <TableRow key={template.id} className="border-border hover:bg-muted/50">
                   <TableCell className="text-foreground">{template.nome}</TableCell>
-                  <TableCell className="text-center">
-                    <span className="bg-red-500 text-white text-xs px-3 py-1 rounded">
-                      NÃO
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Checkbox
-                      checked={template.padrao}
-                      onCheckedChange={() => handleTogglePadrao(template)}
-                    />
-                  </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2">
                       <Button
