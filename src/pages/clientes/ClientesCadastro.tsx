@@ -573,16 +573,19 @@ export default function ClientesCadastro() {
 
                       <div className="space-y-2 md:col-span-2">
                         <Label className="text-sm font-medium">Dispositivos</Label>
-                        <Input 
-                          placeholder="Ex: Smart TV, TV Box, Celular..." 
-                          className="bg-background border-border"
-                          value={acesso.dispositivo}
-                          onChange={(e) => {
-                            setAcessosAdicionais(prev => prev.map((a, i) => 
-                              i === index ? { ...a, dispositivo: e.target.value } : a
-                            ));
-                          }}
-                        />
+                        <div className="flex gap-2">
+                          <Input 
+                            placeholder="Ex: Smart TV, TV Box, Celular..." 
+                            className="bg-background border-border flex-1"
+                            value={acesso.dispositivo}
+                            onChange={(e) => {
+                              setAcessosAdicionais(prev => prev.map((a, i) => 
+                                i === index ? { ...a, dispositivo: e.target.value } : a
+                              ));
+                            }}
+                          />
+                          <div className="w-10 shrink-0" />
+                        </div>
                       </div>
                     </div>
                   </div>
