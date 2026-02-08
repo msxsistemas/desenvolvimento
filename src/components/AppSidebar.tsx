@@ -111,8 +111,8 @@ export function AppSidebar() {
   ];
 
   return (
-    <Sidebar className="border-r border-[#2a2a3c]" collapsible="icon">
-      <SidebarContent className="bg-[#1e1e2d]">
+    <Sidebar className="border-r border-border" collapsible="icon">
+      <SidebarContent className="bg-background">
         {/* Logo Header */}
         <div className="flex justify-center py-8">
           <div className="w-20 h-20 rounded-full bg-[#e63946] flex items-center justify-center shadow-lg shadow-[#e63946]/30">
