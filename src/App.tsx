@@ -23,7 +23,7 @@ import AtivarCobrancas from "./pages/configuracoes/AtivarCobrancas";
 import Marketing from "./pages/Marketing";
 import MensagensEnviadas from "./pages/MensagensEnviadas";
 import Tutoriais from "./pages/Tutoriais";
-import ParearWhatsapp from "./pages/ParearWhatsapp";
+import ParearWhatsapp from "./pages/whatsapp/ParearWhatsappNew";
 import Checkout from "./pages/financeiro-extra/Checkout";
 import Assas from "./pages/financeiro-extra/Assas";
 // WhatsApp pages
@@ -31,7 +31,7 @@ import GerenciarMensagens from "./pages/whatsapp/GerenciarMensagens";
 import FilaMensagens from "./pages/whatsapp/FilaMensagens";
 import EnviosEmMassa from "./pages/whatsapp/EnviosEmMassa";
 import GerenciarCampanhas from "./pages/whatsapp/GerenciarCampanhas";
-import ParearWhatsappNew from "./pages/whatsapp/ParearWhatsappNew";
+
 import Templates from "./pages/whatsapp/Templates";
 import Relatorios from "./pages/Relatorios";
 import LogsPainel from "./pages/LogsPainel";
@@ -81,7 +81,7 @@ const App = () => (
             <Route path="/whatsapp/fila-mensagens" element={<FilaMensagens />} />
             <Route path="/whatsapp/envios-em-massa" element={<EnviosEmMassa />} />
             <Route path="/whatsapp/templates" element={<Templates />} />
-            <Route path="/whatsapp/parear" element={<ParearWhatsappNew />} />
+            <Route path="/whatsapp/parear" element={<ParearWhatsapp />} />
             {/* Logs routes */}
             <Route path="/logs/painel" element={<LogsPainel />} />
             <Route path="/logs/sistema" element={<LogsSistema />} />
