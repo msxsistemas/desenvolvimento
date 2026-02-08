@@ -3,8 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFinanceiro } from "@/hooks/useFinanceiro";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const mesesNomes = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -113,14 +111,9 @@ export default function Relatorios() {
       {/* Gráfico Financeiro */}
       <Card className="bg-card border-border">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">Gráfico Financeiro</h2>
-              <p className="text-sm text-muted-foreground">Abaixo está o total das suas Vendas e Custos por Servidor.</p>
-            </div>
-            <Button variant="ghost" size="icon" className="text-muted-foreground">
-              <Settings className="h-5 w-5" />
-            </Button>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Gráfico Financeiro</h2>
+            <p className="text-sm text-muted-foreground">Abaixo está o total das suas Vendas e Custos por Servidor.</p>
           </div>
 
           <div className="h-[400px] w-full">
