@@ -304,9 +304,11 @@ export default function Auth() {
 
             {/* Error message */}
             {formError && (
-              <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 animate-fade-in">
-                <AlertCircle className="h-5 w-5 text-red-400 shrink-0" />
-                <p className="text-red-400 text-sm">{formError}</p>
+              <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-red-950/40 to-red-900/20 border border-red-500/30 flex items-center gap-3 animate-fade-in backdrop-blur-sm shadow-lg shadow-red-500/5">
+                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                  <AlertCircle className="h-4 w-4 text-red-400" />
+                </div>
+                <p className="text-red-300 text-sm font-medium">{formError}</p>
               </div>
             )}
 
@@ -485,9 +487,11 @@ export default function Auth() {
           <div className="px-6 pb-8">
             {/* Error message */}
             {formError && (
-              <div className="mb-5 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 animate-fade-in">
-                <AlertCircle className="h-5 w-5 text-red-400 shrink-0" />
-                <p className="text-red-400 text-sm">{formError}</p>
+              <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-red-950/40 to-red-900/20 border border-red-500/30 flex items-center gap-3 animate-fade-in backdrop-blur-sm shadow-lg shadow-red-500/5">
+                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                  <AlertCircle className="h-4 w-4 text-red-400" />
+                </div>
+                <p className="text-red-300 text-sm font-medium">{formError}</p>
               </div>
             )}
 
