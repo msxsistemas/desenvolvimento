@@ -451,48 +451,20 @@ export default function Auth() {
               <p className="text-gray-400 text-sm text-center">Acesse sua conta</p>
             </div>
 
-          {/* Tab Switcher */}
-          <div className="px-6 mb-6">
-            <div className="relative bg-white/[0.03] p-1.5 rounded-2xl border border-white/[0.05]">
-              {/* Sliding background */}
-              <div 
-                className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-lg transition-all duration-300 ease-out"
-                style={{ 
-                  left: activeTab === 'signin' ? '6px' : 'calc(50%)',
-                }}
-              />
-              <div className="relative flex">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('signin')}
-                  className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-colors duration-300 ${
-                    activeTab === 'signin' ? 'text-white' : 'text-gray-400 hover:text-gray-300'
-                  }`}
-                >
-                  Entrar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('signup')}
-                  className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-colors duration-300 ${
-                    activeTab === 'signup' ? 'text-white' : 'text-gray-400 hover:text-gray-300'
-                  }`}
-                >
-                  Cadastrar
-                </button>
-              </div>
-            </div>
+          {/* Header simples */}
+          <div className="px-6 pt-8 pb-4">
+            <h2 className="text-xl font-bold text-white text-center mb-1">
+              {activeTab === 'signin' ? 'Entrar' : 'Criar conta'}
+            </h2>
+            <p className="text-gray-400 text-sm text-center">
+              {activeTab === 'signin' ? 'Acesse sua conta' : 'Preencha os dados abaixo'}
+            </p>
           </div>
 
           <div className="px-6 pb-8">
-            {/* Error message */}
+            {/* Error message - simples */}
             {formError && (
-              <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-red-950/40 to-red-900/20 border border-red-500/30 flex items-center gap-3 animate-fade-in backdrop-blur-sm shadow-lg shadow-red-500/5">
-                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-                  <AlertCircle className="h-4 w-4 text-red-400" />
-                </div>
-                <p className="text-red-300 text-sm font-medium">{formError}</p>
-              </div>
+              <p className="mb-4 text-sm text-red-400 text-center">{formError}</p>
             )}
 
             {/* Success message */}
@@ -735,13 +707,35 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* Footer inside card */}
-          <div className="px-6 pb-6">
-            <p className="text-center text-xs text-gray-500">
-              Ao continuar, você concorda com nossos{' '}
-              <span className="text-purple-400 hover:text-purple-300 cursor-pointer transition-colors">termos</span>
-              {' '}e{' '}
-              <span className="text-purple-400 hover:text-purple-300 cursor-pointer transition-colors">privacidade</span>.
+          {/* Footer inside card - Link para alternar */}
+          <div className="px-6 pb-6 pt-4 border-t border-white/[0.05]">
+            <div className="flex items-center justify-center gap-1 mb-3">
+              <span className="text-gray-500 text-sm">OU</span>
+            </div>
+            <p className="text-center text-sm text-gray-400">
+              {activeTab === 'signin' ? (
+                <>
+                  Ainda não tem conta?{' '}
+                  <button 
+                    type="button"
+                    onClick={() => setActiveTab('signup')}
+                    className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                  >
+                    Criar conta gratuita
+                  </button>
+                </>
+              ) : (
+                <>
+                  Já tem uma conta?{' '}
+                  <button 
+                    type="button"
+                    onClick={() => setActiveTab('signin')}
+                    className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                  >
+                    Entrar
+                  </button>
+                </>
+              )}
             </p>
           </div>
         </div>
