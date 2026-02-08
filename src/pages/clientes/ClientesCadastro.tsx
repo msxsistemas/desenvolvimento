@@ -630,7 +630,7 @@ export default function ClientesCadastro() {
             </div>
 
             {/* Collapsible: Aplicativos Adicionais */}
-            <Collapsible className="mt-3">
+            <Collapsible defaultOpen className="mt-3">
               <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/30 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-2">
                   <Smartphone className="h-4 w-4 text-cyan-400" />
