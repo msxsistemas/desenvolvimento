@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { startOfMonth, endOfMonth, format } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Coins, Eye, EyeOff, Info, LineChart, Pencil, Trash2, RefreshCw } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Pencil, Trash2, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { useFinanceiro } from "@/hooks/useFinanceiro";
 import { toast } from "sonner";
 
@@ -20,7 +19,7 @@ export default function Financeiro() {
   const inicioMes = startOfMonth(hoje);
   const fimMes = endOfMonth(hoje);
   
-  const [mostrarValores, setMostrarValores] = useState(false);
+  const [mostrarValores, setMostrarValores] = useState(true);
   const [filtroDataInicio, setFiltroDataInicio] = useState(format(inicioMes, 'yyyy-MM-dd'));
   const [filtroDataFim, setFiltroDataFim] = useState(format(fimMes, 'yyyy-MM-dd'));
   const [filtroTipo, setFiltroTipo] = useState("todos");
@@ -41,27 +40,9 @@ export default function Financeiro() {
   const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false);
   const [transacaoParaExcluir, setTransacaoParaExcluir] = useState<any>(null);
 
-  // SEO minimalista sem libs
+  // SEO
   useEffect(() => {
     document.title = "Financeiro | Gestor Tech Play";
-    const ensureMeta = (name: string, content: string) => {
-      let tag = document.querySelector(`meta[name="${name}"]`);
-      if (!tag) {
-        tag = document.createElement("meta");
-        tag.setAttribute("name", name);
-        document.head.appendChild(tag);
-      }
-      tag.setAttribute("content", content);
-    };
-    ensureMeta("description", "Financeiro do Gestor Tech Play: lucros, entradas, saídas e projeções.");
-
-    let link = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "canonical";
-      document.head.appendChild(link);
-    }
-    link.href = window.location.href;
   }, []);
 
   const formatarValor = (valor: number) => {
@@ -72,59 +53,25 @@ export default function Financeiro() {
     }).format(valor);
   };
 
-  const calcularProjecoes = (valorBase: number) => ({
-    semanal: valorBase * 4, // 4 semanas por mês
-    mensal: valorBase,
-    anual: valorBase * 12,
-  });
-
   // Filtrar transações baseado nos filtros aplicados
   const transacoesFiltradas = useMemo(() => {
-    console.log("🔍 Aplicando filtros:", { filtroDataInicio, filtroDataFim, filtroTipo, termoPesquisa });
-    console.log("📊 Total de transações:", transacoes.length);
-    
-    // Se não há filtros aplicados, retorna todas as transações
     if (!filtroDataInicio && !filtroDataFim && filtroTipo === "todos" && !termoPesquisa) {
-      console.log("✨ Nenhum filtro aplicado, mostrando todas as transações");
       return transacoes;
     }
     
     return transacoes.filter(transacao => {
-      console.log("🔄 Processando transação:", transacao);
-      
       // Filtro por data
       if (filtroDataInicio || filtroDataFim) {
-        // Extrair apenas a data no formato dd/mm/yyyy da string "13/08/2025, 00:06:55"
-        const dataStr = transacao.data.split(',')[0].trim(); // "13/08/2025"
-        console.log("📅 Data da transação (string):", dataStr);
-        
-        // Converter dd/mm/yyyy para yyyy-mm-dd para comparação
+        const dataStr = transacao.data.split(',')[0].trim();
         const [dia, mes, ano] = dataStr.split('/');
         const dataTransacao = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-        console.log("📅 Data da transação (convertida):", dataTransacao);
         
-        if (filtroDataInicio) {
-          console.log("📅 Comparando com data início:", filtroDataInicio);
-          if (dataTransacao < filtroDataInicio) {
-            console.log("❌ Transação anterior à data início");
-            return false;
-          }
-        }
-        
-        if (filtroDataFim) {
-          console.log("📅 Comparando com data fim:", filtroDataFim);
-          if (dataTransacao > filtroDataFim) {
-            console.log("❌ Transação posterior à data fim");
-            return false;
-          }
-        }
+        if (filtroDataInicio && dataTransacao < filtroDataInicio) return false;
+        if (filtroDataFim && dataTransacao > filtroDataFim) return false;
       }
       
       // Filtro por tipo
-      if (filtroTipo !== "todos" && transacao.tipo !== filtroTipo) {
-        console.log("❌ Tipo não corresponde:", transacao.tipo, "!==", filtroTipo);
-        return false;
-      }
+      if (filtroTipo !== "todos" && transacao.tipo !== filtroTipo) return false;
       
       // Filtro por pesquisa
       if (termoPesquisa) {
@@ -134,13 +81,9 @@ export default function Financeiro() {
           transacao.detalheValor.toLowerCase().includes(termo) ||
           transacao.detalheTitulo.toLowerCase().includes(termo)
         );
-        if (!match) {
-          console.log("❌ Não corresponde ao termo de pesquisa");
-          return false;
-        }
+        if (!match) return false;
       }
       
-      console.log("✅ Transação passou por todos os filtros");
       return true;
     });
   }, [transacoes, filtroDataInicio, filtroDataFim, filtroTipo, termoPesquisa]);
@@ -162,13 +105,7 @@ export default function Financeiro() {
     };
   }, [transacoesFiltradas]);
 
-  const projecoes = calcularProjecoes(metricasFiltradas.lucros); // Projeção baseada no lucro filtrado
-
   const handleLimparFiltros = () => {
-    const hoje = new Date();
-    const inicioMes = startOfMonth(hoje);
-    const fimMes = endOfMonth(hoje);
-    
     setFiltroDataInicio(format(inicioMes, 'yyyy-MM-dd'));
     setFiltroDataFim(format(fimMes, 'yyyy-MM-dd'));
     setFiltroTipo("todos");
@@ -213,7 +150,6 @@ export default function Financeiro() {
     }
 
     try {
-      // Converter valor para número, removendo caracteres especiais
       const valorStr = formData.valor.replace(/[R$\s]/g, '').replace(',', '.');
       const valor = parseFloat(valorStr);
 
@@ -271,368 +207,291 @@ export default function Financeiro() {
     }
   };
 
+  const currentMonth = new Date().toLocaleString('pt-BR', { month: 'long' });
+
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-mobile-2xl md:text-3xl font-bold tracking-tight">Financeiro</h1>
-          <p className="text-mobile-sm text-muted-foreground">Visão geral de lucros, entradas, saídas e projeções.</p>
+    <main className="space-y-4">
+      {/* Header */}
+      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Financeiro</h1>
+          <p className="text-sm text-muted-foreground">Visão geral de lucros, entradas e saídas</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => {}}>Novo</Button>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={mostrarValores ? "default" : "outline"}
-                size="icon"
-                aria-pressed={mostrarValores}
-                aria-label={mostrarValores ? "Ocultar saldos" : "Mostrar saldos"}
-                onClick={() => setMostrarValores((v) => !v)}
-                className="touch-friendly"
-              >
-                {mostrarValores ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {mostrarValores ? "Ocultar saldos" : "Mostrar saldos"}
-            </TooltipContent>
-          </Tooltip>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setMostrarValores(!mostrarValores)}
+            title={mostrarValores ? "Ocultar valores" : "Mostrar valores"}
+          >
+            {mostrarValores ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          </Button>
+          <Button onClick={abrirModalNovo} className="bg-primary hover:bg-primary/90">
+            Nova Transação +
+          </Button>
         </div>
       </header>
 
-      <section aria-label="Métricas financeiras" className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-success/30">
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="text-base">Lucros</CardTitle>
-            <LineChart className="h-5 w-5 text-success" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-semibold">
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="h-6 w-6 animate-spin" />
-                  <span className="text-lg">Carregando...</span>
-                </div>
-              ) : error ? (
-                <span className="text-destructive text-lg">Erro</span>
-              ) : (
-                formatarValor(lucros)
-              )}
+      {/* Cards de métricas */}
+      <section className="grid gap-4 grid-cols-1 md:grid-cols-3">
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="rounded-full bg-emerald-500/20 p-3">
+              <DollarSign className="h-5 w-5 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Lucro do Mês</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xl font-bold text-foreground">
+                  {loading ? <RefreshCw className="h-5 w-5 animate-spin" /> : formatarValor(metricasFiltradas.lucros)}
+                </p>
+                <Badge className="bg-emerald-500/20 text-emerald-500 text-xs">
+                  {currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1)}
+                </Badge>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-info/30">
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="text-base">Entradas</CardTitle>
-            <LineChart className="h-5 w-5 text-info" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-semibold">
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="h-6 w-6 animate-spin" />
-                  <span className="text-lg">Carregando...</span>
-                </div>
-              ) : error ? (
-                <span className="text-destructive text-lg">Erro</span>
-              ) : (
-                formatarValor(entradas)
-              )}
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="rounded-full bg-primary/20 p-3">
+              <TrendingUp className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Entradas</p>
+              <p className="text-xl font-bold text-foreground">
+                {loading ? <RefreshCw className="h-5 w-5 animate-spin" /> : formatarValor(metricasFiltradas.entradas)}
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-destructive/30">
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="text-base">Saídas</CardTitle>
-            <LineChart className="h-5 w-5 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-semibold">
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="h-6 w-6 animate-spin" />
-                  <span className="text-lg">Carregando...</span>
-                </div>
-              ) : error ? (
-                <span className="text-destructive text-lg">Erro</span>
-              ) : (
-                formatarValor(saidas)
-              )}
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="rounded-full bg-destructive/20 p-3">
+              <TrendingDown className="h-5 w-5 text-destructive" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-base">Projeção Semanal</CardTitle>
-              <Info className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <Coins className="h-5 w-5 text-info" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold">
-              {loading ? "Carregando..." : formatarValor(projecoes.semanal)}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-base">Projeção Mensal</CardTitle>
-              <Info className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <Coins className="h-5 w-5 text-info" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold">
-              {loading ? "Carregando..." : formatarValor(projecoes.mensal)}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-base">Projeção Anual</CardTitle>
-              <Info className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <Coins className="h-5 w-5 text-info" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold">
-              {loading ? "Carregando..." : formatarValor(projecoes.anual)}
+            <div>
+              <p className="text-sm text-muted-foreground">Saídas</p>
+              <p className="text-xl font-bold text-foreground">
+                {loading ? <RefreshCw className="h-5 w-5 animate-spin" /> : formatarValor(metricasFiltradas.saidas)}
+              </p>
             </div>
           </CardContent>
         </Card>
       </section>
 
-      <section aria-label="Filtros" className="space-y-3">
-        <div className="rounded-md border">
-          <div className="px-3 sm:px-4 py-2 bg-info/60 text-info-foreground rounded-t-md font-semibold text-sm">Filtros</div>
-          <div className="p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="space-y-2">
-              <Label>Início</Label>
-              <Input 
-                type="date" 
-                value={filtroDataInicio}
-                onChange={(e) => setFiltroDataInicio(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Fim</Label>
-              <Input 
-                type="date" 
-                value={filtroDataFim}
-                onChange={(e) => setFiltroDataFim(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Tipo</Label>
-              <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="entrada">Entrada</SelectItem>
-                    <SelectItem value="saida">Saída</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end gap-2">
-              <Button onClick={handleLimparFiltros} variant="outline" className="flex-1">
-                Limpar
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section aria-label="Tabela de transações" className="space-y-3">
-        <div className="rounded-md border">
-          <div className="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <Input 
-              placeholder="Pesquisar..." 
-              className="w-full sm:max-w-sm" 
+      {/* Filtros */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Busca</Label>
+            <Input
+              placeholder="Buscar..."
               value={termoPesquisa}
               onChange={(e) => setTermoPesquisa(e.target.value)}
             />
-            <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
-              <Label htmlFor="pageSize" className="text-muted-foreground text-sm">Itens</Label>
-              <Select defaultValue="10">
-                <SelectTrigger id="pageSize" className="w-[90px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
-          <div className="px-3 sm:px-4 pb-3 sm:pb-4 px-0 sm:px-4">
-            <div className="mobile-scroll-x px-3 sm:px-0">
-              <Table className="mobile-table">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[80px]">ID</TableHead>
-                    <TableHead className="min-w-[200px]">Produto/Plano/Cliente</TableHead>
-                    <TableHead className="min-w-[100px]">Tipo</TableHead>
-                    <TableHead className="min-w-[120px]">Valor</TableHead>
-                    <TableHead className="min-w-[150px]">Data</TableHead>
-                    <TableHead className="text-right min-w-[100px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      <div className="flex items-center justify-center gap-2">
-                        <RefreshCw className="h-5 w-5 animate-spin" />
-                        <span>Carregando transações...</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : error ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      <span className="text-destructive">{error}</span>
-                    </TableCell>
-                  </TableRow>
-                ) : transacoesFiltradas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      <span className="text-muted-foreground">Nenhuma transação encontrada</span>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  transacoesFiltradas.map((r) => (
-                    <TableRow key={r.id} className="align-top">
-                      <TableCell className="w-[80px] font-mono text-sm">{r.id.split('-')[1].substring(0, 8)}</TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div>
-                            <span className="text-muted-foreground">Novo cliente: </span>
-                            <span className="font-medium text-success">{r.cliente}</span>
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {r.detalheTitulo}: <span className={r.detalheTitulo === "Produto" ? "text-primary font-medium" : "text-info font-medium"}>{r.detalheValor}</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={r.tipo === "entrada" ? "bg-success/10 text-success border-success font-medium" : "bg-destructive/10 text-destructive border-destructive font-medium"}
-                        >
-                          {r.tipo === "entrada" ? "Entrada" : "Saída"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={r.tipo === "entrada" ? "bg-success/10 text-success border-success font-medium px-3 py-1" : "bg-destructive/10 text-destructive border-destructive font-medium px-3 py-1"}
-                        >
-                          {formatarValor(r.valor)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-sm text-muted-foreground">{r.data}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button 
-                            size="icon" 
-                            variant="outline" 
-                            className="h-8 w-8" 
-                            aria-label={`Editar ${r.id}`}
-                            onClick={() => abrirModalEdicao(r)}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            size="icon" 
-                            variant="outline" 
-                            className="h-8 w-8 text-destructive hover:bg-destructive hover:text-destructive-foreground" 
-                            aria-label={`Excluir ${r.id}`}
-                            onClick={() => abrirDialogoExclusao(r)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-            </div>
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Início</Label>
+            <Input 
+              type="date" 
+              value={filtroDataInicio}
+              onChange={(e) => setFiltroDataInicio(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Fim</Label>
+            <Input 
+              type="date" 
+              value={filtroDataFim}
+              onChange={(e) => setFiltroDataFim(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Tipo</Label>
+            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="entrada">Entrada</SelectItem>
+                <SelectItem value="saida">Saída</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-end">
+            <Button variant="outline" onClick={handleLimparFiltros}>
+              Limpar
+            </Button>
           </div>
         </div>
-      </section>
+      </div>
+
+      {/* Record count */}
+      <div className="text-right text-sm text-muted-foreground">
+        Mostrando {transacoesFiltradas.length} de {transacoes.length} transações.
+      </div>
+
+      {/* Tabela */}
+      <div className="rounded-lg border border-border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-24">ID</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Valor</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead className="w-[100px] text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <RefreshCw className="h-5 w-5 animate-spin" />
+                    <span>Carregando...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-destructive">
+                  {error}
+                </TableCell>
+              </TableRow>
+            ) : transacoesFiltradas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  Nenhuma transação encontrada
+                </TableCell>
+              </TableRow>
+            ) : (
+              transacoesFiltradas.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {r.id.split('-')[1]?.substring(0, 8) || r.id.substring(0, 8)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-0.5">
+                      <span className="font-medium">{r.cliente}</span>
+                      <p className="text-sm text-muted-foreground">
+                        {r.detalheTitulo}: {r.detalheValor}
+                      </p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={r.tipo === "entrada" 
+                        ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-500" 
+                        : "border-destructive/50 bg-destructive/10 text-destructive"
+                      }
+                    >
+                      {r.tipo === "entrada" ? "Entrada" : "Saída"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant="secondary" 
+                      className={r.tipo === "entrada" 
+                        ? "bg-emerald-500/10 text-emerald-500" 
+                        : "bg-destructive/10 text-destructive"
+                      }
+                    >
+                      {formatarValor(r.valor)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {r.data}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => abrirModalEdicao(r)}
+                        className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                        disabled={!r.isCustom}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => abrirDialogoExclusao(r)}
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        disabled={!r.isCustom}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Modal de Edição/Criação */}
       <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {modoEdicao ? "Editar Transação" : "Nova Transação"}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="valor">Valor</Label>
-              <Input
-                id="valor"
-                placeholder="R$ 25,00"
-                value={formData.valor}
-                onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="tipo">Tipo</Label>
-              <Select 
-                value={formData.tipo} 
-                onValueChange={(value: "entrada" | "saida") => setFormData(prev => ({ ...prev, tipo: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="entrada">Entrada</SelectItem>
-                  <SelectItem value="saida">Saída</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Valor</Label>
+                <Input
+                  placeholder="R$ 0,00"
+                  value={formData.valor}
+                  onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tipo</Label>
+                <Select 
+                  value={formData.tipo} 
+                  onValueChange={(value: "entrada" | "saida") => setFormData(prev => ({ ...prev, tipo: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="entrada">Entrada</SelectItem>
+                    <SelectItem value="saida">Saída</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="descricao">Descrição</Label>
+              <Label>Descrição</Label>
               <Textarea
-                id="descricao"
-                placeholder="Novo cliente teste&#10;Plano: plano mensal"
-                rows={5}
+                placeholder="Nome do cliente&#10;Plano: Mensal"
+                rows={4}
                 value={formData.descricao}
                 onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
                 className="resize-none"
               />
             </div>
-          </div>
-          
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={fecharModal}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSalvar} className="bg-cyan-500 hover:bg-cyan-600">
-              Salvar
-            </Button>
+            
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" onClick={fecharModal}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSalvar}>
+                Salvar
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -641,7 +500,7 @@ export default function Financeiro() {
       <AlertDialog open={dialogoExclusaoAberto} onOpenChange={setDialogoExclusaoAberto}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Excluir transação</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
@@ -652,13 +511,13 @@ export default function Financeiro() {
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmarExclusao}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive hover:bg-destructive/90"
             >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </main>
   );
 }
