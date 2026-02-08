@@ -354,38 +354,38 @@ export default function Auth() {
             <h1 className="text-2xl font-bold text-foreground">Msx Gestor</h1>
           </div>
 
-          <div className="bg-card border border-border rounded-2xl p-6 lg:p-8 shadow-xl">
+          <div className="bg-card border border-border rounded-3xl p-8 lg:p-10 shadow-2xl">
             {!isSignUp ? (
               // Login Form
-              <div className="space-y-6">
-                <div className="text-center">
+              <div className="space-y-5">
+                <div className="text-center space-y-1">
                   <p className="text-muted-foreground text-sm">Acesse sua conta</p>
-                  <h2 className="text-2xl font-bold text-foreground mt-2">Entrar</h2>
-                  <p className="text-muted-foreground text-sm mt-1">Acesse sua conta</p>
+                  <h2 className="text-2xl font-bold text-foreground">Entrar</h2>
+                  <p className="text-muted-foreground text-sm">Acesse sua conta</p>
                 </div>
 
                 <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signin-email" className="text-sm font-medium">Email</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="signin-email"
                         name="signin-email"
                         type="email"
                         placeholder="seu@email.com"
-                        className="pl-10 h-12 bg-secondary border-border"
+                        className="pl-11 h-12 bg-secondary/50 border-border/50 rounded-xl focus:border-primary/50 transition-colors"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="signin-password">Senha</Label>
+                      <Label htmlFor="signin-password" className="text-sm font-medium">Senha</Label>
                       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
                         <DialogTrigger asChild>
-                          <button type="button" className="text-xs text-[hsl(199,89%,48%)] hover:underline">
+                          <button type="button" className="text-xs text-[hsl(199,89%,48%)] hover:underline font-medium">
                             Esqueceu a senha?
                           </button>
                         </DialogTrigger>
@@ -405,13 +405,13 @@ export default function Auth() {
                                 placeholder="seu@email.com"
                                 value={resetEmail}
                                 onChange={(e) => setResetEmail(e.target.value)}
-                                className="h-12"
+                                className="h-12 rounded-xl"
                                 required
                               />
                             </div>
                             <Button 
                               type="submit" 
-                              className="w-full h-12 bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0" 
+                              className="w-full h-12 rounded-xl bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0" 
                               disabled={resetLoading}
                             >
                               {resetLoading ? (
@@ -428,19 +428,19 @@ export default function Auth() {
                       </Dialog>
                     </div>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="signin-password"
                         name="signin-password"
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Sua senha"
-                        className="pl-10 pr-10 h-12 bg-secondary border-border"
+                        className="pl-11 pr-11 h-12 bg-secondary/50 border-border/50 rounded-xl focus:border-primary/50 transition-colors"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -449,7 +449,7 @@ export default function Auth() {
 
                   <Button 
                     type="submit" 
-                    className="w-full h-12 text-base bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0" 
+                    className="w-full h-12 text-base rounded-xl bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0 font-medium shadow-lg shadow-[hsl(280,70%,50%)]/20" 
                     disabled={loading}
                   >
                     {loading ? (
@@ -467,12 +467,12 @@ export default function Auth() {
                 </form>
 
                 {/* Separator */}
-                <div className="relative">
+                <div className="relative py-2">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border" />
+                    <span className="w-full border-t border-border/50" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-4 text-muted-foreground">OU</span>
+                    <span className="bg-card px-4 text-muted-foreground font-medium">OU</span>
                   </div>
                 </div>
 
@@ -483,7 +483,7 @@ export default function Auth() {
                     <button
                       type="button"
                       onClick={() => setIsSignUp(true)}
-                      className="text-[hsl(280,70%,50%)] hover:underline font-medium"
+                      className="text-[hsl(280,70%,50%)] hover:underline font-semibold"
                     >
                       Criar conta gratuita
                     </button>
