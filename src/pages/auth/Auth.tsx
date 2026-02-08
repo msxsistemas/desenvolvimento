@@ -389,7 +389,7 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#0a0a0f]">
+    <div className="min-h-screen flex relative overflow-hidden bg-[#0a0a0f]">
       {/* Animated gradient orbs */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[150px] animate-pulse" />
@@ -400,21 +400,56 @@ export default function Auth() {
       {/* Grid pattern overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Card */}
-        <div className="bg-[#12121a]/80 backdrop-blur-2xl border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/50 overflow-hidden animate-fade-in">
-          {/* Logo header */}
-          <div className="pt-8 pb-4 flex justify-center">
+      {/* Left side - Branding */}
+      <div className="hidden lg:flex flex-1 items-center justify-center relative z-10">
+        <div className="text-center px-12 animate-fade-in">
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-full blur-xl opacity-50" />
-              <div className="relative w-20 h-20 rounded-full overflow-hidden ring-2 ring-white/10">
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600 rounded-full blur-2xl opacity-40" />
+              <div className="relative w-24 h-24 rounded-full overflow-hidden ring-4 ring-red-500/20 shadow-2xl shadow-red-500/30">
                 <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
               </div>
             </div>
           </div>
 
-          <h1 className="text-2xl font-bold text-white text-center mb-2">Msx Gestor</h1>
-          <p className="text-gray-400 text-sm text-center mb-6">Sua plataforma de gestão inteligente</p>
+          {/* Title */}
+          <h1 className="text-4xl font-bold text-white mb-4">Msx Gestor</h1>
+          
+          {/* Description */}
+          <p className="text-gray-400 text-lg mb-8 max-w-md mx-auto leading-relaxed">
+            Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
+          </p>
+
+          {/* Feature badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.05] border border-white/[0.08] text-gray-300 text-sm">
+            <Sparkles className="h-4 w-4 text-purple-400" />
+            Automação de cobranças
+          </div>
+        </div>
+      </div>
+
+      {/* Right side - Form */}
+      <div className="flex-1 flex items-center justify-center p-4 relative z-10">
+        <div className="w-full max-w-md">
+          {/* Card */}
+          <div className="bg-[#12121a]/80 backdrop-blur-2xl border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/50 overflow-hidden animate-fade-in">
+            {/* Mobile Logo header - only visible on mobile */}
+            <div className="lg:hidden pt-8 pb-4 flex flex-col items-center">
+              <div className="relative mb-4">
+                <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600 rounded-full blur-xl opacity-40" />
+                <div className="relative w-16 h-16 rounded-full overflow-hidden ring-2 ring-red-500/20">
+                  <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
+                </div>
+              </div>
+              <h1 className="text-xl font-bold text-white mb-1">Msx Gestor</h1>
+              <p className="text-gray-400 text-xs">Gerencie suas cobranças com eficiência</p>
+            </div>
+
+            {/* Desktop minimal header */}
+            <div className="hidden lg:block pt-8 pb-2">
+              <p className="text-gray-400 text-sm text-center">Acesse sua conta</p>
+            </div>
 
           {/* Tab Switcher */}
           <div className="px-6 mb-6">
@@ -697,16 +732,19 @@ export default function Auth() {
               )}
             </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <p className="text-center text-xs text-gray-500 mt-6">
-          Ao continuar, você concorda com nossos{' '}
-          <span className="text-purple-400 hover:text-purple-300 cursor-pointer transition-colors">termos</span>
-          {' '}e{' '}
-          <span className="text-purple-400 hover:text-purple-300 cursor-pointer transition-colors">privacidade</span>.
-        </p>
+          {/* Footer inside card */}
+          <div className="px-6 pb-6">
+            <p className="text-center text-xs text-gray-500">
+              Ao continuar, você concorda com nossos{' '}
+              <span className="text-purple-400 hover:text-purple-300 cursor-pointer transition-colors">termos</span>
+              {' '}e{' '}
+              <span className="text-purple-400 hover:text-purple-300 cursor-pointer transition-colors">privacidade</span>.
+            </p>
+          </div>
+        </div>
       </div>
+    </div>
 
       {/* Password Reset Modal */}
       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
