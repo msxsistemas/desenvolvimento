@@ -126,7 +126,6 @@ export function AppSidebar() {
 
   // Subitens do Outros
   const outrosSubItems = [
-    { to: "/configuracoes/mensagens-padroes", label: "Mensagens Padrões" },
     { to: "/outros/cupom", label: "Cupom" },
   ];
 
