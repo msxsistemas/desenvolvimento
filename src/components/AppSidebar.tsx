@@ -142,25 +142,22 @@ export function AppSidebar() {
                         )}
                       </SidebarMenuButton>
                       {clientesOpen && !isCollapsed && (
-                        <SidebarMenuSub className="relative ml-8 mt-2 space-y-0 pl-5">
-                          {/* Linha vertical roxa */}
-                          <div className="absolute left-[3px] top-1 bottom-1 w-[2px] bg-[#7c3aed]" />
-                          
+                        <SidebarMenuSub className="ml-8 mt-2 space-y-1">
                           {clientesSubItems.map((subItem) => (
-                            <SidebarMenuSubItem key={subItem.to} className="relative">
+                            <SidebarMenuSubItem key={subItem.to}>
                               <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
                                 <NavLink
                                   to={subItem.to}
                                   end
-                                  className={`flex items-center py-2 text-[13px] transition-colors ${
-                                    isActive(subItem.to) ? "text-white" : "text-[#8b8b9a] hover:text-white"
+                                  className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
+                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
                                   }`}
                                 >
-                                  {/* Bolinha centralizada na linha */}
-                                  <span className={`absolute left-[-17px] w-2 h-2 rounded-full ${
+                                  {/* Círculo indicador */}
+                                  <span className={`w-2 h-2 rounded-full border ${
                                     isActive(subItem.to) 
-                                      ? "bg-[#7c3aed]" 
-                                      : "bg-[#8b8b9a]"
+                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
+                                      : "border-[#8b8b9a] bg-transparent"
                                   }`} />
                                   {subItem.label}
                                 </NavLink>
