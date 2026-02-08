@@ -473,7 +473,57 @@ export default function ClientesCadastro() {
               </div>
             </div>
 
+            {/* Campos de Aplicativo (sem header) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Aplicativo</Label>
+                <Select 
+                  value={form.watch("app")} 
+                  onValueChange={(v) => form.setValue("app", v)} 
+                  disabled={loadingData}
+                >
+                  <SelectTrigger className="bg-background border-border">
+                    <SelectValue placeholder="Selecione o aplicativo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aplicativos.map((a) => (
+                      <SelectItem key={a.id} value={String(a.id)}>
+                        {a.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Vencimento do App</Label>
+                <Input 
+                  type="date"
+                  className="bg-background border-border [&::-webkit-calendar-picker-indicator]:hidden"
+                  {...form.register("dataVencApp")}
+                />
+              </div>
+            </div>
+
+            {/* Campos Financeiro (sem header) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Desconto (R$)</Label>
+                <Input 
+                  placeholder="R$ 0,00" 
+                  className="bg-background border-border"
+                  {...form.register("desconto")}
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-4">
+                <Switch
+                  checked={form.watch("descontoRecorrente")}
+                  onCheckedChange={(checked) => form.setValue("descontoRecorrente", checked)}
+                />
+                <Label className="text-sm">Desconto Recorrente</Label>
+              </div>
+            </div>
 
             {/* Collapsible: Acessos Adicionais */}
             <Collapsible className="mt-3">
