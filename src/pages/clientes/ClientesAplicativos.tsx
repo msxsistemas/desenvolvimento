@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import type { Aplicativo } from "@/types/database";
 import { useAplicativos } from "@/hooks/useDatabase";
 
 export default function ClientesAplicativos() {
+  const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -149,7 +151,7 @@ export default function ClientesAplicativos() {
           <p className="text-sm text-muted-foreground">Lista com todos os seus aplicativos</p>
         </div>
         <Button 
-          onClick={() => setIsDialogOpen(true)}
+          onClick={() => navigate("/aplicativos/cadastro")}
           className="bg-primary hover:bg-primary/90"
         >
           Adicionar Aplicativo +

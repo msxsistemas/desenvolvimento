@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { usePlanos } from "@/hooks/useDatabase";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ const formatCurrencyBRL = (value: string) => {
 };
 
 export default function ClientesPlanos() {
+  const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -193,7 +195,7 @@ export default function ClientesPlanos() {
           <p className="text-sm text-muted-foreground">Lista com todos os seus planos</p>
         </div>
         <Button 
-          onClick={() => setIsDialogOpen(true)}
+          onClick={() => navigate("/planos/cadastro")}
           className="bg-primary hover:bg-primary/90"
         >
           Adicionar Plano +
