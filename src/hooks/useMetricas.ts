@@ -96,7 +96,7 @@ export function useMetricasClientes(): MetricasClientes {
         }).length;
 
         clientesNovosData.push({
-          day: `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1).toString().padStart(2, '0')}`,
+          day: `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1).toString().padStart(2, '0')}/${data.getFullYear()}`,
           total: clientesDoDia
         });
       }
@@ -225,7 +225,7 @@ export function useMetricasPagamentos(): MetricasPagamentos {
         });
 
         pagamentosData.push({
-          day: `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1).toString().padStart(2, '0')}`,
+          day: `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1).toString().padStart(2, '0')}/${data.getFullYear()}`,
           valor: valorDoDia
         });
       }
@@ -342,7 +342,7 @@ export function useMetricasRenovacoes(): MetricasRenovacoes {
         }).length;
 
         renovacoesData.push({
-          day: `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1).toString().padStart(2, '0')}`,
+          day: `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1).toString().padStart(2, '0')}/${data.getFullYear()}`,
           total: renovacoesDoDia
         });
       }
