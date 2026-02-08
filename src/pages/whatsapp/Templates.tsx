@@ -123,7 +123,7 @@ export default function Templates() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleRestaurarPadrao}>
-            Restaurar Padrão
+            Limpar Todos
           </Button>
           <Button onClick={handleNew} className="bg-primary hover:bg-primary/90">
             Novo Template +

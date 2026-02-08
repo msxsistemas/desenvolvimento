@@ -45,8 +45,15 @@ export const useTemplatesMensagens = () => {
       if (data && data.length > 0) {
         setTemplates(data);
       } else {
-        // Se não houver templates, criar os padrões silenciosamente
-        await createDefaultTemplates(false);
+        // Verificar se o seed foi desabilitado
+        const seedDisabled = localStorage.getItem('templates_mensagens_seed_disabled');
+        if (seedDisabled) {
+          // Não criar templates padrão se o usuário limpou manualmente
+          setTemplates([]);
+        } else {
+          // Se não houver templates e o seed não foi desabilitado, criar os padrões silenciosamente
+          await createDefaultTemplates(false);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar templates:', error);
@@ -172,6 +179,9 @@ export const useTemplatesMensagens = () => {
 
       if (deleteError) throw deleteError;
 
+      // Marcar que o seed foi desabilitado
+      localStorage.setItem('templates_mensagens_seed_disabled', 'true');
+      
       // Limpar a lista local
       setTemplates([]);
       toast.success('Templates removidos com sucesso!');

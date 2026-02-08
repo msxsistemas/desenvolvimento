@@ -545,33 +545,14 @@ export default function ClientesListCreate() {
         }
       }
 
-      // Mapear tipo para nome do template
-      const templateNames: Record<string, string> = {
-        vencido: "Plano Venceu Ontem",
-        vence_hoje: "Plano Vencendo Hoje",
-        proximo_vencer: "Plano Vencendo Amanhã",
+      // Mensagens padrão do sistema (hardcoded)
+      const mensagensPadrao: Record<string, string> = {
+        vencido: "{saudacao}. *{nome_cliente}*. {br}{br} 🟥 *SEU PLANO VENCEU*",
+        vence_hoje: "{saudacao}. *{nome_cliente}*. {br}{br} ⚠️ *SEU VENCIMENTO É HOJE!*",
+        proximo_vencer: "{saudacao}. *{nome_cliente}*. {br}{br} 📅 *SEU PLANO VENCE AMANHÃ!*",
       };
 
-      const templateNome = templateNames[tipoNotificacao];
-      
-      // Buscar templates de mensagens
-      const { data: templatesData, error: templatesError } = await supabase
-        .from("templates_mensagens")
-        .select("*");
-
-      if (templatesError) throw templatesError;
-
-      const template = templatesData?.find((t) => t.nome === templateNome);
-
-      if (!template) {
-        toast({
-          title: "Erro",
-          description: `Template "${templateNome}" não encontrado. Configure em Templates.`,
-          variant: "destructive",
-        });
-        setNotificandoId(null);
-        return;
-      }
+      const mensagemTemplate = mensagensPadrao[tipoNotificacao];
 
       // Processar mensagem com variáveis
       const getSaudacao = () => {
@@ -586,7 +567,7 @@ export default function ClientesListCreate() {
         ? new Date(cliente.data_vencimento).toLocaleDateString("pt-BR")
         : "";
 
-      const mensagemProcessada = template.mensagem
+      const mensagemProcessada = mensagemTemplate
         .replace(/{nome_cliente}/g, cliente.nome)
         .replace(/{usuario}/g, cliente.usuario || "")
         .replace(/{vencimento}/g, vencimento)
