@@ -532,13 +532,13 @@ export default function ClientesIntegracoes() {
         {filteredProvedores.map((provedor) => (
           <Button
             key={provedor.id}
-            variant={selectedProvider === provedor.id ? "default" : "outline"}
+            variant="outline"
             size="sm"
             onClick={() => setSelectedProvider(provedor.id)}
-            className={`h-8 text-xs font-medium ${
+            className={`h-8 text-xs font-medium transition-all ${
               selectedProvider === provedor.id
-                ? "bg-primary hover:bg-primary/90"
-                : "hover:bg-muted"
+                ? "bg-primary border-primary text-primary-foreground hover:bg-primary/90"
+                : "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >
             {provedor.nome}
