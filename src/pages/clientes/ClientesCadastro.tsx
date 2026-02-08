@@ -5,8 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -14,7 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Home } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Home, User, Package, Key, Smartphone, DollarSign, Bell, Users, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useClientes, usePlanos, useProdutos, useAplicativos } from "@/hooks/useDatabase";
@@ -33,34 +38,37 @@ export default function ClientesCadastro() {
   const [planos, setPlanos] = useState<any[]>([]);
   const [produtos, setProdutos] = useState<any[]>([]);
   const [aplicativos, setAplicativos] = useState<any[]>([]);
-  
+  const [clientes, setClientes] = useState<any[]>([]);
 
   const form = useForm({
     defaultValues: {
       nome: "",
-      
       whatsapp: "",
       email: "",
+      cpfCnpj: "",
+      aniversario: "",
+      produto: "",
+      plano: "",
+      telas: 1,
+      fatura: "Pago",
       dataVenc: "",
       fixo: false,
       usuario: "",
       senha: "",
-      produto: "",
-      plano: "",
+      mac: "",
+      key: "",
+      dispositivo: "",
       app: "",
       dataVencApp: "",
-      telas: 1,
-      mac: "",
-      dispositivo: "",
-      fatura: "Pago",
-      key: "",
-      mensagem: "",
-      lembretes: false,
-      indicador: "",
       desconto: "0,00",
       descontoRecorrente: false,
-      aniversario: "",
+      mensagemBoasVindas: "nao_enviar",
+      ativarCobrancas: false,
+      comoConheceu: "",
+      indicador: "",
       observacao: "",
+      lembretes: false,
+      mensagem: "",
     },
   });
 
@@ -80,6 +88,13 @@ export default function ClientesCadastro() {
       setPlanos(planosData || []);
       setProdutos(produtosData || []);
       setAplicativos(aplicativosData || []);
+
+      // Buscar clientes para lista de indicadores
+      const { data: clientesData } = await supabase
+        .from('clientes')
+        .select('id, nome')
+        .order('nome');
+      setClientes(clientesData || []);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -125,12 +140,11 @@ export default function ClientesCadastro() {
     }
 
     const whatsappFormatado = formatWhatsAppNumber(data.whatsapp);
-    const nomeCompleto = data.nome;
 
     setLoading(true);
     try {
       const novoCliente = await criar({
-        nome: nomeCompleto,
+        nome: data.nome,
         whatsapp: whatsappFormatado,
         email: data.email,
         data_vencimento: data.dataVenc ? new Date(data.dataVenc + 'T23:59:59.999Z').toISOString() : null,
@@ -155,8 +169,8 @@ export default function ClientesCadastro() {
         observacao: data.observacao
       });
 
-      // Enviar mensagem de boas-vindas se o cliente tiver WhatsApp
-      if (novoCliente.whatsapp) {
+      // Enviar mensagem de boas-vindas se configurado
+      if (novoCliente.whatsapp && data.mensagemBoasVindas !== 'nao_enviar') {
         try {
           const { data: user } = await supabase.auth.getUser();
           if (user?.user?.id) {
@@ -242,6 +256,13 @@ export default function ClientesCadastro() {
   const hora = new Date().getHours();
   const saudacao = hora < 12 ? "Bom Dia" : hora < 18 ? "Boa Tarde" : "Boa Noite";
 
+  const SectionHeader = ({ icon: Icon, title, color }: { icon: any; title: string; color: string }) => (
+    <div className="flex items-center gap-2 mb-4 mt-6 first:mt-0">
+      <Icon className={`h-4 w-4 ${color}`} />
+      <span className={`text-sm font-semibold ${color}`}>{title}</span>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -260,184 +281,378 @@ export default function ClientesCadastro() {
           <h2 className="text-xl font-semibold text-foreground mb-1">Cadastrar Novo Cliente</h2>
           <p className="text-sm text-muted-foreground mb-6">Cadastre seu cliente agora mesmo!</p>
 
-          <form onSubmit={onSubmit} className="space-y-5">
-            {/* Servidor */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Servidor</Label>
-              <Select 
-                value={form.watch("produto")} 
-                onValueChange={(v) => form.setValue("produto", v)} 
-                disabled={loadingData}
-              >
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue placeholder="Selecione o servidor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {produtos.map((p) => (
-                    <SelectItem key={p.id} value={String(p.id)}>
-                      {p.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <form onSubmit={onSubmit} className="space-y-1">
+            
+            {/* Seção: Dados Pessoais */}
+            <SectionHeader icon={User} title="Dados Pessoais" color="text-cyan-400" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Nome <span className="text-destructive">*</span></Label>
+                <Input 
+                  placeholder="Nome completo do cliente" 
+                  className="bg-background border-border"
+                  {...form.register("nome")}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">WhatsApp <span className="text-destructive">*</span></Label>
+                <Input 
+                  placeholder="5511999999999" 
+                  className="bg-background border-border"
+                  {...form.register("whatsapp")}
+                  onChange={(e) => {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.startsWith('55') && value.length > 11) {
+                      value = value.substring(2);
+                    }
+                    form.setValue("whatsapp", value);
+                  }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">E-mail</Label>
+                <Input 
+                  type="email"
+                  placeholder="email@exemplo.com" 
+                  className="bg-background border-border"
+                  {...form.register("email")}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">CPF/CNPJ</Label>
+                <Input 
+                  placeholder="CPF ou CNPJ" 
+                  className="bg-background border-border"
+                  {...form.register("cpfCnpj")}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Data de Aniversário</Label>
+                <Input 
+                  type="date"
+                  className="bg-background border-border"
+                  {...form.register("aniversario")}
+                />
+              </div>
             </div>
 
-            {/* Nome */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Nome</Label>
-              <Input 
-                placeholder="Nome do seu cliente" 
-                className="bg-background border-border"
-                {...form.register("nome")}
-              />
+            {/* Seção: Plano e Produto */}
+            <SectionHeader icon={Package} title="Plano e Produto" color="text-cyan-400" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Produto <span className="text-destructive">*</span></Label>
+                <Select 
+                  value={form.watch("produto")} 
+                  onValueChange={(v) => form.setValue("produto", v)} 
+                  disabled={loadingData}
+                >
+                  <SelectTrigger className="bg-background border-border">
+                    <SelectValue placeholder="Selecione um produto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {produtos.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Plano <span className="text-destructive">*</span></Label>
+                <Select 
+                  value={form.watch("plano")} 
+                  onValueChange={(v) => form.setValue("plano", v)} 
+                  disabled={loadingData}
+                >
+                  <SelectTrigger className="bg-background border-border">
+                    <SelectValue placeholder="Selecione o plano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {planos.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Quantidade de Telas</Label>
+                <Input 
+                  type="number"
+                  min={1}
+                  className="bg-background border-border"
+                  {...form.register("telas", { valueAsNumber: true })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Status da Fatura</Label>
+                <Select 
+                  value={form.watch("fatura")} 
+                  onValueChange={(v) => form.setValue("fatura", v)}
+                >
+                  <SelectTrigger className="bg-background border-border">
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pago">Pago</SelectItem>
+                    <SelectItem value="Pendente">Pendente</SelectItem>
+                    <SelectItem value="Atrasado">Atrasado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Data de Vencimento <span className="text-destructive">*</span></Label>
+                <Input 
+                  type="date"
+                  className="bg-background border-border"
+                  {...form.register("dataVenc")}
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-6">
+                <Switch
+                  checked={form.watch("fixo")}
+                  onCheckedChange={(checked) => form.setValue("fixo", checked)}
+                />
+                <Label className="text-sm">Vencimento Fixo <span className="text-muted-foreground">(mesmo dia do mês)</span></Label>
+              </div>
             </div>
 
+            {/* Seção: Credenciais de Acesso */}
+            <SectionHeader icon={Key} title="Credenciais de Acesso" color="text-cyan-400" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Usuário</Label>
+                <Input 
+                  placeholder="Nome de usuário no painel" 
+                  className="bg-background border-border"
+                  {...form.register("usuario")}
+                />
+              </div>
 
-            {/* WhatsApp */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">WhatsApp</Label>
-              <Input 
-                placeholder="(00) 00000-0000" 
-                className="bg-background border-border"
-                {...form.register("whatsapp")}
-                onChange={(e) => {
-                  let value = e.target.value.replace(/\D/g, '');
-                  if (value.startsWith('55') && value.length > 11) {
-                    value = value.substring(2);
-                  }
-                  form.setValue("whatsapp", value);
-                }}
-              />
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Senha</Label>
+                <Input 
+                  placeholder="Senha de acesso" 
+                  className="bg-background border-border"
+                  {...form.register("senha")}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">MAC Address / Email</Label>
+                <Input 
+                  placeholder="Ex: 00:1A:2B:3C:4D:5E ou email@clouddy.com" 
+                  className="bg-background border-border"
+                  {...form.register("mac")}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Key / OTP</Label>
+                <Input 
+                  placeholder="Chave de ativação ou OTP" 
+                  className="bg-background border-border"
+                  {...form.register("key")}
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label className="text-sm font-medium">Dispositivos</Label>
+                <Input 
+                  placeholder="Ex: Smart TV, TV Box, Celular..." 
+                  className="bg-background border-border"
+                  {...form.register("dispositivo")}
+                />
+              </div>
             </div>
 
-            {/* Usuário */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Usuario</Label>
-              <Input 
-                placeholder="Username do cliente" 
-                className="bg-background border-border"
-                {...form.register("usuario")}
-              />
+            {/* Seção: Aplicativo */}
+            <SectionHeader icon={Smartphone} title="Aplicativo" color="text-cyan-400" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Aplicativo</Label>
+                <Select 
+                  value={form.watch("app")} 
+                  onValueChange={(v) => form.setValue("app", v)} 
+                  disabled={loadingData}
+                >
+                  <SelectTrigger className="bg-background border-border">
+                    <SelectValue placeholder="Selecione o aplicativo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aplicativos.map((a) => (
+                      <SelectItem key={a.id} value={String(a.id)}>
+                        {a.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Vencimento do App</Label>
+                <Input 
+                  type="date"
+                  className="bg-background border-border"
+                  {...form.register("dataVencApp")}
+                />
+              </div>
             </div>
 
-            {/* Senha */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Senha</Label>
-              <Input 
-                placeholder="Senha do cliente" 
-                className="bg-background border-border"
-                type="password"
-                {...form.register("senha")}
-              />
+            {/* Collapsible: Aplicativos Adicionais */}
+            <Collapsible className="mt-4">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/30 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="h-4 w-4 text-cyan-400" />
+                  <span className="text-sm font-medium">Aplicativos Adicionais</span>
+                  <span className="text-xs text-muted-foreground">(Opcional)</span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-4">
+                <p className="text-sm text-muted-foreground">Funcionalidade em desenvolvimento...</p>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Seção: Financeiro */}
+            <SectionHeader icon={DollarSign} title="Financeiro" color="text-green-400" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Desconto (R$)</Label>
+                <Input 
+                  placeholder="R$ 0,00" 
+                  className="bg-background border-border"
+                  {...form.register("desconto")}
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-6">
+                <Switch
+                  checked={form.watch("descontoRecorrente")}
+                  onCheckedChange={(checked) => form.setValue("descontoRecorrente", checked)}
+                />
+                <Label className="text-sm">Desconto Recorrente</Label>
+              </div>
             </div>
 
-            {/* Data de Vencimento */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Data de vencimento:</Label>
-              <Input 
-                type="date"
-                placeholder="dd/mm/aaaa"
-                className="bg-background border-border"
-                {...form.register("dataVenc")}
-              />
+            {/* Seção: Notificações */}
+            <SectionHeader icon={Bell} title="Notificações" color="text-yellow-400" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Mensagem de Boas-vindas</Label>
+                <Select 
+                  value={form.watch("mensagemBoasVindas")} 
+                  onValueChange={(v) => form.setValue("mensagemBoasVindas", v)}
+                >
+                  <SelectTrigger className="bg-background border-border">
+                    <SelectValue placeholder="Selecione uma opção" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nao_enviar">Não enviar mensagem</SelectItem>
+                    <SelectItem value="padrao">Mensagem padrão</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Ativar Cobranças</Label>
+                <div className="flex items-center gap-3 pt-2">
+                  <Switch
+                    checked={form.watch("ativarCobrancas")}
+                    onCheckedChange={(checked) => form.setValue("ativarCobrancas", checked)}
+                  />
+                  <span className="text-sm text-muted-foreground">Ativar</span>
+                </div>
+              </div>
             </div>
 
-            {/* Plano */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Plano</Label>
-              <Select 
-                value={form.watch("plano")} 
-                onValueChange={(v) => form.setValue("plano", v)} 
-                disabled={loadingData}
-              >
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue placeholder="Selecione o plano" />
-                </SelectTrigger>
-                <SelectContent>
-                  {planos.map((p) => (
-                    <SelectItem key={p.id} value={String(p.id)}>
-                      {p.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Collapsible: Acessos Adicionais */}
+            <Collapsible className="mt-4">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/30 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-2">
+                  <Key className="h-4 w-4 text-cyan-400" />
+                  <span className="text-sm font-medium">Acessos Adicionais</span>
+                  <span className="text-xs text-muted-foreground">(Opcional)</span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-4">
+                <p className="text-sm text-muted-foreground">Funcionalidade em desenvolvimento...</p>
+              </CollapsibleContent>
+            </Collapsible>
 
+            {/* Seção: Captação e Observações */}
+            <SectionHeader icon={Users} title="Captação e Observações" color="text-purple-400" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Como conheceu?</Label>
+                <Select 
+                  value={form.watch("comoConheceu")} 
+                  onValueChange={(v) => form.setValue("comoConheceu", v)}
+                >
+                  <SelectTrigger className="bg-background border-border">
+                    <SelectValue placeholder="Selecione uma opção" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="indicacao">Indicação</SelectItem>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="facebook">Facebook</SelectItem>
+                    <SelectItem value="google">Google</SelectItem>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Aplicativo */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Aplicativo</Label>
-              <Select 
-                value={form.watch("app")} 
-                onValueChange={(v) => form.setValue("app", v)} 
-                disabled={loadingData}
-              >
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue placeholder="Selecione o aplicativo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {aplicativos.map((a) => (
-                    <SelectItem key={a.id} value={String(a.id)}>
-                      {a.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Cliente Indicador</Label>
+                <Select 
+                  value={form.watch("indicador")} 
+                  onValueChange={(v) => form.setValue("indicador", v)}
+                >
+                  <SelectTrigger className="bg-background border-border">
+                    <SelectValue placeholder="Selecione o indicador" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientes.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Data vencimento app */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Data vencimento app</Label>
-              <Input 
-                type="date"
-                className="bg-background border-border"
-                {...form.register("dataVencApp")}
-              />
-            </div>
-
-            {/* Telas */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Telas</Label>
-              <Input 
-                type="number"
-                min={1}
-                className="bg-background border-border"
-                {...form.register("telas", { valueAsNumber: true })}
-              />
-            </div>
-
-            {/* Mac */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Mac</Label>
-              <Input 
-                placeholder="Mac opcional" 
-                className="bg-background border-border"
-                {...form.register("mac")}
-              />
-            </div>
-
-            {/* Dispositivo */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Dispositivo</Label>
-              <Input 
-                placeholder="Dispositivo opcional" 
-                className="bg-background border-border"
-                {...form.register("dispositivo")}
-              />
-            </div>
-
-            {/* Observação */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Observação</Label>
-              <Textarea 
-                placeholder="Observação opcional" 
-                className="bg-background border-border"
-                {...form.register("observacao")}
-              />
+              <div className="space-y-2 md:col-span-2">
+                <Label className="text-sm font-medium">Observações</Label>
+                <Textarea 
+                  placeholder="Anotações internas sobre o cliente..." 
+                  className="bg-background border-border min-h-[100px]"
+                  {...form.register("observacao")}
+                />
+              </div>
             </div>
 
             {/* Botões */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-6">
               <Button
                 type="button"
                 variant="outline"
@@ -451,7 +666,7 @@ export default function ClientesCadastro() {
                 disabled={loading}
                 className="bg-primary hover:bg-primary/90"
               >
-                {loading ? "Salvando..." : "Cadastrar Cliente"}
+                {loading ? "Salvando..." : "Salvar Cliente"}
               </Button>
             </div>
           </form>
