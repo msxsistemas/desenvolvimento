@@ -279,14 +279,7 @@ export default function ClientesCadastro() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{saudacao}, Tech Play!</h1>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-            <Home className="h-4 w-4" />
-            <span>/</span>
-            <span className="text-[hsl(var(--brand-2))]">Adicionar cliente</span>
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">{saudacao}, Tech Play!</h1>
         <Button 
           variant="outline" 
           onClick={() => navigate("/clientes")}
