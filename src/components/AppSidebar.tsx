@@ -142,9 +142,9 @@ export function AppSidebar() {
                         )}
                       </SidebarMenuButton>
                       {clientesOpen && !isCollapsed && (
-                        <SidebarMenuSub className="relative ml-7 mt-2 space-y-0 pl-4">
+                        <SidebarMenuSub className="relative ml-8 mt-2 space-y-0 pl-5">
                           {/* Linha vertical roxa */}
-                          <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#7c3aed]" />
+                          <div className="absolute left-[3px] top-1 bottom-1 w-[2px] bg-[#7c3aed]" />
                           
                           {clientesSubItems.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.to} className="relative">
@@ -152,17 +152,17 @@ export function AppSidebar() {
                                 <NavLink
                                   to={subItem.to}
                                   end
-                                  className={`flex items-center gap-3 py-2 text-[13px] transition-colors ${
+                                  className={`flex items-center py-2 text-[13px] transition-colors ${
                                     isActive(subItem.to) ? "text-white" : "text-[#8b8b9a] hover:text-white"
                                   }`}
                                 >
-                                  {/* Bolinha na linha */}
-                                  <span className={`absolute left-[-4px] w-[10px] h-[10px] rounded-full border-2 ${
+                                  {/* Bolinha centralizada na linha */}
+                                  <span className={`absolute left-[-17px] w-2 h-2 rounded-full ${
                                     isActive(subItem.to) 
-                                      ? "bg-[#7c3aed] border-[#7c3aed]" 
-                                      : "bg-[#1e1e2d] border-[#8b8b9a]"
+                                      ? "bg-[#7c3aed]" 
+                                      : "bg-[#8b8b9a]"
                                   }`} />
-                                  <span className="ml-2">{subItem.label}</span>
+                                  {subItem.label}
                                 </NavLink>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
