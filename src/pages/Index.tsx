@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useFinanceiro } from "@/hooks/useFinanceiro";
 import {
   useMetricasClientes,
@@ -11,11 +10,8 @@ import DashboardFinanceCards from "@/components/dashboard/DashboardFinanceCards"
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import DashboardNewCards from "@/components/dashboard/DashboardNewCards";
 import DashboardClientTables from "@/components/dashboard/DashboardClientTables";
-import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
 
 export default function Index() {
-  const [showValues, setShowValues] = useState(true);
   const { entradas, saidas, lucros, loading: loadingFinanceiro } = useFinanceiro();
   const {
     totalClientes,
@@ -72,19 +68,9 @@ export default function Index() {
   return (
     <div className="space-y-6">
       
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-          {saudacao}, Tech Play!
-        </h1>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setShowValues(!showValues)}
-          className="h-10 w-10"
-        >
-          {showValues ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-        </Button>
-      </div>
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+        {saudacao}, Tech Play!
+      </h1>
 
       {/* 1ª linha — Cards de clientes (3 cards) */}
       <DashboardClientCards
