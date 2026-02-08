@@ -869,11 +869,12 @@ export default function ClientesListCreate() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
-                {indicadoresUnicos.map((indicador) => (
-                  <SelectItem key={indicador} value={indicador}>
-                    {indicador}
-                  </SelectItem>
-                ))}
+                <SelectItem value="Indicação">Indicação</SelectItem>
+                <SelectItem value="Instagram">Instagram</SelectItem>
+                <SelectItem value="Facebook">Facebook</SelectItem>
+                <SelectItem value="Google">Google</SelectItem>
+                <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                <SelectItem value="Outro">Outro</SelectItem>
               </SelectContent>
             </Select>
           </div>
