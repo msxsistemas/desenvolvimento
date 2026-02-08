@@ -4,27 +4,11 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
-import { 
-  Eye, 
-  EyeOff, 
-  Mail, 
-  Lock, 
-  User as UserIcon, 
-  Phone, 
-  Gift, 
-  Loader2, 
-  ArrowRight, 
-  Sparkles, 
-  KeyRound, 
-  Send, 
-  X,
-  CheckCircle2,
-  AlertCircle
-} from 'lucide-react';
-import logoMsx from '@/assets/logo-msx-circular.png';
+import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles } from 'lucide-react';
+import logoPlay from '@/assets/logo-play.png';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -38,15 +22,14 @@ export default function Auth() {
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  // Get referral code from URL
   const referralCode = searchParams.get('ref') || '';
 
   useEffect(() => {
-    document.title = activeTab === 'signin' ? 'Entrar | Msx Gestor' : 'Cadastro | Msx Gestor';
+    document.title = activeTab === 'signin' ? 'Entrar | Gestor Tech Play' : 'Cadastro | Gestor Tech Play';
   }, [activeTab]);
 
   useEffect(() => {
@@ -79,23 +62,16 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate, isRecovery]);
 
+  // If there's a referral code, default to signup tab
   useEffect(() => {
     if (referralCode) {
       setActiveTab('signup');
     }
   }, [referralCode]);
 
-  // Clear messages when switching tabs
-  useEffect(() => {
-    setFormError(null);
-    setFormSuccess(null);
-  }, [activeTab]);
-
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    setFormError(null);
-    setFormSuccess(null);
 
     const formData = new FormData(e.currentTarget);
     const name = formData.get('signup-name') as string;
@@ -106,19 +82,19 @@ export default function Auth() {
     const refCode = formData.get('referral-code') as string;
 
     if (!name.trim()) {
-      setFormError('Por favor, informe seu nome');
+      toast.error('Por favor, informe seu nome');
       setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      setFormError('As senhas não coincidem');
+      toast.error('As senhas não coincidem');
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setFormError('A senha deve ter pelo menos 6 caracteres');
+      toast.error('A senha deve ter pelo menos 6 caracteres');
       setLoading(false);
       return;
     }
@@ -139,16 +115,15 @@ export default function Auth() {
 
       if (error) {
         if (error.message.includes('already registered')) {
-          setFormError('Este email já está cadastrado. Tente fazer login.');
+          toast.error('Este email já está cadastrado. Tente fazer login.');
         } else {
-          setFormError(error.message);
+          toast.error(error.message);
         }
       } else {
-        setFormSuccess('Conta criada! Verifique seu email para confirmar.');
-        toast.success('Conta criada com sucesso!');
+        toast.success('Conta criada com sucesso! Verifique seu email para confirmar.');
       }
     } catch (error) {
-      setFormError('Erro ao criar conta. Tente novamente.');
+      toast.error('Erro ao criar conta');
     } finally {
       setLoading(false);
     }
@@ -157,8 +132,6 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    setFormError(null);
-    setFormSuccess(null);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get('signin-email') as string;
@@ -172,16 +145,15 @@ export default function Auth() {
 
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
-          setFormError('Email ou senha incorretos');
+          toast.error('Email ou senha incorretos');
         } else {
-          setFormError(error.message);
+          toast.error(error.message);
         }
       } else {
-        setFormSuccess('Login realizado com sucesso!');
-        toast.success('Bem-vindo de volta!');
+        toast.success('Login realizado com sucesso!');
       }
     } catch (error) {
-      setFormError('Erro ao fazer login. Tente novamente.');
+      toast.error('Erro ao fazer login');
     } finally {
       setLoading(false);
     }
@@ -205,7 +177,7 @@ export default function Auth() {
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success('Email de recuperação enviado!');
+        toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
         setResetDialogOpen(false);
         setResetEmail('');
       }
@@ -219,22 +191,21 @@ export default function Auth() {
   const handleUpdatePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    setFormError(null);
 
     if (!newPassword.trim()) {
-      setFormError('Por favor, informe a nova senha');
+      toast.error('Por favor, informe a nova senha');
       setLoading(false);
       return;
     }
 
     if (newPassword.length < 6) {
-      setFormError('A senha deve ter pelo menos 6 caracteres');
+      toast.error('A senha deve ter pelo menos 6 caracteres');
       setLoading(false);
       return;
     }
 
     if (newPassword !== confirmNewPassword) {
-      setFormError('As senhas não coincidem');
+      toast.error('As senhas não coincidem');
       setLoading(false);
       return;
     }
@@ -251,7 +222,7 @@ export default function Auth() {
         } else if (error.message.includes('Password should be at least')) {
           errorMessage = 'A senha deve ter pelo menos 6 caracteres';
         }
-        setFormError(errorMessage);
+        toast.error(errorMessage);
       } else {
         toast.success('Senha atualizada com sucesso!');
         setIsRecovery(false);
@@ -260,7 +231,7 @@ export default function Auth() {
         navigate('/');
       }
     } catch (error) {
-      setFormError('Erro ao atualizar senha');
+      toast.error('Erro ao atualizar senha');
     } finally {
       setLoading(false);
     }
@@ -269,117 +240,70 @@ export default function Auth() {
   // Password recovery form
   if (isRecovery) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#0a0a0f]">
-        {/* Animated gradient orbs */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-blue-600/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[150px]" />
-        </div>
-        
-        {/* Grid overlay removido */}
-
-        <div className="w-full max-w-md relative z-10">
-          <div className="bg-[#12121a]/80 backdrop-blur-2xl border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/50 p-8 animate-fade-in">
-            {/* Logo */}
-            <div className="flex justify-center mb-8">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full blur-xl opacity-50" />
-                <div className="relative w-20 h-20 rounded-full overflow-hidden ring-2 ring-cyan-400/30 shadow-xl shadow-blue-500/30">
-                  <img src={logoMsx} alt="Logo" className="w-full h-full object-cover" />
-                </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+        <div className="w-full max-w-md">
+          <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg shadow-primary/20">
+                <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
               </div>
+              <h1 className="text-2xl font-bold text-foreground">Redefinir Senha</h1>
+              <p className="text-muted-foreground text-sm mt-1">Digite sua nova senha abaixo</p>
             </div>
 
-            {/* Badge */}
-            <div className="flex justify-center mb-6">
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 text-purple-400 text-xs font-medium">
-                <KeyRound className="h-3.5 w-3.5" />
-                Recuperação de Senha
-              </span>
-            </div>
-
-            <h1 className="text-2xl font-bold text-white text-center mb-2">Redefinir Senha</h1>
-            <p className="text-gray-400 text-sm text-center mb-8">Digite sua nova senha abaixo</p>
-
-            {/* Error message */}
-            {formError && (
-              <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-red-950/40 to-red-900/20 border border-red-500/30 flex items-center gap-3 animate-fade-in backdrop-blur-sm shadow-lg shadow-red-500/5">
-                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-                  <AlertCircle className="h-4 w-4 text-red-400" />
-                </div>
-                <p className="text-red-300 text-sm font-medium">{formError}</p>
-              </div>
-            )}
-
-            <form onSubmit={handleUpdatePassword} className="space-y-5">
+            <form onSubmit={handleUpdatePassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="new-password" className="text-sm font-medium text-gray-300">Nova Senha</Label>
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
-                    <Input
-                      id="new-password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Mínimo 6 caracteres"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="pl-12 pr-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
+                <Label htmlFor="new-password">Nova Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="new-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Mínimo 6 caracteres"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pl-10 pr-10 h-12"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="confirm-new-password" className="text-sm font-medium text-gray-300">Confirmar Senha</Label>
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
-                    <Input
-                      id="confirm-new-password"
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      placeholder="Confirme sua nova senha"
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      className="pl-12 pr-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
+                <Label htmlFor="confirm-new-password">Confirmar Nova Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="confirm-new-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Confirme sua nova senha"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    className="pl-10 pr-10 h-12"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
-
-              <Button 
-                type="submit" 
-                className="w-full h-13 text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl shadow-lg shadow-purple-500/25 border-0 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-0.5"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Atualizando...
                   </>
                 ) : (
-                  <>
-                    Atualizar Senha
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </>
+                  'Atualizar Senha'
                 )}
               </Button>
             </form>
@@ -390,429 +314,309 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden bg-[#0a0a0f]">
-      {/* Animated gradient orbs */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[150px] animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-600/15 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/10 rounded-full blur-[200px]" />
-      </div>
-      
-      {/* Grid overlay removido */}
-
+    <div className="min-h-screen flex bg-gradient-to-br from-background via-background to-primary/5">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex flex-1 items-center justify-center relative z-10">
-        <div className="text-center px-12 animate-fade-in">
-          {/* Logo */}
-          <div className="flex justify-center mb-8">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full blur-2xl opacity-40" />
-              <div className="relative w-24 h-24 rounded-full overflow-hidden ring-4 ring-cyan-400/20 shadow-2xl shadow-blue-500/30">
-                <img src={logoMsx} alt="Logo" className="w-full h-full object-cover" />
-              </div>
-            </div>
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 via-primary/5 to-background items-center justify-center p-12">
+        <div className="max-w-md text-center">
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full overflow-hidden shadow-2xl shadow-primary/30">
+            <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
           </div>
-
-          {/* Title */}
-          <h1 className="text-4xl font-bold text-white mb-4">Msx Gestor</h1>
-          
-          {/* Description */}
-          <p className="text-gray-400 text-lg mb-8 max-w-md mx-auto leading-relaxed">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            Msx Gestor
+          </h1>
+          <p className="text-lg text-muted-foreground mb-8">
             Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
           </p>
-
-          {/* Feature badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.05] border border-white/[0.08] text-gray-300 text-sm">
-            <Sparkles className="h-4 w-4 text-purple-400" />
-            Automação de cobranças
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span>Automação de cobranças</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Right side - Form */}
-      <div className="flex-1 flex items-center justify-center p-4 relative z-10">
+      <div className="flex-1 flex items-center justify-center p-4 lg:p-12">
         <div className="w-full max-w-md">
-          {/* Card */}
-          <div className="bg-[#12121a]/80 backdrop-blur-2xl border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/50 overflow-hidden animate-fade-in">
-            {/* Mobile Logo header - only visible on mobile */}
-            <div className="lg:hidden pt-8 pb-4 flex flex-col items-center">
-              <div className="relative mb-4">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full blur-xl opacity-40" />
-                <div className="relative w-16 h-16 rounded-full overflow-hidden ring-2 ring-cyan-400/20 shadow-lg shadow-blue-500/30">
-                  <img src={logoMsx} alt="Logo" className="w-full h-full object-cover" />
-                </div>
-              </div>
-              <h1 className="text-xl font-bold text-white mb-1">Msx Gestor</h1>
-              <p className="text-gray-400 text-xs">Gerencie suas cobranças com eficiência</p>
+          {/* Mobile logo */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg shadow-primary/20">
+              <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
             </div>
-
-            {/* Desktop minimal header */}
-            <div className="hidden lg:block pt-8 pb-2">
-              <p className="text-gray-400 text-sm text-center">Acesse sua conta</p>
-            </div>
-
-          {/* Header simples */}
-          <div className="px-6 pt-8 pb-4">
-            <h2 className="text-xl font-bold text-white text-center mb-1">
-              {activeTab === 'signin' ? 'Entrar' : 'Criar conta'}
-            </h2>
-            <p className="text-gray-400 text-sm text-center">
-              {activeTab === 'signin' ? 'Acesse sua conta' : 'Preencha os dados abaixo'}
-            </p>
+            <h1 className="text-2xl font-bold text-foreground">Msx Gestor</h1>
           </div>
 
-          <div className="px-6 pb-8">
-            {/* Error message - simples */}
-            {formError && (
-              <p className="mb-4 text-sm text-red-400 text-center">{formError}</p>
-            )}
+          <div className="bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
+            {/* Tab Switcher */}
+            <div className="flex border-b border-border">
+              <button
+                type="button"
+                onClick={() => setActiveTab('signin')}
+                className={`flex-1 py-4 text-sm font-medium transition-colors ${
+                  activeTab === 'signin'
+                    ? 'text-primary border-b-2 border-primary bg-primary/5'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Entrar
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('signup')}
+                className={`flex-1 py-4 text-sm font-medium transition-colors ${
+                  activeTab === 'signup'
+                    ? 'text-primary border-b-2 border-primary bg-primary/5'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Cadastrar
+              </button>
+            </div>
 
-            {/* Success message */}
-            {formSuccess && (
-              <div className="mb-5 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3 animate-fade-in">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-                <p className="text-emerald-400 text-sm">{formSuccess}</p>
-              </div>
-            )}
+            <div className="p-6 lg:p-8">
+              {activeTab === 'signin' ? (
+                <>
+                  <div className="mb-6">
+                    <h2 className="text-xl font-semibold text-foreground">Bem-vindo de volta!</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Entre com suas credenciais para continuar</p>
+                  </div>
 
-            {/* Sign In Form */}
-            <div className={`transition-all duration-300 ${activeTab === 'signin' ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'}`}>
-              {activeTab === 'signin' && (
-                <form onSubmit={handleSignIn} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email" className="text-sm font-medium text-gray-300">Email</Label>
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-email">Email</Label>
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signin-email"
                           name="signin-email"
                           type="email"
                           placeholder="seu@email.com"
-                          className="pl-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          className="pl-10 h-12"
                           required
                         />
                       </div>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="signin-password" className="text-sm font-medium text-gray-300">Senha</Label>
-                      <button 
-                        type="button" 
-                        onClick={() => setResetDialogOpen(true)}
-                        className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium"
-                      >
-                        Esqueceu a senha?
-                      </button>
-                    </div>
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="signin-password">Senha</Label>
+                        <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                          <DialogTrigger asChild>
+                            <button type="button" className="text-xs text-primary hover:underline">
+                              Esqueceu a senha?
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Recuperar senha</DialogTitle>
+                              <DialogDescription>
+                                Digite seu email para receber o link de recuperação.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handlePasswordReset} className="space-y-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="reset-email">Email</Label>
+                                <Input
+                                  id="reset-email"
+                                  type="email"
+                                  placeholder="seu@email.com"
+                                  value={resetEmail}
+                                  onChange={(e) => setResetEmail(e.target.value)}
+                                  className="h-12"
+                                  required
+                                />
+                              </div>
+                              <Button type="submit" className="w-full h-12" disabled={resetLoading}>
+                                {resetLoading ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Enviando...
+                                  </>
+                                ) : (
+                                  'Enviar link'
+                                )}
+                              </Button>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                       <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signin-password"
                           name="signin-password"
                           type={showPassword ? 'text' : 'password'}
                           placeholder="Sua senha"
-                          className="pl-12 pr-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          className="pl-10 pr-10 h-12"
                           required
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                     </div>
+                    <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Entrando...
+                        </>
+                      ) : (
+                        <>
+                          Entrar
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <h2 className="text-xl font-semibold text-foreground">Criar sua conta</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Preencha os dados para começar</p>
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full h-13 text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl shadow-lg shadow-purple-500/25 border-0 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-0.5"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Entrando...
-                      </>
-                    ) : (
-                      <>
-                        Entrar
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-              )}
-            </div>
-
-            {/* Sign Up Form */}
-            <div className={`transition-all duration-300 ${activeTab === 'signup' ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'}`}>
-              {activeTab === 'signup' && (
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name" className="text-sm font-medium text-gray-300">Nome completo</Label>
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Nome completo</Label>
                       <div className="relative">
-                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                        <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signup-name"
                           name="signup-name"
                           type="text"
                           placeholder="Seu nome completo"
-                          className="pl-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          className="pl-10 h-12"
                           required
                         />
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email" className="text-sm font-medium text-gray-300">Email</Label>
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signup-email"
                           name="signup-email"
                           type="email"
                           placeholder="seu@email.com"
-                          className="pl-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          className="pl-10 h-12"
                           required
                         />
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-whatsapp" className="text-sm font-medium text-gray-300">
-                      WhatsApp <span className="text-gray-500 text-xs">(opcional)</span>
-                    </Label>
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-whatsapp">WhatsApp <span className="text-muted-foreground text-xs">(opcional)</span></Label>
                       <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signup-whatsapp"
                           name="signup-whatsapp"
                           type="tel"
                           placeholder="11999999999"
-                          className="pl-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          className="pl-10 h-12"
                         />
                       </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password" className="text-sm font-medium text-gray-300">Senha</Label>
-                      <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-password">Senha</Label>
                         <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
                             id="signup-password"
                             name="signup-password"
                             type={showPassword ? 'text' : 'password'}
                             placeholder="Mínimo 6"
-                            className="pl-12 pr-10 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                            className="pl-10 pr-10 h-12"
                             required
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                           >
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-300">Confirmar</Label>
-                      <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-password">Confirmar</Label>
                         <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
                             id="confirm-password"
                             name="confirm-password"
                             type={showConfirmPassword ? 'text' : 'password'}
                             placeholder="Confirme"
-                            className="pl-12 pr-10 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                            className="pl-10 pr-10 h-12"
                             required
                           />
                           <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                           >
                             {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Referral Code */}
-                  <div className="space-y-2">
-                    <Label htmlFor="referral-code" className="flex items-center gap-2 text-sm font-medium text-gray-300">
-                      <Gift className="h-4 w-4 text-purple-400" />
-                      Código de indicação <span className="text-gray-500 text-xs">(opcional)</span>
-                    </Label>
-                    <Input
-                      id="referral-code"
-                      name="referral-code"
-                      type="text"
-                      placeholder="REF_XXXXXXXX"
-                      defaultValue={referralCode}
-                      className="h-13 font-mono bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                    />
-                    {referralCode && (
-                      <p className="text-xs text-purple-400 flex items-center gap-1.5 font-medium">
-                        <Sparkles className="h-3.5 w-3.5" />
-                        Código de indicação aplicado!
-                      </p>
-                    )}
-                  </div>
+                    {/* Referral Code Field */}
+                    <div className="space-y-2">
+                      <Label htmlFor="referral-code" className="flex items-center gap-2">
+                        <Gift className="h-4 w-4 text-primary" />
+                        Código de indicação <span className="text-muted-foreground text-xs">(opcional)</span>
+                      </Label>
+                      <Input
+                        id="referral-code"
+                        name="referral-code"
+                        type="text"
+                        placeholder="REF_XXXXXXXX"
+                        defaultValue={referralCode}
+                        className="h-12 font-mono"
+                      />
+                      {referralCode && (
+                        <p className="text-xs text-primary flex items-center gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          Código de indicação aplicado!
+                        </p>
+                      )}
+                    </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full h-13 text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl shadow-lg shadow-purple-500/25 border-0 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-0.5"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Cadastrando...
-                      </>
-                    ) : (
-                      <>
-                        Criar conta
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </>
-                    )}
-                  </Button>
-                </form>
+                    <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Cadastrando...
+                        </>
+                      ) : (
+                        <>
+                          Criar conta
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </>
               )}
             </div>
           </div>
 
-          {/* Footer inside card - Link para alternar */}
-          <div className="px-6 pb-6 pt-4 border-t border-white/[0.05]">
-            <div className="flex items-center justify-center gap-1 mb-3">
-              <span className="text-gray-500 text-sm">OU</span>
-            </div>
-            <p className="text-center text-sm text-gray-400">
-              {activeTab === 'signin' ? (
-                <>
-                  Ainda não tem conta?{' '}
-                  <button 
-                    type="button"
-                    onClick={() => setActiveTab('signup')}
-                    className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
-                  >
-                    Criar conta gratuita
-                  </button>
-                </>
-              ) : (
-                <>
-                  Já tem uma conta?{' '}
-                  <button 
-                    type="button"
-                    onClick={() => setActiveTab('signin')}
-                    className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
-                  >
-                    Entrar
-                  </button>
-                </>
-              )}
-            </p>
-          </div>
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            Ao continuar, você concorda com nossos termos de uso e política de privacidade.
+          </p>
         </div>
       </div>
-    </div>
-
-      {/* Password Reset Modal */}
-      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-[#12121a]/95 backdrop-blur-2xl border-white/[0.08] p-0 overflow-hidden rounded-3xl">
-          {/* Header with gradient */}
-          <div className="relative bg-gradient-to-br from-purple-600/20 via-blue-600/10 to-transparent p-8 text-center">
-            <button
-              onClick={() => setResetDialogOpen(false)}
-              className="absolute right-4 top-4 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
-            >
-              <X className="h-4 w-4" />
-            </button>
-            
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-purple-500/30 to-blue-500/20 flex items-center justify-center mb-4 ring-1 ring-white/10">
-              <KeyRound className="h-8 w-8 text-purple-400" />
-            </div>
-            <h2 className="text-xl font-bold text-white">Recuperar Senha</h2>
-            <p className="text-gray-400 text-sm mt-2">Enviaremos um link para redefinir</p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handlePasswordReset} className="p-6 space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="reset-email" className="text-sm font-medium text-gray-300">Email</Label>
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
-                  <Input
-                    id="reset-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
-                    className="pl-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full h-13 text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl shadow-lg shadow-purple-500/25 border-0 transition-all duration-300"
-              disabled={resetLoading}
-            >
-              {resetLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Send className="mr-2 h-5 w-5" />
-                  Enviar link
-                </>
-              )}
-            </Button>
-
-            <p className="text-center text-xs text-gray-500">
-              Lembrou sua senha?{' '}
-              <button 
-                type="button"
-                onClick={() => setResetDialogOpen(false)}
-                className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
-              >
-                Voltar ao login
-              </button>
-            </p>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
