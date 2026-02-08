@@ -261,7 +261,7 @@ export default function ClientesCadastro() {
   const saudacao = hora < 12 ? "Bom Dia" : hora < 18 ? "Boa Tarde" : "Boa Noite";
 
   const SectionHeader = ({ icon: Icon, title, color }: { icon: any; title: string; color: string }) => (
-    <div className="flex items-center gap-2 mb-4 mt-6 first:mt-0">
+    <div className="flex items-center gap-2 mb-4 mt-8 first:mt-0 pt-2 border-t border-border/20 first:border-t-0 first:pt-0">
       <Icon className={`h-4 w-4 ${color}`} />
       <span className={`text-sm font-semibold ${color}`}>{title}</span>
     </div>
@@ -326,8 +326,8 @@ export default function ClientesCadastro() {
               </div>
             </div>
 
-            {/* Seção: Plano e Produto */}
-            <SectionHeader icon={Package} title="Plano e Produto" color="text-cyan-400" />
+            {/* Seção: Assinatura */}
+            <SectionHeader icon={Package} title="Assinatura" color="text-cyan-400" />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
