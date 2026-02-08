@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, X, Settings, AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import { Settings, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Produto } from "@/types/database";
 
@@ -307,40 +307,48 @@ export default function ClientesProdutos() {
         </DialogContent>
       </Dialog>
 
-      {/* Search & Table */}
-      <div className="rounded-lg border border-border bg-card">
-        <div className="flex items-center gap-2 p-3 border-b border-border">
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      {/* Filters */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Busca</Label>
             <Input
               placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 h-9"
             />
-            {searchTerm && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSearchTerm("")}
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px] h-9">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="ativo">Ativo</SelectItem>
-              <SelectItem value="inativo">Inativo</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="text-sm text-muted-foreground">{filteredProdutos.length} registro(s)</span>
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Status</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="ativo">Ativo</SelectItem>
+                <SelectItem value="inativo">Inativo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-end">
+            <Button 
+              variant="outline" 
+              onClick={() => { setSearchTerm(""); setStatusFilter("todos"); }}
+            >
+              Limpar
+            </Button>
+          </div>
         </div>
+      </div>
+
+      {/* Record count */}
+      <div className="text-right text-sm text-muted-foreground">
+        Mostrando {filteredProdutos.length} de {produtos.length} registros.
+      </div>
+
+      {/* Table */}
+      <div className="rounded-lg border border-border bg-card">
 
         <Table>
           <TableHeader>
