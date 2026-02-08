@@ -96,9 +96,9 @@ export default function ClientesAplicativos() {
   };
 
   const handleToggleAtivo = async (app: Aplicativo) => {
-    const novoStatus = !(app as any).ativo !== false;
+    const isActive = (app as any).ativo !== false;
     try {
-      const atualizado = await atualizar(app.id!, { ativo: !novoStatus } as any);
+      const atualizado = await atualizar(app.id!, { ativo: !isActive } as any);
       if (atualizado) {
         setApps((prev) => prev.map((a) => (a.id === app.id ? atualizado : a)));
       }

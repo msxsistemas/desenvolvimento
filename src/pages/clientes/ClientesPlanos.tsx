@@ -138,9 +138,9 @@ export default function ClientesPlanos() {
   };
 
   const handleToggleAtivo = async (plano: Plano) => {
-    const novoStatus = !(plano as any).ativo !== false;
+    const isActive = (plano as any).ativo !== false;
     try {
-      const atualizado = await atualizar(plano.id!, { ativo: !novoStatus } as any);
+      const atualizado = await atualizar(plano.id!, { ativo: !isActive } as any);
       if (atualizado) {
         setPlanos((prev) => prev.map((p) => (p.id === plano.id ? atualizado : p)));
       }

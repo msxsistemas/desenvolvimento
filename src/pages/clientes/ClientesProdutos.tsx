@@ -175,9 +175,9 @@ export default function ClientesProdutos() {
   };
 
   const handleToggleAtivo = async (produto: Produto) => {
-    const novoStatus = !(produto as any).ativo !== false;
+    const isActive = (produto as any).ativo !== false;
     try {
-      const atualizado = await atualizar(produto.id as string, { ativo: !novoStatus } as any);
+      const atualizado = await atualizar(produto.id as string, { ativo: !isActive } as any);
       if (atualizado) {
         setProdutos((prev) => prev.map((p) => (p.id === produto.id ? atualizado : p)));
       }
