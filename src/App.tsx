@@ -33,6 +33,7 @@ import EnviosEmMassa from "./pages/whatsapp/EnviosEmMassa";
 import GerenciarCampanhas from "./pages/whatsapp/GerenciarCampanhas";
 import ParearWhatsappNew from "./pages/whatsapp/ParearWhatsappNew";
 import Templates from "./pages/whatsapp/Templates";
+import Relatorios from "./pages/Relatorios";
 
 const queryClient = new QueryClient();
 import Auth from "./pages/auth/Auth";
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/clientes/produtos" element={<ClientesProdutos />} />
             <Route path="/clientes/aplicativos" element={<ClientesAplicativos />} />
             <Route path="/clientes/metricas" element={<ClientesMetricas />} />
+            <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/clientes/integracoes" element={<ClientesIntegracoes />} />
             <Route path="/financeiro-extra/checkout" element={<Checkout />} />
             <Route path="/financeiro-extra/assas" element={<Assas />} />
