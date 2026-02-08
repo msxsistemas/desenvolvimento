@@ -432,8 +432,8 @@ export default function Auth() {
       {/* Right side - Form */}
       <div className="flex-1 flex items-center justify-center p-4 relative z-10">
         <div className="w-full max-w-md">
-          {/* Card */}
-          <div className="bg-[#12121a]/80 backdrop-blur-2xl border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/50 overflow-hidden animate-fade-in">
+          {/* Card - Light theme */}
+          <div className="bg-white/95 backdrop-blur-2xl border border-gray-200/50 rounded-3xl shadow-2xl shadow-black/20 overflow-hidden animate-fade-in">
             {/* Mobile Logo header - only visible on mobile */}
             <div className="lg:hidden pt-8 pb-4 flex flex-col items-center">
               <div className="relative mb-4">
@@ -442,31 +442,32 @@ export default function Auth() {
                   <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
                 </div>
               </div>
-              <h1 className="text-xl font-bold text-white mb-1">Msx Gestor</h1>
-              <p className="text-gray-400 text-xs">Gerencie suas cobranças com eficiência</p>
+              <h1 className="text-xl font-bold text-gray-900 mb-1">Msx Gestor</h1>
+              <p className="text-gray-500 text-xs">Gerencie suas cobranças com eficiência</p>
             </div>
 
-            {/* Desktop minimal header */}
-            <div className="hidden lg:block pt-8 pb-2">
-              <p className="text-gray-400 text-sm text-center">Acesse sua conta</p>
+            {/* Desktop header */}
+            <div className="hidden lg:block pt-8 pb-2 px-6">
+              <h2 className="text-xl font-bold text-gray-900">Bem-vindo de volta!</h2>
+              <p className="text-gray-500 text-sm mt-1">Entre com suas credenciais para continuar</p>
             </div>
 
           {/* Tab Switcher */}
-          <div className="px-6 mb-6">
-            <div className="relative bg-white/[0.03] p-1.5 rounded-2xl border border-white/[0.05]">
+          <div className="px-6 mb-6 mt-4">
+            <div className="relative bg-gray-100 p-1 rounded-xl">
               {/* Sliding background */}
               <div 
-                className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-lg transition-all duration-300 ease-out"
+                className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-lg shadow-sm transition-all duration-300 ease-out"
                 style={{ 
-                  left: activeTab === 'signin' ? '6px' : 'calc(50%)',
+                  left: activeTab === 'signin' ? '4px' : 'calc(50%)',
                 }}
               />
               <div className="relative flex">
                 <button
                   type="button"
                   onClick={() => setActiveTab('signin')}
-                  className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-colors duration-300 ${
-                    activeTab === 'signin' ? 'text-white' : 'text-gray-400 hover:text-gray-300'
+                  className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors duration-300 ${
+                    activeTab === 'signin' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Entrar
@@ -474,8 +475,8 @@ export default function Auth() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('signup')}
-                  className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-colors duration-300 ${
-                    activeTab === 'signup' ? 'text-white' : 'text-gray-400 hover:text-gray-300'
+                  className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors duration-300 ${
+                    activeTab === 'signup' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Cadastrar
@@ -506,17 +507,16 @@ export default function Auth() {
               {activeTab === 'signin' && (
                 <form onSubmit={handleSignIn} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email" className="text-sm font-medium text-gray-300">Email</Label>
+                    <Label htmlFor="signin-email" className="text-sm font-medium text-gray-700">Email</Label>
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-gray-600 transition-colors" />
                         <Input
                           id="signin-email"
                           name="signin-email"
                           type="email"
                           placeholder="seu@email.com"
-                          className="pl-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          className="pl-12 h-12 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition-all"
                           required
                         />
                       </div>
@@ -525,31 +525,30 @@ export default function Auth() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="signin-password" className="text-sm font-medium text-gray-300">Senha</Label>
+                      <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700">Senha</Label>
                       <button 
                         type="button" 
                         onClick={() => setResetDialogOpen(true)}
-                        className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium"
+                        className="text-xs text-cyan-600 hover:text-cyan-700 transition-colors font-medium"
                       >
                         Esqueceu a senha?
                       </button>
                     </div>
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
                       <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-gray-600 transition-colors" />
                         <Input
                           id="signin-password"
                           name="signin-password"
                           type={showPassword ? 'text' : 'password'}
                           placeholder="Sua senha"
-                          className="pl-12 pr-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          className="pl-12 pr-12 h-12 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition-all"
                           required
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                         >
                           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
@@ -559,7 +558,7 @@ export default function Auth() {
 
                   <Button 
                     type="submit" 
-                    className="w-full h-13 text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl shadow-lg shadow-purple-500/25 border-0 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-0.5"
+                    className="w-full h-12 text-base font-semibold bg-white hover:bg-gray-50 text-gray-900 rounded-xl shadow-sm border border-gray-200 transition-all duration-300 hover:shadow-md"
                     disabled={loading}
                   >
                     {loading ? (
@@ -583,17 +582,16 @@ export default function Auth() {
               {activeTab === 'signup' && (
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name" className="text-sm font-medium text-gray-300">Nome completo</Label>
+                    <Label htmlFor="signup-name" className="text-sm font-medium text-gray-700">Nome completo</Label>
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
                       <div className="relative">
-                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-gray-600 transition-colors" />
                         <Input
                           id="signup-name"
                           name="signup-name"
                           type="text"
                           placeholder="Seu nome completo"
-                          className="pl-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          className="pl-12 h-12 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition-all"
                           required
                         />
                       </div>
@@ -601,17 +599,16 @@ export default function Auth() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email" className="text-sm font-medium text-gray-300">Email</Label>
+                    <Label htmlFor="signup-email" className="text-sm font-medium text-gray-700">Email</Label>
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-gray-600 transition-colors" />
                         <Input
                           id="signup-email"
                           name="signup-email"
                           type="email"
                           placeholder="seu@email.com"
-                          className="pl-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          className="pl-12 h-12 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition-all"
                           required
                         />
                       </div>
@@ -619,19 +616,18 @@ export default function Auth() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="signup-whatsapp" className="text-sm font-medium text-gray-300">
-                      WhatsApp <span className="text-gray-500 text-xs">(opcional)</span>
+                    <Label htmlFor="signup-whatsapp" className="text-sm font-medium text-gray-700">
+                      WhatsApp <span className="text-gray-400 text-xs">(opcional)</span>
                     </Label>
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
                       <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-gray-600 transition-colors" />
                         <Input
                           id="signup-whatsapp"
                           name="signup-whatsapp"
                           type="tel"
                           placeholder="11999999999"
-                          className="pl-12 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                          className="pl-12 h-12 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition-all"
                         />
                       </div>
                     </div>
@@ -639,23 +635,22 @@ export default function Auth() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password" className="text-sm font-medium text-gray-300">Senha</Label>
+                      <Label htmlFor="signup-password" className="text-sm font-medium text-gray-700">Senha</Label>
                       <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
                         <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-gray-600 transition-colors" />
                           <Input
                             id="signup-password"
                             name="signup-password"
                             type={showPassword ? 'text' : 'password'}
                             placeholder="Mínimo 6"
-                            className="pl-12 pr-10 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                            className="pl-12 pr-10 h-12 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition-all"
                             required
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                           >
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
@@ -664,23 +659,22 @@ export default function Auth() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-300">Confirmar</Label>
+                      <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-700">Confirmar</Label>
                       <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition-opacity -m-0.5" />
                         <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-gray-600 transition-colors" />
                           <Input
                             id="confirm-password"
                             name="confirm-password"
                             type={showConfirmPassword ? 'text' : 'password'}
                             placeholder="Confirme"
-                            className="pl-12 pr-10 h-13 bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                            className="pl-12 pr-10 h-12 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition-all"
                             required
                           />
                           <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                           >
                             {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
@@ -691,9 +685,9 @@ export default function Auth() {
 
                   {/* Referral Code */}
                   <div className="space-y-2">
-                    <Label htmlFor="referral-code" className="flex items-center gap-2 text-sm font-medium text-gray-300">
-                      <Gift className="h-4 w-4 text-purple-400" />
-                      Código de indicação <span className="text-gray-500 text-xs">(opcional)</span>
+                    <Label htmlFor="referral-code" className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Gift className="h-4 w-4 text-cyan-600" />
+                      Código de indicação <span className="text-gray-400 text-xs">(opcional)</span>
                     </Label>
                     <Input
                       id="referral-code"
@@ -701,10 +695,10 @@ export default function Auth() {
                       type="text"
                       placeholder="REF_XXXXXXXX"
                       defaultValue={referralCode}
-                      className="h-13 font-mono bg-white/[0.03] border-white/[0.08] text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                      className="h-12 font-mono bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition-all"
                     />
                     {referralCode && (
-                      <p className="text-xs text-purple-400 flex items-center gap-1.5 font-medium">
+                      <p className="text-xs text-cyan-600 flex items-center gap-1.5 font-medium">
                         <Sparkles className="h-3.5 w-3.5" />
                         Código de indicação aplicado!
                       </p>
@@ -713,7 +707,7 @@ export default function Auth() {
 
                   <Button 
                     type="submit" 
-                    className="w-full h-13 text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl shadow-lg shadow-purple-500/25 border-0 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-0.5"
+                    className="w-full h-12 text-base font-semibold bg-white hover:bg-gray-50 text-gray-900 rounded-xl shadow-sm border border-gray-200 transition-all duration-300 hover:shadow-md"
                     disabled={loading}
                   >
                     {loading ? (
@@ -737,9 +731,9 @@ export default function Auth() {
           <div className="px-6 pb-6">
             <p className="text-center text-xs text-gray-500">
               Ao continuar, você concorda com nossos{' '}
-              <span className="text-purple-400 hover:text-purple-300 cursor-pointer transition-colors">termos</span>
+              <span className="text-cyan-600 hover:text-cyan-700 cursor-pointer transition-colors">termos de uso</span>
               {' '}e{' '}
-              <span className="text-purple-400 hover:text-purple-300 cursor-pointer transition-colors">privacidade</span>.
+              <span className="text-cyan-600 hover:text-cyan-700 cursor-pointer transition-colors">política de privacidade</span>.
             </p>
           </div>
         </div>
