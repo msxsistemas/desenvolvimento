@@ -114,8 +114,8 @@ export function AppSidebar() {
     <Sidebar className="border-r border-border" collapsible="icon">
       <SidebarContent className="bg-background">
         {/* Logo Header */}
-        <div className="flex justify-center py-8">
-          <img src={logoMsx} alt="MSX Logo" className="w-20 h-20 rounded-full shadow-lg" />
+        <div className="flex justify-center py-6">
+          <img src={logoMsx} alt="MSX Logo" className="h-16 w-auto object-contain" />
         </div>
 
         {/* Separator Line */}
