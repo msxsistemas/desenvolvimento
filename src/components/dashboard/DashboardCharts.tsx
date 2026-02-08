@@ -139,8 +139,12 @@ export default function DashboardCharts({
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
+                  tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
                 />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip 
+                  contentStyle={tooltipStyle} 
+                  formatter={(value: number, name: string) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name]}
+                />
                 <Legend 
                   wrapperStyle={{ fontSize: "11px", color: "hsl(215, 20%, 65%)" }}
                   iconType="circle"
