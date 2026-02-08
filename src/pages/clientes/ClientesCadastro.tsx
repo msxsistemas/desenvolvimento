@@ -265,9 +265,6 @@ export default function ClientesCadastro() {
     }
   });
 
-  const hora = new Date().getHours();
-  const saudacao = hora < 12 ? "Bom Dia" : hora < 18 ? "Boa Tarde" : "Boa Noite";
-
   const SectionHeader = ({ icon: Icon, title, color }: { icon: any; title: string; color: string }) => (
     <div className="flex items-center gap-2 mb-2 mt-4 first:mt-0">
       <Icon className={`h-4 w-4 ${color}`} />
@@ -278,8 +275,7 @@ export default function ClientesCadastro() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">{saudacao}, Tech Play!</h1>
+      <div className="flex items-center justify-end">
         <Button 
           variant="outline" 
           onClick={() => navigate("/clientes")}
