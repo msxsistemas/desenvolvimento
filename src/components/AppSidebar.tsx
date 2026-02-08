@@ -115,11 +115,13 @@ export function AppSidebar() {
       <SidebarContent className="bg-background">
         {/* Logo Header */}
         <div className="flex justify-center py-6">
-          <img src={logoMsx} alt="MSX Logo" className="h-16 w-auto object-contain" />
+          <div className="w-16 h-16 rounded-full overflow-hidden shadow-lg">
+            <img src={logoMsx} alt="MSX Logo" className="w-full h-full object-cover" />
+          </div>
         </div>
 
         {/* Separator Line */}
-        <div className="mx-4 border-t border-[#2d2d3d] mb-2" />
+        <div className="mx-4 border-t border-border/50 mb-2" />
 
         {/* Main Navigation */}
         <SidebarGroup className="px-0">
