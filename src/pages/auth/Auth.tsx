@@ -19,7 +19,7 @@ export default function Auth() {
   const [isRecovery, setIsRecovery] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
@@ -29,8 +29,8 @@ export default function Auth() {
   const referralCode = searchParams.get('ref') || '';
 
   useEffect(() => {
-    document.title = activeTab === 'signin' ? 'Entrar | Gestor Tech Play' : 'Cadastro | Gestor Tech Play';
-  }, [activeTab]);
+    document.title = isSignUp ? 'Cadastro | Msx Gestor' : 'Entrar | Msx Gestor';
+  }, [isSignUp]);
 
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -62,10 +62,10 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate, isRecovery]);
 
-  // If there's a referral code, default to signup tab
+  // If there's a referral code, default to signup
   useEffect(() => {
     if (referralCode) {
-      setActiveTab('signup');
+      setIsSignUp(true);
     }
   }, [referralCode]);
 
@@ -240,11 +240,11 @@ export default function Auth() {
   // Password recovery form
   if (isRecovery) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="w-full max-w-md">
           <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg shadow-primary/20">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg">
                 <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">Redefinir Senha</h1>
@@ -262,7 +262,7 @@ export default function Auth() {
                     placeholder="Mínimo 6 caracteres"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="pl-10 pr-10 h-12"
+                    className="pl-10 pr-10 h-12 bg-secondary border-border"
                     required
                   />
                   <button
@@ -284,7 +284,7 @@ export default function Auth() {
                     placeholder="Confirme sua nova senha"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    className="pl-10 pr-10 h-12"
+                    className="pl-10 pr-10 h-12 bg-secondary border-border"
                     required
                   />
                   <button
@@ -296,14 +296,21 @@ export default function Auth() {
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+              <Button 
+                type="submit" 
+                className="w-full h-12 text-base bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0" 
+                disabled={loading}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Atualizando...
                   </>
                 ) : (
-                  'Atualizar Senha'
+                  <>
+                    Atualizar Senha
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
                 )}
               </Button>
             </form>
@@ -314,11 +321,11 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen flex bg-background">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 via-primary/5 to-background items-center justify-center p-12">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-secondary via-background to-background items-center justify-center p-12 border-r border-border">
         <div className="max-w-md text-center">
-          <div className="w-24 h-24 mx-auto mb-8 rounded-full overflow-hidden shadow-2xl shadow-primary/30">
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full overflow-hidden shadow-2xl bg-destructive flex items-center justify-center">
             <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-4xl font-bold text-foreground mb-4">
@@ -341,280 +348,304 @@ export default function Auth() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg shadow-primary/20">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg bg-destructive">
               <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">Msx Gestor</h1>
           </div>
 
-          <div className="bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
-            {/* Tab Switcher */}
-            <div className="flex border-b border-border">
-              <button
-                type="button"
-                onClick={() => setActiveTab('signin')}
-                className={`flex-1 py-4 text-sm font-medium transition-colors ${
-                  activeTab === 'signin'
-                    ? 'text-primary border-b-2 border-primary bg-primary/5'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Entrar
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('signup')}
-                className={`flex-1 py-4 text-sm font-medium transition-colors ${
-                  activeTab === 'signup'
-                    ? 'text-primary border-b-2 border-primary bg-primary/5'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Cadastrar
-              </button>
-            </div>
+          {!isSignUp ? (
+            // Login Form
+            <div className="space-y-6">
+              <div className="text-center">
+                <p className="text-muted-foreground text-sm">Acesse sua conta</p>
+                <h2 className="text-2xl font-bold text-foreground mt-2">Entrar</h2>
+                <p className="text-muted-foreground text-sm mt-1">Acesse sua conta</p>
+              </div>
 
-            <div className="p-6 lg:p-8">
-              {activeTab === 'signin' ? (
-                <>
-                  <div className="mb-6">
-                    <h2 className="text-xl font-semibold text-foreground">Bem-vindo de volta!</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Entre com suas credenciais para continuar</p>
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signin-email"
+                      name="signin-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      className="pl-10 h-12 bg-secondary border-border"
+                      required
+                    />
                   </div>
+                </div>
 
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signin-email"
-                          name="signin-email"
-                          type="email"
-                          placeholder="seu@email.com"
-                          className="pl-10 h-12"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="signin-password">Senha</Label>
-                        <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                          <DialogTrigger asChild>
-                            <button type="button" className="text-xs text-primary hover:underline">
-                              Esqueceu a senha?
-                            </button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Recuperar senha</DialogTitle>
-                              <DialogDescription>
-                                Digite seu email para receber o link de recuperação.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <form onSubmit={handlePasswordReset} className="space-y-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="reset-email">Email</Label>
-                                <Input
-                                  id="reset-email"
-                                  type="email"
-                                  placeholder="seu@email.com"
-                                  value={resetEmail}
-                                  onChange={(e) => setResetEmail(e.target.value)}
-                                  className="h-12"
-                                  required
-                                />
-                              </div>
-                              <Button type="submit" className="w-full h-12" disabled={resetLoading}>
-                                {resetLoading ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Enviando...
-                                  </>
-                                ) : (
-                                  'Enviar link'
-                                )}
-                              </Button>
-                            </form>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signin-password"
-                          name="signin-password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="Sua senha"
-                          className="pl-10 pr-10 h-12"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Senha</Label>
+                    <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                      <DialogTrigger asChild>
+                        <button type="button" className="text-xs text-[hsl(199,89%,48%)] hover:underline">
+                          Esqueceu a senha?
                         </button>
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Entrando...
-                        </>
-                      ) : (
-                        <>
-                          Entrar
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </>
-              ) : (
-                <>
-                  <div className="mb-6">
-                    <h2 className="text-xl font-semibold text-foreground">Criar sua conta</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Preencha os dados para começar</p>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Recuperar senha</DialogTitle>
+                          <DialogDescription>
+                            Digite seu email para receber o link de recuperação.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handlePasswordReset} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="reset-email">Email</Label>
+                            <Input
+                              id="reset-email"
+                              type="email"
+                              placeholder="seu@email.com"
+                              value={resetEmail}
+                              onChange={(e) => setResetEmail(e.target.value)}
+                              className="h-12"
+                              required
+                            />
+                          </div>
+                          <Button 
+                            type="submit" 
+                            className="w-full h-12 bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0" 
+                            disabled={resetLoading}
+                          >
+                            {resetLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Enviando...
+                              </>
+                            ) : (
+                              'Enviar link'
+                            )}
+                          </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
                   </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signin-password"
+                      name="signin-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Sua senha"
+                      className="pl-10 pr-10 h-12 bg-secondary border-border"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
 
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-name">Nome completo</Label>
-                      <div className="relative">
-                        <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signup-name"
-                          name="signup-name"
-                          type="text"
-                          placeholder="Seu nome completo"
-                          className="pl-10 h-12"
-                          required
-                        />
-                      </div>
-                    </div>
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 text-base bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0" 
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Entrando...
+                    </>
+                  ) : (
+                    <>
+                      Entrar
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signup-email"
-                          name="signup-email"
-                          type="email"
-                          placeholder="seu@email.com"
-                          className="pl-10 h-12"
-                          required
-                        />
-                      </div>
-                    </div>
+              {/* Separator */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-4 text-muted-foreground">OU</span>
+                </div>
+              </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-whatsapp">WhatsApp <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signup-whatsapp"
-                          name="signup-whatsapp"
-                          type="tel"
-                          placeholder="11999999999"
-                          className="pl-10 h-12"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-password">Senha</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="signup-password"
-                            name="signup-password"
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="Mínimo 6"
-                            className="pl-10 pr-10 h-12"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="confirm-password">Confirmar</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="confirm-password"
-                            name="confirm-password"
-                            type={showConfirmPassword ? 'text' : 'password'}
-                            placeholder="Confirme"
-                            className="pl-10 pr-10 h-12"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          >
-                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Referral Code Field */}
-                    <div className="space-y-2">
-                      <Label htmlFor="referral-code" className="flex items-center gap-2">
-                        <Gift className="h-4 w-4 text-primary" />
-                        Código de indicação <span className="text-muted-foreground text-xs">(opcional)</span>
-                      </Label>
-                      <Input
-                        id="referral-code"
-                        name="referral-code"
-                        type="text"
-                        placeholder="REF_XXXXXXXX"
-                        defaultValue={referralCode}
-                        className="h-12 font-mono"
-                      />
-                      {referralCode && (
-                        <p className="text-xs text-primary flex items-center gap-1">
-                          <Sparkles className="h-3 w-3" />
-                          Código de indicação aplicado!
-                        </p>
-                      )}
-                    </div>
-
-                    <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Cadastrando...
-                        </>
-                      ) : (
-                        <>
-                          Criar conta
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </>
-              )}
+              {/* Create account link */}
+              <div className="text-center">
+                <p className="text-muted-foreground text-sm">
+                  Ainda não tem conta?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(true)}
+                    className="text-[hsl(280,70%,50%)] hover:underline font-medium"
+                  >
+                    Criar conta gratuita
+                  </button>
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            // Signup Form
+            <div className="space-y-6">
+              <div className="text-center">
+                <p className="text-muted-foreground text-sm">Crie sua conta</p>
+                <h2 className="text-2xl font-bold text-foreground mt-2">Cadastrar</h2>
+                <p className="text-muted-foreground text-sm mt-1">Preencha seus dados para começar</p>
+              </div>
 
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            Ao continuar, você concorda com nossos termos de uso e política de privacidade.
-          </p>
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Nome completo</Label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-name"
+                      name="signup-name"
+                      type="text"
+                      placeholder="Seu nome"
+                      className="pl-10 h-12 bg-secondary border-border"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-email"
+                      name="signup-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      className="pl-10 h-12 bg-secondary border-border"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-whatsapp">WhatsApp (opcional)</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-whatsapp"
+                      name="signup-whatsapp"
+                      type="tel"
+                      placeholder="(00) 00000-0000"
+                      className="pl-10 h-12 bg-secondary border-border"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Senha</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-password"
+                      name="signup-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Mínimo 6 caracteres"
+                      className="pl-10 pr-10 h-12 bg-secondary border-border"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirmar senha</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="confirm-password"
+                      name="confirm-password"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Confirme sua senha"
+                      className="pl-10 pr-10 h-12 bg-secondary border-border"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="referral-code">Código de indicação (opcional)</Label>
+                  <div className="relative">
+                    <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="referral-code"
+                      name="referral-code"
+                      type="text"
+                      placeholder="REF_XXXXXX"
+                      defaultValue={referralCode}
+                      className="pl-10 h-12 bg-secondary border-border"
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 text-base bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0" 
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Criando conta...
+                    </>
+                  ) : (
+                    <>
+                      Criar conta
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              {/* Separator */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-4 text-muted-foreground">OU</span>
+                </div>
+              </div>
+
+              {/* Login link */}
+              <div className="text-center">
+                <p className="text-muted-foreground text-sm">
+                  Já tem uma conta?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(false)}
+                    className="text-[hsl(199,89%,48%)] hover:underline font-medium"
+                  >
+                    Fazer login
+                  </button>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
