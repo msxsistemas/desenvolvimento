@@ -1,6 +1,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { useClientes, usePlanos, useProdutos, useAplicativos, useTemplatesCobranca } from "@/hooks/useDatabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 
 export default function ClientesListCreate() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -757,7 +759,7 @@ export default function ClientesListCreate() {
           <p className="text-sm text-muted-foreground">Lista com todos os seus clientes</p>
         </div>
         <Button 
-          onClick={() => { resetModal(); setOpen(true); }}
+          onClick={() => navigate("/clientes/cadastro")}
           className="bg-pink-600 hover:bg-pink-700 text-white"
         >
           Adicionar Cliente +
