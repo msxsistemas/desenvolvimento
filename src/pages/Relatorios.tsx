@@ -154,7 +154,7 @@ export default function Relatorios() {
                   />
                   <Legend />
                   <Bar dataKey="vendas" name="Vendas" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="custosServidor" name="Custos Servidores" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="custosServidor" name="Custos Servidores" fill="#d946ef" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
