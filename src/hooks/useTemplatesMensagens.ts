@@ -172,9 +172,9 @@ export const useTemplatesMensagens = () => {
 
       if (deleteError) throw deleteError;
 
-      // Criar os templates padrões novamente
-      await createDefaultTemplates(true);
-      toast.success('Templates restaurados para o padrão!');
+      // Limpar a lista local
+      setTemplates([]);
+      toast.success('Templates removidos com sucesso!');
     } catch (error) {
       console.error('Erro ao restaurar templates:', error);
       toast.error('Erro ao restaurar templates');
