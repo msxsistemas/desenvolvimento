@@ -301,18 +301,23 @@ export default function ClientesCadastro() {
               
               <div className="space-y-2">
                 <Label className="text-sm font-medium">WhatsApp <span className="text-destructive">*</span></Label>
-                <Input 
-                  placeholder="5511999999999" 
-                  className="bg-background border-border"
-                  {...form.register("whatsapp")}
-                  onChange={(e) => {
-                    let value = e.target.value.replace(/\D/g, '');
-                    if (value.startsWith('55') && value.length > 11) {
-                      value = value.substring(2);
-                    }
-                    form.setValue("whatsapp", value);
-                  }}
-                />
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-border bg-muted text-muted-foreground text-sm">
+                    +55
+                  </span>
+                  <Input 
+                    placeholder="11999999999" 
+                    className="bg-background border-border rounded-l-none"
+                    {...form.register("whatsapp")}
+                    onChange={(e) => {
+                      let value = e.target.value.replace(/\D/g, '');
+                      if (value.startsWith('55')) {
+                        value = value.substring(2);
+                      }
+                      form.setValue("whatsapp", value);
+                    }}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
