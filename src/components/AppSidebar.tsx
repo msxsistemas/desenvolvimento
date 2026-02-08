@@ -79,10 +79,10 @@ export function AppSidebar() {
   const menuItems = [
     { to: "/", icon: Home, label: "Dashboard" },
     { to: "/clientes", icon: Users, label: "Clientes", hasSubmenu: true },
-    { to: "/clientes/planos", icon: List, label: "Planos" },
-    { to: "/clientes/aplicativos", icon: Package, label: "Aplicativos" },
-    { to: "/clientes/produtos", icon: Package, label: "Produtos" },
-    { to: "/clientes/integracoes", icon: Server, label: "Servidores" },
+    { to: "/planos", icon: List, label: "Planos" },
+    { to: "/aplicativos", icon: Package, label: "Aplicativos" },
+    { to: "/produtos", icon: Package, label: "Produtos" },
+    { to: "/servidores", icon: Server, label: "Servidores" },
     { to: "/financeiro", icon: DollarSign, label: "Financeiro" },
     
     { to: "/relatorios", icon: Filter, label: "Relatórios" },

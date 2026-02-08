@@ -66,12 +66,12 @@ const App = () => (
             <Route path="/clientes" element={<ClientesListCreate />} />
             <Route path="/clientes/cadastro" element={<ClientesCadastro />} />
             <Route path="/clientes/editar/:id" element={<ClientesEditar />} />
-            <Route path="/clientes/planos" element={<ClientesPlanos />} />
-            <Route path="/clientes/produtos" element={<ClientesProdutos />} />
-            <Route path="/clientes/aplicativos" element={<ClientesAplicativos />} />
-            <Route path="/clientes/metricas" element={<ClientesMetricas />} />
+            <Route path="/planos" element={<ClientesPlanos />} />
+            <Route path="/produtos" element={<ClientesProdutos />} />
+            <Route path="/aplicativos" element={<ClientesAplicativos />} />
+            <Route path="/metricas" element={<ClientesMetricas />} />
             <Route path="/relatorios" element={<Relatorios />} />
-            <Route path="/clientes/integracoes" element={<ClientesIntegracoes />} />
+            <Route path="/servidores" element={<ClientesIntegracoes />} />
             <Route path="/financeiro-extra/checkout" element={<Checkout />} />
             <Route path="/financeiro-extra/assas" element={<Assas />} />
             {/* WhatsApp routes */}
