@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useClientes, usePlanos, useProdutos, useAplicativos, useTemplatesCobranca } from "@/hooks/useDatabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash, Plus, Send, RefreshCw, Copy } from "lucide-react";
+import { Edit, Trash, Plus, Send, RefreshCw, Power, Copy } from "lucide-react";
 import { format } from "date-fns";
 import type { Cliente } from "@/types/database";
 import { Input } from "@/components/ui/input";
@@ -995,11 +995,23 @@ export default function ClientesListCreate() {
                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleCopiarMensagem(cliente);
+                              handleEditCliente(cliente);
                             }}
-                            title="Copiar mensagem"
+                            title="Editar cliente"
                           >
-                            <Copy className="h-4 w-4" />
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRenovarPlano(cliente);
+                            }}
+                            title="Renovar plano"
+                          >
+                            <RefreshCw className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -1021,23 +1033,11 @@ export default function ClientesListCreate() {
                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleRenovarPlano(cliente);
+                              // TODO: Implementar toggle ativo/inativo
                             }}
-                            title="Renovar plano"
+                            title="Ativar/Desativar cliente"
                           >
-                            <RefreshCw className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditCliente(cliente);
-                            }}
-                            title="Editar cliente"
-                          >
-                            <Edit className="h-4 w-4" />
+                            <Power className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
