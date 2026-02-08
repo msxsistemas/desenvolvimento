@@ -6,7 +6,7 @@ import { useClientes, usePlanos, useProdutos, useAplicativos, useTemplatesCobran
 import { useEvolutionAPI } from "@/hooks/useEvolutionAPI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash, Plus, Send, RefreshCw, Power, Copy } from "lucide-react";
+import { Edit, Trash, Plus, Send, RefreshCw, Power, Copy, Bell, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import type { Cliente } from "@/types/database";
 import { Input } from "@/components/ui/input";
@@ -87,6 +87,8 @@ export default function ClientesListCreate() {
   const [whatsappMensagem, setWhatsappMensagem] = useState<string>("");
   const [toggleDialogOpen, setToggleDialogOpen] = useState(false);
   const [clienteParaToggle, setClienteParaToggle] = useState<Cliente | null>(null);
+  const [notificandoId, setNotificandoId] = useState<string | null>(null);
+  const [templatesVencimento, setTemplatesVencimento] = useState<any[]>([]);
 
   // Funções auxiliares para obter nomes
   const getProdutoNome = (produtoId: string) => {
@@ -518,6 +520,118 @@ export default function ClientesListCreate() {
     await executarToggleCliente(clienteParaToggle);
     setToggleDialogOpen(false);
     setClienteParaToggle(null);
+  };
+
+  // Função para notificar vencimento do cliente
+  const handleNotificarVencimento = async (cliente: Cliente) => {
+    if (!cliente || !cliente.id) return;
+    
+    setNotificandoId(cliente.id);
+
+    try {
+      // Determinar tipo de notificação com base no status
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      
+      let tipoNotificacao = "proximo_vencer";
+      if (cliente.data_vencimento) {
+        const dataVenc = new Date(cliente.data_vencimento);
+        dataVenc.setHours(0, 0, 0, 0);
+        
+        if (dataVenc < hoje) {
+          tipoNotificacao = "vencido";
+        } else if (dataVenc.getTime() === hoje.getTime()) {
+          tipoNotificacao = "vence_hoje";
+        }
+      }
+
+      // Mapear tipo para nome do template
+      const templateNames: Record<string, string> = {
+        vencido: "Plano Venceu Ontem",
+        vence_hoje: "Plano Vencendo Hoje",
+        proximo_vencer: "Plano Vencendo Amanhã",
+      };
+
+      const templateNome = templateNames[tipoNotificacao];
+      
+      // Buscar templates de mensagens
+      const { data: templatesData, error: templatesError } = await supabase
+        .from("templates_mensagens")
+        .select("*");
+
+      if (templatesError) throw templatesError;
+
+      const template = templatesData?.find((t) => t.nome === templateNome);
+
+      if (!template) {
+        toast({
+          title: "Erro",
+          description: `Template "${templateNome}" não encontrado. Configure em Templates.`,
+          variant: "destructive",
+        });
+        setNotificandoId(null);
+        return;
+      }
+
+      // Processar mensagem com variáveis
+      const getSaudacao = () => {
+        const hora = new Date().getHours();
+        if (hora < 12) return "Bom dia";
+        if (hora < 18) return "Boa tarde";
+        return "Boa noite";
+      };
+
+      const planoNome = cliente.plano ? getPlanoNome(cliente.plano) : "";
+      const vencimento = cliente.data_vencimento
+        ? new Date(cliente.data_vencimento).toLocaleDateString("pt-BR")
+        : "";
+
+      const mensagemProcessada = template.mensagem
+        .replace(/{nome_cliente}/g, cliente.nome)
+        .replace(/{usuario}/g, cliente.usuario || "")
+        .replace(/{vencimento}/g, vencimento)
+        .replace(/{plano}/g, planoNome)
+        .replace(/{saudacao}/g, getSaudacao())
+        .replace(/{br}/g, "\n");
+
+      // Obter user_id atual
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erro",
+          description: "Usuário não autenticado",
+          variant: "destructive",
+        });
+        setNotificandoId(null);
+        return;
+      }
+
+      // Inserir na fila de mensagens
+      const { error } = await supabase.from("whatsapp_messages").insert({
+        user_id: user.id,
+        phone: cliente.whatsapp,
+        message: mensagemProcessada,
+        session_id: `user_${user.id}`,
+        status: "pending",
+        scheduled_for: new Date(Date.now() + 5000).toISOString(),
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Notificação enviada para ${cliente.nome}!`,
+      });
+    } catch (error) {
+      console.error("Erro ao enviar notificação:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar notificação de vencimento",
+        variant: "destructive",
+      });
+    } finally {
+      setNotificandoId(null);
+    }
   };
 
   // Função para abrir diálogo de templates
@@ -1253,6 +1367,23 @@ export default function ClientesListCreate() {
                             title="Renovar plano"
                           >
                             <RefreshCw className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleNotificarVencimento(cliente);
+                            }}
+                            disabled={notificandoId === cliente.id}
+                            title="Notificar vencimento"
+                          >
+                            {notificandoId === cliente.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Bell className="h-4 w-4" />
+                            )}
                           </Button>
                           <Button
                             variant="ghost"
