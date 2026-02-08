@@ -141,34 +141,42 @@ export function AppSidebar() {
                           />
                         )}
                       </SidebarMenuButton>
-                      {clientesOpen && !isCollapsed && (
-                        <SidebarMenuSub className="relative ml-8 mt-2 space-y-0 pl-5">
-                          {/* Linha vertical roxa */}
-                          <div className="absolute left-[3px] top-1 bottom-1 w-[2px] bg-[#7c3aed]" />
-                          
-                          {clientesSubItems.map((subItem) => (
+                      {/* Tree Menu com animação */}
+                      <div 
+                        className={`overflow-hidden transition-all duration-300 ease-out ${
+                          clientesOpen && !isCollapsed 
+                            ? "max-h-40 opacity-100" 
+                            : "max-h-0 opacity-0"
+                        }`}
+                      >
+                        <SidebarMenuSub className="relative ml-[30px] mt-3 space-y-0 pl-4 border-l-2 border-[#7c3aed]/60">
+                          {clientesSubItems.map((subItem, index) => (
                             <SidebarMenuSubItem key={subItem.to} className="relative">
                               <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
                                 <NavLink
                                   to={subItem.to}
                                   end
-                                  className={`flex items-center py-2 text-[13px] transition-colors ${
-                                    isActive(subItem.to) ? "text-white" : "text-[#8b8b9a] hover:text-white"
+                                  className={`group flex items-center py-2 text-[13px] transition-all duration-200 ${
+                                    isActive(subItem.to) 
+                                      ? "text-white font-medium" 
+                                      : "text-[#8b8b9a] hover:text-white"
                                   }`}
                                 >
-                                  {/* Bolinha centralizada na linha */}
-                                  <span className={`absolute left-[-17px] w-2 h-2 rounded-full ${
-                                    isActive(subItem.to) 
-                                      ? "bg-[#7c3aed]" 
-                                      : "bg-[#8b8b9a]"
-                                  }`} />
+                                  {/* Node circular na linha */}
+                                  <span 
+                                    className={`absolute -left-[13px] w-[8px] h-[8px] rounded-full transition-all duration-200 ${
+                                      isActive(subItem.to) 
+                                        ? "bg-[#7c3aed] ring-4 ring-[#7c3aed]/20" 
+                                        : "bg-[#3f3f5a] group-hover:bg-[#7c3aed]/70"
+                                    }`} 
+                                  />
                                   {subItem.label}
                                 </NavLink>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                           ))}
                         </SidebarMenuSub>
-                      )}
+                      </div>
                     </SidebarMenuItem>
                   );
                 }
