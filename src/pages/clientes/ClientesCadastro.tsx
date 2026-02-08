@@ -51,8 +51,6 @@ export default function ClientesCadastro() {
     defaultValues: {
       nome: "",
       whatsapp: "",
-      email: "",
-      cpfCnpj: "",
       aniversario: "",
       produto: "",
       plano: "",
@@ -153,7 +151,7 @@ export default function ClientesCadastro() {
       const novoCliente = await criar({
         nome: data.nome,
         whatsapp: whatsappFormatado,
-        email: data.email,
+        email: null,
         data_vencimento: data.dataVenc ? new Date(data.dataVenc + 'T23:59:59.999Z').toISOString() : null,
         fixo: data.fixo,
         usuario: data.usuario,
@@ -215,7 +213,6 @@ export default function ClientesCadastro() {
                 .replace(/{vencimento}/g, dataVencimento)
                 .replace(/{nome_plano}/g, planoNome)
                 .replace(/{valor_plano}/g, valorPlano)
-                .replace(/{email}/g, novoCliente.email || '')
                 .replace(/{br}/g, '\n');
 
               const scheduledTime = new Date();
@@ -501,7 +498,6 @@ export default function ClientesCadastro() {
                 />
               </div>
             </div>
-
 
             {/* Seção: Financeiro */}
             <SectionHeader icon={DollarSign} title="Financeiro" color="text-green-400" />
