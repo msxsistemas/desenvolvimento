@@ -505,6 +505,95 @@ export default function ClientesCadastro() {
               </div>
             </div>
 
+            {/* Collapsible: Aplicativos Adicionais */}
+            <Collapsible className="mt-3">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/30 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="h-4 w-4 text-cyan-400" />
+                  <span className="text-sm font-medium">Aplicativos Adicionais</span>
+                  <span className="text-xs text-muted-foreground">(Opcional)</span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-4 space-y-4">
+                {aplicativosAdicionais.map((appItem, index) => (
+                  <div key={index} className="space-y-4 p-4 bg-muted/20 rounded-lg border border-border/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Smartphone className="h-4 w-4 text-cyan-400" />
+                        <span className="text-sm font-medium text-cyan-400">Aplicativo {index + 1}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          setAplicativosAdicionais(prev => prev.filter((_, i) => i !== index));
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Aplicativo</Label>
+                        <Select 
+                          value={appItem.app} 
+                          onValueChange={(v) => {
+                            setAplicativosAdicionais(prev => prev.map((a, i) => 
+                              i === index ? { ...a, app: v } : a
+                            ));
+                          }}
+                          disabled={loadingData}
+                        >
+                          <SelectTrigger className="bg-background border-border">
+                            <SelectValue placeholder="Selecione o aplicativo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {aplicativos.map((a) => (
+                              <SelectItem key={a.id} value={String(a.id)}>
+                                {a.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Vencimento do App</Label>
+                        <Input 
+                          type="date"
+                          className="bg-background border-border [&::-webkit-calendar-picker-indicator]:hidden"
+                          value={appItem.dataVencApp}
+                          onChange={(e) => {
+                            setAplicativosAdicionais(prev => prev.map((a, i) => 
+                              i === index ? { ...a, dataVencApp: e.target.value } : a
+                            ));
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-primary/50 text-primary hover:bg-primary/10"
+                  onClick={() => {
+                    setAplicativosAdicionais(prev => [...prev, {
+                      app: "",
+                      dataVencApp: ""
+                    }]);
+                  }}
+                >
+                  + Adicionar Aplicativo
+                </Button>
+              </CollapsibleContent>
+            </Collapsible>
+
             {/* Campos Financeiro (sem header) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
               <div className="space-y-2">
@@ -648,96 +737,6 @@ export default function ClientesCadastro() {
                 </Button>
               </CollapsibleContent>
             </Collapsible>
-
-            {/* Collapsible: Aplicativos Adicionais */}
-            <Collapsible className="mt-3">
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/30 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-2">
-                  <Smartphone className="h-4 w-4 text-cyan-400" />
-                  <span className="text-sm font-medium">Aplicativos Adicionais</span>
-                  <span className="text-xs text-muted-foreground">(Opcional)</span>
-                </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-4 space-y-4">
-                {aplicativosAdicionais.map((appItem, index) => (
-                  <div key={index} className="space-y-4 p-4 bg-muted/20 rounded-lg border border-border/30">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Smartphone className="h-4 w-4 text-cyan-400" />
-                        <span className="text-sm font-medium text-cyan-400">Aplicativo {index + 1}</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => {
-                          setAplicativosAdicionais(prev => prev.filter((_, i) => i !== index));
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Aplicativo</Label>
-                        <Select 
-                          value={appItem.app} 
-                          onValueChange={(v) => {
-                            setAplicativosAdicionais(prev => prev.map((a, i) => 
-                              i === index ? { ...a, app: v } : a
-                            ));
-                          }}
-                          disabled={loadingData}
-                        >
-                          <SelectTrigger className="bg-background border-border">
-                            <SelectValue placeholder="Selecione o aplicativo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {aplicativos.map((a) => (
-                              <SelectItem key={a.id} value={String(a.id)}>
-                                {a.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Vencimento do App</Label>
-                        <Input 
-                          type="date"
-                          className="bg-background border-border [&::-webkit-calendar-picker-indicator]:hidden"
-                          value={appItem.dataVencApp}
-                          onChange={(e) => {
-                            setAplicativosAdicionais(prev => prev.map((a, i) => 
-                              i === index ? { ...a, dataVencApp: e.target.value } : a
-                            ));
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="border-primary/50 text-primary hover:bg-primary/10"
-                  onClick={() => {
-                    setAplicativosAdicionais(prev => [...prev, {
-                      app: "",
-                      dataVencApp: ""
-                    }]);
-                  }}
-                >
-                  + Adicionar Aplicativo
-                </Button>
-              </CollapsibleContent>
-            </Collapsible>
-
             {/* Seção: Captação e Observações */}
             <SectionHeader icon={Users} title="Captação e Observações" color="text-purple-400" />
             
