@@ -385,13 +385,13 @@ export default function FilaMensagens() {
     const { status } = msg;
     switch (status) {
       case "enviada":
-        return <Badge variant="outline" className="border-emerald-500/50 bg-emerald-500/10 text-emerald-500">Enviada</Badge>;
+        return <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">Mensagem Enviada</Badge>;
       case "aguardando":
-        return <Badge variant="outline" className="border-amber-500/50 bg-amber-500/10 text-amber-500">Aguardando</Badge>;
+        return <Badge className="bg-amber-600 hover:bg-amber-600 text-white">Aguardando</Badge>;
       case "agendada":
-        return <Badge variant="outline" className="border-blue-500/50 bg-blue-500/10 text-blue-500">Agendada</Badge>;
+        return <Badge className="bg-blue-600 hover:bg-blue-600 text-white">Agendada</Badge>;
       case "erro":
-        return <Badge variant="outline" className="border-destructive/50 bg-destructive/10 text-destructive">Erro</Badge>;
+        return <Badge className="bg-red-600 hover:bg-red-600 text-white">Erro</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -402,12 +402,12 @@ export default function FilaMensagens() {
       {/* Header */}
       <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Fila de Mensagens</h1>
-          <p className="text-sm text-muted-foreground">Gerencie as mensagens WhatsApp</p>
+          <h1 className="text-xl font-semibold text-foreground">Envios De Notificações</h1>
+          <p className="text-sm text-muted-foreground">Fique por dentro das mensagens que são enviadas aos seus clientes</p>
         </div>
         <div className="flex gap-2">
           <Button 
-            variant="outline"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
             onClick={handleForcarEnvio} 
             disabled={actionLoading}
           >
@@ -415,7 +415,7 @@ export default function FilaMensagens() {
             Forçar Envio
           </Button>
           <Button 
-            variant="outline"
+            className="bg-orange-600 hover:bg-orange-700 text-white"
             onClick={handleExcluirEnviadas} 
             disabled={actionLoading}
           >
@@ -423,7 +423,7 @@ export default function FilaMensagens() {
             Excluir Enviadas
           </Button>
           <Button 
-            variant="destructive"
+            className="bg-red-600 hover:bg-red-700 text-white"
             onClick={handleExcluirTodas} 
             disabled={actionLoading}
           >
@@ -433,52 +433,78 @@ export default function FilaMensagens() {
         </div>
       </header>
 
-      {/* Filters */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="space-y-2">
-            <Label className="text-muted-foreground">Busca</Label>
-            <Input
-              placeholder="Buscar cliente..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-muted-foreground">Status</Label>
-            <Select value={filtro} onValueChange={setFiltro}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas ({counts.todas})</SelectItem>
-                <SelectItem value="aguardando">Aguardando ({counts.aguardando})</SelectItem>
-                <SelectItem value="agendada">Agendadas ({counts.agendada})</SelectItem>
-                <SelectItem value="enviadas">Enviadas ({counts.enviadas})</SelectItem>
-                <SelectItem value="erro">Com Erro ({counts.erro})</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-end gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => { setBusca(""); setFiltro("todas"); }}
-            >
-              Limpar
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => loadMensagens()}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+      {/* Filter Badges */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant={filtro === "todas" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFiltro("todas")}
+          className={filtro === "todas" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}
+        >
+          Todas ({counts.todas})
+        </Button>
+        <Button
+          variant={filtro === "aguardando" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFiltro("aguardando")}
+          className={filtro === "aguardando" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}
+        >
+          Aguardando Envio ({counts.aguardando})
+        </Button>
+        <Button
+          variant={filtro === "enviadas" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFiltro("enviadas")}
+          className={filtro === "enviadas" ? "bg-purple-600 hover:bg-purple-700 text-white" : ""}
+        >
+          Mensagens Enviadas ({counts.enviadas})
+        </Button>
+        <Button
+          variant={filtro === "erro" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFiltro("erro")}
+          className={filtro === "erro" ? "bg-pink-600 hover:bg-pink-700 text-white" : ""}
+        >
+          Mensagens com Erro ({counts.erro})
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleReativarMensagens}
+          disabled={actionLoading || counts.erro === 0}
+          className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+        >
+          <RefreshCw className="h-4 w-4 mr-1" />
+          Reativar Mensagens
+        </Button>
       </div>
 
-      {/* Record count */}
-      <div className="text-right text-sm text-muted-foreground">
-        Mostrando {paginatedMensagens.length} de {filteredMensagens.length} registros.
+      {/* Entries and Search */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Mostrar</span>
+          <Select value={entriesPerPage} onValueChange={setEntriesPerPage}>
+            <SelectTrigger className="w-20 h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-sm text-muted-foreground">entradas</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Buscar:</span>
+          <Input
+            placeholder=""
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="w-48 h-8"
+          />
+        </div>
       </div>
 
       {/* Table */}
@@ -490,48 +516,50 @@ export default function FilaMensagens() {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>WhatsApp</TableHead>
-                <TableHead>Mensagem</TableHead>
-                <TableHead>Data/Hora</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[100px] text-right">Ações</TableHead>
+              <TableRow className="bg-muted/50">
+                <TableHead className="font-semibold">Cliente: ↕</TableHead>
+                <TableHead className="font-semibold">WhatsApp: ↕</TableHead>
+                <TableHead className="font-semibold">Mensagem:</TableHead>
+                <TableHead className="font-semibold">Data/Hora: ↕</TableHead>
+                <TableHead className="font-semibold">Status: ↕</TableHead>
+                <TableHead className="w-[80px] text-right font-semibold">Ações: ↕</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedMensagens.length ? (
                 paginatedMensagens.map((msg) => (
-                  <TableRow key={msg.id}>
-                    <TableCell className="font-medium">{msg.cliente}</TableCell>
+                  <TableRow key={msg.id} className="border-b border-border">
+                    <TableCell className="text-primary font-medium">{msg.cliente}</TableCell>
                     <TableCell className="text-muted-foreground">{msg.whatsapp}</TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                      {msg.mensagem}
+                    <TableCell className="max-w-[300px] text-muted-foreground">
+                      <div className="line-clamp-3 whitespace-pre-wrap text-sm">
+                        {msg.mensagem}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(msg.data_hora), "dd/MM/yyyy HH:mm")}
+                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                      {format(new Date(msg.data_hora), "dd/MM/yyyy")} - {format(new Date(msg.data_hora), "HH:mm:ss")}
                     </TableCell>
                     <TableCell>{getStatusBadge(msg)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(msg.id)}
+                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                         {(msg.status === "erro" || msg.status === "aguardando") && (
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => handleResend(msg.id)}
-                            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                            className="h-8 w-8 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10"
                           >
-                            <Send className="h-4 w-4" />
+                            <RefreshCw className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(msg.id)}
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -546,6 +574,11 @@ export default function FilaMensagens() {
             </TableBody>
           </Table>
         )}
+      </div>
+
+      {/* Pagination info */}
+      <div className="text-sm text-muted-foreground">
+        Mostrando {((currentPage - 1) * parseInt(entriesPerPage)) + 1} a {Math.min(currentPage * parseInt(entriesPerPage), filteredMensagens.length)} de {filteredMensagens.length} entradas
       </div>
 
       {/* Delete Confirmation Dialog */}
