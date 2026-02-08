@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Settings, Percent, Gift, Users } from "lucide-react";
+import { Loader2, Settings, Gift, Users } from "lucide-react";
 import { toast } from "sonner";
 
 export default function IndicacoesSistema() {
@@ -13,7 +13,6 @@ export default function IndicacoesSistema() {
   
   const [config, setConfig] = useState({
     ativo: true,
-    percentualDesconto: "10",
     bonusIndicador: "5",
     diasValidade: "30",
     minIndicacoes: "1",
@@ -63,7 +62,7 @@ export default function IndicacoesSistema() {
       </header>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -77,19 +76,8 @@ export default function IndicacoesSistema() {
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500/10">
-              <Percent className="h-5 w-5 text-green-500" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Desconto Indicado</p>
-              <p className="text-lg font-bold text-foreground">{config.percentualDesconto}%</p>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/10">
-              <Gift className="h-5 w-5 text-amber-500" />
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Gift className="h-5 w-5 text-primary" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Bônus Indicador</p>
@@ -99,8 +87,8 @@ export default function IndicacoesSistema() {
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/10">
-              <Users className="h-5 w-5 text-blue-500" />
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Mín. Indicações</p>
@@ -154,20 +142,9 @@ export default function IndicacoesSistema() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recompensas</CardTitle>
+            <CardTitle className="text-lg">Recompensa do Indicador</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Desconto para Indicado (%)</Label>
-              <Input
-                type="number"
-                value={config.percentualDesconto}
-                onChange={(e) => setConfig({ ...config, percentualDesconto: e.target.value })}
-                placeholder="10"
-              />
-              <p className="text-xs text-muted-foreground">Percentual de desconto que o cliente indicado recebe</p>
-            </div>
-
             <div className="space-y-2">
               <Label>Bônus para Indicador (R$)</Label>
               <Input
@@ -176,7 +153,7 @@ export default function IndicacoesSistema() {
                 onChange={(e) => setConfig({ ...config, bonusIndicador: e.target.value })}
                 placeholder="5.00"
               />
-              <p className="text-xs text-muted-foreground">Valor em reais que o indicador recebe por cada indicação</p>
+              <p className="text-xs text-muted-foreground">Valor em reais que o indicador recebe por cada indicação confirmada</p>
             </div>
 
             <div className="space-y-2">
@@ -221,7 +198,7 @@ export default function IndicacoesSistema() {
             </div>
             <div className="space-y-2">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">2</div>
-              <p>O indicado recebe {config.percentualDesconto}% de desconto na primeira mensalidade</p>
+              <p>O cliente indicado se cadastra usando a indicação</p>
             </div>
             <div className="space-y-2">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">3</div>
