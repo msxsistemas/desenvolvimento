@@ -486,7 +486,7 @@ export default function ClientesCadastro() {
               <CollapsibleContent className="pt-3">
                 <div className="p-4 bg-muted/20 rounded-lg border border-border/30 space-y-4">
                 {acessosAdicionais.map((acesso, index) => (
-                  <div key={index} className="space-y-4 p-4 bg-muted/20 rounded-lg border border-border/30">
+                  <div key={index} className="space-y-4 pt-4 border-t border-border/30 first:border-t-0 first:pt-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Key className="h-4 w-4 text-cyan-400" />
@@ -644,7 +644,7 @@ export default function ClientesCadastro() {
               <CollapsibleContent className="pt-3">
                 <div className="p-4 bg-muted/20 rounded-lg border border-border/30 space-y-4">
                 {aplicativosAdicionais.map((appItem, index) => (
-                  <div key={index} className="space-y-4 p-4 bg-muted/20 rounded-lg border border-border/30">
+                  <div key={index} className="space-y-4 pt-4 border-t border-border/30 first:border-t-0 first:pt-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Smartphone className="h-4 w-4 text-cyan-400" />
