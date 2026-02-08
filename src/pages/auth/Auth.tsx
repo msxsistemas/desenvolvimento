@@ -24,7 +24,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import logoPlay from '@/assets/logo-play.png';
+import logoMsx from '@/assets/logo-msx-circular.png';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -285,9 +285,9 @@ export default function Auth() {
             {/* Logo */}
             <div className="flex justify-center mb-8">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-full blur-xl opacity-50" />
-                <div className="relative w-20 h-20 rounded-full overflow-hidden ring-2 ring-white/10">
-                  <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full blur-xl opacity-50" />
+                <div className="relative w-20 h-20 rounded-full overflow-hidden ring-2 ring-cyan-400/30 shadow-xl shadow-blue-500/30">
+                  <img src={logoMsx} alt="Logo" className="w-full h-full object-cover" />
                 </div>
               </div>
             </div>
@@ -406,9 +406,9 @@ export default function Auth() {
           {/* Logo */}
           <div className="flex justify-center mb-8">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600 rounded-full blur-2xl opacity-40" />
-              <div className="relative w-24 h-24 rounded-full overflow-hidden ring-4 ring-red-500/20 shadow-2xl shadow-red-500/30">
-                <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full blur-2xl opacity-40" />
+              <div className="relative w-24 h-24 rounded-full overflow-hidden ring-4 ring-cyan-400/20 shadow-2xl shadow-blue-500/30">
+                <img src={logoMsx} alt="Logo" className="w-full h-full object-cover" />
               </div>
             </div>
           </div>
@@ -437,9 +437,9 @@ export default function Auth() {
             {/* Mobile Logo header - only visible on mobile */}
             <div className="lg:hidden pt-8 pb-4 flex flex-col items-center">
               <div className="relative mb-4">
-                <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600 rounded-full blur-xl opacity-40" />
-                <div className="relative w-16 h-16 rounded-full overflow-hidden ring-2 ring-red-500/20">
-                  <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full blur-xl opacity-40" />
+                <div className="relative w-16 h-16 rounded-full overflow-hidden ring-2 ring-cyan-400/20 shadow-lg shadow-blue-500/30">
+                  <img src={logoMsx} alt="Logo" className="w-full h-full object-cover" />
                 </div>
               </div>
               <h1 className="text-xl font-bold text-white mb-1">Msx Gestor</h1>
