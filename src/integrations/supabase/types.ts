@@ -188,6 +188,57 @@ export type Database = {
         }
         Relationships: []
       }
+      logs_painel: {
+        Row: {
+          acao: string
+          created_at: string
+          id: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          id?: string
+          tipo?: string
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          id?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      logs_sistema: {
+        Row: {
+          componente: string
+          created_at: string
+          evento: string
+          id: string
+          nivel: string
+          user_id: string
+        }
+        Insert: {
+          componente: string
+          created_at?: string
+          evento: string
+          id?: string
+          nivel?: string
+          user_id: string
+        }
+        Update: {
+          componente?: string
+          created_at?: string
+          evento?: string
+          id?: string
+          nivel?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mensagens_padroes: {
         Row: {
           aniversario_cliente: string | null

@@ -34,8 +34,8 @@ import GerenciarCampanhas from "./pages/whatsapp/GerenciarCampanhas";
 import ParearWhatsappNew from "./pages/whatsapp/ParearWhatsappNew";
 import Templates from "./pages/whatsapp/Templates";
 import Relatorios from "./pages/Relatorios";
-import LogsPainel from "./pages/logs/LogsPainel";
-import LogsSistema from "./pages/logs/LogsSistema";
+import LogsPainel from "./pages/LogsPainel";
+import LogsSistema from "./pages/LogsSistema";
 
 const queryClient = new QueryClient();
 import Auth from "./pages/auth/Auth";
