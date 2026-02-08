@@ -277,8 +277,7 @@ export default function Auth() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[150px]" />
         </div>
         
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+        {/* Grid overlay removido */}
 
         <div className="w-full max-w-md relative z-10">
           <div className="bg-[#12121a]/80 backdrop-blur-2xl border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/50 p-8 animate-fade-in">
@@ -397,8 +396,7 @@ export default function Auth() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/10 rounded-full blur-[200px]" />
       </div>
       
-      {/* Grid pattern overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      {/* Grid overlay removido */}
 
       {/* Left side - Branding */}
       <div className="hidden lg:flex flex-1 items-center justify-center relative z-10">
