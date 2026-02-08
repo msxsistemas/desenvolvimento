@@ -7,14 +7,41 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Rocket, ArrowLeft, Info, Shield, Eye, CheckCircle, XCircle, Edit, Pause, RefreshCw, Trash2, Check, Play } from "lucide-react";
+import { ArrowLeft, Info, Shield, Eye, CheckCircle, XCircle, Edit, Pause, RefreshCw, Trash2, Check, Play, Search, Monitor, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+// Lista de provedores IPTV disponíveis
+const PROVEDORES = [
+  { id: 'playfast', nome: 'PLAYFAST', descricao: 'Painel IPTV Playfast' },
+  { id: 'koffice-api', nome: 'KOFFICE API', descricao: 'Integração kOfficePanel API' },
+  { id: 'koffice-v2', nome: 'KOFFICE V2', descricao: 'Painel kOffice versão 2' },
+  { id: 'sigma-v2', nome: 'SIGMA/QPANEL V2 (NOVO)', descricao: 'Painel Sigma/QPanel versão 2' },
+  { id: 'sigma-backup', nome: 'SIGMA BACKUP', descricao: 'Backup do Painel Sigma' },
+  { id: 'now', nome: 'NOW', descricao: 'Painel NOW IPTV' },
+  { id: 'thebest', nome: 'THEBEST', descricao: 'Painel TheBest IPTV' },
+  { id: 'wplay', nome: 'WPLAY', descricao: 'Painel WPlay IPTV' },
+  { id: 'natv', nome: 'NATV', descricao: 'Painel NATV' },
+  { id: 'uniplay', nome: 'UNIPLAY E FRANQUIAS', descricao: 'Painel Uniplay e Franquias' },
+  { id: 'tvs', nome: 'TVS E FRANQUIAS', descricao: 'Painel TVS e Franquias' },
+  { id: 'mundogf', nome: 'MUNDOGF E FRANQUIAS', descricao: 'Painel MundoGF e Franquias' },
+  { id: 'painelfoda', nome: 'PAINELFODA', descricao: 'Painel Foda IPTV' },
+  { id: 'centralp2braz', nome: 'CENTRALP2BRAZ', descricao: 'Painel CentralP2Braz' },
+  { id: 'clubtv', nome: 'CLUBTV', descricao: 'Painel ClubTV' },
+  { id: 'easyplay', nome: 'EASYPLAY', descricao: 'Painel EasyPlay' },
+  { id: 'blade', nome: 'BLADE', descricao: 'Painel Blade IPTV' },
+  { id: 'live21', nome: 'LIVE21', descricao: 'Painel Live21' },
+  { id: 'elite-office', nome: 'ELITE OFFICE', descricao: 'Painel Elite Office' },
+  { id: 'unitv', nome: 'UNITV', descricao: 'Painel UniTV' },
+];
 
 export default function ClientesIntegracoes() {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [autoRenewal, setAutoRenewal] = useState(false);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState<string>('playfast');
+  
   const [testResultModal, setTestResultModal] = useState<{
     isOpen: boolean;
     success: boolean;
@@ -28,11 +55,12 @@ export default function ClientesIntegracoes() {
     details: "",
     type: 'sigma'
   });
+  
   const [formData, setFormData] = useState({
-    nomePainel: "Painel Sigma Principal",
-    urlPainel: "https://painel.sigma.st",
-    usuario: "seu_usuario",
-    senha: "sua_senha"
+    nomePainel: "",
+    urlPainel: "",
+    usuario: "",
+    senha: ""
   });
 
   // kOfficePanel form data
@@ -69,7 +97,6 @@ export default function ClientesIntegracoes() {
     try {
       const baseUrl = kofficeFormData.linkPainel.trim().replace(/\/$/, '');
       
-      // Testa a API do kOfficePanel
       const response = await fetch(`${baseUrl}/api.php?action=user&sub=info&username=${encodeURIComponent(kofficeFormData.usuario)}&password=${encodeURIComponent(kofficeFormData.chaveApi)}`, {
         method: "GET",
         headers: {
@@ -119,6 +146,7 @@ export default function ClientesIntegracoes() {
     senha: string;
     status: 'Ativo' | 'Inativo';
     autoRenovacao: boolean;
+    provedor?: string;
   }>>([]);
 
   const [createResultModal, setCreateResultModal] = useState<{ isOpen: boolean; message: string }>({
@@ -157,7 +185,8 @@ export default function ClientesIntegracoes() {
           usuario: p.usuario,
           senha: p.senha,
           status: p.status as 'Ativo' | 'Inativo',
-          autoRenovacao: p.auto_renovacao
+          autoRenovacao: p.auto_renovacao,
+          provedor: p.provedor || 'playfast'
         })));
       }
     } catch (error: any) {
@@ -167,7 +196,6 @@ export default function ClientesIntegracoes() {
   };
 
   const handleCreatePanel = async () => {
-    // Validações básicas
     const baseUrl = formData.urlPainel.trim().replace(/\/$/, "");
     if (!formData.nomePainel.trim() || !formData.usuario.trim() || !formData.senha.trim() || !baseUrl) {
       toast({ title: "Campos obrigatórios", description: "Preencha todos os campos marcados com *" });
@@ -210,164 +238,163 @@ export default function ClientesIntegracoes() {
           usuario: (data as any).usuario,
           senha: (data as any).senha,
           status: (data as any).status as 'Ativo' | 'Inativo',
-          autoRenovacao: (data as any).auto_renovacao
+          autoRenovacao: (data as any).auto_renovacao,
+          provedor: selectedProvider
         }]);
       }
 
       setCreateResultModal({ isOpen: true, message: `Painel '${formData.nomePainel}' criado com sucesso!` });
+      setFormData({ nomePainel: "", urlPainel: "", usuario: "", senha: "" });
     } catch (error: any) {
       console.error('Erro ao criar painel:', error);
       toast({ title: "Erro", description: "Não foi possível criar o painel" });
     }
   };
 
-const handleTestConnection = async () => {
-  setIsTestingConnection(true);
-  try {
-    const baseUrl = formData.urlPainel.trim().replace(/\/$/, '');
-    const usuario = formData.usuario.trim();
-    const senha = formData.senha.trim();
-    const nomePainel = formData.nomePainel.trim();
+  const handleTestConnection = async () => {
+    setIsTestingConnection(true);
+    try {
+      const baseUrl = formData.urlPainel.trim().replace(/\/$/, '');
+      const usuario = formData.usuario.trim();
+      const senha = formData.senha.trim();
+      const nomePainel = formData.nomePainel.trim();
 
-    if (!nomePainel || !usuario || !senha || !baseUrl) {
-      setTestResultModal({
-        isOpen: true,
-        success: false,
-        message: "Dados Obrigatórios Ausentes",
-        details: "❌ Preencha nome, URL, usuário e senha com dados reais antes de testar."
-      });
-      return;
-    }
+      if (!nomePainel || !usuario || !senha || !baseUrl) {
+        setTestResultModal({
+          isOpen: true,
+          success: false,
+          message: "Dados Obrigatórios Ausentes",
+          details: "❌ Preencha nome, URL, usuário e senha com dados reais antes de testar."
+        });
+        return;
+      }
 
-    // 🚀 Testa a API do OnWave diretamente (igual ao código Sigma que funciona)
-    const response = await fetch(`${baseUrl}/api/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({
-        captcha: "not-a-robot",
-        captchaChecked: true,
-        username: usuario,
-        password: senha,
-        twofactor_code: "",
-        twofactor_recovery_code: "",
-        twofactor_trusted_device_id: ""
-      })
-    });
-
-    const data = await response.json();
-
-    if (response.ok && data?.token) {
-      // guarda o token se quiser usar em chamadas futuras
-      localStorage.setItem("auth_token", data.token);
-
-      setTestResultModal({
-        isOpen: true,
-        success: true,
-        message: "CONEXÃO REAL BEM-SUCEDIDA!",
-        details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${baseUrl}/api/auth/login\n👤 Usuário: ${usuario}\n📡 Status: OK\n\nToken recebido: ${data.token.slice(0, 20)}...`
-      });
-    } else {
-      setTestResultModal({
-        isOpen: true,
-        success: false,
-        message: "FALHA NA AUTENTICAÇÃO",
-        details: data?.message || "Usuário/senha inválidos ou URL incorreta."
-      });
-    }
-  } catch (error: any) {
-    setTestResultModal({
-      isOpen: true,
-      success: false,
-      message: "Erro no Teste",
-      details: `Erro inesperado durante o teste: ${error.message}`
-    });
-  } finally {
-    setIsTestingConnection(false);
-  }
-};
-
-// Testar conexão diretamente a partir da lista de painéis
-const testPanel = async (panel: { id: string; nome: string; url: string; usuario: string; senha: string }) => {
-  setIsTestingConnection(true);
-  try {
-    const baseUrl = panel.url.trim().replace(/\/$/, '');
-
-    const { data, error } = await supabase.functions.invoke('test-panel-connection', {
-      body: {
-        baseUrl,
-        username: panel.usuario,
-        password: panel.senha,
-        endpointPath: '/api/auth/login',
-        endpointMethod: 'POST',
-        loginPayload: {
-          captcha: 'not-a-robot',
+      const response = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          captcha: "not-a-robot",
           captchaChecked: true,
+          username: usuario,
+          password: senha,
+          twofactor_code: "",
+          twofactor_recovery_code: "",
+          twofactor_trusted_device_id: ""
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data?.token) {
+        localStorage.setItem("auth_token", data.token);
+
+        setTestResultModal({
+          isOpen: true,
+          success: true,
+          message: "CONEXÃO REAL BEM-SUCEDIDA!",
+          details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${baseUrl}/api/auth/login\n👤 Usuário: ${usuario}\n📡 Status: OK\n\nToken recebido: ${data.token.slice(0, 20)}...`
+        });
+      } else {
+        setTestResultModal({
+          isOpen: true,
+          success: false,
+          message: "FALHA NA AUTENTICAÇÃO",
+          details: data?.message || "Usuário/senha inválidos ou URL incorreta."
+        });
+      }
+    } catch (error: any) {
+      setTestResultModal({
+        isOpen: true,
+        success: false,
+        message: "Erro no Teste",
+        details: `Erro inesperado durante o teste: ${error.message}`
+      });
+    } finally {
+      setIsTestingConnection(false);
+    }
+  };
+
+  const testPanel = async (panel: { id: string; nome: string; url: string; usuario: string; senha: string }) => {
+    setIsTestingConnection(true);
+    try {
+      const baseUrl = panel.url.trim().replace(/\/$/, '');
+
+      const { data, error } = await supabase.functions.invoke('test-panel-connection', {
+        body: {
+          baseUrl,
           username: panel.usuario,
           password: panel.senha,
-          twofactor_code: '',
-          twofactor_recovery_code: '',
-          twofactor_trusted_device_id: ''
+          endpointPath: '/api/auth/login',
+          endpointMethod: 'POST',
+          loginPayload: {
+            captcha: 'not-a-robot',
+            captchaChecked: true,
+            username: panel.usuario,
+            password: panel.senha,
+            twofactor_code: '',
+            twofactor_recovery_code: '',
+            twofactor_trusted_device_id: ''
+          },
+          extraHeaders: { Accept: 'application/json' }
         },
-        extraHeaders: { Accept: 'application/json' }
-      },
-    });
+      });
 
-    if (error || !data) {
+      if (error || !data) {
+        setTestResultModal({
+          isOpen: true,
+          success: false,
+          message: 'Erro no Teste',
+          details: `Não foi possível executar o teste agora. ${error?.message ?? ''}`.trim(),
+        });
+        return;
+      }
+
+      if (data.success) {
+        const account = data.account;
+        setTestResultModal({
+          isOpen: true,
+          success: true,
+          message: 'CONEXÃO REAL BEM-SUCEDIDA!',
+          details: `✅ Painel: ${panel.nome}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${panel.usuario}\n📡 Status: ${(account?.status ?? 'OK')}\n⏱️ Expira: ${account?.exp_date ?? 'n/d'}\n\n✅ Autenticação realizada com sucesso no painel.`,
+        });
+      } else {
+        const logs = Array.isArray(data.logs)
+          ? data.logs
+              .slice(0, 4)
+              .map((l: any) => {
+                const s = [
+                  l.status ? `status: ${l.status}` : null,
+                  l.ok !== undefined ? `ok: ${l.ok}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(', ');
+                const head = s ? `(${s})` : '';
+                return `• ${l.url} ${head}\n${(l.snippet || '').slice(0, 200)}`;
+              })
+              .join('\n\n')
+          : '';
+
+        setTestResultModal({
+          isOpen: true,
+          success: false,
+          message: 'FALHA NA AUTENTICAÇÃO',
+          details: `${data.details || 'Usuário/senha inválidos ou URL incorreta.'}${logs ? '\n\nTentativas:\n' + logs : ''}`,
+        });
+      }
+    } catch (error: any) {
       setTestResultModal({
         isOpen: true,
         success: false,
         message: 'Erro no Teste',
-        details: `Não foi possível executar o teste agora. ${error?.message ?? ''}`.trim(),
+        details: `Erro inesperado durante o teste: ${error.message}`,
       });
-      return;
+    } finally {
+      setIsTestingConnection(false);
     }
-
-    if (data.success) {
-      const account = data.account;
-      setTestResultModal({
-        isOpen: true,
-        success: true,
-        message: 'CONEXÃO REAL BEM-SUCEDIDA!',
-        details: `✅ Painel: ${panel.nome}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${panel.usuario}\n📡 Status: ${(account?.status ?? 'OK')}\n⏱️ Expira: ${account?.exp_date ?? 'n/d'}\n\n✅ Autenticação realizada com sucesso no painel.`,
-      });
-    } else {
-      const logs = Array.isArray(data.logs)
-        ? data.logs
-            .slice(0, 4)
-            .map((l: any) => {
-              const s = [
-                l.status ? `status: ${l.status}` : null,
-                l.ok !== undefined ? `ok: ${l.ok}` : null,
-              ]
-                .filter(Boolean)
-                .join(', ');
-              const head = s ? `(${s})` : '';
-              return `• ${l.url} ${head}\n${(l.snippet || '').slice(0, 200)}`;
-            })
-            .join('\n\n')
-        : '';
-
-      setTestResultModal({
-        isOpen: true,
-        success: false,
-        message: 'FALHA NA AUTENTICAÇÃO',
-        details: `${data.details || 'Usuário/senha inválidos ou URL incorreta.'}${logs ? '\n\nTentativas:\n' + logs : ''}`,
-      });
-    }
-  } catch (error: any) {
-    setTestResultModal({
-      isOpen: true,
-      success: false,
-      message: 'Erro no Teste',
-      details: `Erro inesperado durante o teste: ${error.message}`,
-    });
-  } finally {
-    setIsTestingConnection(false);
-  }
-};
+  };
 
   // Edit modal state and handlers
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -379,7 +406,6 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
   };
 
   const handleSaveEditPanel = async () => {
-    // Fecha qualquer toast visível ao clicar em Salvar
     dismiss();
 
     if (!editForm.nome.trim() || !editForm.url.trim()) {
@@ -459,172 +485,187 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
     }
   };
 
+  // Filtrar provedores baseado na busca
+  const filteredProvedores = PROVEDORES.filter(p => 
+    p.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Obter provedor selecionado
+  const currentProvider = PROVEDORES.find(p => p.id === selectedProvider);
+
+  // Filtrar painéis pelo provedor selecionado
+  const providerPanels = panels.filter(p => p.provedor === selectedProvider || (!p.provedor && selectedProvider === 'playfast'));
+
+  // Estatísticas do provedor selecionado
+  const providerStats = {
+    total: providerPanels.length,
+    ativos: providerPanels.filter(p => p.status === 'Ativo').length,
+    inativos: providerPanels.filter(p => p.status === 'Inativo').length
+  };
+
   return (
     <main className="space-y-6">
-      {/* Dashboard Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center text-white">
-            <span className="text-sm font-bold">⚡</span>
+      {/* Header Ciano */}
+      <div className="bg-cyan-500 rounded-lg p-6 text-white">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
+            <span className="text-xs">≡</span>
           </div>
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">Dashboard de Integrações IPTV</h2>
-            <p className="text-sm text-muted-foreground">Gerencie suas integrações IPTV de forma centralizada</p>
-          </div>
+          <h1 className="text-lg font-semibold">Credenciais Dos Servidores IPTV</h1>
         </div>
-        
-        <div className="flex gap-2">
-          <Badge variant="outline" className="bg-cyan-500 text-white border-cyan-500">
-            📊 {panels.length} Painéis
-          </Badge>
-          <Badge variant="outline" className="bg-green-500 text-white border-green-500">
-            ● {panels.filter((p) => p.status === 'Ativo').length} Ativos
-          </Badge>
-        </div>
+        <p className="text-sm text-white/90">Configure e gerencie seus painéis IPTV</p>
       </div>
 
-      {/* Integration Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Sigma IPTV Card */}
-        <Card className="bg-card border hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-cyan-500 rounded-lg flex items-center justify-center">
-                  <Rocket className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Sigma IPTV</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                    <span className="text-sm text-muted-foreground">Configurar</span>
-                  </div>
-                </div>
+      {/* Barra de Busca */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Buscar provedor..."
+          className="pl-10 bg-card border-border"
+        />
+      </div>
+
+      {/* Grid de Provedores */}
+      <div className="flex flex-wrap gap-2">
+        {filteredProvedores.map((provedor) => (
+          <Button
+            key={provedor.id}
+            variant={selectedProvider === provedor.id ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedProvider(provedor.id)}
+            className={
+              selectedProvider === provedor.id
+                ? "bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500"
+                : "border-border text-foreground hover:bg-muted"
+            }
+          >
+            {provedor.nome}
+          </Button>
+        ))}
+      </div>
+
+      {/* Card do Provedor Selecionado */}
+      {currentProvider && (
+        <div className="border border-amber-500/50 rounded-lg p-4 bg-card">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <Play className="w-4 h-4 text-white" />
               </div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                <span className="text-sm text-muted-foreground">Configurar</span>
+              <div>
+                <h3 className="font-semibold text-foreground">{currentProvider.nome}</h3>
+                <p className="text-sm text-cyan-400">{currentProvider.descricao}</p>
               </div>
             </div>
-            
-            <p className="text-sm text-muted-foreground mb-6">
-              Painel IPTV Sigma com suporte a múltiplos painéis
-            </p>
-            
+
+            {/* Estatísticas */}
+            <div className="flex gap-3">
+              <div className="border border-cyan-500/50 rounded-lg px-4 py-2 text-center min-w-[80px]">
+                <div className="text-xl font-bold text-cyan-400">{providerStats.total}</div>
+                <div className="text-xs text-muted-foreground">Total</div>
+              </div>
+              <div className="border border-green-500/50 rounded-lg px-4 py-2 text-center min-w-[80px]">
+                <div className="text-xl font-bold text-green-400">{providerStats.ativos}</div>
+                <div className="text-xs text-muted-foreground">Ativos</div>
+              </div>
+              <div className="border border-red-500/50 rounded-lg px-4 py-2 text-center min-w-[80px]">
+                <div className="text-xl font-bold text-red-400">{providerStats.inativos}</div>
+                <div className="text-xs text-muted-foreground">Inativos</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Área de Painéis Configurados */}
+      <div className="border border-amber-500/30 rounded-lg p-8 bg-card min-h-[200px] flex flex-col items-center justify-center">
+        {providerPanels.length === 0 ? (
+          <>
+            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center mb-4">
+              <Monitor className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground mb-2">Nenhum painel configurado</p>
+            <p className="text-sm text-muted-foreground mb-4">Configure seu primeiro painel {currentProvider?.nome} para começar</p>
             <Button 
               onClick={() => setIsConfigModalOpen(true)}
-              className="w-full bg-green-500 hover:bg-green-600 text-white"
+              className="bg-green-500 hover:bg-green-600 text-white"
             >
-              <span className="mr-2">+</span>
-              Configurar Agora
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Painel {currentProvider?.nome}
             </Button>
-          </CardContent>
-        </Card>
-
-        {/* kOfficePanel API Card */}
-        <Card className="bg-card border hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">kOfficePanel API</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`w-2 h-2 ${kofficeIntegrations.length > 0 ? 'bg-green-500' : 'bg-gray-400'} rounded-full`}></span>
-                    <span className="text-sm text-muted-foreground">{kofficeIntegrations.length > 0 ? `${kofficeIntegrations.length} Configurado(s)` : 'Configurar'}</span>
-                  </div>
-                </div>
-              </div>
+          </>
+        ) : (
+          <div className="w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-foreground">Painéis Configurados</h3>
+              <Button 
+                onClick={() => setIsConfigModalOpen(true)}
+                className="bg-green-500 hover:bg-green-600 text-white"
+                size="sm"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Painel
+              </Button>
             </div>
-            
-            <p className="text-sm text-muted-foreground mb-6">
-              Integração com kOfficePanel para gerenciamento IPTV
-            </p>
-            
-            <Button 
-              onClick={() => setIsKofficeModalOpen(true)}
-              className="w-full bg-green-500 hover:bg-green-600 text-white"
-            >
-              <span className="mr-2">+</span>
-              Configurar Agora
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Panel List */}
-      <div className="mt-6">
-        <div className="bg-cyan-600 text-white rounded-t-lg px-4 py-2 flex items-center gap-2">
-          <span className="text-sm">≡</span>
-          <span className="font-medium">Painéis Sigma Configurados ({panels.length})</span>
-        </div>
-        <div className="border border-cyan-600/40 rounded-b-lg overflow-hidden">
-          <div className="grid grid-cols-12 bg-amber-200 text-slate-800 font-medium px-4 py-2">
-            <div className="col-span-6">Painel</div>
-            <div className="col-span-3 text-center">Status</div>
-            <div className="col-span-3 text-right">Ações</div>
-          </div>
-          {panels.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-muted-foreground">Nenhum painel configurado ainda.</div>
-          ) : (
-            <div className="divide-y divide-slate-700">
-              {panels.map((p) => (
-                <div key={p.id} className="grid grid-cols-12 items-center px-4 py-3 bg-slate-900">
-                  <div className="col-span-6 flex items-start gap-3">
+            <div className="divide-y divide-border">
+              {providerPanels.map((p) => (
+                <div key={p.id} className="flex items-center justify-between py-3">
+                  <div className="flex items-start gap-3">
                     <div className={`w-6 h-6 ${p.status === 'Ativo' ? 'bg-green-500' : 'bg-gray-500'} rounded-full flex items-center justify-center mt-0.5`}>
                       <Check className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <div className="text-white font-medium">{p.nome}</div>
+                      <div className="text-foreground font-medium">{p.nome}</div>
                       <a href={p.url} target="_blank" rel="noreferrer" className="text-cyan-400 text-xs hover:underline">
                         {p.url}
                       </a>
                     </div>
                   </div>
-                  <div className="col-span-3 flex justify-center">
-                    <span className={`${p.status === 'Ativo' ? 'bg-green-500' : 'bg-gray-500'} text-white text-xs px-3 py-1 rounded`}>{p.status}</span>
-                  </div>
-                  <div className="col-span-3 flex justify-end gap-2">
-                    <Button onClick={() => startEditPanel(p)} variant="outline" size="icon" className="h-8 w-8 border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"><Edit className="h-4 w-4" /></Button>
-                    <Button onClick={() => handleToggleStatus(p.id)} variant="outline" size="icon" className="h-8 w-8 border-cyan-500 text-cyan-400 hover:bg-cyan-500/10">{p.status === 'Ativo' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</Button>
-                    <Button onClick={() => testPanel(p)} title="Testar conexão" disabled={isTestingConnection} variant="outline" size="icon" className="h-8 w-8 border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"><RefreshCw className="h-4 w-4" /></Button>
-                    <Button onClick={() => openDeleteConfirm(p)} variant="outline" size="icon" className="h-8 w-8 border-red-500 text-red-400 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button>
+                  <div className="flex items-center gap-3">
+                    <Badge variant={p.status === 'Ativo' ? 'default' : 'secondary'} className={p.status === 'Ativo' ? 'bg-green-500 hover:bg-green-500' : ''}>
+                      {p.status}
+                    </Badge>
+                    <div className="flex gap-1">
+                      <Button onClick={() => startEditPanel(p)} variant="outline" size="icon" className="h-8 w-8 border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"><Edit className="h-4 w-4" /></Button>
+                      <Button onClick={() => handleToggleStatus(p.id)} variant="outline" size="icon" className="h-8 w-8 border-cyan-500 text-cyan-400 hover:bg-cyan-500/10">{p.status === 'Ativo' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</Button>
+                      <Button onClick={() => testPanel(p)} title="Testar conexão" disabled={isTestingConnection} variant="outline" size="icon" className="h-8 w-8 border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"><RefreshCw className="h-4 w-4" /></Button>
+                      <Button onClick={() => openDeleteConfirm(p)} variant="outline" size="icon" className="h-8 w-8 border-red-500 text-red-400 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Configuration Modal */}
       <Dialog open={isConfigModalOpen} onOpenChange={setIsConfigModalOpen}>
-<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-800 border-slate-700">
-            <DialogHeader>
-              <DialogTitle className="sr-only">Configurar Credenciais Dos Servidores IPTV</DialogTitle>
-              <DialogDescription className="sr-only">Formulário de configuração e teste de conexão do painel Sigma IPTV</DialogDescription>
-            </DialogHeader>
-            {/* Header */}
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-800 border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="sr-only">Configurar Painel {currentProvider?.nome}</DialogTitle>
+            <DialogDescription className="sr-only">Formulário de configuração do painel IPTV</DialogDescription>
+          </DialogHeader>
+          
+          {/* Header */}
           <div className="bg-cyan-500 -m-6 mb-6 p-6 text-white">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
                 <span className="text-xs">≡</span>
               </div>
-              <h1 className="text-lg font-semibold">Credenciais Dos Servidores IPTV</h1>
+              <h1 className="text-lg font-semibold">Adicionar Painel {currentProvider?.nome}</h1>
             </div>
-            <p className="text-sm text-white/90">Configure suas integrações IPTV para renovação automática</p>
+            <p className="text-sm text-white/90">Configure suas credenciais para integração</p>
           </div>
 
           {/* Breadcrumb */}
           <div className="flex items-center justify-between gap-2 text-sm mb-6">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 p-0">
-                🏠 Dashboard
-              </Button>
+              <span className="text-gray-400">Dashboard</span>
               <span className="text-gray-400">&gt;</span>
-              <span className="text-white">Sigma IPTV</span>
+              <span className="text-white">{currentProvider?.nome}</span>
             </div>
             <Button 
               variant="outline" 
@@ -633,34 +674,15 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
               className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar ao Dashboard
-            </Button>
-          </div>
-
-          {/* Sigma IPTV Header */}
-          <div className="flex items-center gap-2 mb-6">
-            <Rocket className="w-6 h-6 text-cyan-400" />
-            <h2 className="text-xl font-semibold text-white">Sigma IPTV</h2>
-          </div>
-
-          {/* Action Buttons Section */}
-          <div className="flex gap-4 mb-6">
-            <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
-              <span className="mr-2">🔧</span>
-              Configurações
-            </Button>
-            
-            <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
-              <Info className="w-4 h-4 mr-2" />
-              Tutorial de Integração
+              Voltar
             </Button>
           </div>
 
           {/* Add New Panel Section */}
           <div className="bg-green-500 rounded-lg p-4 text-white mb-6">
             <div className="flex items-center gap-2">
-              <span className="text-sm">+</span>
-              <span className="font-medium">Adicionar Novo Painel Sigma</span>
+              <Plus className="w-4 h-4" />
+              <span className="font-medium">Adicionar Novo Painel {currentProvider?.nome}</span>
             </div>
           </div>
 
@@ -669,7 +691,7 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
             <div className="flex items-center gap-2">
               <span className="text-orange-400 text-xs">⚠️</span>
               <span className="text-sm font-medium text-orange-400">IMPORTANTE:</span>
-              <span className="text-sm text-gray-300">Desabilite 2FA no painel Sigma</span>
+              <span className="text-sm text-gray-300">Desabilite 2FA no painel se necessário</span>
             </div>
             
             <div className="flex gap-2">
@@ -680,15 +702,11 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
                 <Shield className="w-4 h-4 mr-2" />
                 AES-256 Criptografado
               </Button>
-              <Button size="sm" variant="outline" className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10">
-                ▶️
-              </Button>
             </div>
           </div>
 
           {/* Form */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Nome do Painel */}
             <div className="space-y-2">
               <Label className="text-cyan-400 flex items-center gap-2">
                 <span className="text-cyan-400">💼</span>
@@ -697,12 +715,12 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
               <Input
                 value={formData.nomePainel}
                 onChange={(e) => setFormData(prev => ({ ...prev, nomePainel: e.target.value }))}
+                placeholder="Ex: Meu Painel Principal"
                 className="bg-slate-700 border-slate-600 text-white"
               />
               <p className="text-xs text-gray-400">Nome para identificar este painel</p>
             </div>
 
-            {/* URL do Painel */}
             <div className="space-y-2">
               <Label className="text-cyan-400 flex items-center gap-2">
                 <span className="text-cyan-400">🔗</span>
@@ -711,12 +729,12 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
               <Input
                 value={formData.urlPainel}
                 onChange={(e) => setFormData(prev => ({ ...prev, urlPainel: e.target.value }))}
+                placeholder="https://painel.exemplo.com"
                 className="bg-slate-700 border-slate-600 text-white"
               />
-              <p className="text-xs text-gray-400">URL do seu painel Sigma</p>
+              <p className="text-xs text-gray-400">URL do seu painel</p>
             </div>
 
-            {/* Usuário do Painel */}
             <div className="space-y-2">
               <Label className="text-cyan-400 flex items-center gap-2">
                 <span className="text-cyan-400">👤</span>
@@ -725,12 +743,12 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
               <Input
                 value={formData.usuario}
                 onChange={(e) => setFormData(prev => ({ ...prev, usuario: e.target.value }))}
+                placeholder="seu_usuario"
                 className="bg-slate-700 border-slate-600 text-white"
               />
               <p className="text-xs text-gray-400">Username usado para acessar o painel</p>
             </div>
 
-            {/* Senha do Painel */}
             <div className="space-y-2">
               <Label className="text-red-400 flex items-center gap-2">
                 <span className="text-red-400">🔒</span>
@@ -741,6 +759,7 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
                   type={showPassword ? "text" : "password"}
                   value={formData.senha}
                   onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
+                  placeholder="sua_senha"
                   className="bg-slate-700 border-slate-600 text-white pr-10"
                 />
                 <Button
@@ -787,7 +806,7 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
               onClick={handleCreatePanel}
               className="bg-green-500 hover:bg-green-600 text-white"
             >
-              <span className="mr-2">+</span>
+              <Plus className="w-4 h-4 mr-2" />
               Criar Painel
             </Button>
             
@@ -808,8 +827,8 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
       <Dialog open={createResultModal.isOpen} onOpenChange={(open) => setCreateResultModal((prev) => ({ ...prev, isOpen: open }))}>
         <DialogContent className="max-w-md bg-slate-800 border-slate-700">
           <DialogHeader>
-            <DialogTitle className="sr-only">Resultado da Criação de Painel</DialogTitle>
-            <DialogDescription className="sr-only">Mensagem de sucesso ao criar painel</DialogDescription>
+            <DialogTitle className="sr-only">Resultado da Operação</DialogTitle>
+            <DialogDescription className="sr-only">Mensagem de sucesso</DialogDescription>
           </DialogHeader>
           <div className="text-center p-6">
             <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -867,9 +886,7 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
         <DialogContent className="max-w-md bg-slate-800 border-slate-700">
           <DialogHeader>
             <DialogTitle className="sr-only">Resultado do Teste de Conexão</DialogTitle>
-            <DialogDescription className="sr-only">
-              Resultado do teste de conexão com o painel Sigma IPTV
-            </DialogDescription>
+            <DialogDescription className="sr-only">Resultado do teste de conexão com o painel</DialogDescription>
           </DialogHeader>
           
           <div className="text-center p-6">
@@ -886,10 +903,7 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
             </div>
             
             <h3 className={`text-lg font-semibold mb-2 ${testResultModal.success ? 'text-green-400' : 'text-red-400'}`}>
-              {testResultModal.type === 'koffice' 
-                ? (testResultModal.success ? "Teste kOfficePanel - Sucesso" : "Teste kOfficePanel - Erro")
-                : (testResultModal.success ? "Teste Sigma - Sucesso" : "Teste Sigma - Erro")
-              }
+              {testResultModal.success ? "Teste - Sucesso" : "Teste - Erro"}
             </h3>
             
             <p className={`text-sm mb-4 ${testResultModal.success ? 'text-green-300' : 'text-red-300'}`}>
@@ -953,202 +967,6 @@ const testPanel = async (panel: { id: string; nome: string; url: string; usuario
               </Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* kOfficePanel Configuration Modal */}
-      <Dialog open={isKofficeModalOpen} onOpenChange={setIsKofficeModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-800 border-slate-700">
-          <DialogHeader>
-            <DialogTitle className="sr-only">Configurar kOfficePanel API</DialogTitle>
-            <DialogDescription className="sr-only">Formulário de configuração da integração kOfficePanel API</DialogDescription>
-          </DialogHeader>
-          
-          {/* Header */}
-          <div className="bg-purple-500 -m-6 mb-6 p-6 text-white">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 bg-white/20 rounded flex items-center justify-center">
-                <Shield className="w-4 h-4" />
-              </div>
-              <h1 className="text-lg font-semibold">kOfficePanel API</h1>
-            </div>
-            <p className="text-sm text-white/90">Configure suas integrações kOfficePanel para gerenciamento IPTV</p>
-          </div>
-
-          {/* Breadcrumb */}
-          <div className="flex items-center justify-between gap-2 text-sm mb-6">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="text-purple-400 hover:text-purple-300 p-0">
-                🏠 Dashboard
-              </Button>
-              <span className="text-gray-400">&gt;</span>
-              <span className="text-white">kOfficePanel API</span>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setIsKofficeModalOpen(false)}
-              className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar ao Dashboard
-            </Button>
-          </div>
-
-          {/* kOfficePanel Header */}
-          <div className="flex items-center gap-2 mb-6">
-            <Shield className="w-6 h-6 text-purple-400" />
-            <h2 className="text-xl font-semibold text-white">kOfficePanel API</h2>
-          </div>
-
-          {/* Add New Integration Section */}
-          <div className="bg-purple-500 rounded-lg p-4 text-white mb-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">+</span>
-              <span className="font-medium">Adicionar Nova Integração kOfficePanel</span>
-            </div>
-          </div>
-
-          {/* Form */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Nome do Servidor */}
-            <div className="space-y-2">
-              <Label className="text-purple-400 flex items-center gap-2">
-                <span className="text-purple-400">💼</span>
-                Nome Servidor *
-              </Label>
-              <Input
-                value={kofficeFormData.nomeServidor}
-                onChange={(e) => setKofficeFormData(prev => ({ ...prev, nomeServidor: e.target.value }))}
-                placeholder="Ex: Digital+"
-                className="bg-slate-700 border-slate-600 text-white"
-              />
-              <p className="text-xs text-gray-400">Nome para identificar este servidor</p>
-            </div>
-
-            {/* Link do Painel */}
-            <div className="space-y-2">
-              <Label className="text-purple-400 flex items-center gap-2">
-                <span className="text-purple-400">🔗</span>
-                Link Painel *
-              </Label>
-              <Input
-                value={kofficeFormData.linkPainel}
-                onChange={(e) => setKofficeFormData(prev => ({ ...prev, linkPainel: e.target.value }))}
-                placeholder="https://painel.exemplo.top"
-                className="bg-slate-700 border-slate-600 text-white"
-              />
-              <p className="text-xs text-gray-400">URL do painel kOffice</p>
-            </div>
-
-            {/* Usuário */}
-            <div className="space-y-2">
-              <Label className="text-purple-400 flex items-center gap-2">
-                <span className="text-purple-400">👤</span>
-                Usuário *
-              </Label>
-              <Input
-                value={kofficeFormData.usuario}
-                onChange={(e) => setKofficeFormData(prev => ({ ...prev, usuario: e.target.value }))}
-                placeholder="seu_usuario"
-                className="bg-slate-700 border-slate-600 text-white"
-              />
-              <p className="text-xs text-gray-400">Username da conta kOffice</p>
-            </div>
-
-            {/* Chave API */}
-            <div className="space-y-2">
-              <Label className="text-purple-400 flex items-center gap-2">
-                <span className="text-purple-400">🔑</span>
-                Chave API *
-              </Label>
-              <Input
-                value={kofficeFormData.chaveApi}
-                onChange={(e) => setKofficeFormData(prev => ({ ...prev, chaveApi: e.target.value }))}
-                placeholder="12d9c25f4dceffbc741de91412ec729d"
-                className="bg-slate-700 border-slate-600 text-white font-mono text-sm"
-              />
-              <p className="text-xs text-gray-400">Chave de API do painel kOffice</p>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4 mb-6">
-            <Button 
-              onClick={() => {
-                if (!kofficeFormData.nomeServidor.trim() || !kofficeFormData.linkPainel.trim() || !kofficeFormData.usuario.trim() || !kofficeFormData.chaveApi.trim()) {
-                  toast({ title: "Campos obrigatórios", description: "Preencha todos os campos marcados com *" });
-                  return;
-                }
-                const newIntegration = {
-                  id: Date.now().toString(),
-                  ...kofficeFormData
-                };
-                setKofficeIntegrations(prev => [...prev, newIntegration]);
-                setKofficeFormData({ nomeServidor: "", linkPainel: "", usuario: "", chaveApi: "" });
-                toast({ title: "Sucesso", description: "Integração kOfficePanel adicionada!" });
-              }}
-              className="bg-green-500 hover:bg-green-600 text-white"
-            >
-              <span className="mr-2">+</span>
-              Adicionar Integração
-            </Button>
-            
-            <Button 
-              onClick={handleTestKofficeConnection}
-              variant="outline" 
-              className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
-              disabled={isTestingKoffice}
-            >
-              <span className="mr-2">🔧</span>
-              {isTestingKoffice ? "Testando..." : "Testar Conexão"}
-            </Button>
-          </div>
-
-          {/* kOfficePanel Integrations Table */}
-          {kofficeIntegrations.length > 0 && (
-            <div className="mt-6">
-              <div className="bg-purple-600 text-white rounded-t-lg px-4 py-2 flex items-center gap-2">
-                <span className="text-sm">≡</span>
-                <span className="font-medium">Integrações kOfficePanel Configuradas ({kofficeIntegrations.length})</span>
-              </div>
-              <div className="border border-purple-600/40 rounded-b-lg overflow-hidden">
-                <div className="grid grid-cols-12 bg-purple-200 text-slate-800 font-medium px-4 py-2 text-sm">
-                  <div className="col-span-3">Nome Servidor:</div>
-                  <div className="col-span-4">Link Painel:</div>
-                  <div className="col-span-2">Usuário:</div>
-                  <div className="col-span-2">Chave API:</div>
-                  <div className="col-span-1 text-right">Ações</div>
-                </div>
-                <div className="divide-y divide-slate-700">
-                  {kofficeIntegrations.map((integration) => (
-                    <div key={integration.id} className="grid grid-cols-12 items-center px-4 py-3 bg-slate-900 text-sm">
-                      <div className="col-span-3 text-white font-medium">{integration.nomeServidor}</div>
-                      <div className="col-span-4">
-                        <a href={integration.linkPainel} target="_blank" rel="noreferrer" className="text-purple-400 hover:underline">
-                          {integration.linkPainel}
-                        </a>
-                      </div>
-                      <div className="col-span-2 text-gray-300">{integration.usuario}</div>
-                      <div className="col-span-2 text-gray-400 font-mono text-xs truncate" title={integration.chaveApi}>
-                        {integration.chaveApi}
-                      </div>
-                      <div className="col-span-1 flex justify-end">
-                        <Button 
-                          onClick={() => setKofficeIntegrations(prev => prev.filter(i => i.id !== integration.id))}
-                          variant="outline" 
-                          size="icon" 
-                          className="h-8 w-8 border-red-500 text-red-400 hover:bg-red-500/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </DialogContent>
       </Dialog>
     </main>
