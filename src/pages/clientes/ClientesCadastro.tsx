@@ -363,16 +363,6 @@ export default function ClientesCadastro() {
               </Select>
             </div>
 
-            {/* Email */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Email (opcional)</Label>
-              <Input 
-                type="email"
-                placeholder="email@exemplo.com" 
-                className="bg-background border-border"
-                {...form.register("email")}
-              />
-            </div>
 
             {/* Aplicativo */}
             <div className="space-y-2">
