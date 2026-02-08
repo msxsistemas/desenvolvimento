@@ -465,8 +465,20 @@ export default function ClientesListCreate() {
       plano: "",
       produto: "",
       search: "",
+      captacao: "",
     },
   });
+
+  // Lista de indicadores únicos para o filtro de captação
+  const indicadoresUnicos = useMemo(() => {
+    const indicadores = new Set<string>();
+    clientes.forEach(cliente => {
+      if (cliente.indicador && cliente.indicador.trim() !== '') {
+        indicadores.add(cliente.indicador.trim());
+      }
+    });
+    return Array.from(indicadores).sort();
+  }, [clientes]);
 
   const handleBuscar = () => {
     // Filtros são aplicados automaticamente via useMemo
@@ -526,6 +538,10 @@ export default function ClientesListCreate() {
 
       if (filtrosValues.produto && filtrosValues.produto !== "todos") {
         if (cliente.produto !== filtrosValues.produto) return false;
+      }
+
+      if (filtrosValues.captacao && filtrosValues.captacao !== "todos") {
+        if (cliente.indicador !== filtrosValues.captacao) return false;
       }
 
       return true;
@@ -825,7 +841,7 @@ export default function ClientesListCreate() {
           </div>
         </div>
 
-        {/* Linha 2: Data Vencimento Inicial, Data Vencimento Final */}
+        {/* Linha 2: Data Vencimento Inicial, Data Vencimento Final, Captação */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
             <Label className="text-sm font-normal text-muted-foreground">Data Vencimento Inicial</Label>
@@ -844,6 +860,22 @@ export default function ClientesListCreate() {
               {...filtros.register("dataFinal")}
               className="bg-background"
             />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-normal text-muted-foreground">Captação</Label>
+            <Select onValueChange={(v) => filtros.setValue("captacao", v)}>
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                {indicadoresUnicos.map((indicador) => (
+                  <SelectItem key={indicador} value={indicador}>
+                    {indicador}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
