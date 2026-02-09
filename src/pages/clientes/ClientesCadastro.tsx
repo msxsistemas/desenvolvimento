@@ -40,6 +40,7 @@ export default function ClientesCadastro() {
   const [produtos, setProdutos] = useState<any[]>([]);
   const [aplicativos, setAplicativos] = useState<any[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [acessosAdicionais, setAcessosAdicionais] = useState<Array<{
     usuario: string;
     senha: string;
@@ -122,18 +123,16 @@ export default function ClientesCadastro() {
   };
 
   const onSubmit = form.handleSubmit(async (data) => {
-    const camposFaltantes: string[] = [];
-    if (!data.nome || data.nome.trim() === '') camposFaltantes.push("Nome");
-    if (!data.dataVenc) camposFaltantes.push("Data de Vencimento");
-    if (!data.plano) camposFaltantes.push("Plano");
+    const errors: Record<string, string> = {};
+    if (!data.nome || data.nome.trim() === '') errors.nome = "Campo obrigatório";
+    if (!data.dataVenc) errors.dataVenc = "Campo obrigatório";
+    if (!data.plano) errors.plano = "Campo obrigatório";
 
-    if (camposFaltantes.length > 0) {
-      toast({
-        title: "Preencha os campos obrigatórios",
-        description: camposFaltantes.join(", "),
-      });
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
+    setFieldErrors({});
 
     const whatsappFormatado = formatWhatsAppNumber(data.whatsapp);
 
@@ -276,9 +275,10 @@ export default function ClientesCadastro() {
                 <Label className="text-sm font-medium">Nome <span className="text-destructive">*</span></Label>
                 <Input 
                   placeholder="Nome completo do cliente" 
-                  className="bg-background border-border"
-                  {...form.register("nome")}
+                  className={`bg-background border-border ${fieldErrors.nome ? 'border-destructive' : ''}`}
+                  {...form.register("nome", { onChange: () => setFieldErrors(prev => ({ ...prev, nome: '' })) })}
                 />
+                {fieldErrors.nome && <span className="text-xs text-destructive">{fieldErrors.nome}</span>}
               </div>
               
               <div className="space-y-2">
@@ -340,10 +340,10 @@ export default function ClientesCadastro() {
                 <Label className="text-sm font-medium">Plano <span className="text-destructive">*</span></Label>
                 <Select 
                   value={form.watch("plano")} 
-                  onValueChange={(v) => form.setValue("plano", v)} 
+                  onValueChange={(v) => { form.setValue("plano", v); setFieldErrors(prev => ({ ...prev, plano: '' })); }} 
                   disabled={loadingData}
                 >
-                  <SelectTrigger className="bg-background border-border">
+                  <SelectTrigger className={`bg-background border-border ${fieldErrors.plano ? 'border-destructive' : ''}`}>
                     <SelectValue placeholder="Selecione o plano" />
                   </SelectTrigger>
                   <SelectContent>
@@ -354,6 +354,7 @@ export default function ClientesCadastro() {
                     ))}
                   </SelectContent>
                 </Select>
+                {fieldErrors.plano && <span className="text-xs text-destructive">{fieldErrors.plano}</span>}
               </div>
 
               <div className="space-y-2">
@@ -387,9 +388,10 @@ export default function ClientesCadastro() {
                 <Label className="text-sm font-medium">Data de Vencimento <span className="text-destructive">*</span></Label>
                 <Input 
                   type="date"
-                  className="bg-background border-border [&::-webkit-calendar-picker-indicator]:hidden"
-                  {...form.register("dataVenc")}
+                  className={`bg-background border-border [&::-webkit-calendar-picker-indicator]:hidden ${fieldErrors.dataVenc ? 'border-destructive' : ''}`}
+                  {...form.register("dataVenc", { onChange: () => setFieldErrors(prev => ({ ...prev, dataVenc: '' })) })}
                 />
+                {fieldErrors.dataVenc && <span className="text-xs text-destructive">{fieldErrors.dataVenc}</span>}
               </div>
 
               <div className="flex items-center gap-3 pt-4">
