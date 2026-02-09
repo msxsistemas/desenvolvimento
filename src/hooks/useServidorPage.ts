@@ -144,39 +144,58 @@ export function useServidorPage(providerId: string) {
         : { username: usuario, password: senha };
 
       // Tenta primeiro diretamente do navegador (funciona para Sigma e outros painéis)
+      // Para provedores Xtream (koffice-api), tenta GET com params na URL
+      const strategy = getTestStrategy(providerId);
+      const isXtream = strategy.steps.some(s => s.type === 'xtream');
+
       try {
-        const response = await fetch(`${baseUrl}${endpoint}`, {
-          method: provider?.loginMethod || "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+        let response: Response;
+        let directUrl: string;
+
+        if (isXtream) {
+          // Xtream: GET com username/password como query params
+          const xtreamPath = '/player_api.php';
+          directUrl = `${baseUrl}${xtreamPath}?username=${encodeURIComponent(usuario)}&password=${encodeURIComponent(senha)}`;
+          response = await fetch(directUrl, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+          });
+        } else {
+          directUrl = `${baseUrl}${endpoint}`;
+          response = await fetch(directUrl, {
+            method: provider?.loginMethod || "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+        }
 
         const data = await response.json();
 
-        if (response.ok && (data?.token || data?.success === true || data?.user || data?.result === 'success')) {
+        const isSuccess = response.ok && (
+          data?.token || data?.success === true || data?.user || 
+          data?.result === 'success' || data?.user_info || data?.server_info
+        );
+
+        if (isSuccess) {
           if (data.token) localStorage.setItem("auth_token", data.token);
           setTestResultModal({
             isOpen: true, success: true, message: "CONEXÃO REAL BEM-SUCEDIDA!",
-            details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${baseUrl}${endpoint}\n👤 Usuário: ${usuario}\n📡 Status: OK\n\n${data.token ? `Token recebido: ${data.token.slice(0, 20)}...` : '✅ Autenticação realizada com sucesso.'}`,
-          });
-          return;
-        } else {
-          setTestResultModal({
-            isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO",
-            details: data?.message || "Usuário/senha inválidos ou URL incorreta.",
+            details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${directUrl}\n👤 Usuário: ${usuario}\n📡 Status: ${data?.user_info?.status || 'OK'}\n\n✅ Autenticação realizada com sucesso.`,
           });
           return;
         }
+        // Não retorna no else - deixa cair no fallback via Edge Function
+        console.log('Teste direto não obteve sucesso, tentando via Edge Function...');
       } catch (directError: any) {
         // Se falhar direto (CORS etc), tenta via Edge Function como fallback
         console.log('Teste direto falhou, tentando via Edge Function:', directError.message);
       }
 
       // Fallback: via Edge Function
-      const strategy = getTestStrategy(providerId);
+      const fallbackStrategy = getTestStrategy(providerId);
       const { data, error } = await supabase.functions.invoke('test-panel-connection', {
         body: {
           baseUrl, username: usuario, password: senha,
@@ -184,7 +203,7 @@ export function useServidorPage(providerId: string) {
           endpointMethod: provider?.loginMethod || 'POST',
           loginPayload: payload,
           providerId,
-          testSteps: strategy.steps,
+          testSteps: fallbackStrategy.steps,
           extraHeaders: { Accept: 'application/json' },
         },
       });
