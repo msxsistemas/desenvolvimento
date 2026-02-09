@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Cliente, Plano, Produto } from '@/types/database';
 import { useCurrentUser } from './useCurrentUser';
+import { logPainel } from '@/utils/logger';
 
 interface TransacaoFinanceira {
   id: string;
@@ -252,6 +253,7 @@ export function useFinanceiro(): DadosFinanceiros {
       }
 
       // Recarregar dados após salvar
+      logPainel(`Transação ${novaTransacao.tipo} registrada: R$ ${novaTransacao.valor}`, "success");
       await carregarDadosFinanceiros();
     } catch (error) {
       console.error('Erro ao salvar transação:', error);

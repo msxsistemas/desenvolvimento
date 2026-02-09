@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentUser } from './useCurrentUser';
+import { logSistema } from '@/utils/logger';
 
 interface EvolutionSession {
   status: 'connecting' | 'connected' | 'disconnected';
@@ -214,6 +215,7 @@ export const useEvolutionAPISimple = () => {
         clearInterval(interval);
         statusIntervalRef.current = null;
         toast.success('WhatsApp conectado com sucesso!');
+        logSistema("whatsapp", "WhatsApp conectado via Evolution API", "success");
       }
     }, 3000);
 
@@ -273,6 +275,7 @@ export const useEvolutionAPISimple = () => {
       await callEvolutionAPI('disconnect');
       setSession(null);
       toast.success('WhatsApp desconectado com sucesso!');
+      logSistema("whatsapp", "WhatsApp desconectado", "warning");
     } catch (error: any) {
       console.error('Error disconnecting:', error);
       setSession(null);

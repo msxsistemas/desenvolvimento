@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentUser } from './useCurrentUser';
 import { toast } from 'sonner';
+import { logPainel, logSistema } from '@/utils/logger';
 
 export interface TemplateMensagem {
   id: string;
@@ -96,6 +97,7 @@ export const useTemplatesMensagens = () => {
       if (data) {
         setTemplates(prev => [...prev, data]);
         toast.success('Template criado com sucesso!');
+        logPainel(`Template criado: ${template.nome}`, "success");
         return data;
       }
     } catch (error) {
@@ -119,6 +121,7 @@ export const useTemplatesMensagens = () => {
       
       setTemplates(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
       toast.success('Template atualizado com sucesso!');
+      logPainel(`Template atualizado`, "success");
     } catch (error) {
       console.error('Erro ao atualizar template:', error);
       toast.error('Erro ao atualizar template');
@@ -139,6 +142,7 @@ export const useTemplatesMensagens = () => {
       
       setTemplates(prev => prev.filter(t => t.id !== id));
       toast.success('Template excluído com sucesso!');
+      logPainel(`Template excluído`, "warning");
     } catch (error) {
       console.error('Erro ao excluir template:', error);
       toast.error('Erro ao excluir template');
