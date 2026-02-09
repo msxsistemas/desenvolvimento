@@ -52,13 +52,13 @@ export default function EvolutionQRCode({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           {isConnected ? (
-            <Wifi className="h-5 w-5 text-green-600" />
+            <Wifi className="h-5 w-5 text-success" />
           ) : (
             <WifiOff className="h-5 w-5 text-muted-foreground" />
           )}
           Conexão WhatsApp
           {isConnected && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
+            <Badge variant="secondary" className="bg-success/10 text-success">
               Conectado
             </Badge>
           )}
@@ -75,7 +75,7 @@ export default function EvolutionQRCode({
           </div>
         ) : isConnected ? (
           <div className="text-center space-y-4">
-            <div className="w-48 h-48 mx-auto flex items-center justify-center bg-green-50 dark:bg-green-950 rounded-full border-4 border-green-200 dark:border-green-800">
+            <div className="w-48 h-48 mx-auto flex items-center justify-center bg-success/10 rounded-full border-4 border-success/30">
               {session?.profilePicture ? (
                 <img 
                   src={session.profilePicture} 
@@ -114,11 +114,11 @@ export default function EvolutionQRCode({
                 <RotateCw className="h-4 w-4 mr-1" />
                 Reiniciar
               </Button>
-              <Button onClick={onDisconnect} variant="outline" size="sm" className="text-orange-600">
+              <Button onClick={onDisconnect} variant="outline" size="sm" className="text-warning">
                 <LogOut className="h-4 w-4 mr-1" />
                 Desconectar
               </Button>
-              <Button onClick={onDelete} variant="outline" size="sm" className="text-red-600">
+              <Button onClick={onDelete} variant="outline" size="sm" className="text-destructive">
                 <Trash2 className="h-4 w-4 mr-1" />
                 Excluir
               </Button>
