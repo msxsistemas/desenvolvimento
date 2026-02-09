@@ -89,11 +89,7 @@ serve(async (req) => {
       }
     }
 
-    const isKoffice = providerId === 'koffice-api' || providerId === 'koffice-v2';
-    const isSigma = providerId === 'sigma-v2';
-
-    // Discover API structure for koffice and sigma (sigma panels may also use form login)
-    if (!providerId || isKoffice || isSigma) {
+    // --- Step 1: Discover API structure ---
     try {
       console.log('🔍 Descobrindo estrutura da API...');
       const loginPageResp = await withTimeout(fetch(`${cleanBase}/login`, {
@@ -121,14 +117,12 @@ serve(async (req) => {
     } catch (e) {
       console.log(`⚠️ Erro ao buscar página de login: ${(e as Error).message}`);
     }
-    } // end discovery block
 
     const logs: any[] = [];
     let lastResp: any = null;
     let lastUrl = '';
 
-    // --- Try Xtream/kOffice style: only for koffice-api or unknown providers ---
-    if (!providerId || providerId === 'koffice-api') {
+    // --- Step 2: Try Xtream/kOffice style (GET with params) ---
     const xtreamPaths = ['/player_api.php', '/panel_api.php', '/api.php'];
 
     for (const path of xtreamPaths) {
@@ -175,10 +169,8 @@ serve(async (req) => {
         logs.push({ url: `${cleanBase}${path}`, error: (e as Error).message });
       }
     }
-    } // end xtream block
 
-    // --- Try form-based login (for koffice, sigma, or unknown providers) ---
-    if (!providerId || isKoffice || isSigma) {
+    // --- Step 3: Try form-based login (HTML form with CSRF) ---
     try {
       console.log('🔄 Tentando login via formulário HTML (kOffice style)...');
       // Step 1: GET login page to extract CSRF token
@@ -231,7 +223,7 @@ serve(async (req) => {
         console.log(`📊 Form login → status: ${formStatus}, location: ${formLocation}, snippet: ${formText.slice(0, 200)}`);
         logs.push({ url: `${cleanBase}/login (form)`, status: formStatus, location: formLocation, snippet: formText.slice(0, 200) });
 
-        // Success indicators: redirect specifically to dashboard/home (not ./ or back to login)
+        // Success indicators: redirect specifically to dashboard/home
         const locationLower = formLocation.toLowerCase();
         const isRedirectToApp = locationLower.includes('dashboard') || locationLower.includes('/home') || locationLower.includes('/admin') || locationLower.includes('/panel');
         const isRedirectToLogin = !formLocation || locationLower === './' || locationLower === '.' || locationLower.includes('/login') || locationLower === '/';
@@ -247,7 +239,7 @@ serve(async (req) => {
           return new Response(JSON.stringify({
             success: true,
             endpoint: `${cleanBase}/login`,
-            type: 'kOffice Form',
+            type: 'Form Login',
             account: {
               status: 'Active',
               user: { username },
@@ -268,10 +260,8 @@ serve(async (req) => {
       console.log(`⚠️ Erro form login: ${(e as Error).message}`);
       logs.push({ url: `${cleanBase}/login (form)`, error: (e as Error).message });
     }
-    } // end form-based login block
 
-    // --- Fallback: Try standard POST JSON login endpoints (sigma and others) ---
-    // If provider is known, only try its specific endpoint; otherwise try all
+    // --- Step 4: Try standard POST JSON login endpoints ---
     const candidates = providerId && endpointPath
       ? [endpointPath]
       : Array.from(new Set([
@@ -333,7 +323,7 @@ serve(async (req) => {
       }
     }
 
-    // Check if any endpoint responded with a valid JSON that indicates auth failure (kOffice style)
+    // Error response
     const hasAuthEndpoint = logs.some(l => l.ok && l.snippet && (l.snippet.includes('"result"') || l.snippet.includes('"success"')));
     
     let errorMessage = 'Falha na autenticação';
@@ -360,6 +350,7 @@ serve(async (req) => {
         status: lastResp?.status || 0,
         response: String(lastResp?.text || '').slice(0, 500),
       },
+      logs,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
