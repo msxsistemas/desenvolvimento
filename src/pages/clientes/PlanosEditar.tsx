@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,12 +17,14 @@ const formatCurrencyBRL = (value: string) => {
   return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 };
 
-export default function PlanosCadastro() {
+export default function PlanosEditar() {
   const navigate = useNavigate();
-  const { criar } = usePlanos();
+  const { id } = useParams<{ id: string }>();
+  const { atualizar, buscarPorId } = usePlanos();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
   const [formData, setFormData] = useState({
     nome: "",
     valor: "",
@@ -32,8 +34,49 @@ export default function PlanosCadastro() {
   });
 
   useEffect(() => {
-    document.title = "Adicionar Plano | Tech Play";
-  }, []);
+    document.title = "Editar Plano | Tech Play";
+    
+    const carregarPlano = async () => {
+      if (!id) {
+        navigate("/planos");
+        return;
+      }
+      
+      setLoadingData(true);
+      try {
+        const plano = await buscarPorId(id);
+        if (plano) {
+          setFormData({
+            nome: plano.nome || "",
+            valor: plano.valor ? (plano.valor.toString().trim().startsWith("R$") ? plano.valor : formatCurrencyBRL(plano.valor.toString())) : "",
+            tipo: plano.tipo || "meses",
+            quantidade: plano.quantidade || "1",
+            descricao: plano.descricao || "",
+          });
+        } else {
+          toast({
+            title: "Erro",
+            description: "Plano não encontrado",
+            variant: "destructive",
+          });
+          navigate("/planos");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar plano:", error);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar dados do plano",
+          variant: "destructive",
+        });
+        navigate("/planos");
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    carregarPlano();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -60,21 +103,23 @@ export default function PlanosCadastro() {
       return;
     }
 
+    if (!id) return;
+
     setLoading(true);
     try {
-      await criar(formData);
+      await atualizar(id, formData);
       
       toast({
         title: "Sucesso",
-        description: "Plano cadastrado com sucesso!",
+        description: "Plano atualizado com sucesso!",
       });
       
       navigate("/planos");
     } catch (error) {
-      console.error("Erro ao salvar plano:", error);
+      console.error("Erro ao atualizar plano:", error);
       toast({
         title: "Erro",
-        description: "Erro ao cadastrar plano",
+        description: "Erro ao atualizar plano",
         variant: "destructive",
       });
     } finally {
@@ -82,15 +127,27 @@ export default function PlanosCadastro() {
     }
   };
 
+  if (loadingData) {
+    return (
+      <div className="space-y-6">
+        <Card className="bg-card border border-border/30">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center py-8">
+              <span className="text-muted-foreground">Carregando dados do plano...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-
-      {/* Card do Formulário */}
       <Card className="bg-card border border-border/30">
         <CardContent className="p-6">
           <div className="flex items-center gap-2 mb-6">
             <List className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold text-foreground">Cadastrar Novo Plano</h2>
+            <h2 className="text-xl font-semibold text-foreground">Editar Plano</h2>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -162,7 +219,7 @@ export default function PlanosCadastro() {
                 Cancelar
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? "Salvando..." : "Cadastrar Plano"}
+                {loading ? "Salvando..." : "Salvar Alterações"}
               </Button>
             </div>
           </form>

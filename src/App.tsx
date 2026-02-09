@@ -11,10 +11,13 @@ import ClientesCadastro from "./pages/clientes/ClientesCadastro";
 import ClientesEditar from "./pages/clientes/ClientesEditar";
 import ClientesPlanos from "./pages/clientes/ClientesPlanos";
 import PlanosCadastro from "./pages/clientes/PlanosCadastro";
+import PlanosEditar from "./pages/clientes/PlanosEditar";
 import ClientesProdutos from "./pages/clientes/ClientesProdutos";
 import ProdutosCadastro from "./pages/clientes/ProdutosCadastro";
 import ClientesAplicativos from "./pages/clientes/ClientesAplicativos";
 import AplicativosCadastro from "./pages/clientes/AplicativosCadastro";
+import AplicativosEditar from "./pages/clientes/AplicativosEditar";
+import ProdutosEditar from "./pages/clientes/ProdutosEditar";
 import ClientesMetricas from "./pages/clientes/ClientesMetricas";
 import ClientesIntegracoes from "./pages/clientes/ClientesIntegracoes";
 import Financeiro from "./pages/Financeiro";
@@ -76,10 +79,13 @@ const App = () => (
             <Route path="/clientes/editar/:id" element={<ClientesEditar />} />
             <Route path="/planos" element={<ClientesPlanos />} />
             <Route path="/planos/cadastro" element={<PlanosCadastro />} />
+            <Route path="/planos/editar/:id" element={<PlanosEditar />} />
             <Route path="/produtos" element={<ClientesProdutos />} />
             <Route path="/produtos/cadastro" element={<ProdutosCadastro />} />
+            <Route path="/produtos/editar/:id" element={<ProdutosEditar />} />
             <Route path="/aplicativos" element={<ClientesAplicativos />} />
             <Route path="/aplicativos/cadastro" element={<AplicativosCadastro />} />
+            <Route path="/aplicativos/editar/:id" element={<AplicativosEditar />} />
             <Route path="/metricas" element={<ClientesMetricas />} />
             <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/servidores" element={<ClientesIntegracoes />} />

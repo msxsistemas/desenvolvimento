@@ -181,7 +181,23 @@ export const useAplicativos = () => {
     }
   };
 
-  return { criar, atualizar, buscar, deletar };
+  const buscarPorId = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('aplicativos')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Erro ao buscar aplicativo por ID:', error);
+      return null;
+    }
+  };
+
+  return { criar, atualizar, buscar, buscarPorId, deletar };
 };
 
 // Hook para Planos
@@ -263,7 +279,23 @@ export const usePlanos = () => {
     }
   };
 
-  return { criar, atualizar, buscar, deletar };
+  const buscarPorId = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('planos')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Erro ao buscar plano por ID:', error);
+      return null;
+    }
+  };
+
+  return { criar, atualizar, buscar, buscarPorId, deletar };
 };
 
 // Hook para Produtos
@@ -345,7 +377,23 @@ export const useProdutos = () => {
     }
   };
 
-  return { criar, atualizar, buscar, deletar };
+  const buscarPorId = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('produtos')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Erro ao buscar produto por ID:', error);
+      return null;
+    }
+  };
+
+  return { criar, atualizar, buscar, buscarPorId, deletar };
 };
 
 // Hook para Templates de Cobrança

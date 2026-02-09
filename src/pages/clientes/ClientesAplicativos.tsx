@@ -3,9 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pencil, Trash2, Power } from "lucide-react";
@@ -15,20 +14,14 @@ import { useAplicativos } from "@/hooks/useDatabase";
 
 export default function ClientesAplicativos() {
   const navigate = useNavigate();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
-  const [formData, setFormData] = useState({
-    nome: "",
-    descricao: ""
-  });
-  const [loading, setLoading] = useState(false);
   const [apps, setApps] = useState<Aplicativo[]>([]);
-  const [editingApp, setEditingApp] = useState<Aplicativo | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [desativarTarget, setDesativarTarget] = useState<Aplicativo | null>(null);
   
-  const { criar, atualizar, buscar, deletar } = useAplicativos();
+  const { atualizar, buscar, deletar } = useAplicativos();
 
   useEffect(() => {
     document.title = "Clientes - Aplicativos | Gestor Tech Play";
@@ -42,50 +35,6 @@ export default function ClientesAplicativos() {
     carregar();
   }, [buscar]);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = async () => {
-    if (!formData.nome.trim()) return;
-    
-    setLoading(true);
-    try {
-      if (editingApp) {
-        const atualizado = await atualizar(editingApp.id!, formData);
-        if (atualizado) {
-          setApps((prev) => prev.map(app => app.id === editingApp.id ? atualizado : app));
-          setSuccessMessage("Aplicativo atualizado");
-          setShowSuccessDialog(true);
-        }
-      } else {
-        const novo = await criar(formData);
-        if (novo) {
-          setApps((prev) => [novo, ...prev]);
-          setSuccessMessage("Aplicativo criado");
-          setShowSuccessDialog(true);
-        }
-      }
-      
-      setIsDialogOpen(false);
-      setEditingApp(null);
-      setFormData({ nome: "", descricao: "" });
-    } catch (error) {
-      console.error("Erro ao salvar aplicativo:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEdit = (app: Aplicativo) => {
-    setEditingApp(app);
-    setFormData({
-      nome: app.nome || "",
-      descricao: app.descricao || ""
-    });
-    setIsDialogOpen(true);
-  };
-
   const handleDelete = async (app: Aplicativo) => {
     try {
       await deletar(app.id!);
@@ -97,16 +46,12 @@ export default function ClientesAplicativos() {
     }
   };
 
-  const [desativarTarget, setDesativarTarget] = useState<Aplicativo | null>(null);
-
   const handleToggleAtivo = async (app: Aplicativo) => {
     const isActive = (app as any).ativo !== false;
-    
     if (isActive) {
       setDesativarTarget(app);
       return;
     }
-    
     await executarToggle(app);
   };
 
@@ -126,12 +71,6 @@ export default function ClientesAplicativos() {
     if (!desativarTarget) return;
     await executarToggle(desativarTarget);
     setDesativarTarget(null);
-  };
-
-  const handleCancel = () => {
-    setIsDialogOpen(false);
-    setFormData({ nome: "", descricao: "" });
-    setEditingApp(null);
   };
 
   const filteredApps = apps.filter((a) => {
@@ -157,46 +96,6 @@ export default function ClientesAplicativos() {
           Adicionar Aplicativo +
         </Button>
       </header>
-
-      {/* Edit/Create Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingApp ? "Editar Aplicativo" : "Novo Aplicativo"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome</Label>
-              <Input
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => handleInputChange("nome", e.target.value)}
-                placeholder="Nome do aplicativo"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="descricao">Descrição</Label>
-              <Textarea
-                id="descricao"
-                value={formData.descricao}
-                onChange={(e) => handleInputChange("descricao", e.target.value)}
-                placeholder="Descrição do aplicativo"
-                className="min-h-[100px] resize-none"
-              />
-            </div>
-
-            <div className="flex gap-2 justify-end pt-2">
-              <Button variant="outline" onClick={handleCancel}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave} disabled={loading}>
-                {loading ? "Salvando..." : "Salvar"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Filters */}
       <div className="rounded-lg border border-border bg-card p-4">
@@ -240,7 +139,6 @@ export default function ClientesAplicativos() {
 
       {/* Table */}
       <div className="rounded-lg border border-border bg-card">
-
         <Table>
           <TableHeader>
             <TableRow>
@@ -253,10 +151,10 @@ export default function ClientesAplicativos() {
           </TableHeader>
           <TableBody>
             {filteredApps.length ? (
-              filteredApps.map((a) => (
+              filteredApps.map((a, index) => (
                 <TableRow key={a.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {a.id?.slice(0, 8)}
+                    {filteredApps.length - index}
                   </TableCell>
                   <TableCell className="font-medium">{a.nome}</TableCell>
                   <TableCell className="text-muted-foreground">{a.descricao || "-"}</TableCell>
@@ -276,8 +174,8 @@ export default function ClientesAplicativos() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleEdit(a)}
-                        className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                        onClick={() => navigate(`/aplicativos/editar/${a.id}`)}
+                        className="h-8 w-8 text-primary hover:text-primary/80"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -285,10 +183,7 @@ export default function ClientesAplicativos() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleToggleAtivo(a)}
-                        className={`h-8 w-8 ${(a as any).ativo !== false 
-                          ? "text-muted-foreground hover:text-warning hover:bg-warning/10" 
-                          : "text-muted-foreground hover:text-success hover:bg-success/10"
-                        }`}
+                        className="h-8 w-8 text-warning hover:text-warning/80"
                         title={(a as any).ativo !== false ? "Desativar" : "Ativar"}
                       >
                         <Power className="h-4 w-4" />
@@ -298,7 +193,7 @@ export default function ClientesAplicativos() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            className="h-8 w-8 text-destructive hover:text-destructive/80"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -352,6 +247,7 @@ export default function ClientesAplicativos() {
           </div>
         </DialogContent>
       </Dialog>
+
       {/* Desativar Confirmation Dialog */}
       <AlertDialog open={!!desativarTarget} onOpenChange={() => setDesativarTarget(null)}>
         <AlertDialogContent>
