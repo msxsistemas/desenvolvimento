@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { PROVEDORES, Panel, ProviderConfig } from "@/config/provedores";
+import { PROVEDORES, Panel, ProviderConfig, getTestStrategy } from "@/config/provedores";
 
 export function useServidorPage(providerId: string) {
   const provider = PROVEDORES.find(p => p.id === providerId) || null;
@@ -143,6 +143,7 @@ export function useServidorPage(providerId: string) {
         ? provider.buildLoginPayload(usuario, senha)
         : { username: usuario, password: senha };
 
+      const strategy = getTestStrategy(providerId);
       const { data, error } = await supabase.functions.invoke('test-panel-connection', {
         body: {
           baseUrl, username: usuario, password: senha,
@@ -150,6 +151,7 @@ export function useServidorPage(providerId: string) {
           endpointMethod: provider?.loginMethod || 'POST',
           loginPayload: payload,
           providerId,
+          testSteps: strategy.steps,
           extraHeaders: { Accept: 'application/json' },
         },
       });
@@ -195,6 +197,7 @@ export function useServidorPage(providerId: string) {
         ? prov.buildLoginPayload(panel.usuario, panel.senha)
         : { username: panel.usuario, password: panel.senha };
 
+      const strategy = getTestStrategy(panel.provedor || providerId);
       const { data, error } = await supabase.functions.invoke('test-panel-connection', {
         body: {
           baseUrl, username: panel.usuario, password: panel.senha,
@@ -202,6 +205,7 @@ export function useServidorPage(providerId: string) {
           endpointMethod: prov?.loginMethod || 'POST',
           loginPayload: payload,
           providerId: panel.provedor || providerId,
+          testSteps: strategy.steps,
           extraHeaders: { Accept: 'application/json' },
         },
       });
