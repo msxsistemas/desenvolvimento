@@ -133,7 +133,7 @@ export function useServidorPage(providerId: string) {
         setTestResultModal({
           isOpen: true, success: false,
           message: "Dados Obrigatórios Ausentes",
-          details: "❌ Preencha todos os campos obrigatórios antes de testar.",
+          details: "❌ Preencha nome, URL, usuário e senha com dados reais antes de testar.",
         });
         return;
       }
@@ -143,6 +143,39 @@ export function useServidorPage(providerId: string) {
         ? provider.buildLoginPayload(usuario, senha)
         : { username: usuario, password: senha };
 
+      // Tenta primeiro diretamente do navegador (funciona para Sigma e outros painéis)
+      try {
+        const response = await fetch(`${baseUrl}${endpoint}`, {
+          method: provider?.loginMethod || "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && (data?.token || data?.success === true || data?.user || data?.result === 'success')) {
+          if (data.token) localStorage.setItem("auth_token", data.token);
+          setTestResultModal({
+            isOpen: true, success: true, message: "CONEXÃO REAL BEM-SUCEDIDA!",
+            details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${baseUrl}${endpoint}\n👤 Usuário: ${usuario}\n📡 Status: OK\n\n${data.token ? `Token recebido: ${data.token.slice(0, 20)}...` : '✅ Autenticação realizada com sucesso.'}`,
+          });
+          return;
+        } else {
+          setTestResultModal({
+            isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO",
+            details: data?.message || "Usuário/senha inválidos ou URL incorreta.",
+          });
+          return;
+        }
+      } catch (directError: any) {
+        // Se falhar direto (CORS etc), tenta via Edge Function como fallback
+        console.log('Teste direto falhou, tentando via Edge Function:', directError.message);
+      }
+
+      // Fallback: via Edge Function
       const strategy = getTestStrategy(providerId);
       const { data, error } = await supabase.functions.invoke('test-panel-connection', {
         body: {
