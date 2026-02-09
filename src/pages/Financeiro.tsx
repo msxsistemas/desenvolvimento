@@ -450,7 +450,7 @@ export default function Financeiro() {
                         variant="ghost"
                         size="icon"
                         onClick={() => abrirModalEdicao(r)}
-                        className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                        className="h-8 w-8 text-primary hover:text-primary/80"
                         disabled={!r.isCustom}
                       >
                         <Pencil className="h-4 w-4" />
@@ -459,7 +459,7 @@ export default function Financeiro() {
                         variant="ghost"
                         size="icon"
                         onClick={() => abrirDialogoExclusao(r)}
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        className="h-8 w-8 text-destructive hover:text-destructive/80"
                         disabled={!r.isCustom}
                       >
                         <Trash2 className="h-4 w-4" />
