@@ -169,32 +169,45 @@ export default function ClientesIntegracoes() {
         ? provider.buildLoginPayload(usuario, senha)
         : { username: usuario, password: senha };
 
-      const response = await fetch(`${baseUrl}${endpoint}`, {
-        method: provider?.loginMethod || "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+      const { data, error } = await supabase.functions.invoke('test-panel-connection', {
+        body: {
+          baseUrl,
+          username: usuario,
+          password: senha,
+          endpointPath: endpoint,
+          endpointMethod: provider?.loginMethod || 'POST',
+          loginPayload: payload,
+          extraHeaders: { Accept: 'application/json' }
         },
-        body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      if (error || !data) {
+        setTestResultModal({
+          isOpen: true,
+          success: false,
+          message: 'Erro no Teste',
+          details: `Não foi possível executar o teste. ${error?.message ?? ''}`.trim(),
+        });
+        return;
+      }
 
-      if (response.ok && (data?.token || data?.jwt || data?.access_token)) {
-        const token = data.token || data.jwt || data.access_token;
-        localStorage.setItem("auth_token", token);
+      if (data.success) {
+        const account = data.account;
+        if (data.data?.token) {
+          localStorage.setItem("auth_token", data.data.token);
+        }
         setTestResultModal({
           isOpen: true,
           success: true,
           message: "CONEXÃO REAL BEM-SUCEDIDA!",
-          details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${baseUrl}${endpoint}\n👤 Usuário: ${usuario}\n📡 Status: OK\n\nToken recebido: ${token.slice(0, 20)}...`
+          details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}\n\n✅ Autenticação realizada com sucesso no painel.`
         });
       } else {
         setTestResultModal({
           isOpen: true,
           success: false,
           message: "FALHA NA AUTENTICAÇÃO",
-          details: data?.message || "Credenciais inválidas ou URL incorreta."
+          details: data.details || "Credenciais inválidas ou URL incorreta."
         });
       }
     } catch (error: any) {
