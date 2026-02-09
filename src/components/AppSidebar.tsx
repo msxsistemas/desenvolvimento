@@ -177,7 +177,7 @@ export function AppSidebar() {
         className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none"
       >
         <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
-          sectionActive 
+          sectionActive || openSubmenu === menuKey
             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium" 
             : "text-muted-foreground hover:text-muted-foreground/80"
         }`}>
@@ -229,7 +229,7 @@ export function AppSidebar() {
                         className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none"
                       >
                         <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
-                          whatsappActive 
+                          whatsappActive || openSubmenu === "whatsapp"
                             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium" 
                             : "text-muted-foreground hover:text-muted-foreground/80"
                         }`}>
