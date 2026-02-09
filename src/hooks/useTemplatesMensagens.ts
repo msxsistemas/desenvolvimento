@@ -42,12 +42,7 @@ export const useTemplatesMensagens = () => {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        setTemplates(data);
-      } else {
-        // Se não houver templates, criar os padrões silenciosamente
-        await createDefaultTemplates(false);
-      }
+      setTemplates(data || []);
     } catch (error) {
       console.error('Erro ao carregar templates:', error);
       toast.error('Erro ao carregar templates');

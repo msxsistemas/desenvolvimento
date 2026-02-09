@@ -122,9 +122,27 @@ export default function Templates() {
           <p className="text-sm text-muted-foreground">Gerencie seus templates de mensagens</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleRestaurarPadrao}>
-            Restaurar Padrão
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline">
+                Limpar Templates
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Limpar todos os templates</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja apagar todos os templates? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleRestaurarPadrao} className="bg-destructive hover:bg-destructive/90">
+                  Apagar Todos
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button onClick={handleNew} className="bg-primary hover:bg-primary/90">
             Novo Template +
           </Button>
