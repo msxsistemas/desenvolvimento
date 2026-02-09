@@ -41,6 +41,8 @@ import EnviosEmMassa from "./pages/whatsapp/EnviosEmMassa";
 import GerenciarCampanhas from "./pages/whatsapp/GerenciarCampanhas";
 
 import Templates from "./pages/whatsapp/Templates";
+import TemplateCadastro from "./pages/whatsapp/TemplateCadastro";
+import TemplateEditar from "./pages/whatsapp/TemplateEditar";
 import Relatorios from "./pages/Relatorios";
 import LogsPainel from "./pages/LogsPainel";
 import LogsSistema from "./pages/LogsSistema";
@@ -100,6 +102,8 @@ const App = () => (
             <Route path="/whatsapp/fila-mensagens" element={<FilaMensagens />} />
             <Route path="/whatsapp/envios-em-massa" element={<EnviosEmMassa />} />
             <Route path="/whatsapp/templates" element={<Templates />} />
+            <Route path="/whatsapp/templates/cadastro" element={<TemplateCadastro />} />
+            <Route path="/whatsapp/templates/editar/:id" element={<TemplateEditar />} />
             <Route path="/whatsapp/parear" element={<ParearWhatsapp />} />
             {/* Logs routes */}
             <Route path="/logs/painel" element={<LogsPainel />} />
