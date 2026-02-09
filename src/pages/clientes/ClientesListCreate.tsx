@@ -6,7 +6,7 @@ import { useClientes, usePlanos, useProdutos, useAplicativos, useTemplatesCobran
 import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash, Plus, Send, RefreshCw, Power, Copy, Bell, Loader2 } from "lucide-react";
+import { Edit, Trash, Plus, Send, RefreshCw, Power, Copy, Bell, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import type { Cliente } from "@/types/database";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,10 @@ export default function ClientesListCreate() {
   const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   // Estados para dados dos selects
   const [planos, setPlanos] = useState<any[]>([]);
   const [produtos, setProdutos] = useState<any[]>([]);
@@ -876,7 +880,18 @@ export default function ClientesListCreate() {
     });
   }, [clientes, filtrosValues.search, filtrosValues.dataInicial, filtrosValues.dataFinal, filtrosValues.status, filtrosValues.plano, filtrosValues.produto, filtrosValues.captacao]);
 
-  // Formulário Novo Cliente
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filtrosValues.search, filtrosValues.dataInicial, filtrosValues.dataFinal, filtrosValues.status, filtrosValues.plano, filtrosValues.produto, filtrosValues.captacao]);
+
+  const totalPages = Math.ceil(clientesFiltrados.filter(c => c && c.id).length / itemsPerPage);
+  const clientesPaginados = useMemo(() => {
+    const valid = clientesFiltrados.filter(c => c && c.id);
+    const start = (currentPage - 1) * itemsPerPage;
+    return valid.slice(start, start + itemsPerPage);
+  }, [clientesFiltrados, currentPage, itemsPerPage]);
+
   const form = useForm({
     defaultValues: {
       nome: "",
@@ -1252,7 +1267,7 @@ export default function ClientesListCreate() {
 
       {/* Record count */}
       <div className="text-right text-sm text-muted-foreground">
-        Mostrando {clientesFiltrados.length} de {clientes.length} registros.
+        Mostrando {Math.min(clientesPaginados.length, itemsPerPage)} de {clientesFiltrados.filter(c => c && c.id).length} registros (Página {currentPage} de {totalPages || 1}).
       </div>
 
       {/* Table */}
@@ -1277,15 +1292,14 @@ export default function ClientesListCreate() {
                   <span className="text-muted-foreground">Carregando clientes...</span>
                 </TableCell>
               </TableRow>
-            ) : clientesFiltrados.length === 0 ? (
+            ) : clientesPaginados.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
                   <span className="text-muted-foreground">Nenhum cliente encontrado</span>
                 </TableCell>
               </TableRow>
             ) : (
-              clientesFiltrados
-                .filter(cliente => cliente && cliente.id)
+              clientesPaginados
                 .map((cliente, index) => {
                   const { status } = getClienteStatus(cliente);
                   const formattedPhone = cliente.whatsapp ? `+${cliente.whatsapp}` : '-';
@@ -1296,7 +1310,7 @@ export default function ClientesListCreate() {
                       onClick={() => handleEditCliente(cliente)}
                     >
                       <TableCell className="font-mono text-xs text-muted-foreground">
-                        {clientesFiltrados.filter(c => c && c.id).length - index}
+                        {clientesFiltrados.filter(c => c && c.id).length - ((currentPage - 1) * itemsPerPage + index)}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
@@ -1435,7 +1449,74 @@ export default function ClientesListCreate() {
         </Table>
       </div>
 
-      {/* Dialog de Criar/Editar Cliente */}
+      {/* Paginação */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-2">
+          <span className="text-sm text-muted-foreground">
+            Página {currentPage} de {totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              Primeira
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let page: number;
+              if (totalPages <= 5) {
+                page = i + 1;
+              } else if (currentPage <= 3) {
+                page = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                page = totalPages - 4 + i;
+              } else {
+                page = currentPage - 2 + i;
+              }
+              return (
+                <Button
+                  key={page}
+                  variant={page === currentPage ? "default" : "outline"}
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </Button>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              Última
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
