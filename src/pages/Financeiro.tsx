@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,14 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { DollarSign, TrendingUp, TrendingDown, Pencil, Trash2, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { useFinanceiro } from "@/hooks/useFinanceiro";
 import { toast } from "sonner";
 
 export default function Financeiro() {
+  const navigate = useNavigate();
   const hoje = new Date();
   const inicioMes = startOfMonth(hoje);
   const fimMes = endOfMonth(hoje);
@@ -24,17 +24,8 @@ export default function Financeiro() {
   const [filtroDataFim, setFiltroDataFim] = useState(format(fimMes, 'yyyy-MM-dd'));
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [termoPesquisa, setTermoPesquisa] = useState("");
-  const { entradas, saidas, lucros, transacoes, loading, error, salvarTransacao, editarTransacao, excluirTransacao } = useFinanceiro();
+  const { transacoes, loading, error, excluirTransacao } = useFinanceiro();
 
-  // Estado para o modal
-  const [modalAberto, setModalAberto] = useState(false);
-  const [modoEdicao, setModoEdicao] = useState(false);
-  const [transacaoEditando, setTransacaoEditando] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    valor: "",
-    tipo: "entrada" as "entrada" | "saida",
-    descricao: ""
-  });
 
   // Estado para o diálogo de confirmação
   const [dialogoExclusaoAberto, setDialogoExclusaoAberto] = useState(false);
@@ -112,71 +103,12 @@ export default function Financeiro() {
     setTermoPesquisa("");
   };
 
-  // Funções do modal
-  const abrirModalNovo = () => {
-    setModoEdicao(false);
-    setTransacaoEditando(null);
-    setFormData({ valor: "", tipo: "entrada", descricao: "" });
-    setModalAberto(true);
-  };
-
   const abrirModalEdicao = (transacao: any) => {
     if (!transacao.isCustom) {
       toast.error("Só é possível editar transações customizadas");
       return;
     }
-
-    setModoEdicao(true);
-    setTransacaoEditando(transacao);
-    setFormData({
-      valor: transacao.valor.toString(),
-      tipo: transacao.tipo,
-      descricao: transacao.descricao || `${transacao.cliente}\n${transacao.detalheTitulo}: ${transacao.detalheValor}`
-    });
-    setModalAberto(true);
-  };
-
-  const fecharModal = () => {
-    setModalAberto(false);
-    setModoEdicao(false);
-    setTransacaoEditando(null);
-    setFormData({ valor: "", tipo: "entrada", descricao: "" });
-  };
-
-  const handleSalvar = async () => {
-    if (!formData.valor || !formData.descricao) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-
-    try {
-      const valorStr = formData.valor.replace(/[R$\s]/g, '').replace(',', '.');
-      const valor = parseFloat(valorStr);
-
-      if (isNaN(valor) || valor <= 0) {
-        toast.error("Valor inválido");
-        return;
-      }
-
-      const novaTransacao = {
-        valor,
-        tipo: formData.tipo,
-        descricao: formData.descricao,
-      };
-
-      if (modoEdicao && transacaoEditando && transacaoEditando.isCustom) {
-        await editarTransacao(transacaoEditando.id, novaTransacao);
-        toast.success("Transação editada com sucesso!");
-      } else {
-        await salvarTransacao(novaTransacao);
-        toast.success("Nova transação criada com sucesso!");
-      }
-      
-      fecharModal();
-    } catch (error) {
-      console.error('Erro ao salvar transação:', error);
-      toast.error("Erro ao salvar transação");
-    }
+    navigate(`/financeiro/editar/${transacao.id}`);
   };
 
   const abrirDialogoExclusao = (transacao: any) => {
@@ -224,7 +156,7 @@ export default function Financeiro() {
           >
             {mostrarValores ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
           </Button>
-          <Button onClick={abrirModalNovo} className="bg-primary hover:bg-primary/90">
+          <Button onClick={() => navigate("/financeiro/nova-transacao")} className="bg-primary hover:bg-primary/90">
             Nova Transação +
           </Button>
         </div>
@@ -472,64 +404,6 @@ export default function Financeiro() {
           </TableBody>
         </Table>
       </div>
-
-      {/* Modal de Edição/Criação */}
-      <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {modoEdicao ? "Editar Transação" : "Nova Transação"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Valor</Label>
-                <Input
-                  placeholder="R$ 0,00"
-                  value={formData.valor}
-                  onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Tipo</Label>
-                <Select 
-                  value={formData.tipo} 
-                  onValueChange={(value: "entrada" | "saida") => setFormData(prev => ({ ...prev, tipo: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="entrada">Entrada</SelectItem>
-                    <SelectItem value="saida">Saída</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Descrição</Label>
-              <Textarea
-                placeholder="Nome do cliente&#10;Plano: Mensal"
-                rows={4}
-                value={formData.descricao}
-                onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-                className="resize-none"
-              />
-            </div>
-            
-            <div className="flex gap-2 justify-end pt-2">
-              <Button variant="outline" onClick={fecharModal}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSalvar}>
-                Salvar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Diálogo de Confirmação de Exclusão */}
       <AlertDialog open={dialogoExclusaoAberto} onOpenChange={setDialogoExclusaoAberto}>

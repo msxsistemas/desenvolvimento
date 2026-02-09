@@ -61,12 +61,13 @@ export function AppSidebar() {
   const planosActive = currentPath === "/planos" || currentPath.startsWith("/planos/");
   const aplicativosActive = currentPath === "/aplicativos" || currentPath.startsWith("/aplicativos/");
   const produtosActive = currentPath === "/produtos" || currentPath.startsWith("/produtos/");
+  const financeiroActive = currentPath.startsWith("/financeiro");
   const whatsappActive = currentPath.startsWith("/whatsapp") || currentPath === "/parear-whatsapp";
   const logsActive = currentPath.startsWith("/logs");
   const indicacoesActive = currentPath.startsWith("/indicacoes");
   const outrosActive = currentPath.startsWith("/outros") || currentPath === "/configuracoes/mensagens-padroes";
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(
-    clientesActive ? "clientes" : planosActive ? "planos" : aplicativosActive ? "aplicativos" : produtosActive ? "produtos" : whatsappActive ? "whatsapp" : logsActive ? "logs" : indicacoesActive ? "indicacoes" : outrosActive ? "outros" : null
+    clientesActive ? "clientes" : planosActive ? "planos" : aplicativosActive ? "aplicativos" : produtosActive ? "produtos" : financeiroActive ? "financeiro" : whatsappActive ? "whatsapp" : logsActive ? "logs" : indicacoesActive ? "indicacoes" : outrosActive ? "outros" : null
   );
 
   const toggleSubmenu = (menu: string) => {
@@ -104,7 +105,7 @@ export function AppSidebar() {
     { to: "/aplicativos", icon: Package, label: "Aplicativos", hasAplicativosSubmenu: true },
     { to: "/produtos", icon: Package, label: "Produtos", hasProdutosSubmenu: true },
     { to: "/servidores", icon: Server, label: "Servidores" },
-    { to: "/financeiro", icon: DollarSign, label: "Financeiro" },
+    { to: "/financeiro", icon: DollarSign, label: "Financeiro", hasFinanceiroSubmenu: true },
     { to: "/relatorios", icon: Filter, label: "Relatórios" },
     { to: "/configuracoes", icon: Globe, label: "Gateways" },
     { to: "/whatsapp", icon: WhatsAppIcon, label: "WhatsApp", hasWhatsappSubmenu: true },
@@ -128,6 +129,10 @@ export function AppSidebar() {
   const produtosSubItems = [
     { to: "/produtos/cadastro", label: "Adicionar" },
     { to: "/produtos", label: "Gerenciar" },
+  ];
+  const financeiroSubItems = [
+    { to: "/financeiro", label: "Visão Geral" },
+    { to: "/financeiro/nova-transacao", label: "Nova Transação" },
   ];
   const whatsappSubItems = [
     { to: "/whatsapp/gerenciar-mensagens", label: "Gerenciar Mensagens" },
@@ -221,6 +226,7 @@ export function AppSidebar() {
                 if (item.hasPlanosSubmenu) return renderSubmenuParent(item, "planos", planosActive, planosSubItems);
                 if (item.hasAplicativosSubmenu) return renderSubmenuParent(item, "aplicativos", aplicativosActive, aplicativosSubItems);
                 if (item.hasProdutosSubmenu) return renderSubmenuParent(item, "produtos", produtosActive, produtosSubItems);
+                if (item.hasFinanceiroSubmenu) return renderSubmenuParent(item, "financeiro", financeiroActive, financeiroSubItems);
                 if (item.hasLogsSubmenu) return renderSubmenuParent(item, "logs", logsActive, logsSubItems);
                 if (item.hasIndicacoesSubmenu) return renderSubmenuParent(item, "indicacoes", indicacoesActive, indicacoesSubItems);
                 if (item.hasOutrosSubmenu) return renderSubmenuParent(item, "outros", outrosActive, outrosSubItems);

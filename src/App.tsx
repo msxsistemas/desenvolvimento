@@ -21,6 +21,8 @@ import ProdutosEditar from "./pages/clientes/ProdutosEditar";
 import ClientesMetricas from "./pages/clientes/ClientesMetricas";
 import ClientesIntegracoes from "./pages/clientes/ClientesIntegracoes";
 import Financeiro from "./pages/Financeiro";
+import FinanceiroNovaTransacao from "./pages/financeiro/FinanceiroNovaTransacao";
+import FinanceiroEditarTransacao from "./pages/financeiro/FinanceiroEditarTransacao";
 import Configuracoes from "./pages/configuracoes/Configuracoes";
 import MensagensCobranca from "./pages/configuracoes/MensagensCobranca";
 import MensagensPadroes from "./pages/configuracoes/MensagensPadroes";
@@ -64,6 +66,8 @@ const App = () => (
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
             <Route path="/" element={<Index />} />
             <Route path="/financeiro" element={<Financeiro />} />
+            <Route path="/financeiro/nova-transacao" element={<FinanceiroNovaTransacao />} />
+            <Route path="/financeiro/editar/:id" element={<FinanceiroEditarTransacao />} />
             <Route path="/marketing" element={<Marketing />} />
             <Route path="/mensagens" element={<MensagensEnviadas />} />
             <Route path="/loja" element={<ParearWhatsapp />} />
