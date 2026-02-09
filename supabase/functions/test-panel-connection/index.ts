@@ -183,58 +183,120 @@ serve(async (req) => {
     } // end xtream block
 
     // --- Try form-based login (only for koffice-v2 or unknown providers) ---
-    // --- MundoGF: connectivity-only test (reCAPTCHA v3 blocks server-side login) ---
+    // --- MundoGF: connectivity + form POST test (reCAPTCHA v3 blocks full auth) ---
     if (isMundogf) {
       try {
-        console.log('🔄 MundoGF: teste de conectividade (reCAPTCHA v3 impede login server-side)...');
+        console.log('🔄 MundoGF: teste de conectividade + validação via POST...');
+        // Step 1: GET login page
         const loginPageResp = await withTimeout(fetch(`${cleanBase}/login`, {
           method: 'GET',
           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html', ...hdrs },
         }), 10000);
         const loginHtml = await loginPageResp.text();
         const hasForm = loginHtml.includes('<form') && loginHtml.includes('username') && loginHtml.includes('password');
-        const hasCsrf = loginHtml.includes('csrf-token') || loginHtml.includes('_token');
-        console.log(`📊 Login page → status: ${loginPageResp.status}, hasForm: ${hasForm}, hasCsrf: ${hasCsrf}`);
-
-        if (loginPageResp.ok && hasForm) {
-          return new Response(JSON.stringify({
-            success: true,
-            endpoint: `${cleanBase}/login`,
-            type: 'MundoGF Connectivity',
-            account: {
-              status: 'Active',
-              user: { username },
-              token_received: false,
-            },
-            data: {
-              connectivity: true,
-              hasForm,
-              hasCsrf,
-              note: 'Teste de conectividade OK. O painel possui reCAPTCHA v3, autenticação completa será feita pelo sistema.',
-            },
-            logs,
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-          });
-        } else {
+        
+        if (!loginPageResp.ok || !hasForm) {
           return new Response(JSON.stringify({
             success: false,
             details: `Página de login não encontrada ou inválida (status: ${loginPageResp.status})`,
             debug: { url: `${cleanBase}/login`, status: loginPageResp.status, response: loginHtml.slice(0, 500) },
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-          });
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
         }
+
+        // Extract CSRF token and cookies
+        const csrfInput = loginHtml.match(/name=["']_token["']\s+value=["'](.*?)["']/);
+        const csrfMeta = loginHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
+        const csrfToken = (csrfInput ? csrfInput[1] : null) || (csrfMeta ? csrfMeta[1] : null);
+        const cookies = loginPageResp.headers.get('set-cookie') || '';
+        const cookieParts = cookies.split(',').map(c => c.split(';')[0].trim()).join('; ');
+
+        // Step 2: POST login with AJAX header to get JSON response
+        const formBody = new URLSearchParams();
+        if (csrfToken) formBody.append('_token', csrfToken);
+        formBody.append('username', username);
+        formBody.append('password', password);
+
+        const postHeaders: Record<string, string> = {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Origin': cleanBase,
+          'Referer': `${cleanBase}/login`,
+        };
+        if (cookieParts) postHeaders['Cookie'] = cookieParts;
+        const xsrfMatch = cookies.match(/XSRF-TOKEN=([^;]+)/);
+        if (xsrfMatch) postHeaders['X-XSRF-TOKEN'] = decodeURIComponent(xsrfMatch[1]);
+
+        console.log(`🔄 POST AJAX para: ${cleanBase}/login`);
+        const postResp = await withTimeout(fetch(`${cleanBase}/login`, {
+          method: 'POST',
+          headers: postHeaders,
+          body: formBody.toString(),
+          redirect: 'manual',
+        }), 15000);
+
+        const postStatus = postResp.status;
+        const postText = await postResp.text();
+        let postJson: any = null;
+        try { postJson = JSON.parse(postText); } catch (_) {}
+        console.log(`📊 POST → status: ${postStatus}, snippet: ${postText.slice(0, 300)}`);
+
+        // 422 with validation errors
+        if (postStatus === 422 && postJson?.errors) {
+          const errorKeys = Object.keys(postJson.errors);
+          const onlyRecaptcha = errorKeys.length === 1 && errorKeys[0] === 'g-recaptcha-response';
+          const hasCredentialError = errorKeys.includes('username') || errorKeys.includes('password');
+
+          if (hasCredentialError) {
+            return new Response(JSON.stringify({
+              success: false,
+              details: 'Credenciais inválidas. Verifique usuário e senha.',
+              debug: { url: `${cleanBase}/login`, status: postStatus, errors: postJson.errors },
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+          }
+
+          if (onlyRecaptcha) {
+            return new Response(JSON.stringify({
+              success: true,
+              endpoint: `${cleanBase}/login`,
+              type: 'MundoGF Session',
+              account: { status: 'Active', user: { username }, token_received: false },
+              data: {
+                connectivity: true,
+                credentialsValidated: true,
+                note: 'Credenciais validadas pelo servidor. reCAPTCHA v3 impede login completo server-side.',
+              },
+              logs,
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+          }
+        }
+
+        // 302 redirect after POST
+        const postLocation = postResp.headers.get('location') || '';
+        if ((postStatus === 302 || postStatus === 301) && !postLocation.includes('/login')) {
+          return new Response(JSON.stringify({
+            success: true,
+            endpoint: `${cleanBase}/login`,
+            type: 'MundoGF Session',
+            account: { status: 'Active', user: { username }, token_received: false },
+            data: { redirect: postLocation, note: 'Login bem-sucedido.' },
+            logs,
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+        }
+
+        // Fallback
+        return new Response(JSON.stringify({
+          success: false,
+          details: 'Falha na autenticação',
+          debug: { url: `${cleanBase}/login`, status: postStatus, response: postText.slice(0, 500) },
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+
       } catch (e) {
         return new Response(JSON.stringify({
           success: false,
           details: `Erro ao conectar: ${(e as Error).message}`,
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        });
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
       }
     }
 
