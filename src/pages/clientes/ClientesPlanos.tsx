@@ -258,10 +258,10 @@ export default function ClientesPlanos() {
           </TableHeader>
           <TableBody>
             {filteredPlanos.length ? (
-              filteredPlanos.map((p) => (
+              filteredPlanos.map((p, index) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {p.id?.slice(0, 8)}
+                    {index + 1}
                   </TableCell>
                   <TableCell className="font-medium">{p.nome}</TableCell>
                   <TableCell>
