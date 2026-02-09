@@ -497,20 +497,6 @@ export const useTemplatesCobranca = () => {
 
       if (error) throw error;
 
-      // Se o usuário não tem templates, criar os padrões (a menos que ele tenha optado por deixar vazio)
-      if (!data || data.length === 0) {
-        if (isSeedDisabled()) return [];
-
-        await criarTemplatesPadroes(uid);
-        // Buscar novamente após criar
-        const { data: newData } = await supabase
-          .from('templates_cobranca')
-          .select('*')
-          .eq('user_id', uid)
-          .order('created_at', { ascending: false });
-        return newData || [];
-      }
-
       return data || [];
     } catch (error) {
       console.error('Erro ao buscar templates:', error);

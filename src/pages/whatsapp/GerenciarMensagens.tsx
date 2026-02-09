@@ -2,6 +2,17 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -17,84 +28,18 @@ interface MensagensPadroes {
   dados_cliente: string;
 }
 
-const defaultMensagens: MensagensPadroes = {
-  bem_vindo: `{saudacao} *{nome_cliente}*
-
-🎉 Seja bem-vindo(a) à *Tech Play!*
-
-Aqui você tem acesso ao melhor do entretenimento: filmes, séries, canais e muito mais, tudo em alta qualidade.
-
-🎬 Abaixo são os dados`,
-  fatura_criada: `{saudacao}. *{nome_cliente}*
-
-📄 *Sua fatura foi gerada com sucesso!*
-
-*DADOS DA FATURA*
---------------------------------
-◆ *Vencimento:* *{vencimento}*
-◆ {nome_plano}
-◆ Desconto: {desconto}
-◆ Total a pagar: {subtotal}
-
-💸 Pagamento rápido em 1 clique:
-{link_fatura}`,
-  proximo_vencer: `{saudacao}. *{nome_cliente}*
-
-⚠️ *Passando só pra avisar que seu Plano vence amanhã!*
-
-*DADOS DA FATURA*
-------------------
-◆ *Vencimento:* {vencimento}
-◆ {nome_plano}
-
-💸 Pagamento rápido em 1 clique:
-{link_fatura}`,
-  vence_hoje: `{saudacao}. *{nome_cliente}*
-
-⚠️ *SEU VENCIMENTO É HOJE!*
-Pra continuar aproveitando seus canais, realize o pagamento o quanto antes.
-
-*DADOS DA FATURA*
-----------------------------------------
-◆ *Vencimento:* {vencimento}
-◆ {nome_plano}
-◆ Total a pagar: {subtotal}
-
-💸 Pagamento rápido em 1 clique:
-{link_fatura}`,
-  vencido: `{saudacao}. *{nome_cliente}*
-
-🟥 *SEU PLANO VENCEU*
-Pra continuar aproveitando seus canais, realize o pagamento o quanto antes.
-
-*DADOS DA FATURA*
-----------------------------------------
-◆ *Vencimento:* {vencimento}
-◆ {nome_plano}
-◆ Total a pagar: {subtotal}
-
-💸 Pagamento rápido em 1 clique:
-{link_fatura}`,
-  confirmacao_pagamento: `Olá, *{nome_cliente}*
-
-✅ *Seu pagamento foi realizado e o seu acesso será renovado em alguns minutos!*
-
-Próximo vencimento: *{vencimento}*
-
-Qualquer dúvida, estamos por aqui
-
-*Obrigado!*`,
-  dados_cliente: `{saudacao} *{nome_cliente}*
-Segue suas informações abaixo:
-
-💜 *Central do Cliente:* {area_cliente}
-
-Login: *{usuario}*
-Senha: *{senha}*`,
+const emptyMensagens: MensagensPadroes = {
+  bem_vindo: "",
+  fatura_criada: "",
+  proximo_vencer: "",
+  vence_hoje: "",
+  vencido: "",
+  confirmacao_pagamento: "",
+  dados_cliente: "",
 };
 
 export default function GerenciarMensagens() {
-  const [mensagens, setMensagens] = useState<MensagensPadroes>(defaultMensagens);
+  const [mensagens, setMensagens] = useState<MensagensPadroes>(emptyMensagens);
   const [saving, setSaving] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<keyof MensagensPadroes>("vence_hoje");
   const { user } = useCurrentUser();
@@ -168,9 +113,26 @@ export default function GerenciarMensagens() {
     }
   };
 
-  const handleRestaurarPadrao = () => {
-    setMensagens(defaultMensagens);
-    toast.success("Mensagens restauradas para o padrão!");
+  const handleLimparMensagens = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setSaving(true);
+      const { error } = await supabase
+        .from("mensagens_padroes")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setMensagens(emptyMensagens);
+      toast.success("Mensagens limpas com sucesso!");
+    } catch (error) {
+      console.error("Erro ao limpar mensagens:", error);
+      toast.error("Erro ao limpar mensagens");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const availableKeys = [
@@ -202,9 +164,27 @@ export default function GerenciarMensagens() {
           <p className="text-sm text-muted-foreground">Configure as mensagens padrão do sistema</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleRestaurarPadrao}>
-            Restaurar Padrão
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline">
+                Limpar Mensagens
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Limpar todas as mensagens</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja apagar todas as mensagens? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleLimparMensagens} className="bg-destructive hover:bg-destructive/90">
+                  Apagar Todas
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90">
             {saving ? "Salvando..." : "Salvar"}
           </Button>
