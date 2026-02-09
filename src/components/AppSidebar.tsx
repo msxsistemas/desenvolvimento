@@ -157,6 +157,7 @@ export function AppSidebar() {
     { to: "/servidores/sigma", label: "Painel Sigma" },
     { to: "/servidores/koffice-api", label: "KOffice API" },
     { to: "/servidores/koffice-v2", label: "KOffice V2" },
+    { to: "/servidores/mundogf", label: "MundoGF" },
   ];
   const servidoresActive = currentPath.startsWith("/servidores");
 

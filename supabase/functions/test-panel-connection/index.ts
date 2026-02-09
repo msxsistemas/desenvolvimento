@@ -90,10 +90,11 @@ serve(async (req) => {
     }
 
     const isKoffice = providerId === 'koffice-api' || providerId === 'koffice-v2';
+    const isMundogf = providerId === 'mundogf';
     const isSigma = providerId === 'sigma-v2';
 
     // Only discover API structure for unknown providers
-    if (!providerId || isKoffice) {
+    if (!providerId || isKoffice || isMundogf) {
     // First try to fetch the login page to discover API endpoints
     try {
       console.log('🔍 Descobrindo estrutura da API...');
@@ -182,7 +183,7 @@ serve(async (req) => {
     } // end xtream block
 
     // --- Try form-based login (only for koffice-v2 or unknown providers) ---
-    if (!providerId || isKoffice) {
+    if (!providerId || isKoffice || isMundogf) {
     try {
       console.log('🔄 Tentando login via formulário HTML (kOffice style)...');
       // Step 1: GET login page to extract CSRF token and session cookie
@@ -266,51 +267,58 @@ serve(async (req) => {
       if (isFormLoginSuccess) {
         console.log(`✅ Login via formulário parece OK, verificando com API...`);
         
-        // Step 3: Verify session by calling /dashboard/api?get_info (KOffice style)
-        try {
-          const verifyHeaders: Record<string, string> = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'X-Requested-With': 'XMLHttpRequest',
-            'Referer': `${cleanBase}/dashboard/`,
-          };
-          if (sessionCookies) verifyHeaders['Cookie'] = sessionCookies;
+        // Determine verify endpoints based on provider
+        const verifyEndpoints = isMundogf
+          ? ['/bonus/stats', '/ajax/getClientsStats2']
+          : ['/dashboard/api?get_info&month=0'];
 
-          console.log(`🔍 Verificando sessão: GET ${cleanBase}/dashboard/api?get_info&month=0`);
-          const verifyResp = await withTimeout(fetch(`${cleanBase}/dashboard/api?get_info&month=0`, {
-            method: 'GET',
-            headers: verifyHeaders,
-          }), 10000);
+        // Step 3: Verify session
+        for (const verifyPath of verifyEndpoints) {
+          try {
+            const verifyHeaders: Record<string, string> = {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Accept': 'application/json, text/javascript, */*; q=0.01',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Referer': `${cleanBase}/`,
+            };
+            if (sessionCookies) verifyHeaders['Cookie'] = sessionCookies;
 
-          const verifyText = await verifyResp.text();
-          let verifyJson: any = null;
-          try { verifyJson = JSON.parse(verifyText); } catch (_) {}
-          console.log(`📊 Verify → status: ${verifyResp.status}, snippet: ${verifyText.slice(0, 300)}`);
-          logs.push({ url: `${cleanBase}/dashboard/api?get_info`, status: verifyResp.status, snippet: verifyText.slice(0, 200) });
+            console.log(`🔍 Verificando sessão: GET ${cleanBase}${verifyPath}`);
+            const verifyResp = await withTimeout(fetch(`${cleanBase}${verifyPath}`, {
+              method: 'GET',
+              headers: verifyHeaders,
+            }), 10000);
 
-          if (verifyResp.ok && verifyJson && typeof verifyJson === 'object') {
-            console.log(`✅ Sessão verificada com sucesso via /dashboard/api!`);
-            return new Response(JSON.stringify({
-              success: true,
-              endpoint: `${cleanBase}/dashboard/api`,
-              type: 'kOffice Session',
-              account: {
-                status: 'Active',
-                user: { username },
-                token_received: false,
-              },
-              data: {
-                dashboard_info: verifyJson,
-                redirect: formLocation || null,
-              },
-              logs,
-            }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200,
-            });
+            const verifyText = await verifyResp.text();
+            let verifyJson: any = null;
+            try { verifyJson = JSON.parse(verifyText); } catch (_) {}
+            console.log(`📊 Verify → status: ${verifyResp.status}, snippet: ${verifyText.slice(0, 300)}`);
+            logs.push({ url: `${cleanBase}${verifyPath}`, status: verifyResp.status, snippet: verifyText.slice(0, 200) });
+
+            if (verifyResp.ok && verifyJson && typeof verifyJson === 'object') {
+              console.log(`✅ Sessão verificada com sucesso via ${verifyPath}!`);
+              return new Response(JSON.stringify({
+                success: true,
+                endpoint: `${cleanBase}${verifyPath}`,
+                type: isMundogf ? 'MundoGF Session' : 'kOffice Session',
+                account: {
+                  status: 'Active',
+                  user: { username },
+                  token_received: false,
+                },
+                data: {
+                  dashboard_info: verifyJson,
+                  redirect: formLocation || null,
+                },
+                logs,
+              }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200,
+              });
+            }
+          } catch (verifyErr) {
+            console.log(`⚠️ Erro ao verificar sessão via ${verifyPath}: ${(verifyErr as Error).message}`);
           }
-        } catch (verifyErr) {
-          console.log(`⚠️ Erro ao verificar sessão: ${(verifyErr as Error).message}`);
         }
 
         // Even without verify, if redirect was to dashboard, consider success
