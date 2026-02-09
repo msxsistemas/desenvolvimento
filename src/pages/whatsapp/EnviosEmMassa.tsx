@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { availableVariableKeys } from "@/utils/message-variables";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -58,12 +59,7 @@ export default function EnviosEmMassa() {
     document.title = "Envios em Massa | Tech Play";
   }, []);
 
-  const availableKeys = [
-    "{area_cliente}", "{credito}", "{dados_servidor}", "{desconto}", "{indicacao}", "{link_fatura}",
-    "{nome_cliente}", "{nome_plano}", "{nome_servidor}", "{numero_fatura}", "{obs}", "{pix}",
-    "{saudacao}", "{senha}", "{sobrenome}", "{subtotal}", "{usuario}", "{valor_plano}", 
-    "{vencimento}", "{info1}", "{info2}", "{info3}"
-  ];
+  const availableKeys = availableVariableKeys;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
