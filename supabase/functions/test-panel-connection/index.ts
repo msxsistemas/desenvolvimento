@@ -183,7 +183,62 @@ serve(async (req) => {
     } // end xtream block
 
     // --- Try form-based login (only for koffice-v2 or unknown providers) ---
-    if (!providerId || isKoffice || isMundogf) {
+    // --- MundoGF: connectivity-only test (reCAPTCHA v3 blocks server-side login) ---
+    if (isMundogf) {
+      try {
+        console.log('🔄 MundoGF: teste de conectividade (reCAPTCHA v3 impede login server-side)...');
+        const loginPageResp = await withTimeout(fetch(`${cleanBase}/login`, {
+          method: 'GET',
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html', ...hdrs },
+        }), 10000);
+        const loginHtml = await loginPageResp.text();
+        const hasForm = loginHtml.includes('<form') && loginHtml.includes('username') && loginHtml.includes('password');
+        const hasCsrf = loginHtml.includes('csrf-token') || loginHtml.includes('_token');
+        console.log(`📊 Login page → status: ${loginPageResp.status}, hasForm: ${hasForm}, hasCsrf: ${hasCsrf}`);
+
+        if (loginPageResp.ok && hasForm) {
+          return new Response(JSON.stringify({
+            success: true,
+            endpoint: `${cleanBase}/login`,
+            type: 'MundoGF Connectivity',
+            account: {
+              status: 'Active',
+              user: { username },
+              token_received: false,
+            },
+            data: {
+              connectivity: true,
+              hasForm,
+              hasCsrf,
+              note: 'Teste de conectividade OK. O painel possui reCAPTCHA v3, autenticação completa será feita pelo sistema.',
+            },
+            logs,
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        } else {
+          return new Response(JSON.stringify({
+            success: false,
+            details: `Página de login não encontrada ou inválida (status: ${loginPageResp.status})`,
+            debug: { url: `${cleanBase}/login`, status: loginPageResp.status, response: loginHtml.slice(0, 500) },
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+      } catch (e) {
+        return new Response(JSON.stringify({
+          success: false,
+          details: `Erro ao conectar: ${(e as Error).message}`,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+    }
+
+    if (!providerId || isKoffice) {
     try {
       console.log('🔄 Tentando login via formulário HTML (kOffice style)...');
       // Step 1: GET login page to extract CSRF token and session cookie
