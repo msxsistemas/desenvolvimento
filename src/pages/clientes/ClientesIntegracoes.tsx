@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Server } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { PROVEDORES, ProvedoresList, ProviderCard, PanelsList, Panel } from "@/components/servidores/ProvedoresList";
+import { PROVEDORES, ProvedoresList, ProviderCard, PanelsList, Panel, ProviderConfig } from "@/components/servidores/ProvedoresList";
 import { AddPanelModal, EditPanelModal, TestResultModal, DeleteConfirmModal, SuccessModal } from "@/components/servidores/ServidoresModals";
 
 export default function ClientesIntegracoes() {
@@ -158,44 +158,43 @@ export default function ClientesIntegracoes() {
           isOpen: true,
           success: false,
           message: "Dados Obrigatórios Ausentes",
-          details: "❌ Preencha nome, URL, usuário e senha com dados reais antes de testar."
+          details: "❌ Preencha todos os campos obrigatórios antes de testar."
         });
         return;
       }
 
-      const response = await fetch(`${baseUrl}/api/auth/login`, {
-        method: "POST",
+      const provider = PROVEDORES.find(p => p.id === selectedProvider);
+      const endpoint = provider?.loginEndpoint || '/api/auth/login';
+      const payload = provider?.buildLoginPayload 
+        ? provider.buildLoginPayload(usuario, senha)
+        : { username: usuario, password: senha };
+
+      const response = await fetch(`${baseUrl}${endpoint}`, {
+        method: provider?.loginMethod || "POST",
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
-        body: JSON.stringify({
-          captcha: "not-a-robot",
-          captchaChecked: true,
-          username: usuario,
-          password: senha,
-          twofactor_code: "",
-          twofactor_recovery_code: "",
-          twofactor_trusted_device_id: ""
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
 
-      if (response.ok && data?.token) {
-        localStorage.setItem("auth_token", data.token);
+      if (response.ok && (data?.token || data?.jwt || data?.access_token)) {
+        const token = data.token || data.jwt || data.access_token;
+        localStorage.setItem("auth_token", token);
         setTestResultModal({
           isOpen: true,
           success: true,
           message: "CONEXÃO REAL BEM-SUCEDIDA!",
-          details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${baseUrl}/api/auth/login\n👤 Usuário: ${usuario}\n📡 Status: OK\n\nToken recebido: ${data.token.slice(0, 20)}...`
+          details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${baseUrl}${endpoint}\n👤 Usuário: ${usuario}\n📡 Status: OK\n\nToken recebido: ${token.slice(0, 20)}...`
         });
       } else {
         setTestResultModal({
           isOpen: true,
           success: false,
           message: "FALHA NA AUTENTICAÇÃO",
-          details: data?.message || "Usuário/senha inválidos ou URL incorreta."
+          details: data?.message || "Credenciais inválidas ou URL incorreta."
         });
       }
     } catch (error: any) {
@@ -214,23 +213,20 @@ export default function ClientesIntegracoes() {
     setIsTestingConnection(true);
     try {
       const baseUrl = panel.url.trim().replace(/\/$/, '');
+      const provider = PROVEDORES.find(p => p.id === panel.provedor);
+      const endpoint = provider?.loginEndpoint || '/api/auth/login';
+      const payload = provider?.buildLoginPayload 
+        ? provider.buildLoginPayload(panel.usuario, panel.senha)
+        : { username: panel.usuario, password: panel.senha };
 
       const { data, error } = await supabase.functions.invoke('test-panel-connection', {
         body: {
           baseUrl,
           username: panel.usuario,
           password: panel.senha,
-          endpointPath: '/api/auth/login',
-          endpointMethod: 'POST',
-          loginPayload: {
-            captcha: 'not-a-robot',
-            captchaChecked: true,
-            username: panel.usuario,
-            password: panel.senha,
-            twofactor_code: '',
-            twofactor_recovery_code: '',
-            twofactor_trusted_device_id: ''
-          },
+          endpointPath: endpoint,
+          endpointMethod: provider?.loginMethod || 'POST',
+          loginPayload: payload,
           extraHeaders: { Accept: 'application/json' }
         },
       });
@@ -459,6 +455,7 @@ export default function ClientesIntegracoes() {
         isOpen={isConfigModalOpen}
         onOpenChange={setIsConfigModalOpen}
         providerName={currentProvider?.nome || ''}
+        providerConfig={currentProvider}
         formData={formData}
         setFormData={setFormData}
         showPassword={showPassword}

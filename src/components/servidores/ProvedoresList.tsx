@@ -2,12 +2,67 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Play, Check, Edit, Pause, RefreshCw, Trash2, Monitor, Plus, Lock } from "lucide-react";
 
+// Configuração específica por provedor
+export interface ProviderConfig {
+  id: string;
+  nome: string;
+  descricao: string;
+  integrado: boolean;
+  // Campos do formulário
+  senhaLabel?: string; // Label do campo senha/api key
+  senhaPlaceholder?: string;
+  nomePlaceholder?: string;
+  urlPlaceholder?: string;
+  usuarioPlaceholder?: string;
+  // Endpoint de login
+  loginEndpoint?: string;
+  loginMethod?: string;
+  buildLoginPayload?: (usuario: string, senha: string) => Record<string, unknown>;
+}
+
 // Lista de provedores IPTV disponíveis
-export const PROVEDORES = [
+export const PROVEDORES: ProviderConfig[] = [
   { id: 'playfast', nome: 'PLAYFAST', descricao: 'Painel IPTV Playfast', integrado: false },
-  { id: 'koffice-api', nome: 'KOFFICE API', descricao: 'Integração kOfficePanel API', integrado: false },
+  { 
+    id: 'koffice-api', 
+    nome: 'KOFFICE API', 
+    descricao: 'Integração kOfficePanel API', 
+    integrado: true,
+    senhaLabel: 'Chave da API',
+    senhaPlaceholder: 'chave_api_koffice',
+    nomePlaceholder: 'Ex: KOffice Principal, KOffice Backup, etc.',
+    urlPlaceholder: 'https://seupainel.koffice.com',
+    usuarioPlaceholder: 'seu_usuario_koffice',
+    loginEndpoint: '/api/login',
+    loginMethod: 'POST',
+    buildLoginPayload: (usuario: string, senha: string) => ({
+      username: usuario,
+      password: senha,
+    }),
+  },
   { id: 'koffice-v2', nome: 'KOFFICE V2', descricao: 'Painel kOffice versão 2', integrado: false },
-  { id: 'sigma-v2', nome: 'PAINEL SIGMA', descricao: 'Painel Sigma versão 2', integrado: true },
+  { 
+    id: 'sigma-v2', 
+    nome: 'PAINEL SIGMA', 
+    descricao: 'Painel Sigma versão 2', 
+    integrado: true,
+    senhaLabel: 'Senha do Painel',
+    senhaPlaceholder: 'sua_senha',
+    nomePlaceholder: 'Ex: Meu Painel Principal',
+    urlPlaceholder: 'https://painel.exemplo.com',
+    usuarioPlaceholder: 'seu_usuario',
+    loginEndpoint: '/api/auth/login',
+    loginMethod: 'POST',
+    buildLoginPayload: (usuario: string, senha: string) => ({
+      captcha: 'not-a-robot',
+      captchaChecked: true,
+      username: usuario,
+      password: senha,
+      twofactor_code: '',
+      twofactor_recovery_code: '',
+      twofactor_trusted_device_id: '',
+    }),
+  },
   { id: 'now', nome: 'NOW', descricao: 'Painel NOW IPTV', integrado: false },
   { id: 'thebest', nome: 'THEBEST', descricao: 'Painel TheBest IPTV', integrado: false },
   { id: 'wplay', nome: 'WPLAY', descricao: 'Painel WPlay IPTV', integrado: false },
@@ -37,7 +92,7 @@ export interface Panel {
 }
 
 interface ProvedoresListProps {
-  filteredProvedores: typeof PROVEDORES;
+  filteredProvedores: ProviderConfig[];
   selectedProvider: string;
   onSelectProvider: (id: string) => void;
 }
@@ -68,7 +123,7 @@ export function ProvedoresList({ filteredProvedores, selectedProvider, onSelectP
 }
 
 interface ProviderCardProps {
-  provider: typeof PROVEDORES[0];
+  provider: ProviderConfig;
   stats: { total: number; ativos: number; inativos: number };
 }
 
