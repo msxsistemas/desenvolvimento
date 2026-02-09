@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { WhatsAppPhonePreview } from "@/components/whatsapp/WhatsAppPhonePreview";
+import { availableVariableKeys } from "@/utils/message-variables";
 
 interface MensagensPadroes {
   bem_vindo: string;
@@ -135,12 +136,7 @@ export default function GerenciarMensagens() {
     }
   };
 
-  const availableKeys = [
-    "{area_cliente}", "{credito}", "{dados_servidor}", "{desconto}", "{indicacao}", "{link_fatura}",
-    "{nome_cliente}", "{nome_plano}", "{nome_servidor}", "{numero_fatura}", "{obs}", "{pix}",
-    "{saudacao}", "{senha}", "{sobrenome}", "{subtotal}", "{usuario}", "{valor_plano}", 
-    "{vencimento}", "{hora_vencimento}", "{info1}", "{info2}", "{info3}"
-  ];
+  const availableKeys = availableVariableKeys;
 
   const getTemplateTitle = () => {
     const titles: Record<keyof MensagensPadroes, string> = {

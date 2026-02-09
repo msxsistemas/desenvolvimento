@@ -1,4 +1,5 @@
 import { Video, Phone, FileText, Image } from "lucide-react";
+import { sampleDataMap } from "@/utils/message-variables";
 
 interface WhatsAppPhonePreviewProps {
   message: string;
@@ -10,23 +11,6 @@ interface WhatsAppPhonePreviewProps {
   mediaPreview?: string | null;
   mediaType?: 'imagem' | 'video' | 'documento';
 }
-
-// Sample data for variable replacement
-const sampleData: Record<string, string> = {
-  "{saudacao}": "Bom dia",
-  "{nome_cliente}": "Fulano",
-  "{vencimento}": "10/10/2025",
-  "{nome_plano}": "Plano Completo: R$ 40,00",
-  "{desconto}": "R$ 5,00",
-  "{subtotal}": "R$ 35,00",
-  "{link_fatura}": "https://gestorv3.com.br/central/ver_fatura?r=C999000999",
-  "{area_cliente}": "https://gestorv3.com.br/central",
-  "{usuario}": "usuario123",
-  "{senha}": "****",
-  "{pix}": "pix@techplay.com",
-  "{valor_plano}": "R$ 40,00",
-  "{numero_fatura}": "999009900",
-};
 
 export function WhatsAppPhonePreview({ 
   message, 
@@ -46,7 +30,7 @@ export function WhatsAppPhonePreview({
     let preview = message;
     
     // Replace variables with sample data
-    Object.entries(sampleData).forEach(([key, value]) => {
+    Object.entries(sampleDataMap).forEach(([key, value]) => {
       preview = preview.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
     });
     
