@@ -9,7 +9,7 @@ export const PROVEDORES_NAO_INTEGRADOS: ProviderConfig[] = [
   { id: 'natv', nome: 'NATV', descricao: 'Painel NATV', integrado: false },
   { id: 'uniplay', nome: 'UNIPLAY E FRANQUIAS', descricao: 'Painel Uniplay e Franquias', integrado: false },
   { id: 'tvs', nome: 'TVS E FRANQUIAS', descricao: 'Painel TVS e Franquias', integrado: false },
-  { id: 'mundogf', nome: 'MUNDOGF E FRANQUIAS', descricao: 'Painel MundoGF e Franquias', integrado: false },
+  
   { id: 'painelfoda', nome: 'PAINELFODA', descricao: 'Painel Foda IPTV', integrado: false },
   { id: 'centralp2braz', nome: 'CENTRALP2BRAZ', descricao: 'Painel CentralP2Braz', integrado: false },
   { id: 'clubtv', nome: 'CLUBTV', descricao: 'Painel ClubTV', integrado: false },

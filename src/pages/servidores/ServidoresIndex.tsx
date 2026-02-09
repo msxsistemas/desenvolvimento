@@ -8,6 +8,7 @@ const PROVIDER_ROUTES: Record<string, string> = {
   'sigma-v2': '/servidores/sigma',
   'koffice-api': '/servidores/koffice-api',
   'koffice-v2': '/servidores/koffice-v2',
+  'mundogf': '/servidores/mundogf',
 };
 
 export default function ServidoresIndex() {
