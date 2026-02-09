@@ -97,7 +97,7 @@ export default function ClientesCadastro() {
       ]);
       setPlanos((planosData || []).filter((p: any) => p.ativo !== false));
       setProdutos((produtosData || []).filter((p: any) => p.ativo !== false));
-      setAplicativos(aplicativosData || []);
+      setAplicativos((aplicativosData || []).filter((a: any) => a.ativo !== false));
 
       // Buscar clientes para lista de indicadores
       const { data: clientesData } = await supabase
