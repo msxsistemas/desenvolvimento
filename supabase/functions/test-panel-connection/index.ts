@@ -63,7 +63,8 @@ async function tryFormLogin(cleanBase: string, username: string, password: strin
     const csrf = csrfMatch ? csrfMatch[1] : null;
     console.log(`🔑 CSRF: ${csrf ? csrf.slice(0, 20) + '...' : 'não encontrado'}`);
 
-    if (csrf || loginHtml.includes('form-login')) {
+    // Always attempt form POST (some panels don't have CSRF or form-login class)
+    {
       const formBody = new URLSearchParams();
       formBody.append('try_login', '1');
       if (csrf) formBody.append('csrf_token', csrf);
@@ -111,8 +112,8 @@ async function tryFormLogin(cleanBase: string, username: string, password: strin
           data: { redirect: formLocation || null, response: formText.slice(0, 500) },
           logs,
         };
-      }
     }
+  }
   } catch (e) {
     console.log(`⚠️ Form login: ${(e as Error).message}`);
     logs.push({ url: `${cleanBase}${loginPath} (form)`, error: (e as Error).message });

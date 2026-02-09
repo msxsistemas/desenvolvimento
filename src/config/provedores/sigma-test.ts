@@ -3,16 +3,16 @@ import { TestStrategy } from "./test-types";
 /**
  * Estratégia de teste do PAINEL SIGMA
  * 
- * O Sigma usa autenticação via JSON POST no endpoint /api/auth/login
- * com payload incluindo captcha e campos de 2FA.
- * Também tenta form login como fallback para painéis baseados em Sigma
- * que usam interfaces web tradicionais.
+ * O Sigma usa autenticação via JSON POST.
+ * Tenta múltiplos endpoints comuns em painéis Sigma:
+ * /api/auth/login, /login, /api/login
+ * O form login serve como fallback final.
  */
 export const SIGMA_TEST_STRATEGY: TestStrategy = {
   steps: [
     {
       type: 'json-post',
-      endpoints: ['/api/auth/login'],
+      endpoints: ['/api/auth/login', '/login', '/api/login'],
       label: 'Sigma JSON API',
     },
     {
