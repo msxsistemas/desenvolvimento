@@ -287,7 +287,7 @@ export default function ClientesPlanos() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(p)}
-                        className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                        className="h-8 w-8 text-primary hover:text-primary/80"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -308,7 +308,7 @@ export default function ClientesPlanos() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            className="h-8 w-8 text-destructive hover:text-destructive/80"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
