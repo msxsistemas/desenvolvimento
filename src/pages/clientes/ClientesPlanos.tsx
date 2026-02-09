@@ -208,7 +208,7 @@ export default function ClientesPlanos() {
           <div className="space-y-2">
             <Label className="text-muted-foreground">Busca</Label>
             <Input
-              placeholder="Buscar..."
+              placeholder=""
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
