@@ -17,11 +17,14 @@ All colors MUST be HSL.
     --popover: 220 18% 18%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 220 20% 14%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 217 91% 53%;
+    --primary-active: 217 91% 48%;
 
-    --secondary: 220 15% 22%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 18% 20%;
+    --secondary-foreground: 215 20% 84%;
+    --secondary-hover: 220 14% 27%;
 
     --muted: 220 15% 22%;
     --muted-foreground: 215 20% 65%;
@@ -29,52 +32,55 @@ All colors MUST be HSL.
     --accent: 220 15% 25%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-hover: 0 84% 53%;
 
     --border: 220 15% 25%;
     --input: 220 15% 22%;
-    --ring: 199 89% 48%;
+    --ring: 217 91% 60%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 220 20% 10%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 15% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 199 89% 48%;
+    --sidebar-ring: 217 91% 60%;
 
     /* Brand and support tokens */
-    --brand: 14 100% 57%;
-    --brand-2: 199 89% 48%;
-    --success: 142 70% 45%;
+    --brand: 217 91% 60%;
+    --brand-2: 217 91% 48%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
+    --success-hover: 142 71% 37%;
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 10%;
-    --info: 199 89% 48%;
+    --warning-foreground: 220 20% 10%;
+    --warning-hover: 38 92% 42%;
+    --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
     
     /* Dashboard card colors */
-    --dashboard-green: 142 70% 45%;
-    --dashboard-red: 0 72% 51%;
+    --dashboard-green: 142 71% 45%;
+    --dashboard-red: 0 84% 60%;
     --dashboard-purple: 300 70% 40%;
-    --dashboard-cyan: 199 89% 48%;
+    --dashboard-cyan: 217 91% 60%;
     
     /* Dashboard chart colors */
-    --dashboard-primary: 220 20% 14%;
-    --dashboard-secondary: 199 89% 48%;
-    --dashboard-danger: 0 72% 51%;
-    --dashboard-success: 142 70% 45%;
+    --dashboard-primary: 217 91% 60%;
+    --dashboard-secondary: 217 91% 48%;
+    --dashboard-danger: 0 84% 60%;
+    --dashboard-success: 142 71% 45%;
     --dashboard-warning: 38 92% 50%;
     --dashboard-neutral: 215 16% 47%;
 
     /* Effects */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--brand)), hsl(var(--brand-2)));
-    --shadow-elegant: 0 10px 30px -10px hsl(var(--brand) / 0.3);
-    --shadow-glow: 0 0 40px hsl(var(--brand-2) / 0.4);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-active)));
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+    --shadow-glow: 0 0 40px hsl(var(--primary-active) / 0.4);
   }
 
   .dark {
@@ -87,11 +93,14 @@ All colors MUST be HSL.
     --popover: 220 18% 18%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 220 20% 14%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 217 91% 53%;
+    --primary-active: 217 91% 48%;
 
-    --secondary: 220 15% 22%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 18% 20%;
+    --secondary-foreground: 215 20% 84%;
+    --secondary-hover: 220 14% 27%;
 
     --muted: 220 15% 22%;
     --muted-foreground: 215 20% 65%;
@@ -99,49 +108,52 @@ All colors MUST be HSL.
     --accent: 220 15% 25%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-hover: 0 84% 53%;
 
     --border: 220 15% 25%;
     --input: 220 15% 22%;
-    --ring: 199 89% 48%;
+    --ring: 217 91% 60%;
 
     --sidebar-background: 220 20% 10%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 15% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 199 89% 48%;
+    --sidebar-ring: 217 91% 60%;
 
     /* Brand and support tokens (dark) */
-    --brand: 14 100% 57%;
-    --brand-2: 199 89% 48%;
-    --success: 142 60% 50%;
+    --brand: 217 91% 60%;
+    --brand-2: 217 91% 48%;
+    --success: 142 71% 50%;
     --success-foreground: 0 0% 100%;
+    --success-hover: 142 71% 42%;
     --warning: 38 92% 55%;
-    --warning-foreground: 0 0% 10%;
-    --info: 199 89% 52%;
+    --warning-foreground: 220 20% 10%;
+    --warning-hover: 38 92% 47%;
+    --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
     
     /* Dashboard card colors */
-    --dashboard-green: 142 70% 45%;
-    --dashboard-red: 0 72% 51%;
+    --dashboard-green: 142 71% 45%;
+    --dashboard-red: 0 84% 60%;
     --dashboard-purple: 300 70% 40%;
-    --dashboard-cyan: 199 89% 48%;
+    --dashboard-cyan: 217 91% 60%;
     
     /* Dashboard chart colors (dark) */
-    --dashboard-primary: 220 20% 14%;
-    --dashboard-secondary: 199 89% 52%;
-    --dashboard-danger: 0 72% 55%;
-    --dashboard-success: 142 60% 50%;
+    --dashboard-primary: 217 91% 60%;
+    --dashboard-secondary: 217 91% 48%;
+    --dashboard-danger: 0 84% 55%;
+    --dashboard-success: 142 71% 50%;
     --dashboard-warning: 38 92% 60%;
     --dashboard-neutral: 215 16% 52%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(var(--brand)), hsl(var(--brand-2)));
-    --shadow-elegant: 0 10px 30px -10px hsl(var(--brand) / 0.35);
-    --shadow-glow: 0 0 40px hsl(var(--brand-2) / 0.45);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-active)));
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.35);
+    --shadow-glow: 0 0 40px hsl(var(--primary-active) / 0.45);
   }
 }
 
