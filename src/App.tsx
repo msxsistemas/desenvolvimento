@@ -11,6 +11,7 @@ import ClientesCadastro from "./pages/clientes/ClientesCadastro";
 import ClientesEditar from "./pages/clientes/ClientesEditar";
 import ClientesPlanos from "./pages/clientes/ClientesPlanos";
 import PlanosCadastro from "./pages/clientes/PlanosCadastro";
+import PlanosEditar from "./pages/clientes/PlanosEditar";
 import ClientesProdutos from "./pages/clientes/ClientesProdutos";
 import ProdutosCadastro from "./pages/clientes/ProdutosCadastro";
 import ClientesAplicativos from "./pages/clientes/ClientesAplicativos";
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="/clientes/editar/:id" element={<ClientesEditar />} />
             <Route path="/planos" element={<ClientesPlanos />} />
             <Route path="/planos/cadastro" element={<PlanosCadastro />} />
+            <Route path="/planos/editar/:id" element={<PlanosEditar />} />
             <Route path="/produtos" element={<ClientesProdutos />} />
             <Route path="/produtos/cadastro" element={<ProdutosCadastro />} />
             <Route path="/aplicativos" element={<ClientesAplicativos />} />
