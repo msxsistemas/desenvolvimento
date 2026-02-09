@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileText } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useTemplatesMensagens } from "@/hooks/useTemplatesMensagens";
 import { availableVariableKeys } from "@/utils/message-variables";
 import { supabase } from "@/lib/supabase";
@@ -16,7 +15,6 @@ export default function TemplateEditar() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { updateTemplate } = useTemplatesMensagens();
-  const { toast } = useToast();
   const { user } = useCurrentUser();
 
   const [loading, setLoading] = useState(false);
@@ -31,10 +29,13 @@ export default function TemplateEditar() {
     document.title = "Editar Template | Tech Play";
 
     const carregarTemplate = async () => {
-      if (!id || !user?.id) {
+      if (!id) {
         navigate("/whatsapp/templates");
         return;
       }
+
+      // Wait for user to be available
+      if (!user?.id) return;
 
       setLoadingData(true);
       try {
@@ -46,11 +47,6 @@ export default function TemplateEditar() {
           .maybeSingle();
 
         if (error || !data) {
-          toast({
-            title: "Erro",
-            description: "Template não encontrado",
-            variant: "destructive",
-          });
           navigate("/whatsapp/templates");
           return;
         }
@@ -97,19 +93,9 @@ export default function TemplateEditar() {
         mensagem: formData.mensagem,
       });
 
-      toast({
-        title: "Sucesso",
-        description: "Template atualizado com sucesso!",
-      });
-
       navigate("/whatsapp/templates");
     } catch (error) {
       console.error("Erro ao atualizar template:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar template",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
