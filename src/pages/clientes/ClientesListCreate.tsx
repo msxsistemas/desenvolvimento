@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useClientes, usePlanos, useProdutos, useAplicativos, useTemplatesCobranca } from "@/hooks/useDatabase";
-import { useEvolutionAPI } from "@/hooks/useEvolutionAPI";
+import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash, Plus, Send, RefreshCw, Power, Copy, Bell, Loader2 } from "lucide-react";
@@ -63,7 +63,7 @@ export default function ClientesListCreate() {
   const { buscar: buscarProdutos } = useProdutos();
   const { buscar: buscarAplicativos } = useAplicativos();
   const { buscar: buscarTemplates } = useTemplatesCobranca();
-  const { sendMessage, session: whatsappSession, loading: sendingMessage } = useEvolutionAPI();
+  const { sendMessage, session: whatsappSession, loading: sendingMessage } = useEvolutionAPISimple();
   const { dismiss, toast } = useToast();
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
