@@ -47,7 +47,7 @@ export default function ClientesListCreate() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [loadingClientes, setLoadingClientes] = useState(true);
+  const [loadingClientes, setLoadingClientes] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -1192,7 +1192,7 @@ export default function ClientesListCreate() {
           </div>
           <div className="space-y-2">
             <Label className="text-sm font-normal text-muted-foreground">Captação</Label>
-            <Select onValueChange={(v) => filtros.setValue("captacao", v)} value={filtros.watch("captacao") || "todos"}>
+            <Select onValueChange={(v) => filtros.setValue("captacao", v)} value={filtrosValues.captacao || "todos"}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
@@ -1231,7 +1231,7 @@ export default function ClientesListCreate() {
       {produtosContagem.length > 0 && (
         <div className="flex flex-wrap items-center justify-end gap-2">
           {produtosContagem.map((produto) => {
-            const isActive = filtros.watch("produto") === produto.id;
+            const isActive = filtrosValues.produto === produto.id;
             return (
               <Badge 
                 key={produto.id} 
