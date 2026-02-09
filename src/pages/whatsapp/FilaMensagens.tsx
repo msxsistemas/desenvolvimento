@@ -439,7 +439,7 @@ export default function FilaMensagens() {
           <div className="space-y-2">
             <Label className="text-muted-foreground">Busca</Label>
             <Input
-              placeholder="Buscar cliente..."
+              placeholder=""
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />

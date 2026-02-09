@@ -323,7 +323,7 @@ export default function Financeiro() {
           <div className="space-y-2">
             <Label className="text-muted-foreground">Busca</Label>
             <Input
-              placeholder="Buscar..."
+              placeholder=""
               value={termoPesquisa}
               onChange={(e) => setTermoPesquisa(e.target.value)}
             />
