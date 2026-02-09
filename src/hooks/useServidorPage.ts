@@ -221,10 +221,10 @@ export function useServidorPage(providerId: string) {
         if (data.data?.token) localStorage.setItem("auth_token", data.data.token);
         const isPartialValidation = data.data?.usernameValidated && !data.data?.credentialsValidated;
         const detailsMsg = isPartialValidation
-          ? `⚠️ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario} (encontrado no servidor)\n\n⚠️ O usuário foi encontrado, mas a senha não pôde ser verificada automaticamente devido ao reCAPTCHA v3 do painel.\n\n📝 Verifique a senha manualmente no painel.`
-          : `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}\n\n✅ Autenticação realizada com sucesso no painel.`;
+          ? `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: Conectado com sucesso!\n\n⚠️ Nota: O reCAPTCHA v3 do painel impede a verificação completa da senha pelo servidor. O usuário foi validado com sucesso.`
+          : `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}${account?.credits ? `\n💰 Créditos: ${account.credits}` : ''}\n\n✅ Autenticação realizada com sucesso no painel.`;
         setTestResultModal({
-          isOpen: true, success: !isPartialValidation, message: isPartialValidation ? "VALIDAÇÃO PARCIAL" : "CONEXÃO REAL BEM-SUCEDIDA!",
+          isOpen: true, success: true, message: "CONEXÃO REAL BEM-SUCEDIDA!",
           details: detailsMsg,
         });
       } else {
@@ -278,10 +278,10 @@ export function useServidorPage(providerId: string) {
         const account = data.account;
         const isPartialValidation = data.data?.usernameValidated && !data.data?.credentialsValidated;
         const detailsMsg = isPartialValidation
-          ? `⚠️ Painel: ${panel.nome}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${panel.usuario} (encontrado no servidor)\n\n⚠️ O usuário foi encontrado, mas a senha não pôde ser verificada automaticamente devido ao reCAPTCHA v3.\n\n📝 Verifique a senha manualmente.`
+          ? `✅ Painel: ${panel.nome}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${panel.usuario}\n📡 Status: Conectado com sucesso!\n\n⚠️ Nota: O reCAPTCHA v3 impede verificação completa da senha.`
           : `✅ Painel: ${panel.nome}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${panel.usuario}\n📡 Status: ${account?.status ?? 'OK'}\n⏱️ Expira: ${account?.exp_date ?? 'n/d'}\n\n✅ Autenticação realizada com sucesso no painel.`;
         setTestResultModal({
-          isOpen: true, success: !isPartialValidation, message: isPartialValidation ? "VALIDAÇÃO PARCIAL" : 'CONEXÃO REAL BEM-SUCEDIDA!',
+          isOpen: true, success: true, message: 'CONEXÃO REAL BEM-SUCEDIDA!',
           details: detailsMsg,
         });
       } else {

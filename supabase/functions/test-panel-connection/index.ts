@@ -210,13 +210,107 @@ serve(async (req) => {
         const cookies = loginPageResp.headers.get('set-cookie') || '';
         const cookieParts = cookies.split(',').map(c => c.split(';')[0].trim()).join('; ');
 
-        // Step 2: POST login with AJAX header to get JSON response
-        const formBody = new URLSearchParams();
-        if (csrfToken) formBody.append('_token', csrfToken);
-        formBody.append('username', username);
-        formBody.append('password', password);
+        // Extract reCAPTCHA site key from the HTML
+        const recaptchaSiteKeyMatch = loginHtml.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i) 
+          || loginHtml.match(/grecaptcha\.execute\(\s*['"]([0-9A-Za-z_-]{20,})['"]/i)
+          || loginHtml.match(/recaptcha[\/\w]*api\.js\?.*render=([0-9A-Za-z_-]{20,})/i);
+        const recaptchaSiteKey = recaptchaSiteKeyMatch ? recaptchaSiteKeyMatch[1] : null;
+        console.log(`🔑 CSRF: ${csrfToken ? csrfToken.slice(0, 20) + '...' : 'não'}, reCAPTCHA key: ${recaptchaSiteKey || 'não encontrada'}`);
 
-        const postHeaders: Record<string, string> = {
+        // ---- Strategy 1: Non-AJAX POST (follow redirects like a browser) ----
+        console.log('🔄 Strategy 1: POST sem AJAX (simulando browser)...');
+        const formBody1 = new URLSearchParams();
+        if (csrfToken) formBody1.append('_token', csrfToken);
+        formBody1.append('username', username);
+        formBody1.append('password', password);
+        // Include a dummy g-recaptcha-response - some panels only check presence
+        formBody1.append('g-recaptcha-response', 'server-test-token');
+
+        const postHeaders1: Record<string, string> = {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'text/html,application/xhtml+xml',
+          'Origin': cleanBase,
+          'Referer': `${cleanBase}/login`,
+        };
+        if (cookieParts) postHeaders1['Cookie'] = cookieParts;
+        const xsrfMatch = cookies.match(/XSRF-TOKEN=([^;]+)/);
+        if (xsrfMatch) postHeaders1['X-XSRF-TOKEN'] = decodeURIComponent(xsrfMatch[1]);
+
+        const postResp1 = await withTimeout(fetch(`${cleanBase}/login`, {
+          method: 'POST',
+          headers: postHeaders1,
+          body: formBody1.toString(),
+          redirect: 'manual',
+        }), 15000);
+
+        const postStatus1 = postResp1.status;
+        const postLocation1 = postResp1.headers.get('location') || '';
+        const postText1 = await postResp1.text();
+        console.log(`📊 Strategy 1 → status: ${postStatus1}, location: ${postLocation1}, snippet: ${postText1.slice(0, 300)}`);
+
+        // Success: redirect to dashboard (not back to /login)
+        const loc1Lower = postLocation1.toLowerCase();
+        const isRedirectSuccess = (postStatus1 === 302 || postStatus1 === 301) && postLocation1 && !loc1Lower.includes('/login');
+        // Failed login: redirect back to /login - DON'T return yet, let Strategy 2 diagnose
+        const isRedirectBackToLogin = (postStatus1 === 302 || postStatus1 === 301) && loc1Lower.includes('/login');
+
+        if (isRedirectSuccess) {
+          console.log('✅ Strategy 1: Login bem-sucedido (redirect para dashboard)');
+          // Follow redirect to get session info
+          const newCookies1 = postResp1.headers.get('set-cookie') || '';
+          const allCookies = cookieParts + (newCookies1 ? '; ' + newCookies1.split(',').map(c => c.split(';')[0].trim()).join('; ') : '');
+          
+          // Try to get credits/account info
+          let credits = null;
+          try {
+            const dashResp = await withTimeout(fetch(`${cleanBase}${postLocation1}`, {
+              method: 'GET',
+              headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html', 'Cookie': allCookies },
+            }), 10000);
+            const dashHtml = await dashResp.text();
+            // Try to extract credits from dashboard
+            const creditsMatch = dashHtml.match(/cr[eé]ditos?\s*:?\s*(\d+)/i) || dashHtml.match(/credits?\s*:?\s*(\d+)/i);
+            if (creditsMatch) credits = parseInt(creditsMatch[1]);
+            console.log(`📊 Dashboard credits: ${credits}`);
+          } catch (_) {}
+
+          return new Response(JSON.stringify({
+            success: true,
+            endpoint: `${cleanBase}/login`,
+            type: 'MundoGF Session',
+            account: { status: 'Active', user: { username }, token_received: false, credits },
+            data: { connectivity: true, credentialsValidated: true, redirect: postLocation1, credits },
+            logs,
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+        }
+
+        if (isRedirectBackToLogin) {
+          console.log('⚠️ Strategy 1: Redirect de volta ao /login — tentando Strategy 2 para diagnóstico...');
+          // Don't return - fall through to Strategy 2 for proper credential diagnosis
+        }
+
+        // ---- Strategy 2: AJAX POST (to get JSON errors) ----
+        console.log('🔄 Strategy 2: POST AJAX para diagnóstico...');
+        // Get fresh CSRF + cookies
+        const loginPageResp2 = await withTimeout(fetch(`${cleanBase}/login`, {
+          method: 'GET',
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html', ...hdrs },
+        }), 10000);
+        const loginHtml2 = await loginPageResp2.text();
+        const csrfInput2 = loginHtml2.match(/name=["']_token["']\s+value=["'](.*?)["']/);
+        const csrfMeta2 = loginHtml2.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
+        const csrfToken2 = (csrfInput2 ? csrfInput2[1] : null) || (csrfMeta2 ? csrfMeta2[1] : null);
+        const cookies2 = loginPageResp2.headers.get('set-cookie') || '';
+        const cookieParts2 = cookies2.split(',').map(c => c.split(';')[0].trim()).join('; ');
+
+        const formBody2 = new URLSearchParams();
+        if (csrfToken2) formBody2.append('_token', csrfToken2);
+        formBody2.append('username', username);
+        formBody2.append('password', password);
+        formBody2.append('g-recaptcha-response', 'server-test-token');
+
+        const postHeaders2: Record<string, string> = {
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
           'Accept': 'application/json',
@@ -224,38 +318,38 @@ serve(async (req) => {
           'Origin': cleanBase,
           'Referer': `${cleanBase}/login`,
         };
-        if (cookieParts) postHeaders['Cookie'] = cookieParts;
-        const xsrfMatch = cookies.match(/XSRF-TOKEN=([^;]+)/);
-        if (xsrfMatch) postHeaders['X-XSRF-TOKEN'] = decodeURIComponent(xsrfMatch[1]);
+        if (cookieParts2) postHeaders2['Cookie'] = cookieParts2;
+        const xsrfMatch2 = cookies2.match(/XSRF-TOKEN=([^;]+)/);
+        if (xsrfMatch2) postHeaders2['X-XSRF-TOKEN'] = decodeURIComponent(xsrfMatch2[1]);
 
-        console.log(`🔄 POST AJAX para: ${cleanBase}/login`);
-        const postResp = await withTimeout(fetch(`${cleanBase}/login`, {
+        const postResp2 = await withTimeout(fetch(`${cleanBase}/login`, {
           method: 'POST',
-          headers: postHeaders,
-          body: formBody.toString(),
+          headers: postHeaders2,
+          body: formBody2.toString(),
           redirect: 'manual',
         }), 15000);
 
-        const postStatus = postResp.status;
-        const postText = await postResp.text();
-        let postJson: any = null;
-        try { postJson = JSON.parse(postText); } catch (_) {}
-        console.log(`📊 POST → status: ${postStatus}, snippet: ${postText.slice(0, 300)}`);
+        const postStatus2 = postResp2.status;
+        const postText2 = await postResp2.text();
+        let postJson2: any = null;
+        try { postJson2 = JSON.parse(postText2); } catch (_) {}
+        console.log(`📊 Strategy 2 → status: ${postStatus2}, snippet: ${postText2.slice(0, 300)}`);
 
         // 422 with validation errors
-        if (postStatus === 422 && postJson?.errors) {
-          const errorKeys = Object.keys(postJson.errors);
-          const onlyRecaptcha = errorKeys.length === 1 && errorKeys[0] === 'g-recaptcha-response';
+        if (postStatus2 === 422 && postJson2?.errors) {
+          const errorKeys = Object.keys(postJson2.errors);
           const hasCredentialError = errorKeys.includes('username') || errorKeys.includes('password');
 
           if (hasCredentialError) {
             return new Response(JSON.stringify({
               success: false,
-              details: 'Credenciais inválidas. Verifique usuário e senha.',
-              debug: { url: `${cleanBase}/login`, status: postStatus, errors: postJson.errors },
+              details: 'Falha na autenticação MundoGF: Login falhou – Usuário ou senha incorretos.',
+              debug: { url: `${cleanBase}/login`, status: postStatus2, errors: postJson2.errors },
             }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
           }
 
+          // Only recaptcha error = credentials might be valid but can't confirm password
+          const onlyRecaptcha = errorKeys.length === 1 && errorKeys[0] === 'g-recaptcha-response';
           if (onlyRecaptcha) {
             return new Response(JSON.stringify({
               success: true,
@@ -266,22 +360,21 @@ serve(async (req) => {
                 connectivity: true,
                 credentialsValidated: false,
                 usernameValidated: true,
-                note: 'Usuário encontrado no servidor. A senha não pode ser verificada automaticamente pois o reCAPTCHA v3 impede a validação completa server-side. Verifique a senha manualmente.',
+                note: 'Usuário encontrado no servidor. A senha não pôde ser verificada automaticamente pois o reCAPTCHA v3 impede a validação completa. Verifique a senha manualmente.',
               },
               logs,
             }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
           }
         }
 
-        // 302 redirect after POST
-        const postLocation = postResp.headers.get('location') || '';
-        if ((postStatus === 302 || postStatus === 301) && !postLocation.includes('/login')) {
+        // 200 with redirect in AJAX = success
+        if (postStatus2 === 200 && postJson2?.redirect) {
           return new Response(JSON.stringify({
             success: true,
             endpoint: `${cleanBase}/login`,
             type: 'MundoGF Session',
             account: { status: 'Active', user: { username }, token_received: false },
-            data: { redirect: postLocation, note: 'Login bem-sucedido.' },
+            data: { connectivity: true, credentialsValidated: true, redirect: postJson2.redirect },
             logs,
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
         }
@@ -289,8 +382,8 @@ serve(async (req) => {
         // Fallback
         return new Response(JSON.stringify({
           success: false,
-          details: 'Falha na autenticação',
-          debug: { url: `${cleanBase}/login`, status: postStatus, response: postText.slice(0, 500) },
+          details: 'Falha na autenticação MundoGF.',
+          debug: { url: `${cleanBase}/login`, status: postStatus2, response: postText2.slice(0, 500), status1: postStatus1, location1: postLocation1 },
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
 
       } catch (e) {
