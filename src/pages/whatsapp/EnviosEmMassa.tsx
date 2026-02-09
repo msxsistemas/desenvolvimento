@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { availableVariableKeys } from "@/utils/message-variables";
+import { availableVariableKeys, replaceMessageVariables, getSaudacao } from "@/utils/message-variables";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -11,11 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Send, Loader2, Upload, X, Image, Video, FileText } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Send, Loader2, Upload, X, Image, FileText, AlertTriangle, CheckCircle2, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useEvolutionAPI } from "@/hooks/useEvolutionAPI";
+import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
 import { WhatsAppPhonePreview } from "@/components/whatsapp/WhatsAppPhonePreview";
 
 const tiposMensagem = [
@@ -46,9 +48,11 @@ export default function EnviosEmMassa() {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState({ total: 0, sent: 0, failed: 0 });
+  const [showProgress, setShowProgress] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useCurrentUser();
-  const { isConnected } = useEvolutionAPI();
+  const { isConnected, sendMessage } = useEvolutionAPISimple();
 
   useEffect(() => {
     document.title = "Envios em Massa | Tech Play";
@@ -60,15 +64,8 @@ export default function EnviosEmMassa() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const isImage = file.type.startsWith('image/');
-    const isVideo = file.type.startsWith('video/');
-
-    if (tipoMensagem === 'imagem' && !isImage) {
+    if (!file.type.startsWith('image/')) {
       toast.error("Por favor, selecione uma imagem");
-      return;
-    }
-    if (tipoMensagem === 'video' && !isVideo) {
-      toast.error("Por favor, selecione um vídeo");
       return;
     }
 
@@ -78,18 +75,11 @@ export default function EnviosEmMassa() {
     }
 
     setMediaFile(file);
-
-    if (isImage) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setMediaPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else if (isVideo) {
-      setMediaPreview(URL.createObjectURL(file));
-    } else {
-      setMediaPreview(null);
-    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setMediaPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const removeMedia = () => {
@@ -100,21 +90,41 @@ export default function EnviosEmMassa() {
     }
   };
 
-  const getAcceptTypes = () => {
-    switch (tipoMensagem) {
-      case 'imagem':
-        return 'image/*';
-      case 'video':
-        return 'video/*';
-      case 'documento':
-        return '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt';
-      default:
-        return '';
+  // Buscar valor do plano pelo nome
+  const fetchValorPlano = async (planoNome: string): Promise<string> => {
+    if (!planoNome || !user?.id) return "";
+    try {
+      const { data } = await supabase
+        .from("planos")
+        .select("valor")
+        .eq("user_id", user.id)
+        .eq("nome", planoNome)
+        .maybeSingle();
+      return data?.valor || "";
+    } catch {
+      return "";
+    }
+  };
+
+  // Buscar chave PIX do usuário
+  const fetchPixKey = async (): Promise<string> => {
+    if (!user?.id) return "";
+    try {
+      const { data } = await supabase
+        .from("templates_cobranca")
+        .select("chave_pix")
+        .eq("user_id", user.id)
+        .eq("incluir_chave_pix", true)
+        .limit(1)
+        .maybeSingle();
+      return data?.chave_pix || "";
+    } catch {
+      return "";
     }
   };
 
   const handleEnviar = async () => {
-    if (!tipoMensagem || !destinatarios || !mensagem) {
+    if (!tipoMensagem || !destinatarios || !mensagem.trim()) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
@@ -129,53 +139,36 @@ export default function EnviosEmMassa() {
       return;
     }
 
+    if (!isConnected) {
+      toast.error("WhatsApp não está conectado. Vá em Parear WhatsApp para conectar.");
+      return;
+    }
+
     setSending(true);
+    setShowProgress(true);
+    setProgress({ total: 0, sent: 0, failed: 0 });
+
     try {
-      let mediaUrl = null;
-
-      if (mediaFile) {
-        setUploading(true);
-        const fileExt = mediaFile.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('whatsapp-media')
-          .upload(fileName, mediaFile);
-
-        if (uploadError) {
-          console.error("Erro no upload:", uploadError);
-          if (!uploadError.message.includes('bucket')) {
-            throw uploadError;
-          }
-        } else {
-          const { data: { publicUrl } } = supabase.storage
-            .from('whatsapp-media')
-            .getPublicUrl(fileName);
-          mediaUrl = publicUrl;
-        }
-        setUploading(false);
-      }
-
+      // Build client query
       let query = supabase.from("clientes").select("*").eq("user_id", user.id);
-
       const today = new Date().toISOString().split('T')[0];
-      
+
       switch (destinatarios) {
         case "clientes_ativos":
-          query = query.gte("data_vencimento", today);
+          query = query.eq("ativo", true).gte("data_vencimento", today);
+          break;
+        case "clientes_ativos_plano":
+          query = query.eq("ativo", true).gte("data_vencimento", today).not("plano", "is", null);
           break;
         case "clientes_vencidos":
         case "clientes_vencidos_data":
           query = query.lt("data_vencimento", today);
           break;
         case "clientes_inativos":
-          query = query.is("data_vencimento", null);
+          query = query.eq("ativo", false);
           break;
         case "clientes_desativados":
-          query = query.eq("fixo", false);
-          break;
-        case "clientes_ativos_plano":
-          query = query.gte("data_vencimento", today);
+          query = query.eq("ativo", false);
           break;
         case "todos":
           break;
@@ -188,48 +181,117 @@ export default function EnviosEmMassa() {
       if (!clientes || clientes.length === 0) {
         toast.warning("Nenhum cliente encontrado para este filtro");
         setSending(false);
+        setShowProgress(false);
         return;
       }
 
-      const mensagensParaEnviar = clientes.map(cliente => ({
-        user_id: user.id,
-        phone: cliente.whatsapp,
-        message: mensagem
-          .replace(/{nome_cliente}/g, cliente.nome || '')
-          .replace(/{usuario}/g, cliente.usuario || '')
-          .replace(/{senha}/g, cliente.senha || '')
-          .replace(/{vencimento}/g, cliente.data_vencimento || '')
-          .replace(/{nome_plano}/g, cliente.plano || '')
-          .replace(/{valor_plano}/g, '')
-          .replace(/{email}/g, cliente.email || '')
-          .replace(/{observacao}/g, cliente.observacao || '')
-          .replace(/{br}/g, '\n'),
-        status: 'pending',
-        session_id: 'bulk_' + Date.now(),
-        sent_at: new Date().toISOString(),
-        media_url: mediaUrl,
-        media_type: tipoMensagem !== 'texto' ? tipoMensagem : null,
-      }));
+      // Filter clients with valid WhatsApp numbers
+      const clientesComWhatsapp = clientes.filter(c => c.whatsapp && c.whatsapp.trim() !== '');
 
-      const { error: insertError } = await supabase
-        .from("whatsapp_messages")
-        .insert(mensagensParaEnviar);
+      if (clientesComWhatsapp.length === 0) {
+        toast.warning("Nenhum cliente com WhatsApp válido encontrado");
+        setSending(false);
+        setShowProgress(false);
+        return;
+      }
 
-      if (insertError) throw insertError;
+      setProgress({ total: clientesComWhatsapp.length, sent: 0, failed: 0 });
 
-      toast.success(`${clientes.length} mensagens adicionadas à fila de envio!`);
+      // Fetch PIX key once
+      const pixKey = await fetchPixKey();
+
+      // Send messages one by one with delay to avoid rate limiting
+      let sentCount = 0;
+      let failedCount = 0;
+
+      for (const cliente of clientesComWhatsapp) {
+        try {
+          // Get plan value for this client
+          const valorPlano = cliente.plano ? await fetchValorPlano(cliente.plano) : "";
+
+          // Replace variables using the shared utility
+          const mensagemProcessada = replaceMessageVariables(mensagem, {
+            nome: cliente.nome,
+            whatsapp: cliente.whatsapp,
+            email: cliente.email || undefined,
+            usuario: cliente.usuario || undefined,
+            senha: cliente.senha || undefined,
+            data_vencimento: cliente.data_vencimento || undefined,
+            plano: cliente.plano || undefined,
+            produto: cliente.produto || undefined,
+            desconto: cliente.desconto || undefined,
+            observacao: cliente.observacao || undefined,
+            app: cliente.app || undefined,
+            dispositivo: cliente.dispositivo || undefined,
+            telas: cliente.telas || undefined,
+            mac: cliente.mac || undefined,
+          }, {
+            pix: pixKey,
+            valor_plano: valorPlano ? `R$ ${valorPlano}` : "",
+          });
+
+          // Normalize phone number
+          let phone = cliente.whatsapp.replace(/\D/g, '');
+          if (!phone.startsWith('55') && phone.length >= 10) {
+            phone = '55' + phone;
+          }
+
+          // Send via Evolution API
+          await sendMessage(phone, mensagemProcessada);
+
+          // Log to whatsapp_messages table
+          await supabase.from("whatsapp_messages").insert({
+            user_id: user.id,
+            phone: cliente.whatsapp,
+            message: mensagemProcessada,
+            status: 'sent',
+            session_id: 'bulk_' + Date.now(),
+            sent_at: new Date().toISOString(),
+          });
+
+          sentCount++;
+          setProgress(prev => ({ ...prev, sent: sentCount }));
+
+          // Delay between messages (1.5s) to avoid rate limiting
+          if (sentCount < clientesComWhatsapp.length) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
+        } catch (err) {
+          console.error(`Erro ao enviar para ${cliente.nome}:`, err);
+          failedCount++;
+          setProgress(prev => ({ ...prev, failed: failedCount }));
+
+          // Log failed message
+          await supabase.from("whatsapp_messages").insert({
+            user_id: user.id,
+            phone: cliente.whatsapp,
+            message: mensagem,
+            status: 'failed',
+            error_message: err instanceof Error ? err.message : 'Erro desconhecido',
+            session_id: 'bulk_' + Date.now(),
+            sent_at: new Date().toISOString(),
+          });
+        }
+      }
+
+      if (sentCount > 0) {
+        toast.success(`${sentCount} mensagens enviadas com sucesso!${failedCount > 0 ? ` (${failedCount} falharam)` : ''}`);
+      } else {
+        toast.error("Nenhuma mensagem foi enviada");
+      }
+
       setMensagem("");
       removeMedia();
     } catch (error) {
       console.error("Erro ao enviar mensagens:", error);
-      toast.error("Erro ao adicionar mensagens à fila");
+      toast.error("Erro ao processar envio em massa");
     } finally {
       setSending(false);
-      setUploading(false);
     }
   };
 
   const showMediaUpload = tipoMensagem && tipoMensagem !== 'texto';
+  const progressPercent = progress.total > 0 ? Math.round(((progress.sent + progress.failed) / progress.total) * 100) : 0;
 
   return (
     <main className="space-y-4">
@@ -239,7 +301,47 @@ export default function EnviosEmMassa() {
           <h1 className="text-xl font-semibold text-foreground">Envios em Massa</h1>
           <p className="text-sm text-muted-foreground">Envie mensagens para múltiplos clientes</p>
         </div>
+        <div className="flex items-center gap-2">
+          {isConnected ? (
+            <Badge variant="outline" className="border-success/50 bg-success/10 text-success gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              WhatsApp Conectado
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="border-destructive/50 bg-destructive/10 text-destructive gap-1">
+              <WifiOff className="h-3 w-3" />
+              WhatsApp Desconectado
+            </Badge>
+          )}
+        </div>
       </header>
+
+      {/* Connection Warning */}
+      {!isConnected && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>WhatsApp não está conectado. Vá em <strong>WhatsApp → Parear WhatsApp</strong> para conectar antes de enviar mensagens.</span>
+        </div>
+      )}
+
+      {/* Progress */}
+      {showProgress && (
+        <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-foreground font-medium">Progresso do envio</span>
+            <span className="text-muted-foreground">
+              {progress.sent + progress.failed} / {progress.total}
+              {progress.failed > 0 && <span className="text-destructive ml-2">({progress.failed} falhas)</span>}
+            </span>
+          </div>
+          <Progress value={progressPercent} className="h-2" />
+          {!sending && progress.total > 0 && (
+            <Button variant="ghost" size="sm" onClick={() => setShowProgress(false)} className="text-xs text-muted-foreground">
+              Fechar
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -271,11 +373,7 @@ export default function EnviosEmMassa() {
           {/* Media Upload */}
           {showMediaUpload && (
             <div className="space-y-2">
-              <Label className="text-foreground">
-                {tipoMensagem === 'imagem' && 'Selecione uma imagem'}
-                {tipoMensagem === 'video' && 'Selecione um vídeo'}
-                {tipoMensagem === 'documento' && 'Selecione um documento'}
-              </Label>
+              <Label className="text-foreground">Selecione uma imagem</Label>
               
               {!mediaFile ? (
                 <div 
@@ -296,20 +394,8 @@ export default function EnviosEmMassa() {
                   >
                     <X className="h-4 w-4" />
                   </Button>
-                  
-                  {tipoMensagem === 'imagem' && mediaPreview && (
+                  {mediaPreview && (
                     <img src={mediaPreview} alt="Preview" className="max-h-32 mx-auto rounded" />
-                  )}
-                  
-                  {tipoMensagem === 'video' && mediaPreview && (
-                    <video src={mediaPreview} className="max-h-32 mx-auto rounded" controls />
-                  )}
-                  
-                  {tipoMensagem === 'documento' && (
-                    <div className="flex items-center gap-2 justify-center">
-                      <FileText className="h-8 w-8 text-muted-foreground" />
-                      <span className="text-sm text-foreground">{mediaFile.name}</span>
-                    </div>
                   )}
                 </div>
               )}
@@ -317,7 +403,7 @@ export default function EnviosEmMassa() {
               <Input
                 ref={fileInputRef}
                 type="file"
-                accept={getAcceptTypes()}
+                accept="image/*"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -353,6 +439,9 @@ export default function EnviosEmMassa() {
                 </span>
               ))}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Use <span className="text-primary">{"{br}"}</span> para quebra de linha.
+            </p>
             <Textarea
               value={mensagem}
               onChange={(e) => setMensagem(e.target.value)}
@@ -364,18 +453,18 @@ export default function EnviosEmMassa() {
           {/* Send Button */}
           <Button 
             onClick={handleEnviar}
-            disabled={sending || uploading || !tipoMensagem || !destinatarios || !mensagem || (showMediaUpload && !mediaFile)}
+            disabled={sending || uploading || !tipoMensagem || !destinatarios || !mensagem.trim() || !isConnected || (showMediaUpload && !mediaFile)}
             className="w-full bg-primary hover:bg-primary/90"
           >
             {sending || uploading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {uploading ? 'Enviando mídia...' : 'Enviando...'}
+                {uploading ? 'Enviando mídia...' : `Enviando... (${progress.sent}/${progress.total})`}
               </>
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Adicionar à Fila
+                Enviar Mensagens
               </>
             )}
           </Button>
@@ -387,7 +476,7 @@ export default function EnviosEmMassa() {
             message={mensagem}
             templateLabel={destinatarios ? getDestinatarioLabel(destinatarios) : undefined}
             mediaPreview={mediaPreview}
-            mediaType={tipoMensagem as 'imagem' | 'video' | 'documento' | undefined}
+            mediaType={tipoMensagem === 'imagem' ? 'imagem' : undefined}
           />
         </div>
       </div>
