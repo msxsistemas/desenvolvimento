@@ -771,7 +771,7 @@ export default function ClientesListCreate() {
       ]);
       setPlanos((planosData || []).filter((p: any) => p.ativo !== false));
       setProdutos((produtosData || []).filter((p: any) => p.ativo !== false));
-      setAplicativos(aplicativosData || []);
+      setAplicativos((aplicativosData || []).filter((a: any) => a.ativo !== false));
       setTemplates(templatesData || []);
     } catch (error) {
       console.error("Erro ao carregar dados dos selects:", error);
