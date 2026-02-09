@@ -241,6 +241,7 @@ export default function ClientesIntegracoes() {
           endpointPath: endpoint,
           endpointMethod: provider?.loginMethod || 'POST',
           loginPayload: payload,
+          providerId: panel.provedor || selectedProvider,
           extraHeaders: { Accept: 'application/json' }
         },
       });
@@ -442,7 +443,13 @@ export default function ClientesIntegracoes() {
       <ProvedoresList 
         filteredProvedores={filteredProvedores}
         selectedProvider={selectedProvider}
-        onSelectProvider={setSelectedProvider}
+        onSelectProvider={(id) => {
+          setSelectedProvider(id);
+          // Reset form when switching providers to avoid data leaking between providers
+          setFormData({ nomePainel: "", urlPainel: "", usuario: "", senha: "" });
+          setAutoRenewal(false);
+          setIsConfigModalOpen(false);
+        }}
       />
 
       {/* Provider Card */}
@@ -456,7 +463,11 @@ export default function ClientesIntegracoes() {
           panels={providerPanels}
           providerName={currentProvider?.nome || ''}
           isTestingConnection={isTestingConnection}
-          onAddPanel={() => setIsConfigModalOpen(true)}
+          onAddPanel={() => {
+            setFormData({ nomePainel: "", urlPainel: "", usuario: "", senha: "" });
+            setAutoRenewal(false);
+            setIsConfigModalOpen(true);
+          }}
           onEditPanel={startEditPanel}
           onToggleStatus={handleToggleStatus}
           onTestPanel={testPanel}
