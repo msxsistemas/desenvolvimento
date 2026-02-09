@@ -264,8 +264,9 @@ serve(async (req) => {
               account: { status: 'Active', user: { username }, token_received: false },
               data: {
                 connectivity: true,
-                credentialsValidated: true,
-                note: 'Credenciais validadas pelo servidor. reCAPTCHA v3 impede login completo server-side.',
+                credentialsValidated: false,
+                usernameValidated: true,
+                note: 'Usuário encontrado no servidor. A senha não pode ser verificada automaticamente pois o reCAPTCHA v3 impede a validação completa server-side. Verifique a senha manualmente.',
               },
               logs,
             }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
