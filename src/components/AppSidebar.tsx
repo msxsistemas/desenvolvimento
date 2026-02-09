@@ -67,7 +67,7 @@ export function AppSidebar() {
   const indicacoesActive = currentPath.startsWith("/indicacoes");
   const outrosActive = currentPath.startsWith("/outros") || currentPath === "/configuracoes/mensagens-padroes";
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(
-    clientesActive ? "clientes" : planosActive ? "planos" : aplicativosActive ? "aplicativos" : produtosActive ? "produtos" : financeiroActive ? "financeiro" : whatsappActive ? "whatsapp" : logsActive ? "logs" : indicacoesActive ? "indicacoes" : outrosActive ? "outros" : null
+    clientesActive ? "clientes" : planosActive ? "planos" : aplicativosActive ? "aplicativos" : produtosActive ? "produtos" : currentPath.startsWith("/servidores") ? "servidores" : financeiroActive ? "financeiro" : whatsappActive ? "whatsapp" : logsActive ? "logs" : indicacoesActive ? "indicacoes" : outrosActive ? "outros" : null
   );
 
   const toggleSubmenu = (menu: string) => {
@@ -104,7 +104,7 @@ export function AppSidebar() {
     { to: "/planos", icon: List, label: "Planos", hasPlanosSubmenu: true },
     { to: "/aplicativos", icon: Package, label: "Aplicativos", hasAplicativosSubmenu: true },
     { to: "/produtos", icon: Package, label: "Produtos", hasProdutosSubmenu: true },
-    { to: "/servidores", icon: Server, label: "Servidores" },
+    { to: "/servidores", icon: Server, label: "Servidores", hasServidoresSubmenu: true },
     { to: "/financeiro", icon: DollarSign, label: "Financeiro", hasFinanceiroSubmenu: true },
     { to: "/relatorios", icon: Filter, label: "Relatórios" },
     { to: "/configuracoes", icon: Globe, label: "Gateways" },
@@ -152,6 +152,13 @@ export function AppSidebar() {
   const outrosSubItems = [
     { to: "/outros/cupom", label: "Cupom" },
   ];
+  const servidoresSubItems = [
+    { to: "/servidores", label: "Todos os Servidores" },
+    { to: "/servidores/sigma", label: "Painel Sigma" },
+    { to: "/servidores/koffice-api", label: "KOffice API" },
+    { to: "/servidores/koffice-v2", label: "KOffice V2" },
+  ];
+  const servidoresActive = currentPath.startsWith("/servidores");
 
   // Helper to render submenu items
   const renderSubItems = (items: { to: string; label: string }[]) => (
@@ -226,6 +233,7 @@ export function AppSidebar() {
                 if (item.hasPlanosSubmenu) return renderSubmenuParent(item, "planos", planosActive, planosSubItems);
                 if (item.hasAplicativosSubmenu) return renderSubmenuParent(item, "aplicativos", aplicativosActive, aplicativosSubItems);
                 if (item.hasProdutosSubmenu) return renderSubmenuParent(item, "produtos", produtosActive, produtosSubItems);
+                if (item.hasServidoresSubmenu) return renderSubmenuParent(item, "servidores", servidoresActive, servidoresSubItems);
                 if (item.hasFinanceiroSubmenu) return renderSubmenuParent(item, "financeiro", financeiroActive, financeiroSubItems);
                 if (item.hasLogsSubmenu) return renderSubmenuParent(item, "logs", logsActive, logsSubItems);
                 if (item.hasIndicacoesSubmenu) return renderSubmenuParent(item, "indicacoes", indicacoesActive, indicacoesSubItems);
