@@ -92,9 +92,8 @@ serve(async (req) => {
     const isKoffice = providerId === 'koffice-api' || providerId === 'koffice-v2';
     const isSigma = providerId === 'sigma-v2';
 
-    // Only discover API structure for unknown providers
-    if (!providerId || isKoffice) {
-    // First try to fetch the login page to discover API endpoints
+    // Discover API structure for koffice and sigma (sigma panels may also use form login)
+    if (!providerId || isKoffice || isSigma) {
     try {
       console.log('🔍 Descobrindo estrutura da API...');
       const loginPageResp = await withTimeout(fetch(`${cleanBase}/login`, {
@@ -102,7 +101,6 @@ serve(async (req) => {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
       }), 10000);
       const loginHtml = await loginPageResp.text();
-      // Log key parts of the HTML that reveal API structure
       const actionMatch = loginHtml.match(/action=['"](.*?)['"]/g);
       const apiMatch = loginHtml.match(/['"](\/api\/[^'"]*)['"]/g);
       const axiosMatch = loginHtml.match(/axios\.(post|get)\(['"](.*?)['"]/g);
@@ -112,12 +110,10 @@ serve(async (req) => {
       console.log(`📄 Axios calls: ${JSON.stringify(axiosMatch?.slice(0, 5))}`);
       console.log(`📄 Fetch calls: ${JSON.stringify(fetchMatch?.slice(0, 5))}`);
       
-      // Extract CSRF token if present
       const csrfMatch = loginHtml.match(/name=["']_token["']\s+value=["'](.*?)["']/);
       const csrf = csrfMatch ? csrfMatch[1] : null;
       console.log(`🔑 CSRF token: ${csrf ? csrf.slice(0, 20) + '...' : 'não encontrado'}`);
       
-      // Log HTML snippet around form for debugging
       const formStart = loginHtml.indexOf('<form');
       if (formStart > -1) {
         console.log(`📄 Form HTML: ${loginHtml.slice(formStart, formStart + 500)}`);
@@ -125,7 +121,7 @@ serve(async (req) => {
     } catch (e) {
       console.log(`⚠️ Erro ao buscar página de login: ${(e as Error).message}`);
     }
-    } // end if !providerId || isKoffice
+    } // end discovery block
 
     const logs: any[] = [];
     let lastResp: any = null;
@@ -181,8 +177,8 @@ serve(async (req) => {
     }
     } // end xtream block
 
-    // --- Try form-based login (only for koffice-v2 or unknown providers) ---
-    if (!providerId || isKoffice) {
+    // --- Try form-based login (for koffice, sigma, or unknown providers) ---
+    if (!providerId || isKoffice || isSigma) {
     try {
       console.log('🔄 Tentando login via formulário HTML (kOffice style)...');
       // Step 1: GET login page to extract CSRF token
