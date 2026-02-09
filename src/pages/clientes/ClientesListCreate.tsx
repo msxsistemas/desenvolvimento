@@ -1400,7 +1400,7 @@ export default function ClientesListCreate() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-primary hover:text-primary/80"
+                            className="h-8 w-8 text-warning hover:text-warning/80"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleToggleAtivo(cliente);

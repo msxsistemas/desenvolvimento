@@ -433,10 +433,7 @@ export default function ClientesProdutos() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleToggleAtivo(p)}
-                        className={`h-8 w-8 ${(p as any).ativo !== false 
-                          ? "text-muted-foreground hover:text-warning hover:bg-warning/10" 
-                          : "text-muted-foreground hover:text-success hover:bg-success/10"
-                        }`}
+                        className="h-8 w-8 text-warning hover:text-warning/80"
                         title={(p as any).ativo !== false ? "Desativar" : "Ativar"}
                       >
                         <Power className="h-4 w-4" />
