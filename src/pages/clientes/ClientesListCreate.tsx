@@ -1115,9 +1115,8 @@ export default function ClientesListCreate() {
         {/* Linha 1: Busca, Servidor, Planos, Status */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
-            <Label className="text-sm font-normal text-muted-foreground">Busca</Label>
             <Input 
-              placeholder="" 
+              placeholder="Buscar..." 
               {...filtros.register("search")}
               className="bg-background"
             />

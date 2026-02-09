@@ -321,7 +321,6 @@ export default function Financeiro() {
       <div className="rounded-lg border border-border bg-card p-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="space-y-2">
-            <Label className="text-muted-foreground">Busca</Label>
             <Input
               placeholder="Buscar..."
               value={termoPesquisa}
