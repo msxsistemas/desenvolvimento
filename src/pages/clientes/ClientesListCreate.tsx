@@ -1359,7 +1359,7 @@ export default function ClientesListCreate() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            className="h-8 w-8 text-primary hover:text-primary/80"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleRenovarPlano(cliente);
@@ -1371,7 +1371,7 @@ export default function ClientesListCreate() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-warning hover:text-warning/80"
+                            className="h-8 w-8 text-primary hover:text-primary/80"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleNotificarVencimento(cliente);
@@ -1400,7 +1400,7 @@ export default function ClientesListCreate() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-success hover:text-success/80"
+                            className="h-8 w-8 text-primary hover:text-primary/80"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleToggleAtivo(cliente);
