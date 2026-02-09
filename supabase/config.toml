@@ -1,1 +1,38 @@
 project_id = "dxxfablfqigoewcfmjzl"
+
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
+
+[functions.evolution-api]
+verify_jwt = false
+
+[functions.whatsapp-web]
+verify_jwt = false
+
+[functions.whatsapp-baileys]
+verify_jwt = false
+
+[functions.whatsapp-connection]
+verify_jwt = false
+
+[functions.exec-sql]
+verify_jwt = false
+
+[functions.setup-database]
+verify_jwt = false
+
+[functions.test-panel-connection]
+verify_jwt = false
+
+[functions.create-transacoes]
+verify_jwt = false
+
+[functions.create-transacoes-table]
+verify_jwt = false
+
+[functions.asaas-integration]
+verify_jwt = false
