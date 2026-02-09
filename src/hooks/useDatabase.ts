@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import type { Cliente, Aplicativo, Plano, Produto, TemplateCobranca, MensagensPadroes } from '@/types/database';
+import { logPainel, logSistema } from '@/utils/logger';
 import { useCurrentUser } from './useCurrentUser';
 
 // Hook para Clientes
@@ -20,6 +21,7 @@ export const useClientes = () => {
         .single();
 
       if (error || !data) throw error || new Error('Falha ao criar cliente');
+      logPainel(`Cliente criado: ${cliente.nome}`, "success");
       return data;
     } catch (error) {
       console.error('Erro ao criar cliente:', error);
@@ -70,6 +72,7 @@ export const useClientes = () => {
 
       if (error) throw error;
       
+      logPainel(`Cliente atualizado`, "success");
       // toast.success('Cliente atualizado com sucesso!'); // desativado para exibir apenas o modal de sucesso
       return data;
     } catch (error) {
@@ -91,6 +94,7 @@ export const useClientes = () => {
 
       if (error) throw error;
 
+      logPainel(`Cliente excluído`, "warning");
       toast.success('Cliente excluído com sucesso!');
     } catch (error) {
       console.error('Erro ao excluir cliente:', error);
@@ -117,6 +121,7 @@ export const useAplicativos = () => {
 
       if (error) throw error;
       
+      logPainel(`Aplicativo criado: ${aplicativo.nome}`, "success");
       // toast.success('Aplicativo criado com sucesso!'); // desativado para exibir apenas o modal de sucesso
       return data;
     } catch (error) {
@@ -137,6 +142,7 @@ export const useAplicativos = () => {
 
       if (error) throw error;
       
+      logPainel(`Aplicativo atualizado`, "success");
       // toast.success('Aplicativo atualizado com sucesso!'); // desativado para exibir apenas o modal de sucesso
       return data;
     } catch (error) {
@@ -158,6 +164,7 @@ export const useAplicativos = () => {
 
       if (error) throw error;
 
+      logPainel(`Aplicativo excluído`, "warning");
       toast.success('Aplicativo excluído com sucesso!');
     } catch (error) {
       console.error('Erro ao excluir aplicativo:', error);
@@ -215,6 +222,7 @@ export const usePlanos = () => {
 
       if (error) throw error;
       
+      logPainel(`Plano criado: ${plano.nome}`, "success");
       // toast.success('Plano criado com sucesso!') // desativado para exibir apenas o modal de sucesso
       return data;
     } catch (error) {
@@ -235,6 +243,7 @@ export const usePlanos = () => {
 
       if (error) throw error;
       
+      logPainel(`Plano atualizado`, "success");
       // toast.success('Plano atualizado com sucesso!') // desativado para exibir apenas o modal de sucesso
       return data;
     } catch (error) {
@@ -256,6 +265,7 @@ export const usePlanos = () => {
 
       if (error) throw error;
 
+      logPainel(`Plano excluído`, "warning");
       // toast.success('Plano excluído com sucesso!') // desativado para exibir apenas o modal de sucesso
     } catch (error) {
       console.error('Erro ao excluir plano:', error);
@@ -313,6 +323,7 @@ export const useProdutos = () => {
 
       if (error) throw error;
       
+      logPainel(`Produto criado: ${produto.nome}`, "success");
       // toast.success('Produto criado com sucesso!') // desativado para exibir apenas o modal de sucesso
       return data;
     } catch (error) {
@@ -333,6 +344,7 @@ export const useProdutos = () => {
 
       if (error) throw error;
       
+      logPainel(`Produto atualizado`, "success");
       // toast.success('Produto atualizado com sucesso!') // desativado para exibir apenas o modal de sucesso
       return data;
     } catch (error) {
@@ -354,6 +366,7 @@ export const useProdutos = () => {
 
       if (error) throw error;
 
+      logPainel(`Produto excluído`, "warning");
       // toast.success('Produto excluído com sucesso!') // desativado para exibir apenas o modal de sucesso
     } catch (error) {
       console.error('Erro ao excluir produto:', error);
@@ -429,6 +442,7 @@ export const useTemplatesCobranca = () => {
 
       if (error) throw error;
 
+      logPainel(`Template cobrança criado: ${template.nome}`, "success");
       toast.success('Template criado com sucesso!');
       return data;
     } catch (error) {
@@ -449,6 +463,7 @@ export const useTemplatesCobranca = () => {
 
       if (error) throw error;
 
+      logPainel(`Template cobrança atualizado`, "success");
       toast.success('Template atualizado com sucesso!');
       return data;
     } catch (error) {

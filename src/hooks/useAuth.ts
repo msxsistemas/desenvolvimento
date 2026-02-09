@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { logPainel, logSistema } from "@/utils/logger";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -21,6 +22,10 @@ export function useAuth() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
+      if (_event === 'SIGNED_IN') {
+        logPainel("Login realizado", "success");
+        logSistema("auth", "Usuário logou no sistema", "success");
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -36,6 +41,7 @@ export function useAuth() {
           variant: "destructive",
         });
       } else {
+        logPainel("Logout realizado", "info");
         toast({
           title: "Logout realizado",
           description: "Você foi desconectado com sucesso.",
