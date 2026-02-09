@@ -131,7 +131,7 @@ export function AppSidebar() {
     { to: "/produtos", label: "Gerenciar" },
   ];
   const financeiroSubItems = [
-    { to: "/financeiro", label: "Visão Geral" },
+    { to: "/financeiro", label: "Geral" },
     { to: "/financeiro/nova-transacao", label: "Nova Transação" },
   ];
   const whatsappSubItems = [
