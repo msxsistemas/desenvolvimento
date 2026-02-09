@@ -414,7 +414,7 @@ export default function ClientesIntegracoes() {
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar provedor..."
+                placeholder=""
                 className="pl-10"
               />
             </div>
