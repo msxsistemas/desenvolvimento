@@ -11,9 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+
 import { Progress } from "@/components/ui/progress";
-import { Send, Loader2, Upload, X, Image, FileText, AlertTriangle, CheckCircle2, WifiOff } from "lucide-react";
+import { Send, Loader2, Upload, X, Image, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -301,28 +301,7 @@ export default function EnviosEmMassa() {
           <h1 className="text-xl font-semibold text-foreground">Envios em Massa</h1>
           <p className="text-sm text-muted-foreground">Envie mensagens para múltiplos clientes</p>
         </div>
-        <div className="flex items-center gap-2">
-          {isConnected ? (
-            <Badge variant="outline" className="border-success/50 bg-success/10 text-success gap-1">
-              <CheckCircle2 className="h-3 w-3" />
-              WhatsApp Conectado
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="border-destructive/50 bg-destructive/10 text-destructive gap-1">
-              <WifiOff className="h-3 w-3" />
-              WhatsApp Desconectado
-            </Badge>
-          )}
-        </div>
       </header>
-
-      {/* Connection Warning */}
-      {!isConnected && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-          <span>WhatsApp não está conectado. Vá em <strong>WhatsApp → Parear WhatsApp</strong> para conectar antes de enviar mensagens.</span>
-        </div>
-      )}
 
       {/* Progress */}
       {showProgress && (
