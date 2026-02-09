@@ -195,20 +195,22 @@ serve(async (req) => {
       const loginHtml2 = await loginPageResp2.text();
       const cookies = loginPageResp2.headers.get('set-cookie') || '';
       
-      // Extract CSRF token
+      // Extract CSRF token from multiple sources
       const csrfMatch2 = loginHtml2.match(/name=["']csrf_token["']\s+value=["'](.*?)["']/);
       const csrf2 = csrfMatch2 ? csrfMatch2[1] : null;
-      // Also try Laravel-style _token
+      // Laravel-style _token hidden input
       const laravelCsrf = loginHtml2.match(/name=["']_token["']\s+value=["'](.*?)["']/);
-      const csrfToken = csrf2 || (laravelCsrf ? laravelCsrf[1] : null);
+      // Laravel meta tag: <meta name="csrf-token" content="...">
+      const metaCsrf = loginHtml2.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
+      const csrfToken = csrf2 || (laravelCsrf ? laravelCsrf[1] : null) || (metaCsrf ? metaCsrf[1] : null);
       console.log(`🔑 CSRF token extraído: ${csrfToken ? csrfToken.slice(0, 20) + '...' : 'não encontrado'}`);
       console.log(`🍪 Cookies: ${cookies.slice(0, 200)}`);
 
       // Step 2: POST form-encoded login
       const formBody = new URLSearchParams();
-      formBody.append('try_login', '1');
+      if (!isMundogf) formBody.append('try_login', '1');
       if (csrfToken) {
-        formBody.append('csrf_token', csrfToken);
+        if (!isMundogf) formBody.append('csrf_token', csrfToken);
         formBody.append('_token', csrfToken);
       }
       formBody.append('username', username);
@@ -220,9 +222,13 @@ serve(async (req) => {
         'Accept': 'text/html,application/xhtml+xml,application/json',
         'Origin': cleanBase,
         'Referer': `${cleanBase}/login`,
-        'X-Requested-With': 'XMLHttpRequest',
         ...hdrs,
       };
+      // Extract XSRF-TOKEN from cookies for Laravel X-XSRF-TOKEN header
+      const xsrfMatch = cookies.match(/XSRF-TOKEN=([^;]+)/);
+      if (xsrfMatch) {
+        formHeaders['X-XSRF-TOKEN'] = decodeURIComponent(xsrfMatch[1]);
+      }
       // Collect session cookies
       let sessionCookies = '';
       if (cookies) {
@@ -256,10 +262,13 @@ serve(async (req) => {
       // Success indicators: redirect to dashboard/home OR 200 with dashboard content
       const locationLower = formLocation.toLowerCase();
       const isRedirectToApp = locationLower.includes('dashboard') || locationLower.includes('/home') || locationLower.includes('/admin') || locationLower.includes('/panel');
-      const isRedirectToLogin = !formLocation || locationLower === './' || locationLower === '.' || locationLower.includes('/login') || locationLower === '/';
+      // For MundoGF, redirect to '/' means success (it's the dashboard)
+      const isRedirectToRoot = isMundogf && locationLower === '/';
+      const isRedirectToLogin = !formLocation || locationLower === './' || locationLower === '.' || locationLower.includes('/login');
+      const isRedirectToLoginOnly = isRedirectToLogin && !isRedirectToRoot;
       
       const isFormLoginSuccess = (
-        (formStatus === 302 || formStatus === 301) && !isRedirectToLogin
+        (formStatus === 302 || formStatus === 301) && !isRedirectToLoginOnly
       ) || (
         formStatus === 200 && !formText.includes('form-login') && !formText.includes('login_error') && !formText.includes('Invalid')
       );
@@ -322,7 +331,7 @@ serve(async (req) => {
         }
 
         // Even without verify, if redirect was to dashboard, consider success
-        if (isRedirectToApp) {
+        if (isRedirectToApp || isRedirectToRoot) {
           console.log(`✅ Login via formulário bem-sucedido (redirect para dashboard)!`);
           return new Response(JSON.stringify({
             success: true,
