@@ -258,7 +258,7 @@ export function AppSidebar() {
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none">
-                      <NavLink to={item.to} end>
+                      <NavLink to={item.to} end onClick={() => setOpenSubmenu(null)}>
                         <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
                           isActive(item.to) && openSubmenu === null
                             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium"
