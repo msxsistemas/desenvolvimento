@@ -130,6 +130,11 @@ export default function ClientesCadastro() {
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
+      const firstErrorField = Object.keys(errors)[0];
+      setTimeout(() => {
+        const el = document.querySelector(`[data-field="${firstErrorField}"]`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
       return;
     }
     setFieldErrors({});
@@ -271,7 +276,7 @@ export default function ClientesCadastro() {
             <SectionHeader icon={User} title="Dados Pessoais" color="text-primary" />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-2">
+              <div className="space-y-2" data-field="nome">
                 <Label className="text-sm font-medium">Nome <span className="text-destructive">*</span></Label>
                 <Input 
                   placeholder="Nome completo do cliente" 
@@ -336,7 +341,7 @@ export default function ClientesCadastro() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2" data-field="plano">
                 <Label className="text-sm font-medium">Plano <span className="text-destructive">*</span></Label>
                 <Select 
                   value={form.watch("plano")} 
@@ -384,7 +389,7 @@ export default function ClientesCadastro() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2" data-field="dataVenc">
                 <Label className="text-sm font-medium">Data de Vencimento <span className="text-destructive">*</span></Label>
                 <Input 
                   type="date"
