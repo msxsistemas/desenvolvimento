@@ -199,8 +199,10 @@ export default function ClientesEditar() {
 
     const errors: Record<string, string> = {};
     if (!data.nome || data.nome.trim() === '') errors.nome = "Campo obrigatório";
-    if (!data.dataVenc) errors.dataVenc = "Campo obrigatório";
+    if (!data.whatsapp || data.whatsapp.trim() === '') errors.whatsapp = "Campo obrigatório";
+    if (!data.produto) errors.produto = "Campo obrigatório";
     if (!data.plano) errors.plano = "Campo obrigatório";
+    if (!data.dataVenc) errors.dataVenc = "Campo obrigatório";
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -329,7 +331,7 @@ export default function ClientesEditar() {
                 {fieldErrors.nome && <span className="text-xs text-destructive">{fieldErrors.nome}</span>}
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-2" data-field="whatsapp">
                 <Label className="text-sm font-medium">WhatsApp <span className="text-destructive">*</span></Label>
                 <div className="flex">
                   <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-border bg-muted text-muted-foreground text-sm">
@@ -337,7 +339,7 @@ export default function ClientesEditar() {
                   </span>
                   <Input 
                     placeholder="11999999999" 
-                    className="bg-background border-border rounded-l-none"
+                    className={`bg-background border-border rounded-l-none ${fieldErrors.whatsapp ? 'border-destructive' : ''}`}
                     {...form.register("whatsapp")}
                     onChange={(e) => {
                       let value = e.target.value.replace(/\D/g, '');
@@ -345,9 +347,11 @@ export default function ClientesEditar() {
                         value = value.substring(2);
                       }
                       form.setValue("whatsapp", value);
+                      setFieldErrors(prev => ({ ...prev, whatsapp: '' }));
                     }}
                   />
                 </div>
+                {fieldErrors.whatsapp && <span className="text-xs text-destructive">{fieldErrors.whatsapp}</span>}
               </div>
 
               <div className="space-y-2">
@@ -364,14 +368,14 @@ export default function ClientesEditar() {
             <SectionHeader icon={Package} title="Plano e Produto" color="text-primary" />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-2">
+              <div className="space-y-2" data-field="produto">
                 <Label className="text-sm font-medium">Produto <span className="text-destructive">*</span></Label>
                 <Select 
                   value={form.watch("produto")} 
-                  onValueChange={(v) => form.setValue("produto", v)} 
+                  onValueChange={(v) => { form.setValue("produto", v); setFieldErrors(prev => ({ ...prev, produto: '' })); }} 
                   disabled={loadingData}
                 >
-                  <SelectTrigger className="bg-background border-border">
+                  <SelectTrigger className={`bg-background border-border ${fieldErrors.produto ? 'border-destructive' : ''}`}>
                     <SelectValue placeholder="Selecione um produto" />
                   </SelectTrigger>
                   <SelectContent>
@@ -382,6 +386,7 @@ export default function ClientesEditar() {
                     ))}
                   </SelectContent>
                 </Select>
+                {fieldErrors.produto && <span className="text-xs text-destructive">{fieldErrors.produto}</span>}
               </div>
 
               <div className="space-y-2" data-field="plano">
