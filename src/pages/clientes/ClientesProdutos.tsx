@@ -396,10 +396,10 @@ export default function ClientesProdutos() {
           </TableHeader>
           <TableBody>
             {filteredProdutos.length ? (
-              filteredProdutos.map((p) => (
+              filteredProdutos.map((p, index) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {p.id?.slice(0, 8)}
+                    {index + 1}
                   </TableCell>
                   <TableCell className="font-medium">{p.nome}</TableCell>
                   <TableCell>

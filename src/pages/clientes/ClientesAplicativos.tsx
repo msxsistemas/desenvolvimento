@@ -253,10 +253,10 @@ export default function ClientesAplicativos() {
           </TableHeader>
           <TableBody>
             {filteredApps.length ? (
-              filteredApps.map((a) => (
+              filteredApps.map((a, index) => (
                 <TableRow key={a.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {a.id?.slice(0, 8)}
+                    {index + 1}
                   </TableCell>
                   <TableCell className="font-medium">{a.nome}</TableCell>
                   <TableCell className="text-muted-foreground">{a.descricao || "-"}</TableCell>

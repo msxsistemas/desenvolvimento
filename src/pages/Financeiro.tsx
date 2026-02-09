@@ -406,10 +406,10 @@ export default function Financeiro() {
                 </TableCell>
               </TableRow>
             ) : (
-              transacoesFiltradas.map((r) => (
+              transacoesFiltradas.map((r, index) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {r.id.split('-')[1]?.substring(0, 8) || r.id.substring(0, 8)}
+                    {index + 1}
                   </TableCell>
                   <TableCell>
                     <div className="space-y-0.5">
