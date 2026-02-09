@@ -258,7 +258,7 @@ export function AppSidebar() {
                           <item.icon className="h-5 w-5" />
                           {!isCollapsed && <span className="text-[14px]">{item.label}</span>}
                         </div>
-                        {!isCollapsed && item.to !== "/" && <ChevronRight className="h-4 w-4 opacity-50" />}
+                        {!isCollapsed && <ChevronDown className="h-4 w-4 opacity-50" />}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
