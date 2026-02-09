@@ -256,9 +256,8 @@ export function AppSidebar() {
                       <NavLink to={item.to} end className={menuItemClass(isActive(item.to))}>
                         <div className="flex items-center gap-3">
                           <item.icon className="h-5 w-5" />
-                          {!isCollapsed && <span className="text-[14px]">{item.label}</span>}
+                          {!isCollapsed && <span className="text-[14px] font-medium">{item.label}</span>}
                         </div>
-                        {!isCollapsed && item.to !== "/" && <ChevronRight className="h-4 w-4 opacity-50" />}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
