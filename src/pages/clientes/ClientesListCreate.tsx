@@ -1260,6 +1260,7 @@ export default function ClientesListCreate() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableHead className="w-16 font-medium">ID:</TableHead>
               <TableHead className="font-medium">Nome do Cliente:</TableHead>
               <TableHead className="font-medium">Usuário:</TableHead>
               <TableHead className="font-medium">Vencimento:</TableHead>
@@ -1272,20 +1273,20 @@ export default function ClientesListCreate() {
           <TableBody>
             {loadingClientes ? (
               <TableRow>
-               <TableCell colSpan={7} className="text-center py-8">
+               <TableCell colSpan={8} className="text-center py-8">
                   <span className="text-muted-foreground">Carregando clientes...</span>
                 </TableCell>
               </TableRow>
             ) : clientesFiltrados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   <span className="text-muted-foreground">Nenhum cliente encontrado</span>
                 </TableCell>
               </TableRow>
             ) : (
               clientesFiltrados
                 .filter(cliente => cliente && cliente.id)
-                .map((cliente) => {
+                .map((cliente, index) => {
                   const { status } = getClienteStatus(cliente);
                   const formattedPhone = cliente.whatsapp ? `+${cliente.whatsapp}` : '-';
                   return (
@@ -1294,6 +1295,9 @@ export default function ClientesListCreate() {
                       className="cursor-pointer hover:bg-muted/20"
                       onClick={() => handleEditCliente(cliente)}
                     >
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {clientesFiltrados.filter(c => c && c.id).length - index}
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">{cliente.nome.split(' ').slice(0, 2).join(' ')}</span>
