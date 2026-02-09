@@ -80,13 +80,13 @@ export function AppSidebar() {
     `flex items-center justify-between w-full px-5 py-3 transition-all border-0 rounded-none ${
       active 
         ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium" 
-        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+        : "text-muted-foreground hover:text-primary hover:bg-primary/10"
     }`;
 
   // Estilo para subitens ativos
   const subItemClass = (active: boolean) =>
     `flex items-center gap-2 py-1 text-[13px] transition-colors ${
-      active ? "text-primary font-medium" : "text-muted-foreground hover:text-foreground"
+      active ? "text-primary font-medium" : "text-muted-foreground hover:text-primary"
     }`;
 
   const subItemDotClass = (active: boolean) =>
@@ -174,7 +174,7 @@ export function AppSidebar() {
     <SidebarMenuItem key={item.to}>
       <SidebarMenuButton
         onClick={() => toggleSubmenu(menuKey)}
-        className={`${menuItemClass(sectionActive)} hover:bg-accent/50`}
+        className={`${menuItemClass(sectionActive)}`}
       >
         <div className="flex items-center gap-3">
           <item.icon className="h-5 w-5" />
@@ -225,7 +225,7 @@ export function AppSidebar() {
                         <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
                           whatsappActive 
                             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium" 
-                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                            : "text-muted-foreground hover:text-primary hover:bg-primary/10"
                         }`}>
                           <div className="flex items-center gap-3">
                             <Phone className="h-5 w-5" />
