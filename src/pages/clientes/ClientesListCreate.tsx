@@ -1263,6 +1263,7 @@ export default function ClientesListCreate() {
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableHead className="font-medium">Nome do Cliente:</TableHead>
+              <TableHead className="font-medium">Usuário:</TableHead>
               <TableHead className="font-medium">Vencimento:</TableHead>
               <TableHead className="font-medium">Status:</TableHead>
               <TableHead className="font-medium">Plano:</TableHead>
@@ -1273,13 +1274,13 @@ export default function ClientesListCreate() {
           <TableBody>
             {loadingClientes ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+               <TableCell colSpan={7} className="text-center py-8">
                   <span className="text-muted-foreground">Carregando clientes...</span>
                 </TableCell>
               </TableRow>
             ) : clientesFiltrados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <span className="text-muted-foreground">Nenhum cliente encontrado</span>
                 </TableCell>
               </TableRow>
@@ -1310,6 +1311,9 @@ export default function ClientesListCreate() {
                             <span className="text-xs text-muted-foreground">{formattedPhone}</span>
                           </div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">{cliente.usuario || '-'}</span>
                       </TableCell>
                       <TableCell>
                         {cliente.data_vencimento 
