@@ -252,7 +252,7 @@ export function AppSidebar() {
                 // Items normais
                 return (
                   <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
+                    <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent hover:text-primary rounded-none">
                       <NavLink to={item.to} end className={menuItemClass(isActive(item.to))}>
                         <div className="flex items-center gap-3">
                           <item.icon className="h-5 w-5" />
