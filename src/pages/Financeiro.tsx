@@ -10,9 +10,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { DollarSign, TrendingUp, TrendingDown, Pencil, Trash2, Eye, EyeOff, RefreshCw } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Pencil, Trash2, Eye, EyeOff, RefreshCw, Download } from "lucide-react";
 import { useFinanceiro } from "@/hooks/useFinanceiro";
 import { toast } from "sonner";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { exportToCSV, type ExportColumn } from "@/utils/csv-export";
 
 export default function Financeiro() {
   const hoje = new Date();
@@ -112,6 +116,33 @@ export default function Financeiro() {
     setTermoPesquisa("");
   };
 
+  // Paginação
+  const pagination = usePagination(transacoesFiltradas, { pageSize: 20 });
+
+  // Exportar transações
+  const exportColumns: ExportColumn<typeof transacoes[0]>[] = [
+    { key: 'data', header: 'Data' },
+    { key: 'tipo', header: 'Tipo', formatter: (v) => v === 'entrada' ? 'Entrada' : 'Saída' },
+    { key: 'valor', header: 'Valor', formatter: (v) => v.toFixed(2) },
+    { key: 'cliente', header: 'Descrição' },
+    { key: 'detalheTitulo', header: 'Detalhe' },
+    { key: 'detalheValor', header: 'Valor Detalhe' },
+  ];
+
+  const handleExport = () => {
+    if (transacoesFiltradas.length === 0) {
+      toast.error("Nenhuma transação para exportar");
+      return;
+    }
+    exportToCSV(transacoesFiltradas, exportColumns, 'financeiro');
+    toast.success(`${transacoesFiltradas.length} transações exportadas!`);
+  };
+
+  // Loading skeleton
+  if (loading && transacoes.length === 0) {
+    return <PageSkeleton variant="table" rows={8} columns={5} />;
+  }
+
   // Funções do modal
   const abrirModalNovo = () => {
     setModoEdicao(false);
@@ -210,12 +241,12 @@ export default function Financeiro() {
   return (
     <main className="space-y-4">
       {/* Header */}
-      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-lg bg-card border border-border">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Financeiro</h1>
           <p className="text-sm text-muted-foreground">Visão geral de lucros, entradas e saídas</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
             size="icon"
@@ -223,6 +254,16 @@ export default function Financeiro() {
             title={mostrarValores ? "Ocultar valores" : "Mostrar valores"}
           >
             {mostrarValores ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={transacoesFiltradas.length === 0}
+            title="Exportar CSV"
+          >
+            <Download className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Exportar</span>
           </Button>
           <Button onClick={abrirModalNovo} className="bg-primary hover:bg-primary/90">
             Nova Transação +
@@ -365,10 +406,6 @@ export default function Financeiro() {
         </div>
       </div>
 
-      {/* Record count */}
-      <div className="text-right text-sm text-muted-foreground">
-        Mostrando {transacoesFiltradas.length} de {transacoes.length} transações.
-      </div>
 
       {/* Tabela */}
       <div className="rounded-lg border border-border bg-card">
@@ -406,7 +443,7 @@ export default function Financeiro() {
                 </TableCell>
               </TableRow>
             ) : (
-              transacoesFiltradas.map((r) => (
+              pagination.data.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {r.id.split('-')[1]?.substring(0, 8) || r.id.substring(0, 8)}
@@ -471,6 +508,22 @@ export default function Financeiro() {
             )}
           </TableBody>
         </Table>
+        
+        {/* Paginação */}
+        {transacoesFiltradas.length > 0 && (
+          <PaginationControls
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            startIndex={pagination.startIndex}
+            endIndex={pagination.endIndex}
+            pageSize={pagination.pageSize}
+            hasNextPage={pagination.hasNextPage}
+            hasPrevPage={pagination.hasPrevPage}
+            onPageChange={pagination.goToPage}
+            onPageSizeChange={pagination.setPageSize}
+          />
+        )}
       </div>
 
       {/* Modal de Edição/Criação */}

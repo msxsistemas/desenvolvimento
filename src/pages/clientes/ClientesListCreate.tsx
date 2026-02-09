@@ -1,12 +1,13 @@
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useClientes, usePlanos, useProdutos, useAplicativos, useTemplatesCobranca } from "@/hooks/useDatabase";
 import { useEvolutionAPI } from "@/hooks/useEvolutionAPI";
+import { usePagination } from "@/hooks/usePagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash, Plus, Send, RefreshCw, Power, Copy, Bell, Loader2 } from "lucide-react";
+import { Edit, Trash, Plus, Send, RefreshCw, Power, Copy, Bell, Loader2, Download, Upload } from "lucide-react";
 import { format } from "date-fns";
 import type { Cliente } from "@/types/database";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,11 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/lib/supabase";
 import { Textarea } from "@/components/ui/textarea";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { ImportExportButtons } from "@/components/data/ImportExportButtons";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { exportToCSV, type ExportColumn } from "@/utils/csv-export";
+import { toast as sonnerToast } from "sonner";
 
 
 export default function ClientesListCreate() {
@@ -1096,20 +1102,111 @@ export default function ClientesListCreate() {
     }
   });
 
+  // Configuração de export/import
+  const exportColumns: ExportColumn<Cliente>[] = [
+    { key: 'nome', header: 'Nome' },
+    { key: 'whatsapp', header: 'WhatsApp' },
+    { key: 'email', header: 'Email' },
+    { key: 'data_vencimento', header: 'Vencimento', formatter: (v) => v ? format(new Date(v), 'dd/MM/yyyy') : '' },
+    { key: 'plano', header: 'Plano ID' },
+    { key: 'produto', header: 'Produto ID' },
+    { key: 'usuario', header: 'Usuário' },
+    { key: 'senha', header: 'Senha' },
+    { key: 'telas', header: 'Telas' },
+    { key: 'mac', header: 'MAC' },
+    { key: 'dispositivo', header: 'Dispositivo' },
+    { key: 'indicador', header: 'Captação' },
+    { key: 'observacao', header: 'Observação' },
+  ];
+
+  const importColumnMap: Record<string, keyof Cliente> = {
+    'Nome': 'nome',
+    'WhatsApp': 'whatsapp',
+    'Email': 'email',
+    'Vencimento': 'data_vencimento',
+    'Plano ID': 'plano',
+    'Produto ID': 'produto',
+    'Usuário': 'usuario',
+    'Senha': 'senha',
+    'Telas': 'telas',
+    'MAC': 'mac',
+    'Dispositivo': 'dispositivo',
+    'Captação': 'indicador',
+    'Observação': 'observacao',
+  };
+
+  const handleImport = async (data: Partial<Cliente>[]) => {
+    let importados = 0;
+    for (const row of data) {
+      try {
+        if (row.nome && row.whatsapp) {
+          await criar({
+            nome: row.nome,
+            whatsapp: row.whatsapp,
+            email: row.email || null,
+            data_vencimento: row.data_vencimento || null,
+            plano: row.plano || null,
+            produto: row.produto || null,
+            usuario: row.usuario || null,
+            senha: row.senha || null,
+            telas: row.telas || 1,
+            mac: row.mac || null,
+            dispositivo: row.dispositivo || null,
+            indicador: row.indicador || null,
+            observacao: row.observacao || null,
+            fixo: false,
+            app: null,
+            data_venc_app: null,
+            fatura: 'Pago',
+            key: null,
+            mensagem: null,
+            lembretes: false,
+            desconto: '0,00',
+            desconto_recorrente: false,
+            aniversario: null,
+          } as any);
+          importados++;
+        }
+      } catch (err) {
+        console.error('Erro ao importar registro:', err);
+      }
+    }
+    await carregarClientes();
+    sonnerToast.success(`${importados} clientes importados com sucesso!`);
+  };
+
+  // Paginação dos clientes filtrados
+  const pagination = usePagination(clientesFiltrados, { pageSize: 20 });
+
+  // Loading skeleton
+  if (loadingClientes && clientes.length === 0) {
+    return <PageSkeleton variant="table" rows={10} columns={6} />;
+  }
+
   return (
     <div className="space-y-6">
       {/* Cabeçalho */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Meus Clientes</h1>
           <p className="text-sm text-muted-foreground">Lista com todos os seus clientes</p>
         </div>
-        <Button 
-          onClick={() => navigate("/clientes/cadastro")}
-          className="bg-pink-600 hover:bg-pink-700 text-white"
-        >
-          Adicionar Cliente +
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <ImportExportButtons
+            data={clientesFiltrados}
+            exportColumns={exportColumns}
+            importColumnMap={importColumnMap}
+            filename="clientes"
+            onImport={handleImport}
+            disabled={loadingClientes}
+          />
+          <Button 
+            onClick={() => navigate("/clientes/cadastro")}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Adicionar Cliente +
+          </Button>
+        </div>
       </div>
 
       {/* Seção de Filtros */}
@@ -1252,12 +1349,6 @@ export default function ClientesListCreate() {
         </div>
       )}
 
-      {/* Info de registros */}
-      <div className="flex justify-end">
-        <span className="text-sm text-muted-foreground">
-          Mostrando {clientesFiltrados.length} de {clientes.length} registros.
-        </span>
-      </div>
 
       {/* Tabela */}
       <div className="rounded-lg border border-border/50 overflow-hidden">
@@ -1286,7 +1377,7 @@ export default function ClientesListCreate() {
                 </TableCell>
               </TableRow>
             ) : (
-              clientesFiltrados
+              pagination.data
                 .filter(cliente => cliente && cliente.id)
                 .map((cliente) => {
                   const { status } = getClienteStatus(cliente);
@@ -1429,6 +1520,22 @@ export default function ClientesListCreate() {
             )}
           </TableBody>
         </Table>
+        
+        {/* Paginação */}
+        {clientesFiltrados.length > 0 && (
+          <PaginationControls
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            startIndex={pagination.startIndex}
+            endIndex={pagination.endIndex}
+            pageSize={pagination.pageSize}
+            hasNextPage={pagination.hasNextPage}
+            hasPrevPage={pagination.hasPrevPage}
+            onPageChange={pagination.goToPage}
+            onPageSizeChange={pagination.setPageSize}
+          />
+        )}
       </div>
 
       {/* Dialog de Criar/Editar Cliente */}
