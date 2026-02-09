@@ -17,7 +17,7 @@ export default function FinanceiroNovaTransacao() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     valor: "",
-    tipo: "entrada" as "entrada" | "saida",
+    tipo: "" as "" | "entrada" | "saida",
     descricao: "",
   });
 
@@ -30,6 +30,7 @@ export default function FinanceiroNovaTransacao() {
 
     const errors: Record<string, string> = {};
     if (!formData.valor.trim()) errors.valor = "Campo obrigatório";
+    if (!formData.tipo) errors.tipo = "Campo obrigatório";
     if (!formData.descricao.trim()) errors.descricao = "Campo obrigatório";
 
     if (Object.keys(errors).length > 0) {
@@ -56,7 +57,7 @@ export default function FinanceiroNovaTransacao() {
 
       await salvarTransacao({
         valor,
-        tipo: formData.tipo,
+        tipo: formData.tipo as "entrada" | "saida",
         descricao: formData.descricao,
       });
 
@@ -92,20 +93,21 @@ export default function FinanceiroNovaTransacao() {
                 {fieldErrors.valor && <span className="text-xs text-destructive">{fieldErrors.valor}</span>}
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2" data-field="tipo">
                 <Label className="text-sm font-medium">Tipo <span className="text-destructive">*</span></Label>
                 <Select
                   value={formData.tipo}
-                  onValueChange={(value: "entrada" | "saida") => setFormData(prev => ({ ...prev, tipo: value }))}
+                  onValueChange={(value: "entrada" | "saida") => { setFormData(prev => ({ ...prev, tipo: value })); setFieldErrors(prev => ({ ...prev, tipo: '' })); }}
                 >
-                  <SelectTrigger className="bg-background border-border">
-                    <SelectValue />
+                  <SelectTrigger className={`bg-background border-border ${fieldErrors.tipo ? 'border-destructive' : ''}`}>
+                    <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="entrada">Entrada</SelectItem>
                     <SelectItem value="saida">Saída</SelectItem>
                   </SelectContent>
                 </Select>
+                {fieldErrors.tipo && <span className="text-xs text-destructive">{fieldErrors.tipo}</span>}
               </div>
 
               <div className="space-y-2 md:col-span-2" data-field="descricao">
