@@ -189,16 +189,16 @@ export default function Relatorios() {
                   </h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-emerald-500">Vendas:</span>
-                      <span className="text-emerald-500">{formatarValor(mes.vendas)}</span>
+                      <span className="text-success">Vendas:</span>
+                      <span className="text-success">{formatarValor(mes.vendas)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Custos Servidor:</span>
                       <span className="text-muted-foreground">{formatarValor(mes.custosServidor)}</span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-border mt-2">
-                      <span className="text-cyan-500 font-medium">Saldo Líquido:</span>
-                      <span className="text-cyan-500 font-medium">{formatarValor(mes.saldoLiquido)}</span>
+                      <span className="text-primary font-medium">Saldo Líquido:</span>
+                      <span className="text-primary font-medium">{formatarValor(mes.saldoLiquido)}</span>
                     </div>
                   </div>
                 </CardContent>

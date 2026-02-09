@@ -298,7 +298,7 @@ export default function ClientesProdutos() {
               />
             </div>
 
-            <div className="flex items-center gap-2 text-amber-500 text-sm">
+            <div className="flex items-center gap-2 text-warning text-sm">
               <AlertTriangle className="h-4 w-4" />
               <span>Nenhum painel IPTV configurado</span>
             </div>
@@ -412,8 +412,8 @@ export default function ClientesProdutos() {
                     <Badge 
                       variant="outline" 
                       className={(p as any).ativo !== false 
-                        ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-500" 
-                        : "border-amber-500/50 bg-amber-500/10 text-amber-500"
+                        ? "border-success/50 bg-success/10 text-success" 
+                        : "border-warning/50 bg-warning/10 text-warning"
                       }
                     >
                       {(p as any).ativo !== false ? "Ativo" : "Inativo"}
@@ -434,8 +434,8 @@ export default function ClientesProdutos() {
                         size="icon"
                         onClick={() => handleToggleAtivo(p)}
                         className={`h-8 w-8 ${(p as any).ativo !== false 
-                          ? "text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10" 
-                          : "text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10"
+                          ? "text-muted-foreground hover:text-warning hover:bg-warning/10" 
+                          : "text-muted-foreground hover:text-success hover:bg-success/10"
                         }`}
                         title={(p as any).ativo !== false ? "Desativar" : "Ativar"}
                       >
@@ -502,8 +502,8 @@ export default function ClientesProdutos() {
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
         <DialogContent className="sm:max-w-sm text-center">
           <div className="flex flex-col items-center space-y-4 py-4">
-            <div className="w-12 h-12 rounded-full border-2 border-green-500 flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 rounded-full border-2 border-success flex items-center justify-center">
+              <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -525,7 +525,7 @@ export default function ClientesProdutos() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmarDesativar} className="bg-amber-600 hover:bg-amber-700">
+            <AlertDialogAction onClick={confirmarDesativar} className="bg-warning hover:bg-warning/90 text-warning-foreground">
               Desativar
             </AlertDialogAction>
           </AlertDialogFooter>

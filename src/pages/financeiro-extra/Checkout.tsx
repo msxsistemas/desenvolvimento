@@ -179,8 +179,8 @@ export default function Checkout() {
               </div>
               
               {!asaasConfigured && (
-                <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-950/20 rounded-md border border-orange-200 dark:border-orange-800">
-                  <p className="text-sm text-orange-800 dark:text-orange-200">
+                <div className="mt-3 p-3 bg-warning/10 rounded-md border border-warning/20">
+                  <p className="text-sm text-warning">
                     Configure o Asaas primeiro para habilitar pagamentos PIX.{" "}
                     <a href="/financeiro-extra/assas" className="underline font-medium">
                       Configurar Asaas
@@ -190,8 +190,8 @@ export default function Checkout() {
               )}
               
               {asaasConfigured && pixEnabled && (
-                <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200 dark:border-green-800">
-                  <p className="text-sm text-green-800 dark:text-green-200">
+                <div className="mt-3 p-3 bg-success/10 rounded-md border border-success/20">
+                  <p className="text-sm text-success">
                     ✅ Asaas ativo como provedor PIX
                   </p>
                 </div>

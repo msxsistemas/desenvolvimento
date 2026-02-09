@@ -234,8 +234,8 @@ export default function Financeiro() {
       <section className="grid gap-4 grid-cols-1 md:grid-cols-3">
         <Card className="bg-card border-border">
           <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-full bg-emerald-500/20 p-2.5">
-              <DollarSign className="h-4 w-4 text-emerald-500" />
+            <div className="rounded-full bg-success/20 p-2.5">
+              <DollarSign className="h-4 w-4 text-success" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Lucro</p>
@@ -276,8 +276,8 @@ export default function Financeiro() {
 
         <Card className="bg-card border-border">
           <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-full bg-blue-500/20 p-2.5">
-              <DollarSign className="h-4 w-4 text-blue-500" />
+            <div className="rounded-full bg-primary/20 p-2.5">
+              <DollarSign className="h-4 w-4 text-primary" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Proj. Semanal</p>
@@ -290,8 +290,8 @@ export default function Financeiro() {
 
         <Card className="bg-card border-border">
           <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-full bg-blue-500/20 p-2.5">
-              <DollarSign className="h-4 w-4 text-blue-500" />
+            <div className="rounded-full bg-primary/20 p-2.5">
+              <DollarSign className="h-4 w-4 text-primary" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Proj. Mensal</p>
@@ -304,8 +304,8 @@ export default function Financeiro() {
 
         <Card className="bg-card border-border">
           <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-full bg-blue-500/20 p-2.5">
-              <DollarSign className="h-4 w-4 text-blue-500" />
+            <div className="rounded-full bg-primary/20 p-2.5">
+              <DollarSign className="h-4 w-4 text-primary" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Proj. Anual</p>
@@ -423,7 +423,7 @@ export default function Financeiro() {
                     <Badge
                       variant="outline"
                       className={r.tipo === "entrada" 
-                        ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-500" 
+                        ? "border-success/50 bg-success/10 text-success" 
                         : "border-destructive/50 bg-destructive/10 text-destructive"
                       }
                     >
@@ -434,7 +434,7 @@ export default function Financeiro() {
                     <Badge 
                       variant="secondary" 
                       className={r.tipo === "entrada" 
-                        ? "bg-emerald-500/10 text-emerald-500" 
+                        ? "bg-success/10 text-success" 
                         : "bg-destructive/10 text-destructive"
                       }
                     >

@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Home, Plus, Edit, Trash2, Play, Pause } from "lucide-react";
+import { Plus, Trash2, Play, Pause } from "lucide-react";
 import { toast } from "sonner";
 
 interface Campanha {
@@ -45,7 +45,6 @@ export default function GerenciarCampanhas() {
 
   useEffect(() => {
     document.title = "Gerenciar Campanhas | Tech Play";
-    // Load sample data
     setCampanhas([
       {
         id: "1",
@@ -111,92 +110,87 @@ export default function GerenciarCampanhas() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "ativa":
-        return <Badge className="bg-green-600">Ativa</Badge>;
+        return <Badge className="bg-success text-success-foreground">Ativa</Badge>;
       case "pausada":
-        return <Badge className="bg-yellow-600">Pausada</Badge>;
+        return <Badge className="bg-warning text-warning-foreground">Pausada</Badge>;
       case "finalizada":
-        return <Badge className="bg-gray-600">Finalizada</Badge>;
+        return <Badge variant="secondary">Finalizada</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
         <div>
-          <h1 className="text-2xl font-bold text-white">Bom Dia, Tech Play!</h1>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-            <Home className="h-4 w-4" />
-            <span>/</span>
-            <span className="text-purple-400">Gerenciar Campanhas</span>
-          </div>
+          <h1 className="text-xl font-semibold text-foreground">Gerenciar Campanhas</h1>
+          <p className="text-sm text-muted-foreground">Crie e gerencie campanhas de envio em massa</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-purple-600 hover:bg-purple-700">
+            <Button className="bg-primary hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-2" />
               Nova Campanha
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-[#1a1a2e] border-[#2a2a3c]">
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle className="text-white">Criar Nova Campanha</DialogTitle>
+              <DialogTitle>Criar Nova Campanha</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-white">Nome da Campanha</Label>
+                <Label>Nome da Campanha</Label>
                 <Input
                   value={novaCampanha.nome}
                   onChange={(e) => setNovaCampanha({ ...novaCampanha, nome: e.target.value })}
-                  className="bg-[#252538] border-[#3a3a4c]"
                   placeholder="Ex: Promoção de Verão"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-white">Mensagem</Label>
+                <Label>Mensagem</Label>
                 <Textarea
                   value={novaCampanha.mensagem}
                   onChange={(e) => setNovaCampanha({ ...novaCampanha, mensagem: e.target.value })}
-                  className="bg-[#252538] border-[#3a3a4c] min-h-[100px]"
+                  className="min-h-[100px]"
                   placeholder="Digite a mensagem da campanha..."
                 />
               </div>
-              <Button onClick={handleCriarCampanha} className="w-full bg-purple-600 hover:bg-purple-700">
+              <Button onClick={handleCriarCampanha} className="w-full">
                 Criar Campanha
               </Button>
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      </header>
 
       {/* Main Content */}
-      <Card className="bg-[#1a1a2e] border-[#2a2a3c]">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white">Suas Campanhas</CardTitle>
+          <CardTitle>Suas Campanhas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border border-[#2a2a3c]">
+          <div className="rounded-md border border-border">
             <Table>
               <TableHeader>
-                <TableRow className="border-b border-[#2a2a3c] hover:bg-transparent">
-                  <TableHead className="text-white">Nome</TableHead>
-                  <TableHead className="text-white">Status</TableHead>
-                  <TableHead className="text-white">Progresso</TableHead>
-                  <TableHead className="text-white">Criada em</TableHead>
-                  <TableHead className="text-white">Ações</TableHead>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Progresso</TableHead>
+                  <TableHead>Criada em</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {campanhas.map((campanha) => (
-                  <TableRow key={campanha.id} className="border-b border-[#2a2a3c] hover:bg-[#252538]">
-                    <TableCell className="text-white font-medium">{campanha.nome}</TableCell>
+                  <TableRow key={campanha.id}>
+                    <TableCell className="font-medium">{campanha.nome}</TableCell>
                     <TableCell>{getStatusBadge(campanha.status)}</TableCell>
-                    <TableCell className="text-white">
+                    <TableCell>
                       {campanha.enviadas}/{campanha.total} ({Math.round((campanha.enviadas / campanha.total) * 100)}%)
                     </TableCell>
-                    <TableCell className="text-white">{campanha.criada_em}</TableCell>
+                    <TableCell>{campanha.criada_em}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
@@ -207,15 +201,15 @@ export default function GerenciarCampanhas() {
                           disabled={campanha.status === "finalizada"}
                         >
                           {campanha.status === "ativa" ? (
-                            <Pause className="h-4 w-4 text-yellow-500" />
+                            <Pause className="h-4 w-4 text-warning" />
                           ) : (
-                            <Play className="h-4 w-4 text-green-500" />
+                            <Play className="h-4 w-4 text-success" />
                           )}
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-red-500 hover:text-red-400"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
                           onClick={() => handleDelete(campanha.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -229,6 +223,6 @@ export default function GerenciarCampanhas() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

@@ -165,7 +165,7 @@ export default function MensagensPadroes() {
             <Button 
               onClick={handleSalvar}
               disabled={loading}
-              className="bg-cyan-500 hover:bg-cyan-600 text-white"
+              className="bg-primary hover:bg-primary/90"
             >
               {loading ? "Salvando..." : "Salvar"}
             </Button>

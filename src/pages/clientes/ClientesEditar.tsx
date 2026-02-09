@@ -288,7 +288,7 @@ export default function ClientesEditar() {
           <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
             <Home className="h-4 w-4" />
             <span>/</span>
-            <span className="text-[hsl(var(--brand-2))]">Editar cliente</span>
+            <span className="text-primary">Editar cliente</span>
           </div>
         </div>
         <Card className="bg-card border border-border/30">
@@ -325,7 +325,7 @@ export default function ClientesEditar() {
           <form onSubmit={onSubmit} className="space-y-3">
             
             {/* Seção: Dados Pessoais */}
-            <SectionHeader icon={User} title="Dados Pessoais" color="text-cyan-400" />
+            <SectionHeader icon={User} title="Dados Pessoais" color="text-primary" />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -369,7 +369,7 @@ export default function ClientesEditar() {
             </div>
 
             {/* Seção: Plano e Produto */}
-            <SectionHeader icon={Package} title="Plano e Produto" color="text-cyan-400" />
+            <SectionHeader icon={Package} title="Plano e Produto" color="text-primary" />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -458,7 +458,7 @@ export default function ClientesEditar() {
             </div>
 
             {/* Seção: Credenciais de Acesso */}
-            <SectionHeader icon={Key} title="Credenciais de Acesso" color="text-cyan-400" />
+            <SectionHeader icon={Key} title="Credenciais de Acesso" color="text-primary" />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -511,7 +511,7 @@ export default function ClientesEditar() {
             <Collapsible className="mt-3 rounded-lg border border-border/50 overflow-hidden">
               <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/40 hover:bg-muted/50 transition-colors group">
                 <div className="flex items-center gap-2">
-                  <Key className="h-4 w-4 text-cyan-400" />
+                   <Key className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">Acessos Adicionais</span>
                   <span className="text-xs text-muted-foreground">(Opcional)</span>
                 </div>
@@ -522,8 +522,8 @@ export default function ClientesEditar() {
                 {acessosAdicionais.map((acesso, index) => (
                   <div key={index} className="space-y-4 pt-4 border-t border-border/30 first:border-t-0 first:pt-0">
                     <div className="flex items-center gap-2">
-                      <Key className="h-4 w-4 text-cyan-400" />
-                      <span className="text-sm font-medium text-cyan-400">Acesso {index + 2}</span>
+                      <Key className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium text-primary">Acesso {index + 2}</span>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -681,7 +681,7 @@ export default function ClientesEditar() {
             <Collapsible className="mt-3 rounded-lg border border-border/50 overflow-hidden">
               <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/40 hover:bg-muted/50 transition-colors group">
                 <div className="flex items-center gap-2">
-                  <Smartphone className="h-4 w-4 text-cyan-400" />
+                   <Smartphone className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">Aplicativos Adicionais</span>
                   <span className="text-xs text-muted-foreground">(Opcional)</span>
                 </div>
@@ -692,8 +692,8 @@ export default function ClientesEditar() {
                 {aplicativosAdicionais.map((appItem, index) => (
                   <div key={index} className="space-y-4 pt-4 border-t border-border/30 first:border-t-0 first:pt-0">
                     <div className="flex items-center gap-2">
-                      <Smartphone className="h-4 w-4 text-cyan-400" />
-                      <span className="text-sm font-medium text-cyan-400">Aplicativo {index + 2}</span>
+                      <Smartphone className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium text-primary">Aplicativo {index + 2}</span>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -792,7 +792,7 @@ export default function ClientesEditar() {
             </div>
 
             {/* Seção: Captação e Observações */}
-            <SectionHeader icon={Users} title="Captação e Observações" color="text-purple-400" />
+            <SectionHeader icon={Users} title="Captação e Observações" color="text-primary" />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">

@@ -29,34 +29,20 @@ export default function EvolutionAPIConfig({ onSave, onTest, currentConfig }: Ev
   }, [currentConfig]);
 
   const handleSave = async () => {
-    if (!apiUrl || !apiKey || !instanceName) {
-      return;
-    }
-
+    if (!apiUrl || !apiKey || !instanceName) return;
     setSaving(true);
     try {
-      await onSave({
-        apiUrl: apiUrl.replace(/\/$/, ''),
-        apiKey,
-        instanceName,
-      });
+      await onSave({ apiUrl: apiUrl.replace(/\/$/, ''), apiKey, instanceName });
     } finally {
       setSaving(false);
     }
   };
 
   const handleTest = async () => {
-    if (!apiUrl || !apiKey) {
-      return;
-    }
-
+    if (!apiUrl || !apiKey) return;
     setTesting(true);
     try {
-      await onTest({
-        apiUrl: apiUrl.replace(/\/$/, ''),
-        apiKey,
-        instanceName,
-      });
+      await onTest({ apiUrl: apiUrl.replace(/\/$/, ''), apiKey, instanceName });
     } finally {
       setTesting(false);
     }
@@ -68,7 +54,7 @@ export default function EvolutionAPIConfig({ onSave, onTest, currentConfig }: Ev
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5" />
           Configuração Evolution API
-          <Badge variant="secondary" className="bg-green-100 text-green-800">v2</Badge>
+          <Badge className="bg-success/10 text-success text-xs">v2</Badge>
         </CardTitle>
         <CardDescription>
           Configure sua Evolution API para conectar o WhatsApp
@@ -150,11 +136,11 @@ export default function EvolutionAPIConfig({ onSave, onTest, currentConfig }: Ev
           </Button>
         </div>
 
-        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg space-y-2">
-          <h4 className="font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
+        <div className="bg-primary/10 p-4 rounded-lg space-y-2">
+          <h4 className="font-semibold text-primary flex items-center gap-2">
             📚 Como obter a Evolution API
           </h4>
-          <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+          <ul className="text-sm text-primary/80 space-y-1">
             <li>1. Acesse a documentação oficial da Evolution API</li>
             <li>2. Faça o deploy da API em seu servidor (VPS, Docker, etc.)</li>
             <li>3. Configure o Global API Key no arquivo de configuração</li>
@@ -164,7 +150,7 @@ export default function EvolutionAPIConfig({ onSave, onTest, currentConfig }: Ev
             href="https://doc.evolution-api.com/" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline mt-2"
+            className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
           >
             <ExternalLink className="h-3 w-3" />
             Documentação Evolution API

@@ -18,15 +18,14 @@ export default function WhatsAppQRDisplay({
 }: WhatsAppQRDisplayProps) {
   const [countdown, setCountdown] = useState(0);
 
-  // Countdown para renovar QR Code automaticamente
   useEffect(() => {
     if (status === 'connecting' && qrCode) {
-      setCountdown(120); // 2 minutos
+      setCountdown(120);
       
       const interval = setInterval(() => {
         setCountdown(prev => {
           if (prev <= 1) {
-            onRefresh(); // Auto-refresh quando countdown chegar a 0
+            onRefresh();
             return 0;
           }
           return prev - 1;
@@ -40,11 +39,11 @@ export default function WhatsAppQRDisplay({
   if (status === 'connected') {
     return (
       <div className="text-center space-y-4">
-        <div className="w-64 h-64 mx-auto flex items-center justify-center bg-green-50 rounded-lg border border-green-200">
+        <div className="w-64 h-64 mx-auto flex items-center justify-center bg-success/10 rounded-lg border border-success/20">
           <div className="text-center">
-            <CheckCircle className="h-16 w-16 mx-auto text-green-600 mb-2" />
-            <h3 className="text-lg font-medium text-green-800">WhatsApp Conectado!</h3>
-            <p className="text-sm text-green-600">Pronto para enviar mensagens</p>
+            <CheckCircle className="h-16 w-16 mx-auto text-success mb-2" />
+            <h3 className="text-lg font-medium text-success">WhatsApp Conectado!</h3>
+            <p className="text-sm text-success/80">Pronto para enviar mensagens</p>
           </div>
         </div>
       </div>
@@ -56,7 +55,7 @@ export default function WhatsAppQRDisplay({
       <CardContent className="p-6 text-center space-y-4">
         {qrCode && status === 'connecting' ? (
           <>
-            <div className="w-64 h-64 mx-auto bg-white p-4 rounded-lg border shadow-lg">
+            <div className="w-64 h-64 mx-auto bg-foreground p-4 rounded-lg border shadow-lg">
               {qrCode.startsWith('data:image') ? (
                 <img 
                   src={qrCode} 
@@ -64,15 +63,15 @@ export default function WhatsAppQRDisplay({
                   className="w-full h-full object-contain"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded text-xs font-mono break-all">
+                <div className="w-full h-full flex items-center justify-center bg-muted rounded text-xs font-mono break-all">
                   {qrCode}
                 </div>
               )}
             </div>
             
             <div className="space-y-2">
-              <div className="flex items-center justify-center gap-2 text-blue-600">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              <div className="flex items-center justify-center gap-2 text-primary">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
                 <span className="text-sm font-medium">Aguardando conexão...</span>
               </div>
               
@@ -83,8 +82,8 @@ export default function WhatsAppQRDisplay({
               )}
             </div>
 
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-xs text-blue-700">
+            <div className="bg-primary/10 p-3 rounded-lg">
+              <p className="text-xs text-primary">
                 <strong>⚡ Conexão 100% Real:</strong><br />
                 Escaneie o QR Code com seu WhatsApp para conectar diretamente
               </p>
@@ -103,9 +102,9 @@ export default function WhatsAppQRDisplay({
           </>
         ) : (
           <>
-            <div className="w-64 h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+            <div className="w-64 h-64 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
               <div className="text-center">
-                <QrCode className="h-16 w-16 mx-auto text-gray-400 mb-2" />
+                <QrCode className="h-16 w-16 mx-auto text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">
                   Clique no botão abaixo para gerar o QR Code
                 </p>
@@ -116,11 +115,11 @@ export default function WhatsAppQRDisplay({
               onClick={onRefresh}
               disabled={connecting}
               size="lg"
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              className="flex items-center gap-2 bg-success hover:bg-success/90 text-success-foreground"
             >
               {connecting ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-success-foreground"></div>
                   Gerando QR Code...
                 </>
               ) : (

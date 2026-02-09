@@ -385,11 +385,11 @@ export default function FilaMensagens() {
     const { status } = msg;
     switch (status) {
       case "enviada":
-        return <Badge variant="outline" className="border-emerald-500/50 bg-emerald-500/10 text-emerald-500">Enviada</Badge>;
+        return <Badge variant="outline" className="border-success/50 bg-success/10 text-success">Enviada</Badge>;
       case "aguardando":
-        return <Badge variant="outline" className="border-amber-500/50 bg-amber-500/10 text-amber-500">Aguardando</Badge>;
+        return <Badge variant="outline" className="border-warning/50 bg-warning/10 text-warning">Aguardando</Badge>;
       case "agendada":
-        return <Badge variant="outline" className="border-blue-500/50 bg-blue-500/10 text-blue-500">Agendada</Badge>;
+        return <Badge variant="outline" className="border-primary/50 bg-primary/10 text-primary">Agendada</Badge>;
       case "erro":
         return <Badge variant="outline" className="border-destructive/50 bg-destructive/10 text-destructive">Erro</Badge>;
       default:

@@ -255,7 +255,7 @@ export default function ClientesMetricas() {
 
         <Button 
           onClick={handleLimpar}
-          className="bg-cyan-500 hover:bg-cyan-600 text-white"
+          className="bg-primary hover:bg-primary/90"
         >
           Limpar
         </Button>
@@ -264,8 +264,8 @@ export default function ClientesMetricas() {
       {/* Resumo de Clientes e Faturamento */}
       <div className="rounded-lg overflow-hidden border bg-card">
         {/* Título com fundo azul */}
-        <div className="bg-cyan-500 p-4">
-          <h2 className="text-lg font-semibold text-white">Resumo de Clientes e Faturamento</h2>
+        <div className="bg-primary p-4">
+          <h2 className="text-lg font-semibold text-primary-foreground">Resumo de Clientes e Faturamento</h2>
         </div>
         
         {/* Conteúdo com fundo normal */}
@@ -285,11 +285,11 @@ export default function ClientesMetricas() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Novos:</span>
-                  <span className="bg-green-500 px-2 py-1 rounded text-sm text-white">{resumo.novos}</span>
+                  <span className="bg-success px-2 py-1 rounded text-sm text-success-foreground">{resumo.novos}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Perdidos:</span>
-                  <span className="bg-red-500 px-2 py-1 rounded text-sm text-white">{resumo.perdidos}</span>
+                  <span className="bg-destructive px-2 py-1 rounded text-sm text-destructive-foreground">{resumo.perdidos}</span>
                 </div>
               </div>
             </div>
@@ -304,11 +304,11 @@ export default function ClientesMetricas() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Novos Clientes:</span>
-                  <span className="bg-green-500 px-2 py-1 rounded text-sm text-white">{formatCurrency(resumo.faturamentoNovos)}</span>
+                  <span className="bg-success px-2 py-1 rounded text-sm text-success-foreground">{formatCurrency(resumo.faturamentoNovos)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Clientes Não Renovados:</span>
-                  <span className="bg-red-500 px-2 py-1 rounded text-sm text-white">{formatCurrency(resumo.faturamentoPerdidos)}</span>
+                  <span className="bg-destructive px-2 py-1 rounded text-sm text-destructive-foreground">{formatCurrency(resumo.faturamentoPerdidos)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">Receita no Período:</span>
@@ -326,11 +326,11 @@ export default function ClientesMetricas() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex justify-between items-center py-2">
             <span className="text-foreground">% Ganho de Clientes:</span>
-            <span className="bg-green-500 text-white px-3 py-1 rounded">{resumo.percentualGanho.toFixed(1)}%</span>
+            <span className="bg-success text-success-foreground px-3 py-1 rounded">{resumo.percentualGanho.toFixed(1)}%</span>
           </div>
           <div className="flex justify-between items-center py-2">
             <span className="text-foreground">% Perda de Clientes:</span>
-            <span className="bg-red-500 text-white px-3 py-1 rounded">{resumo.percentualPerda.toFixed(1)}%</span>
+            <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded">{resumo.percentualPerda.toFixed(1)}%</span>
           </div>
         </div>
       </div>
@@ -379,7 +379,7 @@ export default function ClientesMetricas() {
                     <TableCell>{formatCurrency(metrica.receitaAtiva)}</TableCell>
                     <TableCell>{metrica.clientesVencidos}</TableCell>
                     <TableCell>{formatCurrency(metrica.receitaVencida)}</TableCell>
-                    <TableCell className={metrica.percentual < 0 ? "text-red-500" : "text-green-500"}>
+                    <TableCell className={metrica.percentual < 0 ? "text-destructive" : "text-success"}>
                       {metrica.percentual.toFixed(0)}%
                     </TableCell>
                   </TableRow>

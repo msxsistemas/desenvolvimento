@@ -193,8 +193,8 @@ export default function Indicacoes() {
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500/10">
-              <TrendingUp className="h-5 w-5 text-green-500" />
+            <div className="p-2 rounded-lg bg-success/10">
+              <TrendingUp className="h-5 w-5 text-success" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Clientes Indicados</p>
@@ -204,8 +204,8 @@ export default function Indicacoes() {
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/10">
-              <Gift className="h-5 w-5 text-amber-500" />
+            <div className="p-2 rounded-lg bg-warning/10">
+              <Gift className="h-5 w-5 text-warning" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Bônus Acumulado</p>

@@ -385,7 +385,7 @@ export default function Auth() {
                       <Label htmlFor="signin-password" className="text-sm font-medium">Senha</Label>
                       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
                         <DialogTrigger asChild>
-                          <button type="button" className="text-xs text-[hsl(199,89%,48%)] hover:underline font-medium">
+                          <button type="button" className="text-xs text-primary hover:underline font-medium">
                             Esqueceu a senha?
                           </button>
                         </DialogTrigger>
@@ -483,7 +483,7 @@ export default function Auth() {
                     <button
                       type="button"
                       onClick={() => setIsSignUp(true)}
-                      className="text-[hsl(280,70%,50%)] hover:underline font-semibold"
+                      className="text-primary hover:underline font-semibold"
                     >
                       Criar conta gratuita
                     </button>
@@ -639,7 +639,7 @@ export default function Auth() {
                     <button
                       type="button"
                       onClick={() => setIsSignUp(false)}
-                      className="text-[hsl(199,89%,48%)] hover:underline font-medium"
+                      className="text-primary hover:underline font-medium"
                     >
                       Fazer login
                     </button>

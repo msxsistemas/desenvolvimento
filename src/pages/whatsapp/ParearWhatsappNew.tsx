@@ -30,7 +30,7 @@ export default function ParearWhatsappNew() {
         </div>
         <div className="flex items-center gap-2">
           {hydrated && (
-            <Badge variant={isConnected ? "default" : "secondary"} className={isConnected ? "bg-green-600" : ""}>
+            <Badge variant={isConnected ? "default" : "secondary"} className={isConnected ? "bg-success text-success-foreground" : ""}>
               {isConnected ? (
                 <>
                   <Wifi className="h-3 w-3 mr-1" />
@@ -61,9 +61,9 @@ export default function ParearWhatsappNew() {
         <CardContent className="p-4">
           <div className="space-y-2 text-sm">
             <p className="text-foreground">
-              <span className="font-medium text-green-500">1.</span> Aponte seu celular para o QR Code até que complete o pareamento
+              <span className="font-medium text-success">1.</span> Aponte seu celular para o QR Code até que complete o pareamento
             </p>
-            <p className="text-orange-400">
+            <p className="text-warning">
               <span className="font-medium">2.</span> Após o pareamento ficar ativo em seu aparelho celular, aguarde a confirmação automática
             </p>
             <p className="text-muted-foreground">
@@ -99,8 +99,8 @@ export default function ParearWhatsappNew() {
                 </div>
                 
                 <div className="relative mb-6">
-                  <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-14 h-14 text-white" strokeWidth={1.5} />
+                  <div className="w-24 h-24 bg-success rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-14 h-14 text-success-foreground" strokeWidth={1.5} />
                   </div>
                   <div className="absolute inset-0 rounded-full border-4 border-green-400 animate-pulse opacity-50" />
                 </div>
@@ -134,7 +134,7 @@ export default function ParearWhatsappNew() {
                     {connecting ? (
                       <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin" />
                     ) : (
-                      <Button onClick={connect} className="bg-green-600 hover:bg-green-700">
+                      <Button onClick={connect} className="bg-success hover:bg-success/90 text-success-foreground">
                         <Wifi className="h-4 w-4 mr-2" />
                         Conectar
                       </Button>

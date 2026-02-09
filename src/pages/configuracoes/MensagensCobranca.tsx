@@ -402,7 +402,7 @@ export default function MensagensCobranca() {
             <AlertDialogAction 
               onClick={confirmarExclusao}
               disabled={deletandoId === templateParaExcluir?.id}
-              className="bg-red-500 hover:bg-red-600"
+              className="bg-destructive hover:bg-destructive/90"
             >
               {deletandoId === templateParaExcluir?.id ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
@@ -534,7 +534,7 @@ export default function MensagensCobranca() {
                   <TableRow key={template.id || index}>
                     <TableCell className="font-medium">{template.nome}</TableCell>
                     <TableCell>
-                      <Badge variant="destructive" className="bg-red-500">
+                      <Badge variant="destructive">
                         {template.midia || "NÃO"}
                       </Badge>
                     </TableCell>
@@ -562,7 +562,7 @@ export default function MensagensCobranca() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                           onClick={() => abrirModalExclusao(template)}
                           disabled={deletandoId === template.id}
                         >

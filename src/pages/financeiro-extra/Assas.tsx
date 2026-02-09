@@ -544,7 +544,7 @@ export default function Assas() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Webhook className="h-5 w-5 text-purple-600" />
+                <Webhook className="h-5 w-5 text-primary" />
                 Configuração de Webhook
               </CardTitle>
               <p className="text-sm text-muted-foreground">

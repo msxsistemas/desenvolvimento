@@ -22,15 +22,15 @@ export default function WhatsAppSession({ session, onDisconnect, isActive }: Wha
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'connected':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-success/10 text-success border-success/20';
       case 'connecting':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-warning/10 text-warning border-warning/20';
       case 'disconnected':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted text-muted-foreground border-border';
       case 'failed':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-destructive/10 text-destructive border-destructive/20';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -104,7 +104,7 @@ export default function WhatsAppSession({ session, onDisconnect, isActive }: Wha
               onClick={() => onDisconnect(session.sessionId)}
               variant="outline"
               size="sm"
-              className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               <Trash2 className="h-3 w-3 mr-2" />
               Desconectar
