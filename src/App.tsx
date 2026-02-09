@@ -20,10 +20,6 @@ import AplicativosEditar from "./pages/clientes/AplicativosEditar";
 import ProdutosEditar from "./pages/clientes/ProdutosEditar";
 import ClientesMetricas from "./pages/clientes/ClientesMetricas";
 import ClientesIntegracoes from "./pages/clientes/ClientesIntegracoes";
-import ServidoresIndex from "./pages/servidores/ServidoresIndex";
-import ServidorSigma from "./pages/servidores/ServidorSigma";
-import ServidorKofficeApi from "./pages/servidores/ServidorKofficeApi";
-import ServidorKofficeV2 from "./pages/servidores/ServidorKofficeV2";
 import Financeiro from "./pages/Financeiro";
 import FinanceiroNovaTransacao from "./pages/financeiro/FinanceiroNovaTransacao";
 import FinanceiroEditarTransacao from "./pages/financeiro/FinanceiroEditarTransacao";
@@ -98,10 +94,7 @@ const App = () => (
             <Route path="/aplicativos/editar/:id" element={<AplicativosEditar />} />
             <Route path="/metricas" element={<ClientesMetricas />} />
             <Route path="/relatorios" element={<Relatorios />} />
-            <Route path="/servidores" element={<ServidoresIndex />} />
-            <Route path="/servidores/sigma" element={<ServidorSigma />} />
-            <Route path="/servidores/koffice-api" element={<ServidorKofficeApi />} />
-            <Route path="/servidores/koffice-v2" element={<ServidorKofficeV2 />} />
+            <Route path="/servidores" element={<ClientesIntegracoes />} />
             <Route path="/financeiro-extra/checkout" element={<Checkout />} />
             <Route path="/financeiro-extra/assas" element={<Assas />} />
             {/* WhatsApp routes */}

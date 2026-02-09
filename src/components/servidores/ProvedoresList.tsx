@@ -1,14 +1,43 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Play, Check, Edit, Pause, RefreshCw, Trash2, Monitor, Plus, Lock } from "lucide-react";
-import { ProviderConfig, Panel } from "@/config/provedores";
 
-// Re-export types for backward compatibility
-export type { ProviderConfig, Panel } from "@/config/provedores";
-export { PROVEDORES } from "@/config/provedores";
+// Lista de provedores IPTV disponíveis
+export const PROVEDORES = [
+  { id: 'playfast', nome: 'PLAYFAST', descricao: 'Painel IPTV Playfast', integrado: false },
+  { id: 'koffice-api', nome: 'KOFFICE API', descricao: 'Integração kOfficePanel API', integrado: false },
+  { id: 'koffice-v2', nome: 'KOFFICE V2', descricao: 'Painel kOffice versão 2', integrado: false },
+  { id: 'sigma-v2', nome: 'PAINEL SIGMA', descricao: 'Painel Sigma versão 2', integrado: true },
+  { id: 'now', nome: 'NOW', descricao: 'Painel NOW IPTV', integrado: false },
+  { id: 'thebest', nome: 'THEBEST', descricao: 'Painel TheBest IPTV', integrado: false },
+  { id: 'wplay', nome: 'WPLAY', descricao: 'Painel WPlay IPTV', integrado: false },
+  { id: 'natv', nome: 'NATV', descricao: 'Painel NATV', integrado: false },
+  { id: 'uniplay', nome: 'UNIPLAY E FRANQUIAS', descricao: 'Painel Uniplay e Franquias', integrado: false },
+  { id: 'tvs', nome: 'TVS E FRANQUIAS', descricao: 'Painel TVS e Franquias', integrado: false },
+  { id: 'mundogf', nome: 'MUNDOGF E FRANQUIAS', descricao: 'Painel MundoGF e Franquias', integrado: false },
+  { id: 'painelfoda', nome: 'PAINELFODA', descricao: 'Painel Foda IPTV', integrado: false },
+  { id: 'centralp2braz', nome: 'CENTRALP2BRAZ', descricao: 'Painel CentralP2Braz', integrado: false },
+  { id: 'clubtv', nome: 'CLUBTV', descricao: 'Painel ClubTV', integrado: false },
+  { id: 'easyplay', nome: 'EASYPLAY', descricao: 'Painel EasyPlay', integrado: false },
+  { id: 'blade', nome: 'BLADE', descricao: 'Painel Blade IPTV', integrado: false },
+  { id: 'live21', nome: 'LIVE21', descricao: 'Painel Live21', integrado: false },
+  { id: 'elite-office', nome: 'ELITE OFFICE', descricao: 'Painel Elite Office', integrado: false },
+  { id: 'unitv', nome: 'UNITV', descricao: 'Painel UniTV', integrado: false },
+];
+
+export interface Panel {
+  id: string;
+  nome: string;
+  url: string;
+  usuario: string;
+  senha: string;
+  status: 'Ativo' | 'Inativo';
+  autoRenovacao: boolean;
+  provedor?: string;
+}
 
 interface ProvedoresListProps {
-  filteredProvedores: ProviderConfig[];
+  filteredProvedores: typeof PROVEDORES;
   selectedProvider: string;
   onSelectProvider: (id: string) => void;
 }
@@ -39,7 +68,7 @@ export function ProvedoresList({ filteredProvedores, selectedProvider, onSelectP
 }
 
 interface ProviderCardProps {
-  provider: ProviderConfig;
+  provider: typeof PROVEDORES[0];
   stats: { total: number; ativos: number; inativos: number };
 }
 

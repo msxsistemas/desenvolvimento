@@ -13,14 +13,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Info, Shield, Eye, CheckCircle, XCircle, Plus, Loader2, Key } from "lucide-react";
-import { Panel, ProviderConfig } from "@/config/provedores";
+import { Info, Shield, Eye, CheckCircle, XCircle, Plus, Loader2 } from "lucide-react";
+import { Panel } from "./ProvedoresList";
 
 interface AddPanelModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   providerName: string;
-  providerConfig?: ProviderConfig;
   formData: { nomePainel: string; urlPainel: string; usuario: string; senha: string };
   setFormData: (data: { nomePainel: string; urlPainel: string; usuario: string; senha: string }) => void;
   showPassword: boolean;
@@ -36,7 +35,6 @@ export function AddPanelModal({
   isOpen,
   onOpenChange,
   providerName,
-  providerConfig,
   formData,
   setFormData,
   showPassword,
@@ -47,12 +45,6 @@ export function AddPanelModal({
   onCreatePanel,
   onTestConnection,
 }: AddPanelModalProps) {
-  const senhaLabel = providerConfig?.senhaLabel || 'Senha do Painel';
-  const senhaPlaceholder = providerConfig?.senhaPlaceholder || 'sua_senha';
-  const nomePlaceholder = providerConfig?.nomePlaceholder || 'Ex: Meu Painel Principal';
-  const urlPlaceholder = providerConfig?.urlPlaceholder || 'https://painel.exemplo.com';
-  const usuarioPlaceholder = providerConfig?.usuarioPlaceholder || 'seu_usuario';
-  const isApiKey = senhaLabel.toLowerCase().includes('chave') || senhaLabel.toLowerCase().includes('api');
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -79,43 +71,40 @@ export function AddPanelModal({
         {/* Form */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>📡 Nome do Servidor *</Label>
+            <Label>Nome do Painel *</Label>
             <Input
               value={formData.nomePainel}
               onChange={(e) => setFormData({ ...formData, nomePainel: e.target.value })}
-              placeholder={nomePlaceholder}
+              placeholder="Ex: Meu Painel Principal"
             />
-            <p className="text-xs text-muted-foreground">Nome para identificar este servidor</p>
           </div>
 
           <div className="space-y-2">
-            <Label>🔗 URL do Painel *</Label>
+            <Label>URL do Painel *</Label>
             <Input
               value={formData.urlPainel}
               onChange={(e) => setFormData({ ...formData, urlPainel: e.target.value })}
-              placeholder={urlPlaceholder}
+              placeholder="https://painel.exemplo.com"
             />
-            <p className="text-xs text-muted-foreground">URL do seu painel {providerName}</p>
           </div>
 
           <div className="space-y-2">
-            <Label>👤 Usuário do Painel *</Label>
+            <Label>Usuário do Painel *</Label>
             <Input
               value={formData.usuario}
               onChange={(e) => setFormData({ ...formData, usuario: e.target.value })}
-              placeholder={usuarioPlaceholder}
+              placeholder="seu_usuario"
             />
-            <p className="text-xs text-muted-foreground">Usuário para acessar o painel</p>
           </div>
 
           <div className="space-y-2">
-            <Label>{isApiKey ? '🔑' : '🔒'} {senhaLabel} *</Label>
+            <Label>Senha do Painel *</Label>
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
                 value={formData.senha}
                 onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                placeholder={senhaPlaceholder}
+                placeholder="sua_senha"
                 className="pr-10"
               />
               <Button
@@ -128,7 +117,6 @@ export function AddPanelModal({
                 <Eye className="w-4 h-4" />
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">{isApiKey ? `Chave da API do painel ${providerName}` : `Senha do painel ${providerName}`}</p>
           </div>
         </div>
 
