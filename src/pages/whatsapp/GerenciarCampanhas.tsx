@@ -207,15 +207,15 @@ export default function GerenciarCampanhas() {
                           disabled={campanha.status === "finalizada"}
                         >
                           {campanha.status === "ativa" ? (
-                            <Pause className="h-4 w-4 text-warning" />
+                            <Pause className="h-4 w-4 text-yellow-500" />
                           ) : (
-                            <Play className="h-4 w-4 text-success" />
+                            <Play className="h-4 w-4 text-green-500" />
                           )}
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-destructive hover:text-destructive/80"
+                          className="h-8 w-8 text-red-500 hover:text-red-400"
                           onClick={() => handleDelete(campanha.id)}
                         >
                           <Trash2 className="h-4 w-4" />

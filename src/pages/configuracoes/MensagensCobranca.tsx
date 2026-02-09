@@ -318,7 +318,7 @@ export default function MensagensCobranca() {
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={abrirModalCriacao} className="bg-info hover:bg-info/90 text-info-foreground">Novo</Button>
+              <Button onClick={abrirModalCriacao} className="bg-cyan-500 hover:bg-cyan-600">Novo</Button>
             </DialogTrigger>
           <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
@@ -378,7 +378,7 @@ export default function MensagensCobranca() {
                 <Button 
                   onClick={handleSalvar} 
                   disabled={loading}
-                  className="flex-1 bg-info hover:bg-info/90 text-info-foreground"
+                  className="flex-1 bg-cyan-500 hover:bg-cyan-600"
                 >
                   {loading ? "Processando..." : (editando ? "Atualizar" : "Salvar")}
                 </Button>
@@ -402,7 +402,7 @@ export default function MensagensCobranca() {
             <AlertDialogAction 
               onClick={confirmarExclusao}
               disabled={deletandoId === templateParaExcluir?.id}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-red-500 hover:bg-red-600"
             >
               {deletandoId === templateParaExcluir?.id ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
@@ -472,7 +472,7 @@ export default function MensagensCobranca() {
             <Button 
               data-gerar-mensagem
               onClick={gerarMensagemComDados}
-              className="w-full bg-info hover:bg-info/90 text-info-foreground"
+              className="w-full bg-cyan-500 hover:bg-cyan-600"
             >
               Gerar mensagem
             </Button>
@@ -534,7 +534,7 @@ export default function MensagensCobranca() {
                   <TableRow key={template.id || index}>
                     <TableCell className="font-medium">{template.nome}</TableCell>
                     <TableCell>
-                      <Badge variant="destructive" className="bg-destructive">
+                      <Badge variant="destructive" className="bg-red-500">
                         {template.midia || "NÃO"}
                       </Badge>
                     </TableCell>
@@ -562,7 +562,7 @@ export default function MensagensCobranca() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
                           onClick={() => abrirModalExclusao(template)}
                           disabled={deletandoId === template.id}
                         >

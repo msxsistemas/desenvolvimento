@@ -73,7 +73,7 @@ export default function IndicacoesSistema() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "aprovado":
-        return <Badge className="bg-success/10 text-success hover:bg-success/20">Aprovado</Badge>;
+        return <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">Aprovado</Badge>;
       case "pago":
         return <Badge className="bg-primary/10 text-primary hover:bg-primary/20">Pago</Badge>;
       default:

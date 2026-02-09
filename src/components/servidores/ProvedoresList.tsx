@@ -73,7 +73,7 @@ export function ProviderCard({ provider, stats }: ProviderCardProps) {
     <div className="rounded-lg p-4 bg-card border border-border">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-success rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
             <Play className="w-4 h-4 text-white fill-white" />
           </div>
           <div>
@@ -88,9 +88,9 @@ export function ProviderCard({ provider, stats }: ProviderCardProps) {
             <div className="text-lg font-bold text-primary">{stats.total}</div>
             <div className="text-[10px] text-muted-foreground">Total</div>
           </div>
-           <div className="border border-success/50 rounded-lg px-4 py-2 text-center min-w-[70px]">
-             <div className="text-lg font-bold text-success">{stats.ativos}</div>
-             <div className="text-[10px] text-muted-foreground">Ativos</div>
+          <div className="border border-green-500/50 rounded-lg px-4 py-2 text-center min-w-[70px]">
+            <div className="text-lg font-bold text-green-500">{stats.ativos}</div>
+            <div className="text-[10px] text-muted-foreground">Ativos</div>
           </div>
           <div className="border border-destructive/50 bg-destructive/5 rounded-lg px-4 py-2 text-center min-w-[70px]">
             <div className="text-lg font-bold text-destructive">{stats.inativos}</div>
@@ -133,7 +133,7 @@ export function PanelsList({
         <p className="text-sm text-muted-foreground mb-4">
           Configure seu <span className="text-primary">primeiro painel {providerName}</span> para começar
         </p>
-        <Button onClick={onAddPanel} className="bg-success hover:bg-success/90 text-success-foreground">
+        <Button onClick={onAddPanel} className="bg-green-500 hover:bg-green-600 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Adicionar Painel {providerName}
         </Button>
@@ -154,7 +154,7 @@ export function PanelsList({
         {panels.map((p) => (
           <div key={p.id} className="flex items-center justify-between p-4">
             <div className="flex items-start gap-3">
-              <div className={`w-6 h-6 ${p.status === 'Ativo' ? 'bg-success' : 'bg-muted'} rounded-full flex items-center justify-center mt-0.5`}>
+              <div className={`w-6 h-6 ${p.status === 'Ativo' ? 'bg-green-500' : 'bg-muted'} rounded-full flex items-center justify-center mt-0.5`}>
                 <Check className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -165,7 +165,7 @@ export function PanelsList({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge variant={p.status === 'Ativo' ? 'default' : 'secondary'} className={p.status === 'Ativo' ? 'bg-success hover:bg-success' : ''}>
+              <Badge variant={p.status === 'Ativo' ? 'default' : 'secondary'} className={p.status === 'Ativo' ? 'bg-green-500 hover:bg-green-500' : ''}>
                 {p.status}
               </Badge>
               <div className="flex gap-1">
