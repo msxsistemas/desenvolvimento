@@ -122,29 +122,15 @@ export default function ClientesCadastro() {
   };
 
   const onSubmit = form.handleSubmit(async (data) => {
-    if (!data.nome || data.nome.trim() === '') {
-      toast({
-        title: "Erro",
-        description: "O campo Nome é obrigatório",
-        variant: "destructive",
-      });
-      return;
-    }
+    const camposFaltantes: string[] = [];
+    if (!data.nome || data.nome.trim() === '') camposFaltantes.push("Nome");
+    if (!data.dataVenc) camposFaltantes.push("Data de Vencimento");
+    if (!data.plano) camposFaltantes.push("Plano");
 
-    if (!data.dataVenc) {
+    if (camposFaltantes.length > 0) {
       toast({
-        title: "Erro",
-        description: "O campo Data de Vencimento é obrigatório",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!data.plano) {
-      toast({
-        title: "Erro",
-        description: "O campo Plano é obrigatório",
-        variant: "destructive",
+        title: "Preencha os campos obrigatórios",
+        description: camposFaltantes.join(", "),
       });
       return;
     }
