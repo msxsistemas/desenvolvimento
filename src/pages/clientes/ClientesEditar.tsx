@@ -166,8 +166,8 @@ export default function ClientesEditar() {
         buscarProdutos(),
         buscarAplicativos(),
       ]);
-      setPlanos(planosData || []);
-      setProdutos(produtosData || []);
+      setPlanos((planosData || []).filter((p: any) => p.ativo !== false));
+      setProdutos((produtosData || []).filter((p: any) => p.ativo !== false));
       setAplicativos(aplicativosData || []);
 
       // Buscar clientes para lista de indicadores

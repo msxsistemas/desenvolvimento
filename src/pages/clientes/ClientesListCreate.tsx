@@ -769,8 +769,8 @@ export default function ClientesListCreate() {
         buscarAplicativos(),
         buscarTemplates(),
       ]);
-      setPlanos(planosData || []);
-      setProdutos(produtosData || []);
+      setPlanos((planosData || []).filter((p: any) => p.ativo !== false));
+      setProdutos((produtosData || []).filter((p: any) => p.ativo !== false));
       setAplicativos(aplicativosData || []);
       setTemplates(templatesData || []);
     } catch (error) {
