@@ -177,6 +177,7 @@ export default function ClientesIntegracoes() {
           endpointPath: endpoint,
           endpointMethod: provider?.loginMethod || 'POST',
           loginPayload: payload,
+          providerId: selectedProvider,
           extraHeaders: { Accept: 'application/json' }
         },
       });

@@ -62,7 +62,7 @@ serve(async (req) => {
   }
 
   try {
-    const { baseUrl, username, password, extraHeaders, cf_clearance, cookie, endpointPath, endpointMethod, loginPayload } = await req.json();
+    const { baseUrl, username, password, extraHeaders, cf_clearance, cookie, endpointPath, endpointMethod, loginPayload, providerId } = await req.json();
     
     if (!baseUrl || !username || !password) {
       return new Response(JSON.stringify({ 
@@ -76,7 +76,7 @@ serve(async (req) => {
 
     const cleanBase = String(baseUrl).replace(/\/$/, "");
     
-    console.log(`🚀 Iniciando teste OnWave para: ${cleanBase}`);
+    console.log(`🚀 Iniciando teste para: ${cleanBase} (provedor: ${providerId || 'auto'})`);
     console.log(`👤 Username: ${username}`);
 
     // Configurar headers extras se fornecidos
@@ -89,6 +89,11 @@ serve(async (req) => {
       }
     }
 
+    const isKoffice = providerId === 'koffice-api' || providerId === 'koffice-v2';
+    const isSigma = providerId === 'sigma-v2';
+
+    // Only discover API structure for unknown providers
+    if (!providerId || isKoffice) {
     // First try to fetch the login page to discover API endpoints
     try {
       console.log('🔍 Descobrindo estrutura da API...');
@@ -120,12 +125,15 @@ serve(async (req) => {
     } catch (e) {
       console.log(`⚠️ Erro ao buscar página de login: ${(e as Error).message}`);
     }
+    } // end if !providerId || isKoffice
 
-    // --- Try Xtream/kOffice style: GET /player_api.php?username=X&password=X ---
-    const xtreamPaths = ['/player_api.php', '/panel_api.php', '/api.php'];
     const logs: any[] = [];
     let lastResp: any = null;
     let lastUrl = '';
+
+    // --- Try Xtream/kOffice style: only for koffice-api or unknown providers ---
+    if (!providerId || providerId === 'koffice-api') {
+    const xtreamPaths = ['/player_api.php', '/panel_api.php', '/api.php'];
 
     for (const path of xtreamPaths) {
       const url = `${cleanBase}${path}?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
@@ -171,8 +179,10 @@ serve(async (req) => {
         logs.push({ url: `${cleanBase}${path}`, error: (e as Error).message });
       }
     }
+    } // end xtream block
 
-    // --- Try form-based login (kOffice panels use HTML forms with CSRF) ---
+    // --- Try form-based login (only for koffice-v2 or unknown providers) ---
+    if (!providerId || isKoffice) {
     try {
       console.log('🔄 Tentando login via formulário HTML (kOffice style)...');
       // Step 1: GET login page to extract CSRF token
@@ -262,17 +272,21 @@ serve(async (req) => {
       console.log(`⚠️ Erro form login: ${(e as Error).message}`);
       logs.push({ url: `${cleanBase}/login (form)`, error: (e as Error).message });
     }
+    } // end form-based login block
 
-    // --- Fallback: Try standard POST JSON login endpoints ---
-    const candidates = Array.from(new Set([
-      endpointPath || '/api/auth/login',
-      '/api/login',
-      '/api/v1/login',
-      '/api/v1/auth/login',
-      '/auth/login',
-      '/login',
-      '/admin/login',
-    ]));
+    // --- Fallback: Try standard POST JSON login endpoints (sigma and others) ---
+    // If provider is known, only try its specific endpoint; otherwise try all
+    const candidates = providerId && endpointPath
+      ? [endpointPath]
+      : Array.from(new Set([
+          endpointPath || '/api/auth/login',
+          '/api/login',
+          '/api/v1/login',
+          '/api/v1/auth/login',
+          '/auth/login',
+          '/login',
+          '/admin/login',
+        ]));
 
     for (const path of candidates) {
       const url = `${cleanBase}${path.startsWith('/') ? '' : '/'}${path}`;
