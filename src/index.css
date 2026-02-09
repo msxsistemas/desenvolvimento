@@ -60,7 +60,7 @@ All colors MUST be HSL.
     /* Dashboard card colors */
     --dashboard-green: 142 70% 45%;
     --dashboard-red: 0 72% 51%;
-    --dashboard-purple: 300 70% 40%;
+    --dashboard-purple: 270 70% 55%;
     --dashboard-cyan: 199 89% 48%;
     
     /* Dashboard chart colors */
@@ -128,7 +128,7 @@ All colors MUST be HSL.
     /* Dashboard card colors */
     --dashboard-green: 142 70% 45%;
     --dashboard-red: 0 72% 51%;
-    --dashboard-purple: 300 70% 40%;
+    --dashboard-purple: 270 70% 55%;
     --dashboard-cyan: 199 89% 48%;
     
     /* Dashboard chart colors (dark) */

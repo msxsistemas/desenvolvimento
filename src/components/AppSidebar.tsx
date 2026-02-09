@@ -79,7 +79,7 @@ export function AppSidebar() {
   // Estilo base dos itens
   const menuItemClass = (active: boolean) =>
     `flex items-center justify-between w-full px-5 py-3 transition-colors border-0 rounded-none ${
-      active ? "text-white" : "text-[#8b8b9a] hover:text-white"
+      active ? "text-white" : "text-muted-foreground hover:text-white"
     }`;
 
   // Menu items baseado na imagem de referência
@@ -191,18 +191,18 @@ export function AppSidebar() {
                           {clientesSubItems.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.to}>
                               <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
-                                <NavLink
+                                 <NavLink
                                   to={subItem.to}
                                   end
                                   className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
-                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                    isActive(subItem.to) ? "text-sidebar-primary" : "text-muted-foreground hover:text-white"
                                   }`}
                                 >
                                   {/* Círculo indicador */}
                                   <span className={`w-2 h-2 rounded-full border ${
                                     isActive(subItem.to) 
-                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
-                                      : "border-[#8b8b9a] bg-transparent"
+                                      ? "border-sidebar-primary bg-sidebar-primary" 
+                                      : "border-muted-foreground bg-transparent"
                                   }`} />
                                   {subItem.label}
                                 </NavLink>
@@ -242,13 +242,13 @@ export function AppSidebar() {
                                   to={subItem.to}
                                   end
                                   className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
-                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                    isActive(subItem.to) ? "text-sidebar-primary" : "text-muted-foreground hover:text-white"
                                   }`}
                                 >
                                   <span className={`w-2 h-2 rounded-full border ${
                                     isActive(subItem.to) 
-                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
-                                      : "border-[#8b8b9a] bg-transparent"
+                                      ? "border-sidebar-primary bg-sidebar-primary" 
+                                      : "border-muted-foreground bg-transparent"
                                   }`} />
                                   {subItem.label}
                                 </NavLink>
@@ -288,13 +288,13 @@ export function AppSidebar() {
                                   to={subItem.to}
                                   end
                                   className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
-                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                    isActive(subItem.to) ? "text-sidebar-primary" : "text-muted-foreground hover:text-white"
                                   }`}
                                 >
                                   <span className={`w-2 h-2 rounded-full border ${
                                     isActive(subItem.to) 
-                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
-                                      : "border-[#8b8b9a] bg-transparent"
+                                      ? "border-sidebar-primary bg-sidebar-primary" 
+                                      : "border-muted-foreground bg-transparent"
                                   }`} />
                                   {subItem.label}
                                 </NavLink>
@@ -334,13 +334,13 @@ export function AppSidebar() {
                                   to={subItem.to}
                                   end
                                   className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
-                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                    isActive(subItem.to) ? "text-sidebar-primary" : "text-muted-foreground hover:text-white"
                                   }`}
                                 >
                                   <span className={`w-2 h-2 rounded-full border ${
                                     isActive(subItem.to) 
-                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
-                                      : "border-[#8b8b9a] bg-transparent"
+                                      ? "border-sidebar-primary bg-sidebar-primary" 
+                                      : "border-muted-foreground bg-transparent"
                                   }`} />
                                   {subItem.label}
                                 </NavLink>
@@ -363,8 +363,8 @@ export function AppSidebar() {
                       >
                         <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
                           whatsappActive 
-                            ? "bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg mx-2" 
-                            : "text-[#8b8b9a] hover:text-white"
+                            ? "bg-gradient-to-r from-dashboard-purple to-dashboard-purple/80 text-white rounded-lg mx-2" 
+                            : "text-muted-foreground hover:text-white"
                         }`}>
                           <div className="flex items-center gap-3">
                             <Phone className="h-5 w-5" />
@@ -386,14 +386,14 @@ export function AppSidebar() {
                                   to={subItem.to}
                                   end
                                   className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
-                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                    isActive(subItem.to) ? "text-sidebar-primary" : "text-muted-foreground hover:text-white"
                                   }`}
                                 >
                                   {/* Círculo indicador */}
                                   <span className={`w-2 h-2 rounded-full border ${
                                     isActive(subItem.to) 
-                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
-                                      : "border-[#8b8b9a] bg-transparent"
+                                      ? "border-sidebar-primary bg-sidebar-primary" 
+                                      : "border-muted-foreground bg-transparent"
                                   }`} />
                                   {subItem.label}
                                 </NavLink>
@@ -433,13 +433,13 @@ export function AppSidebar() {
                                   to={subItem.to}
                                   end
                                   className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
-                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                    isActive(subItem.to) ? "text-sidebar-primary" : "text-muted-foreground hover:text-white"
                                   }`}
                                 >
                                   <span className={`w-2 h-2 rounded-full border ${
                                     isActive(subItem.to) 
-                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
-                                      : "border-[#8b8b9a] bg-transparent"
+                                      ? "border-sidebar-primary bg-sidebar-primary" 
+                                      : "border-muted-foreground bg-transparent"
                                   }`} />
                                   {subItem.label}
                                 </NavLink>
@@ -479,13 +479,13 @@ export function AppSidebar() {
                                   to={subItem.to}
                                   end
                                   className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
-                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                    isActive(subItem.to) ? "text-sidebar-primary" : "text-muted-foreground hover:text-white"
                                   }`}
                                 >
                                   <span className={`w-2 h-2 rounded-full border ${
                                     isActive(subItem.to) 
-                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
-                                      : "border-[#8b8b9a] bg-transparent"
+                                      ? "border-sidebar-primary bg-sidebar-primary" 
+                                      : "border-muted-foreground bg-transparent"
                                   }`} />
                                   {subItem.label}
                                 </NavLink>
@@ -525,13 +525,13 @@ export function AppSidebar() {
                                   to={subItem.to}
                                   end
                                   className={`flex items-center gap-2 py-1 text-[13px] transition-colors ${
-                                    isActive(subItem.to) ? "text-[#22d3ee]" : "text-[#8b8b9a] hover:text-white"
+                                    isActive(subItem.to) ? "text-sidebar-primary" : "text-muted-foreground hover:text-white"
                                   }`}
                                 >
                                   <span className={`w-2 h-2 rounded-full border ${
                                     isActive(subItem.to) 
-                                      ? "border-[#22d3ee] bg-[#22d3ee]" 
-                                      : "border-[#8b8b9a] bg-transparent"
+                                      ? "border-sidebar-primary bg-sidebar-primary" 
+                                      : "border-muted-foreground bg-transparent"
                                   }`} />
                                   {subItem.label}
                                 </NavLink>

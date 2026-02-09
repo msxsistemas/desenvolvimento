@@ -16,22 +16,22 @@ export default function DashboardClientCards({
       label: "Clientes Ativos",
       value: clientesAtivos,
       icon: Users,
-      bgColor: "bg-[hsl(142,70%,45%)]",
-      iconBgColor: "bg-[hsl(142,60%,35%)]",
+      bgColor: "bg-dashboard-green",
+      iconBgColor: "bg-success/80",
     },
     {
       label: "Clientes Vencidos",
       value: clientesVencidos,
       icon: AlertTriangle,
-      bgColor: "bg-[hsl(0,72%,51%)]",
-      iconBgColor: "bg-[hsl(0,60%,40%)]",
+      bgColor: "bg-dashboard-red",
+      iconBgColor: "bg-destructive/80",
     },
     {
       label: "Clientes Desativados",
       value: clientesDesativados,
       icon: UserX,
-      bgColor: "bg-[hsl(300,70%,40%)]",
-      iconBgColor: "bg-[hsl(300,60%,30%)]",
+      bgColor: "bg-dashboard-purple",
+      iconBgColor: "bg-dashboard-purple/80",
     },
   ];
 

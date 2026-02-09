@@ -48,9 +48,9 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, notifi
   const [sendingId, setSendingId] = useState<string | null>(null);
 
   const headerStyles = {
-    red: "bg-[hsl(0,72%,51%)]",
-    green: "bg-[hsl(142,70%,45%)]",
-    yellow: "bg-[hsl(45,90%,50%)]",
+    red: "bg-destructive",
+    green: "bg-success",
+    yellow: "bg-warning",
   };
 
   const filtered = clientes.filter((c) =>
@@ -77,9 +77,9 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, notifi
     venc.setHours(0, 0, 0, 0);
 
     if (venc < today) {
-      return { label: "Vencido", color: "bg-[hsl(0,72%,51%)] text-white" };
+      return { label: "Vencido", color: "bg-destructive text-destructive-foreground" };
     }
-    return { label: "Ativo", color: "bg-[hsl(142,70%,45%)] text-white" };
+    return { label: "Ativo", color: "bg-success text-success-foreground" };
   };
 
   const getPlanoNome = (planoId?: string | null) => {
@@ -162,10 +162,10 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, notifi
               return (
                 <tr key={cliente.id} className="border-b border-border hover:bg-muted/50">
                   <td className="p-3">
-                    <span className="text-[hsl(270,70%,60%)] font-medium">{cliente.nome}</span>
+                    <span className="text-dashboard-purple font-medium">{cliente.nome}</span>
                   </td>
                   <td className="p-3">
-                    <span className="text-[hsl(270,70%,60%)]">{cliente.usuario || "-"}</span>
+                    <span className="text-dashboard-purple">{cliente.usuario || "-"}</span>
                   </td>
                   <td className="p-3">
                     <span className="inline-block px-3 py-1 rounded-full border border-border text-sm">
@@ -178,14 +178,14 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, notifi
                     </span>
                   </td>
                   <td className="p-3">
-                    <span className="inline-block px-3 py-1 rounded border border-[hsl(270,70%,60%)] text-[hsl(270,70%,60%)] text-xs">
+                    <span className="inline-block px-3 py-1 rounded border border-dashboard-purple text-dashboard-purple text-xs">
                       {getPlanoNome(cliente.plano)}
                     </span>
                   </td>
                   <td className="p-3">
                     <Button
                       size="icon"
-                      className="h-8 w-8 bg-[hsl(270,70%,50%)] hover:bg-[hsl(270,70%,40%)]"
+                      className="h-8 w-8 bg-dashboard-purple hover:bg-dashboard-purple/80"
                       title="Notificar vencimento"
                       disabled={sendingId === cliente.id}
                       onClick={async () => {
@@ -249,7 +249,7 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, notifi
               onClick={() => setCurrentPage(totalPages)}
               className={`w-8 border-border ${
                 currentPage === totalPages 
-                  ? "bg-white text-black hover:bg-white/90" 
+                  ? "bg-muted text-foreground hover:bg-muted/80" 
                   : "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
@@ -372,7 +372,6 @@ export default function DashboardClientTables() {
       return;
     }
 
-    // Mapear tipo para nome do template
     const templateNames: Record<NotificationType, string> = {
       vencido: "Plano Venceu Ontem",
       vence_hoje: "Plano Vencendo Hoje",
@@ -390,14 +389,13 @@ export default function DashboardClientTables() {
     const mensagemProcessada = processarMensagem(template.mensagem, cliente);
 
     try {
-      // Inserir na fila de mensagens
       const { error } = await supabase.from("whatsapp_messages").insert({
         user_id: userId,
         phone: cliente.whatsapp,
         message: mensagemProcessada,
         session_id: `user_${userId}`,
         status: "pending",
-        scheduled_for: new Date(Date.now() + 5000).toISOString(), // 5 segundos
+        scheduled_for: new Date(Date.now() + 5000).toISOString(),
       });
 
       if (error) throw error;

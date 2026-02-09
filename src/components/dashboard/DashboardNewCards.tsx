@@ -34,22 +34,22 @@ export default function DashboardNewCards({
     <section className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {/* Card 1 - Novos Clientes */}
       <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white flex items-center gap-4">
-        <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
-          <Users className="h-6 w-6 text-[hsl(142,70%,45%)]" />
+        <div className="rounded-full bg-success/20 p-2">
+          <Users className="h-6 w-6 text-success" />
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+            <Users className="h-4 w-4 text-success" />
             <span className="text-sm text-muted-foreground">Novos Clientes Hoje</span>
             <span className="text-foreground font-semibold">{novosClientesHoje}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+            <Users className="h-4 w-4 text-success" />
             <span className="text-sm text-muted-foreground">Novos Clientes Esta Semana</span>
             <span className="text-foreground font-semibold">{novosClientesSemana}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+            <Users className="h-4 w-4 text-success" />
             <span className="text-sm text-muted-foreground">Novos Clientes Este Mês</span>
             <span className="text-foreground font-semibold">{novosClientesMes}</span>
           </div>
@@ -58,8 +58,8 @@ export default function DashboardNewCards({
 
       {/* Card 2 - Clientes Vencendo */}
       <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white flex items-center gap-4">
-        <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
-          <Users className="h-6 w-6 text-[hsl(142,70%,45%)]" />
+        <div className="rounded-full bg-success/20 p-2">
+          <Users className="h-6 w-6 text-success" />
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -80,24 +80,24 @@ export default function DashboardNewCards({
       {/* Card 3 - Projeção */}
       <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white">
         <div className="flex items-center gap-2 mb-3">
-          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-1">
-            <TrendingUp className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+          <div className="rounded-full bg-success/20 p-1">
+            <TrendingUp className="h-4 w-4 text-success" />
           </div>
           <span className="text-sm text-muted-foreground">Valores a Receber</span>
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+            <TrendingUp className="h-4 w-4 text-success" />
             <span className="text-sm text-muted-foreground">Projeção Mensal</span>
             <span className="text-foreground font-semibold">{fmt(projecaoMensal)}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[hsl(142,70%,45%)]">$</span>
+            <span className="text-sm text-success">$</span>
             <span className="text-sm text-muted-foreground">Hoje</span>
             <span className="text-foreground font-semibold">{fmt(valoresHoje)}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[hsl(142,70%,45%)]">$</span>
+            <span className="text-sm text-success">$</span>
             <span className="text-sm text-muted-foreground">Amanhã</span>
             <span className="text-foreground font-semibold">{fmt(valoresAmanha)}</span>
           </div>

@@ -35,13 +35,13 @@ export default function DashboardFinanceCards({
       {/* Card Saldo Líquido do Mês */}
       <Card className="bg-card border-border">
         <CardContent className="flex items-center gap-4 p-6">
-          <div className="rounded-full bg-[hsl(199,89%,48%)]/20 p-3">
-            <DollarSign className="h-6 w-6 text-[hsl(199,89%,48%)]" />
+          <div className="rounded-full bg-info/20 p-3">
+            <DollarSign className="h-6 w-6 text-info" />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <p className="text-sm text-muted-foreground">Saldo Líquido do Mês</p>
-              <Badge className="bg-[hsl(142,70%,45%)] text-white text-xs px-2 py-0.5">
+              <Badge className="bg-success text-success-foreground text-xs px-2 py-0.5">
                 {currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1)}
               </Badge>
             </div>
@@ -67,13 +67,13 @@ export default function DashboardFinanceCards({
       {/* Card Saldo Líquido do Ano */}
       <Card className="bg-card border-border">
         <CardContent className="flex items-center gap-4 p-6">
-          <div className="rounded-full bg-[hsl(199,89%,48%)]/20 p-3">
-            <DollarSign className="h-6 w-6 text-[hsl(199,89%,48%)]" />
+          <div className="rounded-full bg-info/20 p-3">
+            <DollarSign className="h-6 w-6 text-info" />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <p className="text-sm text-muted-foreground">Saldo Líquido do Ano</p>
-              <Badge className="bg-[hsl(142,70%,45%)] text-white text-xs px-2 py-0.5">
+              <Badge className="bg-success text-success-foreground text-xs px-2 py-0.5">
                 {currentYear}
               </Badge>
             </div>
