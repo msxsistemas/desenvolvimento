@@ -6,14 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileText } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+
 import { useTemplatesMensagens } from "@/hooks/useTemplatesMensagens";
 import { availableVariableKeys } from "@/utils/message-variables";
 
 export default function TemplateCadastro() {
   const navigate = useNavigate();
   const { createTemplate } = useTemplatesMensagens();
-  const { toast } = useToast();
+  
 
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -52,19 +52,9 @@ export default function TemplateCadastro() {
         padrao: false,
       });
 
-      toast({
-        title: "Sucesso",
-        description: "Template cadastrado com sucesso!",
-      });
-
       navigate("/whatsapp/templates");
     } catch (error) {
       console.error("Erro ao salvar template:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao cadastrar template",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
