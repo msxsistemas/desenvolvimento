@@ -174,7 +174,7 @@ export function AppSidebar() {
     <SidebarMenuItem key={item.to}>
       <SidebarMenuButton
         onClick={() => toggleSubmenu(menuKey)}
-        className="h-auto p-0 hover:bg-transparent rounded-none"
+        className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none"
       >
         <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
           sectionActive 
@@ -226,7 +226,7 @@ export function AppSidebar() {
                     <SidebarMenuItem key={item.to}>
                       <SidebarMenuButton
                         onClick={() => toggleSubmenu("whatsapp")}
-                        className="h-auto p-0 hover:bg-transparent rounded-none"
+                        className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none"
                       >
                         <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
                           whatsappActive 
@@ -252,7 +252,7 @@ export function AppSidebar() {
                 // Items normais
                 return (
                   <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
+                    <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none">
                       <NavLink to={item.to} end>
                         <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
                           isActive(item.to)
