@@ -809,9 +809,9 @@ export default function ClientesListCreate() {
   };
 
   // Clientes filtrados
+  const filtrosValues = filtros.watch();
+  
   const clientesFiltrados = useMemo(() => {
-    const filtrosValues = filtros.watch();
-    
     return clientes.filter((cliente) => {
       if (!cliente || !cliente.id) return false;
 
@@ -874,7 +874,7 @@ export default function ClientesListCreate() {
 
       return true;
     });
-  }, [clientes, filtros.watch()]);
+  }, [clientes, filtrosValues.search, filtrosValues.dataInicial, filtrosValues.dataFinal, filtrosValues.status, filtrosValues.plano, filtrosValues.produto, filtrosValues.captacao]);
 
   // Formulário Novo Cliente
   const form = useForm({
