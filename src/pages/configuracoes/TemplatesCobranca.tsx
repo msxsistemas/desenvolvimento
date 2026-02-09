@@ -133,7 +133,7 @@ export default function TemplatesCobranca() {
         </h1>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => handleOpenDialog()} className="bg-cyan-500 hover:bg-cyan-600 text-white">
+            <Button onClick={() => handleOpenDialog()} className="bg-info hover:bg-info/90 text-info-foreground">
               <Plus className="w-4 h-4 mr-2" />
               Novo Template
             </Button>
@@ -217,7 +217,7 @@ export default function TemplatesCobranca() {
                 <Button 
                   onClick={handleSalvar}
                   disabled={loading}
-                  className="bg-cyan-500 hover:bg-cyan-600 text-white"
+                  className="bg-info hover:bg-info/90 text-info-foreground"
                 >
                   {loading ? "Salvando..." : "Salvar"}
                 </Button>
