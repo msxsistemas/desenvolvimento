@@ -1298,7 +1298,7 @@ export default function ClientesListCreate() {
                     >
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="font-medium">{cliente.nome.split(' ').slice(0, 3).join(' ')}</span>
+                          <span className="font-medium">{cliente.nome.split(' ').slice(0, 2).join(' ')}</span>
                           <div className="flex items-center gap-1">
                             {cliente.whatsapp && (
                               <svg 
