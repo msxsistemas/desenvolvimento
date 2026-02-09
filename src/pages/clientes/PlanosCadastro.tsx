@@ -118,18 +118,6 @@ export default function PlanosCadastro() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Quantidade</Label>
-                <Input 
-                  type="number"
-                  min="1"
-                  placeholder="1"
-                  className="bg-background border-border"
-                  value={formData.quantidade}
-                  onChange={(e) => handleInputChange("quantidade", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label className="text-sm font-medium">Tipo</Label>
                 <Select value={formData.tipo} onValueChange={(value) => handleInputChange("tipo", value)}>
                   <SelectTrigger className="bg-background border-border">
@@ -140,6 +128,18 @@ export default function PlanosCadastro() {
                     <SelectItem value="dias">Dias</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Período</Label>
+                <Input 
+                  type="number"
+                  min="1"
+                  placeholder="1"
+                  className="bg-background border-border"
+                  value={formData.quantidade}
+                  onChange={(e) => handleInputChange("quantidade", e.target.value)}
+                />
               </div>
 
               <div className="space-y-2 md:col-span-2">
