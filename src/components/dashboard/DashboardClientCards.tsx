@@ -45,8 +45,8 @@ export default function DashboardClientCards({
           <div className="flex items-center gap-4">
             <card.icon className="h-6 w-6 text-white/80" />
             <div>
-              <p className="text-sm font-bold text-white/90">{card.label}</p>
-              <p className="text-xl font-bold ml-1">{card.value}</p>
+              <p className="text-base font-medium text-white">{card.label}</p>
+              <p className="text-2xl font-bold ml-1">{card.value}</p>
             </div>
           </div>
         </div>
