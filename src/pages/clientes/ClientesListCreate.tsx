@@ -1095,23 +1095,23 @@ export default function ClientesListCreate() {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Cabeçalho */}
-      <div className="flex items-start justify-between">
+    <main className="space-y-4">
+      {/* Header */}
+      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Meus Clientes</h1>
+          <h1 className="text-xl font-semibold text-foreground">Meus Clientes</h1>
           <p className="text-sm text-muted-foreground">Lista com todos os seus clientes</p>
         </div>
         <Button 
           onClick={() => navigate("/clientes/cadastro")}
-          className="bg-pink-600 hover:bg-pink-700 text-white"
+          className="bg-primary hover:bg-primary/90"
         >
           Adicionar Cliente +
         </Button>
-      </div>
+      </header>
 
-      {/* Seção de Filtros */}
-      <div className="bg-card rounded-lg border border-border/50 p-6 space-y-4">
+      {/* Filters */}
+      <div className="rounded-lg border border-border bg-card p-4">
         {/* Linha 1: Busca, Servidor, Planos, Status */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
@@ -1250,15 +1250,13 @@ export default function ClientesListCreate() {
         </div>
       )}
 
-      {/* Info de registros */}
-      <div className="flex justify-end">
-        <span className="text-sm text-muted-foreground">
-          Mostrando {clientesFiltrados.length} de {clientes.length} registros.
-        </span>
+      {/* Record count */}
+      <div className="text-right text-sm text-muted-foreground">
+        Mostrando {clientesFiltrados.length} de {clientes.length} registros.
       </div>
 
-      {/* Tabela */}
-      <div className="rounded-lg border border-border/50 overflow-hidden">
+      {/* Table */}
+      <div className="rounded-lg border border-border bg-card">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30">
@@ -1907,6 +1905,6 @@ export default function ClientesListCreate() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </main>
   );
 }
