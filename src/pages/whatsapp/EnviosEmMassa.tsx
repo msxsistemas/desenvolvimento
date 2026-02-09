@@ -21,8 +21,6 @@ import { WhatsAppPhonePreview } from "@/components/whatsapp/WhatsAppPhonePreview
 const tiposMensagem = [
   { value: "texto", label: "Apenas Texto", icon: FileText },
   { value: "imagem", label: "Imagem com Texto", icon: Image },
-  { value: "video", label: "Vídeo com Texto", icon: Video },
-  { value: "documento", label: "Documento", icon: FileText },
 ];
 
 const destinatariosOptions = [
