@@ -79,7 +79,7 @@ export default function ClientesIntegracoes() {
           senha: p.senha,
           status: p.status as 'Ativo' | 'Inativo',
           autoRenovacao: p.auto_renovacao,
-          provedor: p.provedor || 'playfast'
+          provedor: p.provedor || 'playfast',
         })));
       }
     } catch (error: any) {
@@ -116,7 +116,8 @@ export default function ClientesIntegracoes() {
           usuario: formData.usuario.trim(),
           senha: formData.senha.trim(),
           status: 'Ativo',
-          auto_renovacao: autoRenewal
+          auto_renovacao: autoRenewal,
+          provedor: selectedProvider
         }])
         .select()
         .single();
