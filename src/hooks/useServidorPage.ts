@@ -219,9 +219,13 @@ export function useServidorPage(providerId: string) {
       if (data.success) {
         const account = data.account;
         if (data.data?.token) localStorage.setItem("auth_token", data.data.token);
+        const isPartialValidation = data.data?.usernameValidated && !data.data?.credentialsValidated;
+        const detailsMsg = isPartialValidation
+          ? `⚠️ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario} (encontrado no servidor)\n\n⚠️ O usuário foi encontrado, mas a senha não pôde ser verificada automaticamente devido ao reCAPTCHA v3 do painel.\n\n📝 Verifique a senha manualmente no painel.`
+          : `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}\n\n✅ Autenticação realizada com sucesso no painel.`;
         setTestResultModal({
-          isOpen: true, success: true, message: "CONEXÃO REAL BEM-SUCEDIDA!",
-          details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}\n\n✅ Autenticação realizada com sucesso no painel.`,
+          isOpen: true, success: !isPartialValidation, message: isPartialValidation ? "VALIDAÇÃO PARCIAL" : "CONEXÃO REAL BEM-SUCEDIDA!",
+          details: detailsMsg,
         });
       } else {
         setTestResultModal({
@@ -272,9 +276,13 @@ export function useServidorPage(providerId: string) {
 
       if (data.success) {
         const account = data.account;
+        const isPartialValidation = data.data?.usernameValidated && !data.data?.credentialsValidated;
+        const detailsMsg = isPartialValidation
+          ? `⚠️ Painel: ${panel.nome}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${panel.usuario} (encontrado no servidor)\n\n⚠️ O usuário foi encontrado, mas a senha não pôde ser verificada automaticamente devido ao reCAPTCHA v3.\n\n📝 Verifique a senha manualmente.`
+          : `✅ Painel: ${panel.nome}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${panel.usuario}\n📡 Status: ${account?.status ?? 'OK'}\n⏱️ Expira: ${account?.exp_date ?? 'n/d'}\n\n✅ Autenticação realizada com sucesso no painel.`;
         setTestResultModal({
-          isOpen: true, success: true, message: 'CONEXÃO REAL BEM-SUCEDIDA!',
-          details: `✅ Painel: ${panel.nome}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${panel.usuario}\n📡 Status: ${account?.status ?? 'OK'}\n⏱️ Expira: ${account?.exp_date ?? 'n/d'}\n\n✅ Autenticação realizada com sucesso no painel.`,
+          isOpen: true, success: !isPartialValidation, message: isPartialValidation ? "VALIDAÇÃO PARCIAL" : 'CONEXÃO REAL BEM-SUCEDIDA!',
+          details: detailsMsg,
         });
       } else {
         const logs = Array.isArray(data.logs)
