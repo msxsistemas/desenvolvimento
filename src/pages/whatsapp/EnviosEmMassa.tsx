@@ -24,15 +24,12 @@ const tiposMensagem = [
 ];
 
 const destinatariosOptions = [
-  { value: "clientes_ativos_servidor", label: "Clientes Ativos por Servidor" },
-  { value: "clientes_vencidos_servidor", label: "Clientes Vencidos por Servidor" },
   { value: "clientes_ativos_plano", label: "Clientes Ativos Por Plano" },
   { value: "clientes_ativos", label: "Clientes Ativos" },
   { value: "clientes_inativos", label: "Clientes Inativos" },
   { value: "clientes_vencidos", label: "Clientes Vencidos" },
   { value: "clientes_vencidos_data", label: "Clientes Vencidos Data" },
   { value: "clientes_desativados", label: "Clientes Desativados" },
-  { value: "por_tags", label: "Por Tags" },
   { value: "todos", label: "Para Todos" },
 ];
 
@@ -168,7 +165,6 @@ export default function EnviosEmMassa() {
           query = query.gte("data_vencimento", today);
           break;
         case "clientes_vencidos":
-        case "clientes_vencidos_servidor":
         case "clientes_vencidos_data":
           query = query.lt("data_vencimento", today);
           break;
@@ -178,7 +174,6 @@ export default function EnviosEmMassa() {
         case "clientes_desativados":
           query = query.eq("fixo", false);
           break;
-        case "clientes_ativos_servidor":
         case "clientes_ativos_plano":
           query = query.gte("data_vencimento", today);
           break;
