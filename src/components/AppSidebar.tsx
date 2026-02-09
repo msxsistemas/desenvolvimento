@@ -253,12 +253,18 @@ export function AppSidebar() {
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent rounded-none">
-                      <NavLink to={item.to} end className={menuItemClass(isActive(item.to))}>
-                        <div className="flex items-center gap-3">
-                          <item.icon className="h-5 w-5" />
-                          {!isCollapsed && <span className="text-[14px]">{item.label}</span>}
+                      <NavLink to={item.to} end>
+                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
+                          isActive(item.to)
+                            ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium"
+                            : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                        }`}>
+                          <div className="flex items-center gap-3">
+                            <item.icon className="h-5 w-5" />
+                            {!isCollapsed && <span className="text-[14px] font-medium">{item.label}</span>}
+                          </div>
+                          {!isCollapsed && <ChevronDown className="h-4 w-4 opacity-50" />}
                         </div>
-                        {!isCollapsed && <ChevronDown className="h-4 w-4 opacity-50" />}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
