@@ -228,14 +228,85 @@ async function testConnection(baseUrl: string, panelUser: string, panelPass: str
     }
   }
   
-  // Strategy 2: Try direct API with api_key parameter (some KOffice panels support this)
-  const apiKeyEndpoints = [
-    { url: `${cleanBase}/api/login`, method: 'POST', body: JSON.stringify({ username: panelUser, api_key: panelPass }), ct: 'application/json' },
-    { url: `${cleanBase}/api/auth`, method: 'POST', body: JSON.stringify({ username: panelUser, api_key: panelPass }), ct: 'application/json' },
-    { url: `${cleanBase}/dashboard/api?get_info&month=0`, method: 'GET', body: null, ct: null, useApiKey: true },
-    { url: `${cleanBase}/api/v1/auth/login`, method: 'POST', body: JSON.stringify({ username: panelUser, password: panelPass }), ct: 'application/json' },
+  // Strategy 2: Try /api/login with multiple payload formats (this endpoint returned {"result":"failed"})
+  const apiLoginPayloads = [
+    { username: panelUser, api_key: panelPass },
+    { username: panelUser, password: panelPass },
+    { user: panelUser, api_key: panelPass },
+    { user: panelUser, password: panelPass },
+    { login: panelUser, api_key: panelPass },
+    { email: panelUser, password: panelPass },
   ];
   
+  for (const payload of apiLoginPayloads) {
+    try {
+      console.log(`🔑 Trying /api/login with payload keys: ${Object.keys(payload).join(', ')}`);
+      const resp = await withTimeout(fetch(`${cleanBase}/api/login`, {
+        method: 'POST',
+        headers: {
+          'User-Agent': ua,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify(payload),
+      }), 10000);
+      const text = await resp.text();
+      let json: any = null;
+      try { json = JSON.parse(text); } catch {}
+      console.log(`📊 /api/login (${Object.keys(payload).join(',')}) → status: ${resp.status}, response: ${text.substring(0, 300)}`);
+      
+      if (json && json.result !== 'failed' && (json.token || json.access_token || json.success || json.result === 'success' || json.result === true || json.session_id || json.user)) {
+        // Also try x-www-form-urlencoded format
+        return {
+          success: true,
+          clients_count: json.clients_count || 'n/d',
+          active_clients_count: json.active_clients_count || 'n/d',
+        };
+      }
+    } catch (e) {
+      console.log(`⚠️ /api/login: ${(e as Error).message}`);
+    }
+  }
+  
+  // Also try x-www-form-urlencoded format for /api/login
+  for (const payload of apiLoginPayloads) {
+    try {
+      const formBody = new URLSearchParams();
+      for (const [k, v] of Object.entries(payload)) formBody.append(k, v as string);
+      console.log(`🔑 Trying /api/login (form) with: ${formBody.toString().substring(0, 100)}`);
+      const resp = await withTimeout(fetch(`${cleanBase}/api/login`, {
+        method: 'POST',
+        headers: {
+          'User-Agent': ua,
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formBody.toString(),
+      }), 10000);
+      const text = await resp.text();
+      let json: any = null;
+      try { json = JSON.parse(text); } catch {}
+      console.log(`📊 /api/login form (${Object.keys(payload).join(',')}) → status: ${resp.status}, response: ${text.substring(0, 300)}`);
+      
+      if (json && json.result !== 'failed' && (json.token || json.access_token || json.success || json.result === 'success' || json.result === true || json.session_id || json.user)) {
+        return {
+          success: true,
+          clients_count: json.clients_count || 'n/d',
+          active_clients_count: json.active_clients_count || 'n/d',
+        };
+      }
+    } catch (e) {
+      console.log(`⚠️ /api/login form: ${(e as Error).message}`);
+    }
+  }
+  
+  // Strategy 3: Try other API key endpoints
+  const apiKeyEndpoints = [
+    { url: `${cleanBase}/api/auth`, method: 'POST', body: JSON.stringify({ username: panelUser, api_key: panelPass }), ct: 'application/json' },
+    { url: `${cleanBase}/dashboard/api?get_info&month=0`, method: 'GET', body: null, ct: null, useApiKey: true },
+  ];
   for (const ep of apiKeyEndpoints) {
     try {
       const headers: Record<string, string> = {
