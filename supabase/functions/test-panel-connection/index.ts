@@ -474,31 +474,133 @@ serve(async (req) => {
       }
     }
 
-    // --- Uniplay: JSON POST with reCAPTCHA v2 solving ---
+    // --- Uniplay: Discover real API URL from SPA bundles, then JSON POST with reCAPTCHA v2 ---
     if (isUniplay) {
       try {
-        console.log('🔄 Uniplay: Buscando página de login para extrair sitekey do reCAPTCHA...');
-        // Fetch the frontend login page (gestordefender.com) to get the reCAPTCHA sitekey
-        const frontendUrl = String(baseUrl).replace(/\/$/, '');
-        const loginPageResp = await withTimeout(fetch(`${frontendUrl}/login`, {
+        const frontendUrl = cleanBase;
+        console.log('🔄 Uniplay: Buscando SPA para descobrir URL da API real...');
+        
+        // Step 1: Fetch the SPA HTML to find JS bundles
+        const spaResp = await withTimeout(fetch(frontendUrl, {
           method: 'GET',
           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
         }), 10000);
-        const loginHtml = await loginPageResp.text();
-
-        // Extract reCAPTCHA v2 sitekey
-        const siteKeyMatch = loginHtml.match(/data-sitekey=["']([0-9A-Za-z_-]{20,})["']/i)
-          || loginHtml.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i)
-          || loginHtml.match(/grecaptcha\.render\([^,]+,\s*\{[^}]*sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i);
+        const spaHtml = await spaResp.text();
+        
+        // Extract reCAPTCHA v2 sitekey from HTML
+        const siteKeyMatch = spaHtml.match(/data-sitekey=["']([0-9A-Za-z_-]{20,})["']/i)
+          || spaHtml.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i);
         const siteKey = siteKeyMatch ? siteKeyMatch[1] : null;
-        console.log(`🔑 Uniplay reCAPTCHA v2 sitekey: ${siteKey || 'não encontrada'}`);
+        console.log(`🔑 Uniplay reCAPTCHA v2 sitekey (HTML): ${siteKey || 'não encontrada'}`);
 
-        let recaptchaToken: string | null = null;
-        if (siteKey) {
-          recaptchaToken = await solve2Captcha(siteKey, `${frontendUrl}/login`, 'v2');
+        // Step 2: Find JS bundle URLs and extract API base URL
+        const jsMatches = spaHtml.match(/src=["'](\/js\/[^"']+\.js)["']/g) || [];
+        const jsPaths = jsMatches.map((m: string) => {
+          const match = m.match(/src=["'](\/js\/[^"']+\.js)["']/);
+          return match ? match[1] : null;
+        }).filter(Boolean) as string[];
+        console.log(`📦 Uniplay: ${jsPaths.length} bundles JS encontrados`);
+
+        let apiBaseUrl = '';
+        let foundSiteKey = siteKey;
+        
+        // Try to find API URL in JS bundles (check up to 3 bundles)
+        for (const jsPath of jsPaths.slice(0, 3)) {
+          try {
+            const jsResp = await withTimeout(fetch(`${frontendUrl}${jsPath}`, {
+              method: 'GET',
+              headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': '*/*' },
+            }), 10000);
+            const jsCode = await jsResp.text();
+            
+            // Look for API base URL patterns in the JS code
+            // Common patterns: baseURL:"https://api.example.com", VUE_APP_API_URL, axios.defaults.baseURL
+            const apiUrlPatterns = [
+              /baseURL\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
+              /VUE_APP_API_URL\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
+              /VUE_APP_BASE_URL\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
+              /api[_\-]?url\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
+              /["'](https?:\/\/[^"']*api[^"']*\.com[^"']*)["']/i,
+              /["'](https?:\/\/[^"']*office[^"']*\.com[^"']*)["']/i,
+              /["'](https?:\/\/[^"']*gesapi[^"']*\.com[^"']*)["']/i,
+            ];
+            
+            for (const pattern of apiUrlPatterns) {
+              const match = jsCode.match(pattern);
+              if (match && match[1] && !match[1].includes('googleapis.com') && !match[1].includes('google.com') && !match[1].includes('gstatic.com')) {
+                apiBaseUrl = match[1].replace(/\/$/, '');
+                console.log(`🔗 Uniplay: API URL encontrada no JS: ${apiBaseUrl}`);
+                break;
+              }
+            }
+            
+            // Also try to find sitekey in JS if not found in HTML
+            if (!foundSiteKey) {
+              const skMatch = jsCode.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i)
+                || jsCode.match(/data-sitekey=["']([0-9A-Za-z_-]{20,})["']/i)
+                || jsCode.match(/recaptcha[^"']*["']([0-9A-Za-z_-]{20,})["']/i);
+              if (skMatch) {
+                foundSiteKey = skMatch[1];
+                console.log(`🔑 Uniplay reCAPTCHA v2 sitekey (JS): ${foundSiteKey}`);
+              }
+            }
+            
+            if (apiBaseUrl) break;
+          } catch (e) {
+            console.log(`⚠️ Erro ao buscar bundle JS ${jsPath}: ${(e as Error).message}`);
+          }
         }
-
-        // POST login to the API with captcha token
+        
+        // If no API URL found in bundles, try common patterns
+        if (!apiBaseUrl) {
+          // Try known API patterns
+          const hostname = new URL(frontendUrl).hostname;
+          const candidateApis = [
+            `https://gesapi${hostname.replace(/^(www\.)?gestor/, '')}`,
+            `https://api.${hostname}`,
+            frontendUrl, // fallback to same domain
+          ];
+          console.log(`🔍 Uniplay: API URL não encontrada nos bundles, tentando candidatos: ${JSON.stringify(candidateApis)}`);
+          
+          for (const candidate of candidateApis) {
+            try {
+              const testResp = await withTimeout(fetch(`${candidate}/api/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ username: 'test', password: 'test' }),
+              }), 8000);
+              const testText = await testResp.text();
+              // If we get JSON back (not HTML), this is the API
+              try {
+                JSON.parse(testText);
+                apiBaseUrl = candidate;
+                console.log(`✅ Uniplay: API encontrada em ${candidate} (status: ${testResp.status})`);
+                break;
+              } catch {
+                console.log(`❌ ${candidate}/api/login retornou HTML, não é a API`);
+              }
+            } catch (e) {
+              console.log(`❌ ${candidate} não acessível: ${(e as Error).message}`);
+            }
+          }
+        }
+        
+        if (!apiBaseUrl) {
+          return new Response(JSON.stringify({
+            success: false,
+            details: `❌ Não foi possível descobrir a URL da API do Uniplay. O site ${frontendUrl} é uma SPA e a API real está em outro domínio. Tente informar a URL da API diretamente (ex: https://gesapioffice.com).`,
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+        }
+        
+        console.log(`🎯 Uniplay: Usando API: ${apiBaseUrl}`);
+        
+        // Step 3: Solve reCAPTCHA if sitekey found
+        let recaptchaToken: string | null = null;
+        if (foundSiteKey) {
+          recaptchaToken = await solve2Captcha(foundSiteKey, `${frontendUrl}/login`, 'v2');
+        }
+        
+        // Step 4: POST login to the real API
         const loginPayloadUniplay: Record<string, string> = {
           username,
           password,
@@ -507,13 +609,16 @@ serve(async (req) => {
           loginPayloadUniplay['g-recaptcha-response'] = recaptchaToken;
         }
 
-        console.log(`🔄 Uniplay: POST ${cleanBase}/api/login (com${recaptchaToken ? '' : ' SEM'} captcha)`);
-        const loginResp = await withTimeout(fetch(`${cleanBase}/api/login`, {
+        const loginUrl = `${apiBaseUrl}/api/login`;
+        console.log(`🔄 Uniplay: POST ${loginUrl} (com${recaptchaToken ? '' : ' SEM'} captcha)`);
+        const loginResp = await withTimeout(fetch(loginUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Origin': frontendUrl,
+            'Referer': `${frontendUrl}/login`,
           },
           body: JSON.stringify(loginPayloadUniplay),
         }), 15000);
@@ -535,8 +640,8 @@ serve(async (req) => {
         if (isRejection) {
           return new Response(JSON.stringify({
             success: false,
-            details: `❌ Credenciais inválidas no Uniplay.${!recaptchaToken ? ' ⚠️ reCAPTCHA não resolvido (2Captcha pode ter falhado).' : ''}`,
-            debug: { url: `${cleanBase}/api/login`, status: loginResp.status, response: loginText.slice(0, 300) },
+            details: `❌ Credenciais inválidas no Uniplay.${!recaptchaToken ? ' ⚠️ reCAPTCHA não resolvido.' : ''}`,
+            debug: { url: loginUrl, status: loginResp.status, response: loginText.slice(0, 300) },
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
         }
 
@@ -544,7 +649,7 @@ serve(async (req) => {
           // Try to get credits
           let credits = null;
           try {
-            const dashResp = await withTimeout(fetch(`${cleanBase}/api/dash-reseller`, {
+            const dashResp = await withTimeout(fetch(`${apiBaseUrl}/api/dash-reseller`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json', 'Content-Type': 'application/json' },
               body: '{}',
@@ -556,19 +661,28 @@ serve(async (req) => {
 
           return new Response(JSON.stringify({
             success: true,
-            endpoint: `${cleanBase}/api/login`,
+            endpoint: loginUrl,
             type: 'Uniplay JWT',
             account: { status: 'Active', user: { username }, token_received: true, credits },
-            data: { token, credits, captchaSolved: !!recaptchaToken, response: loginJson },
+            data: { token, credits, captchaSolved: !!recaptchaToken, apiBaseUrl, response: loginJson },
             logs,
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
         }
 
-        // Not ok but not credential rejection - maybe captcha issue
+        // Check if response is HTML (SPA fallback) - means API URL is wrong
+        if (loginText.includes('<!DOCTYPE') || loginText.includes('<html')) {
+          return new Response(JSON.stringify({
+            success: false,
+            details: `❌ O endpoint ${loginUrl} retornou HTML ao invés de JSON. A URL da API pode estar incorreta. Tente informar a URL da API diretamente.`,
+            debug: { url: loginUrl, status: loginResp.status, apiBaseUrl, isHtml: true },
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+        }
+
+        // Generic failure
         return new Response(JSON.stringify({
           success: false,
           details: `❌ Login Uniplay falhou (status ${loginResp.status}).${!recaptchaToken ? ' ⚠️ reCAPTCHA não foi resolvido - verifique a chave 2Captcha.' : ' O token reCAPTCHA pode ter expirado.'}`,
-          debug: { url: `${cleanBase}/api/login`, status: loginResp.status, response: loginText.slice(0, 500), captchaSolved: !!recaptchaToken },
+          debug: { url: loginUrl, status: loginResp.status, apiBaseUrl, response: loginText.slice(0, 500), captchaSolved: !!recaptchaToken },
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
 
       } catch (e) {
