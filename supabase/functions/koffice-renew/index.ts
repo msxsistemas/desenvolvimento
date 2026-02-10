@@ -91,14 +91,24 @@ async function formLogin(cleanBase: string, panelUser: string, panelPass: string
     redirect: 'manual',
   }), 15000);
 
-  const postSetCookie = postResp.headers.get('set-cookie');
+  // Log ALL response headers to understand the server behavior
+  const allHeaders: Record<string, string> = {};
+  postResp.headers.forEach((value, key) => { allHeaders[key] = value; });
+  console.log(`📋 POST ALL headers: ${JSON.stringify(allHeaders)}`);
+  
+  // Try getSetCookie for multiple set-cookie headers
+  let postSetCookieArr: string[] = [];
+  try { postSetCookieArr = (postResp.headers as any).getSetCookie?.() || []; } catch {}
+  console.log(`🍪 POST getSetCookie(): ${JSON.stringify(postSetCookieArr)}`);
+  
+  const postSetCookie = postSetCookieArr.length > 0 ? postSetCookieArr.join(', ') : postResp.headers.get('set-cookie');
   console.log(`🍪 GET cookies: ${allCookies}`);
   console.log(`🍪 POST set-cookie: ${postSetCookie}`);
   console.log(`📝 POST body sent: ${formBody.toString()}`);
   allCookies = mergeSetCookies(allCookies, postSetCookie);
   console.log(`🍪 Merged cookies: ${allCookies}`);
   const postBody = await postResp.text();
-  console.log(`📄 POST response body (first 300): ${postBody.substring(0, 300)}`);
+  console.log(`📄 POST response body (first 500): ${postBody.substring(0, 500)}`);
   const postLocation = postResp.headers.get('location') || '';
   console.log(`📊 Form login → status: ${postResp.status}, location: ${postLocation}`);
 
