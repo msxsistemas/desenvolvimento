@@ -578,8 +578,35 @@ serve(async (req) => {
       );
 
       if (isFormLoginSuccess) {
-        console.log(`✅ Login via formulário parece OK, verificando com API...`);
+        console.log(`✅ Login via formulário parece OK, seguindo redirect e verificando sessão...`);
         
+        // Step 2.5: Follow the redirect to complete session establishment
+        if (formLocation) {
+          try {
+            const followUrl = formLocation.startsWith('http') ? formLocation : `${cleanBase}/${formLocation.replace(/^\.\//, '')}`;
+            console.log(`🔄 Seguindo redirect para: ${followUrl}`);
+            const followHeaders: Record<string, string> = {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Accept': 'text/html',
+              'Cookie': sessionCookies,
+            };
+            const followResp = await withTimeout(fetch(followUrl, {
+              method: 'GET',
+              headers: followHeaders,
+              redirect: 'manual',
+            }), 10000);
+            const followSetCookies = followResp.headers.get('set-cookie') || '';
+            if (followSetCookies) {
+              const newParts = followSetCookies.split(',').map(c => c.split(';')[0].trim()).join('; ');
+              sessionCookies = sessionCookies ? `${sessionCookies}; ${newParts}` : newParts;
+            }
+            await followResp.text(); // consume body
+            console.log(`📊 Follow redirect → status: ${followResp.status}, cookies updated`);
+          } catch (e) {
+            console.log(`⚠️ Erro ao seguir redirect: ${(e as Error).message}`);
+          }
+        }
+
         // Determine verify endpoints based on provider
         const verifyEndpoints = isMundogf
           ? ['/bonus/stats', '/ajax/getClientsStats2']
