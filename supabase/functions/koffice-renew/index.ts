@@ -91,8 +91,14 @@ async function formLogin(cleanBase: string, panelUser: string, panelPass: string
     redirect: 'manual',
   }), 15000);
 
-  allCookies = mergeSetCookies(allCookies, postResp.headers.get('set-cookie'));
-  await postResp.text();
+  const postSetCookie = postResp.headers.get('set-cookie');
+  console.log(`🍪 GET cookies: ${allCookies}`);
+  console.log(`🍪 POST set-cookie: ${postSetCookie}`);
+  console.log(`📝 POST body sent: ${formBody.toString()}`);
+  allCookies = mergeSetCookies(allCookies, postSetCookie);
+  console.log(`🍪 Merged cookies: ${allCookies}`);
+  const postBody = await postResp.text();
+  console.log(`📄 POST response body (first 300): ${postBody.substring(0, 300)}`);
   const postLocation = postResp.headers.get('location') || '';
   console.log(`📊 Form login → status: ${postResp.status}, location: ${postLocation}`);
 
