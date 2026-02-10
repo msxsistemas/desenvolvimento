@@ -159,112 +159,109 @@ export default function PixManual() {
       </header>
 
       <main className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Coluna esquerda */}
-        <div className="flex flex-col gap-4 order-1">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Wallet className="h-4 w-4 text-foreground/70" />
-                  <CardTitle className="text-sm">Status</CardTitle>
+        {/* Status */}
+        <Card className="shadow-sm order-1">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-foreground/70" />
+                <CardTitle className="text-sm">Status</CardTitle>
+              </div>
+              <Badge variant={pixManualEnabled ? "default" : "destructive"} className="font-semibold">
+                {pixManualEnabled ? "Ativado" : "Desativado"}
+              </Badge>
+            </div>
+            <CardDescription>Ative para permitir que seus clientes paguem via PIX manual.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border px-3 py-2 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Habilitar PIX Manual</span>
+              <Switch checked={pixManualEnabled} onCheckedChange={setPixManualEnabled} id="pix-manual-toggle" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Chave PIX - no mobile fica segundo, no desktop ocupa a coluna direita com row-span */}
+        <Card className="shadow-sm order-2 lg:row-span-2">
+          <CardHeader>
+            <CardTitle className="text-sm">Chave PIX</CardTitle>
+            <CardDescription>Selecione o tipo e insira sua chave PIX.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {pixManualEnabled ? (
+              <>
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Tipo da chave</Label>
+                  <RadioGroup
+                    value={pixKeyType}
+                    onValueChange={(v) => setPixKeyType(v as PixKeyType)}
+                    className="grid grid-cols-3 gap-1.5"
+                  >
+                    {(Object.keys(pixKeyLabels) as PixKeyType[]).map((type) => (
+                      <div key={type} className="flex items-center space-x-1.5 rounded-md border px-2 py-1.5 hover:bg-accent/50 transition-colors">
+                        <RadioGroupItem value={type} id={`pix-type-${type}`} />
+                        <Label htmlFor={`pix-type-${type}`} className="text-xs cursor-pointer">
+                          {pixKeyLabels[type]}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
                 </div>
-                <Badge variant={pixManualEnabled ? "default" : "destructive"} className="font-semibold">
-                  {pixManualEnabled ? "Ativado" : "Desativado"}
-                </Badge>
-              </div>
-              <CardDescription>Ative para permitir que seus clientes paguem via PIX manual.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border px-3 py-2 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Habilitar PIX Manual</span>
-                <Switch checked={pixManualEnabled} onCheckedChange={setPixManualEnabled} id="pix-manual-toggle" />
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card className="shadow-sm flex-1">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-3">
-                <p className="text-sm font-medium">Finalizar Configuração</p>
-                <p className="text-xs text-muted-foreground">Clique para salvar as configurações do PIX Manual.</p>
-                <Button size="lg" onClick={handleSave} disabled={loading || (pixManualEnabled && !!validationError)}>
-                  {loading ? "Salvando..." : "Salvar Configurações"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Coluna direita - mesma altura da esquerda */}
-        <div className="order-2">
-          <Card className="shadow-sm h-full">
-            <CardHeader>
-              <CardTitle className="text-sm">Chave PIX</CardTitle>
-              <CardDescription>Selecione o tipo e insira sua chave PIX.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {pixManualEnabled ? (
-                <>
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">Tipo da chave</Label>
-                    <RadioGroup
-                      value={pixKeyType}
-                      onValueChange={(v) => setPixKeyType(v as PixKeyType)}
-                      className="grid grid-cols-3 gap-1.5"
-                    >
-                      {(Object.keys(pixKeyLabels) as PixKeyType[]).map((type) => (
-                        <div key={type} className="flex items-center space-x-1.5 rounded-md border px-2 py-1.5 hover:bg-accent/50 transition-colors">
-                          <RadioGroupItem value={type} id={`pix-type-${type}`} />
-                          <Label htmlFor={`pix-type-${type}`} className="text-xs cursor-pointer">
-                            {pixKeyLabels[type]}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
+                <div className="space-y-1.5">
+                  <Label htmlFor="pix-manual-key" className="text-sm font-medium">
+                    {pixKeyLabels[pixKeyType]}
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="pix-manual-key"
+                      placeholder={pixKeyPlaceholders[pixKeyType]}
+                      value={pixManualKey}
+                      onChange={(e) => setPixManualKey(e.target.value)}
+                      maxLength={100}
+                      className={validationError ? "border-destructive" : ""}
+                    />
+                    {pixManualKey.trim() && (
+                      <Button variant="outline" size="icon" onClick={handleCopyKey} title="Copiar chave">
+                        {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    )}
                   </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="pix-manual-key" className="text-sm font-medium">
-                      {pixKeyLabels[pixKeyType]}
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="pix-manual-key"
-                        placeholder={pixKeyPlaceholders[pixKeyType]}
-                        value={pixManualKey}
-                        onChange={(e) => setPixManualKey(e.target.value)}
-                        maxLength={100}
-                        className={validationError ? "border-destructive" : ""}
-                      />
-                      {pixManualKey.trim() && (
-                        <Button variant="outline" size="icon" onClick={handleCopyKey} title="Copiar chave">
-                          {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      )}
-                    </div>
-                    <div className="h-5">
-                      {validationError && (
-                        <p className="text-xs text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" /> {validationError}
-                        </p>
-                      )}
-                      {!validationError && pixManualKey.trim() && (
-                        <p className="text-xs text-green-600 flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" /> Chave válida
-                        </p>
-                      )}
-                    </div>
+                  <div className="h-5">
+                    {validationError && (
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" /> {validationError}
+                      </p>
+                    )}
+                    {!validationError && pixManualKey.trim() && (
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Chave válida
+                      </p>
+                    )}
                   </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <Wallet className="h-10 w-10 text-muted-foreground/40 mb-3" />
-                  <p className="text-sm text-muted-foreground">Ative o PIX Manual para configurar sua chave.</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8">
+                <Wallet className="h-10 w-10 text-muted-foreground/40 mb-3" />
+                <p className="text-sm text-muted-foreground">Ative o PIX Manual para configurar sua chave.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Salvar - terceiro no mobile, abaixo do Status no desktop */}
+        <Card className="shadow-sm order-3">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-3">
+              <p className="text-sm font-medium">Finalizar Configuração</p>
+              <p className="text-xs text-muted-foreground">Clique para salvar as configurações do PIX Manual.</p>
+              <Button size="lg" onClick={handleSave} disabled={loading || (pixManualEnabled && !!validationError)}>
+                {loading ? "Salvando..." : "Salvar Configurações"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
