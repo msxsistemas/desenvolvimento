@@ -1,1 +1,10 @@
 project_id = "dxxfablfqigoewcfmjzl"
+
+[functions.test-panel-connection]
+verify_jwt = false
+
+[functions.mundogf-discover]
+verify_jwt = false
+
+[functions.mundogf-renew]
+verify_jwt = false
