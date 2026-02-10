@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PROVEDORES, Panel, ProviderConfig, getTestStrategy } from "@/config/provedores";
 import { resolveUniplayApiUrl, UNIPLAY_API_BASE } from "@/config/provedores/uniplay";
+import { PLAYFAST_API_BASE } from "@/config/provedores/playfast";
 
 export function useServidorPage(providerId: string) {
   const provider = PROVEDORES.find(p => p.id === providerId) || null;
@@ -139,6 +140,41 @@ export function useServidorPage(providerId: string) {
         return;
       }
 
+      // Playfast: usa Edge Function diretamente (TOKEN + secret)
+      if (providerId === 'playfast') {
+        try {
+          const { data, error } = await supabase.functions.invoke('playfast-renew', {
+            body: { token: usuario, secret: senha, action: 'profile' },
+          });
+
+          if (error) {
+            setTestResultModal({
+              isOpen: true, success: false, message: "Erro no Teste",
+              details: `❌ Painel: ${nomePainel}\n\n❌ Não foi possível conectar à API Playfast.\nErro: ${error.message}`,
+            });
+            return;
+          }
+
+          if (data?.success) {
+            setTestResultModal({
+              isOpen: true, success: true, message: "CONEXÃO REAL BEM-SUCEDIDA!",
+              details: `✅ Painel: ${nomePainel}\n🔗 API: ${PLAYFAST_API_BASE}\n👤 Usuário: ${data.username || usuario}\n💰 Créditos: ${data.credits ?? 'n/d'}\n📧 Email: ${data.email || 'n/d'}\n📡 Status: ${data.status === 1 ? 'Ativo' : 'Inativo'}\n\n✅ Autenticação realizada com sucesso.`,
+            });
+          } else {
+            setTestResultModal({
+              isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO",
+              details: `❌ Painel: ${nomePainel}\n🔗 API: ${PLAYFAST_API_BASE}\n\n❌ ${data?.error || 'TOKEN ou Secret inválidos.'}`,
+            });
+          }
+        } catch (err: any) {
+          setTestResultModal({
+            isOpen: true, success: false, message: "Erro no Teste",
+            details: `Erro inesperado: ${err.message}`,
+          });
+        }
+        return;
+      }
+
       // Uniplay: todas as franquias usam gesapioffice.com como API
       const resolvedBaseUrl = providerId === 'uniplay' ? UNIPLAY_API_BASE : baseUrl;
 
@@ -147,11 +183,9 @@ export function useServidorPage(providerId: string) {
         ? provider.buildLoginPayload(usuario, senha)
         : { username: usuario, password: senha };
 
-      // Uniplay: API valida Origin header E bloqueia IPs fora do Brasil
-      // Única opção: testar direto pelo browser sem edge function
       const strategy = getTestStrategy(providerId);
       const isXtream = strategy.steps.some(s => s.type === 'xtream');
-      const skipBrowserTest = false; // Sempre tenta browser primeiro
+      const skipBrowserTest = false;
 
       if (!skipBrowserTest) {
         try {
@@ -441,7 +475,8 @@ export function useServidorPage(providerId: string) {
   };
 
   const openAddPanel = () => {
-    setFormData({ nomePainel: "", urlPainel: "", usuario: "", senha: "" });
+    const defaultUrl = providerId === 'playfast' ? PLAYFAST_API_BASE : '';
+    setFormData({ nomePainel: "", urlPainel: defaultUrl, usuario: "", senha: "" });
     setAutoRenewal(false);
     setIsConfigModalOpen(true);
   };

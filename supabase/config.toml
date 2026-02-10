@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.uniplay-renew]
 verify_jwt = false
+
+[functions.playfast-renew]
+verify_jwt = false

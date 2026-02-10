@@ -53,8 +53,9 @@ export function AddPanelModal({
   const nomePlaceholder = providerConfig?.nomePlaceholder || 'Ex: Meu Painel Principal';
   const urlPlaceholder = providerConfig?.urlPlaceholder || 'https://painel.exemplo.com';
   const usuarioPlaceholder = providerConfig?.usuarioPlaceholder || 'seu_usuario';
-  const isApiKey = senhaLabel.toLowerCase().includes('chave') || senhaLabel.toLowerCase().includes('api');
+  const isApiKey = senhaLabel.toLowerCase().includes('chave') || senhaLabel.toLowerCase().includes('api') || senhaLabel.toLowerCase().includes('secret');
   const isUniplay = providerConfig?.id === 'uniplay';
+  const isPlayfast = providerConfig?.id === 'playfast';
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -91,14 +92,15 @@ export function AddPanelModal({
           </div>
 
           <div className="space-y-2">
-            <Label>🔗 URL do Painel *</Label>
+            <Label>🔗 {isPlayfast ? 'URL da API (fixo)' : 'URL do Painel'} *</Label>
             <Input
               value={formData.urlPainel}
               onChange={(e) => setFormData({ ...formData, urlPainel: e.target.value })}
               placeholder={urlPlaceholder}
+              disabled={isPlayfast}
             />
             <p className="text-xs text-muted-foreground">
-              URL do painel {providerName} ou franquias
+              {isPlayfast ? 'URL fixa da API Playfast' : `URL do painel ${providerName} ou franquias`}
             </p>
             {isUniplay && (
               <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
@@ -119,13 +121,13 @@ export function AddPanelModal({
           </div>
 
           <div className="space-y-2">
-            <Label>👤 Usuário do Painel *</Label>
+            <Label>👤 {isPlayfast ? 'TOKEN da API' : 'Usuário do Painel'} *</Label>
             <Input
               value={formData.usuario}
               onChange={(e) => setFormData({ ...formData, usuario: e.target.value })}
               placeholder={usuarioPlaceholder}
             />
-            <p className="text-xs text-muted-foreground">Usuário para acessar o painel</p>
+            <p className="text-xs text-muted-foreground">{isPlayfast ? 'TOKEN fornecido pelo painel Playfast' : 'Usuário para acessar o painel'}</p>
           </div>
 
           <div className="space-y-2">
