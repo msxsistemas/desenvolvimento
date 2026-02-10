@@ -511,7 +511,12 @@ serve(async (req) => {
         let loginJson: any = null;
         try { loginJson = JSON.parse(loginText); } catch {}
 
+        // Log detalhado para debug
+        const respHeaders: Record<string, string> = {};
+        loginResp.headers.forEach((v, k) => { respHeaders[k] = v; });
         console.log(`📊 Uniplay login → status: ${loginResp.status}, has_token: ${!!loginJson?.access_token}`);
+        console.log(`📊 Uniplay response body: ${loginText.slice(0, 500)}`);
+        console.log(`📊 Uniplay response headers: ${JSON.stringify(respHeaders)}`);
 
         if (loginResp.ok && loginJson?.access_token) {
           // Try to get credits/account info
