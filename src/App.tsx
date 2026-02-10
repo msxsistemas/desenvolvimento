@@ -110,6 +110,7 @@ const App = () => (
             <Route path="/servidores/playfast" element={<ServidorPlayfast />} />
             <Route path="/financeiro-extra/checkout" element={<Checkout />} />
             <Route path="/financeiro-extra/assas" element={<Assas />} />
+            <Route path="/configuracoes/asaas" element={<Assas />} />
             {/* WhatsApp routes */}
             <Route path="/whatsapp/gerenciar-mensagens" element={<GerenciarMensagens />} />
             <Route path="/whatsapp/fila-mensagens" element={<FilaMensagens />} />
