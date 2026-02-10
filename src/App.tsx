@@ -42,7 +42,7 @@ import ParearWhatsapp from "./pages/whatsapp/ParearWhatsappNew";
 import Checkout from "./pages/financeiro-extra/Checkout";
 import Assas from "./pages/financeiro-extra/Assas";
 import MercadoPago from "./pages/financeiro-extra/MercadoPago";
-import PagSeguro from "./pages/financeiro-extra/PagSeguro";
+
 import Ciabra from "./pages/financeiro-extra/Ciabra";
 // WhatsApp pages
 import GerenciarMensagens from "./pages/whatsapp/GerenciarMensagens";
@@ -115,7 +115,7 @@ const App = () => (
             <Route path="/financeiro-extra/assas" element={<Assas />} />
             <Route path="/configuracoes/asaas" element={<Assas />} />
             <Route path="/configuracoes/mercado-pago" element={<MercadoPago />} />
-            <Route path="/configuracoes/pagseguro" element={<PagSeguro />} />
+            
             <Route path="/configuracoes/ciabra" element={<Ciabra />} />
             {/* WhatsApp routes */}
             <Route path="/whatsapp/gerenciar-mensagens" element={<GerenciarMensagens />} />
