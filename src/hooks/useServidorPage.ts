@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PROVEDORES, Panel, ProviderConfig, getTestStrategy } from "@/config/provedores";
-import { resolveUniplayApiUrl } from "@/config/provedores/uniplay";
+import { resolveUniplayApiUrl, UNIPLAY_API_BASE } from "@/config/provedores/uniplay";
 
 export function useServidorPage(providerId: string) {
   const provider = PROVEDORES.find(p => p.id === providerId) || null;
@@ -139,18 +139,18 @@ export function useServidorPage(providerId: string) {
         return;
       }
 
-      // Usa a URL exata informada pelo usuário
-      const resolvedBaseUrl = baseUrl;
+      // Uniplay: todas as franquias usam gesapioffice.com como API
+      const resolvedBaseUrl = providerId === 'uniplay' ? UNIPLAY_API_BASE : baseUrl;
 
       const endpoint = provider?.loginEndpoint || '/api/auth/login';
       const payload = provider?.buildLoginPayload
         ? provider.buildLoginPayload(usuario, senha)
         : { username: usuario, password: senha };
 
-      // Para Uniplay, vai direto pela Edge Function (CORS bloqueia no browser)
+      // Uniplay API tem CORS: * — pode testar direto do browser
       const strategy = getTestStrategy(providerId);
       const isXtream = strategy.steps.some(s => s.type === 'xtream');
-      const skipBrowserTest = providerId === 'uniplay';
+      const skipBrowserTest = false;
 
       if (!skipBrowserTest) {
         try {
@@ -196,21 +196,20 @@ export function useServidorPage(providerId: string) {
           }
 
           const isSuccess = response.ok && (
-            data?.token || data?.access_token || data?.success === true || data?.user || 
+            data?.access_token || data?.token || data?.success === true || data?.user || 
             data?.result === 'success' || data?.user_info || data?.server_info
           );
 
           if (isSuccess) {
-            const token = data.token || data.access_token;
+            const token = data.access_token || data.token;
             if (token) localStorage.setItem("auth_token", token);
             
             let creditsInfo = '';
             if (providerId === 'uniplay' && token) {
               try {
                 const dashResp = await fetch(`${resolvedBaseUrl}/api/dash-reseller`, {
-                  method: 'POST',
-                  headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                  body: '{}',
+                  method: 'GET',
+                  headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
                 });
                 const dashData = await dashResp.json();
                 const credits = dashData?.credits ?? dashData?.credit ?? dashData?.saldo;
