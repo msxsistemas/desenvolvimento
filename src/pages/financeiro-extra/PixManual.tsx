@@ -195,9 +195,9 @@ export default function PixManual() {
           </Card>
         </div>
 
-        {/* Coluna direita */}
+        {/* Coluna direita - mesma altura da esquerda */}
         <div className="order-2">
-          <Card className="shadow-sm">
+          <Card className="shadow-sm h-full">
             <CardHeader>
               <CardTitle className="text-sm">Chave PIX</CardTitle>
               <CardDescription>Selecione o tipo e insira sua chave PIX.</CardDescription>
