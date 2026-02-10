@@ -198,7 +198,7 @@ export function useServidorPage(providerId: string) {
           } else {
             setTestResultModal({
               isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO",
-              details: `❌ Painel: ${nomePainel}\n🔗 URL: ${baseUrl}\n\n❌ ${data?.error || 'Credenciais inválidas.'}`,
+              details: `❌ Painel: ${nomePainel}\n🔗 URL: ${baseUrl}\n👤 Usuário: ${usuario}\n\n❌ ${data?.error || 'Usuário ou API key inválidos. Verifique suas credenciais e tente novamente.'}`,
             });
           }
         } catch (err: any) {

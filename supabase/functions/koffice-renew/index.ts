@@ -352,7 +352,7 @@ async function testConnection(baseUrl: string, panelUser: string, panelPass: str
   const loginResult = await formLogin(cleanBase, panelUser, panelPass);
 
   if (!loginResult.success) {
-    return { success: false, error: `Login falhou. Verifique se o usuário "${panelUser}" e a API key estão corretos. Detalhes: ${loginResult.error}` };
+    return { success: false, error: `Usuário ou API key inválidos. Verifique suas credenciais e tente novamente.` };
   }
 
   // Try to get dashboard info with session
@@ -380,7 +380,7 @@ async function testConnection(baseUrl: string, panelUser: string, panelPass: str
   }
 
   if (infoText.includes('/login')) {
-    return { success: false, error: 'API key não aceita como senha de login. Verifique se o painel suporta autenticação via API key.' };
+    return { success: false, error: 'Usuário ou API key inválidos. Verifique suas credenciais e tente novamente.' };
   }
 
   return { success: false, error: 'Não foi possível verificar a sessão no painel.' };
