@@ -50,6 +50,5 @@ export const UNIPLAY_CONFIG: ProviderConfig = {
   buildLoginPayload: (usuario: string, senha: string) => ({
     username: usuario,
     password: senha,
-    code: '',
   }),
 };
