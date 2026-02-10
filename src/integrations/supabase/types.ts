@@ -460,6 +460,7 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
+          painel_id: string | null
           provedor_iptv: string | null
           renovacao_automatica: boolean | null
           user_id: string | null
@@ -473,6 +474,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
+          painel_id?: string | null
           provedor_iptv?: string | null
           renovacao_automatica?: boolean | null
           user_id?: string | null
@@ -486,12 +488,21 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
+          painel_id?: string | null
           provedor_iptv?: string | null
           renovacao_automatica?: boolean | null
           user_id?: string | null
           valor?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "produtos_painel_id_fkey"
+            columns: ["painel_id"]
+            isOneToOne: false
+            referencedRelation: "paineis_integracao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       templates_cobranca: {
         Row: {

@@ -7,15 +7,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, Settings, AlertTriangle } from "lucide-react";
+import { Package, Settings, AlertTriangle, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProdutos } from "@/hooks/useDatabase";
+import { supabase } from "@/lib/supabase";
 
 const formatCurrencyBRL = (value: string) => {
   const digits = (value ?? "").toString().replace(/\D/g, "");
   const number = Number(digits) / 100;
   if (isNaN(number)) return "R$ 0,00";
   return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+};
+
+const PROVIDER_LABELS: Record<string, string> = {
+  'mundogf': 'MundoGF',
+  'sigma-v2': 'Sigma',
+  'koffice-api': 'KOffice API',
+  'koffice-v2': 'KOffice V2',
 };
 
 export default function ProdutosEditar() {
@@ -27,6 +35,7 @@ export default function ProdutosEditar() {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [paineis, setPaineis] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     nome: "",
     valor: "",
@@ -34,31 +43,41 @@ export default function ProdutosEditar() {
     descricao: "",
     configuracoesIptv: false,
     provedorIptv: "",
+    painelId: "",
     renovacaoAutomatica: false,
   });
 
   useEffect(() => {
     document.title = "Editar Produto | Tech Play";
+    carregarPaineis();
     
     const carregar = async () => {
       if (!id) { navigate("/produtos"); return; }
       setLoadingData(true);
       try {
-        const produto = await buscarPorId(id);
-        if (produto) {
-          setFormData({
-            nome: produto.nome || "",
-            valor: produto.valor ? (produto.valor.toString().trim().startsWith("R$") ? produto.valor : formatCurrencyBRL(produto.valor.toString())) : "",
-            creditos: produto.creditos || "",
-            descricao: produto.descricao || "",
-            configuracoesIptv: (produto as any).configuracoes_iptv ?? false,
-            provedorIptv: (produto as any).provedor_iptv ?? "",
-            renovacaoAutomatica: (produto as any).renovacao_automatica ?? false,
-          });
-        } else {
+        // Fetch produto with painel_id
+        const { data: produto, error } = await supabase
+          .from('produtos')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error || !produto) {
           toast({ title: "Erro", description: "Produto não encontrado", variant: "destructive" });
           navigate("/produtos");
+          return;
         }
+
+        setFormData({
+          nome: produto.nome || "",
+          valor: produto.valor ? (produto.valor.toString().trim().startsWith("R$") ? produto.valor : formatCurrencyBRL(produto.valor.toString())) : "",
+          creditos: produto.creditos || "",
+          descricao: produto.descricao || "",
+          configuracoesIptv: produto.configuracoes_iptv ?? false,
+          provedorIptv: produto.provedor_iptv ?? "",
+          painelId: (produto as any).painel_id ?? "",
+          renovacaoAutomatica: produto.renovacao_automatica ?? false,
+        });
       } catch (error) {
         console.error("Erro ao carregar produto:", error);
         toast({ title: "Erro", description: "Erro ao carregar dados do produto", variant: "destructive" });
@@ -71,8 +90,23 @@ export default function ProdutosEditar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const carregarPaineis = async () => {
+    const { data } = await supabase
+      .from('paineis_integracao')
+      .select('id, nome, provedor')
+      .order('nome');
+    setPaineis(data || []);
+  };
+
+  const paineisFiltrados = paineis.filter(p => p.provedor === formData.provedorIptv);
+  const provedoresDisponiveis = [...new Set(paineis.map(p => p.provedor))];
+
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      if (field === 'provedorIptv') updated.painelId = '';
+      return updated;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,15 +129,19 @@ export default function ProdutosEditar() {
 
     setLoading(true);
     try {
-      await atualizar(id, {
+      // Use supabase directly to include painel_id
+      const { error } = await supabase.from('produtos').update({
         nome: formData.nome,
         valor: formData.valor,
         creditos: formData.creditos,
         descricao: formData.descricao,
         configuracoes_iptv: formData.configuracoesIptv,
-        provedor_iptv: formData.provedorIptv,
+        provedor_iptv: formData.provedorIptv || null,
+        painel_id: formData.painelId || null,
         renovacao_automatica: formData.renovacaoAutomatica,
-      });
+      }).eq('id', id);
+
+      if (error) throw error;
       toast({ title: "Sucesso", description: "Produto atualizado com sucesso!" });
       navigate("/produtos");
     } catch (error) {
@@ -206,14 +244,40 @@ export default function ProdutosEditar() {
                     <Label className="text-sm font-medium">Provedor IPTV</Label>
                     <Select value={formData.provedorIptv} onValueChange={(value) => handleInputChange("provedorIptv", value)}>
                       <SelectTrigger className="bg-background border-border">
-                        <SelectValue placeholder="Selecione..." />
+                        <SelectValue placeholder="Selecione o provedor..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="provedor1">Provedor 1</SelectItem>
-                        <SelectItem value="provedor2">Provedor 2</SelectItem>
+                        {provedoresDisponiveis.map((prov) => (
+                          <SelectItem key={prov} value={prov}>
+                            {PROVIDER_LABELS[prov] || prov}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {formData.provedorIptv && paineisFiltrados.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Painel Específico</Label>
+                      <Select value={formData.painelId} onValueChange={(value) => handleInputChange("painelId", value)}>
+                        <SelectTrigger className="bg-background border-border">
+                          <SelectValue placeholder={paineisFiltrados.length === 1 ? paineisFiltrados[0].nome : "Selecione o painel..."} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {paineisFiltrados.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        {paineisFiltrados.length === 1 
+                          ? "Único painel disponível — será usado automaticamente" 
+                          : "Escolha qual painel será usado para renovação"}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between">
                     <div>
@@ -226,10 +290,17 @@ export default function ProdutosEditar() {
                     />
                   </div>
 
-                  <div className="flex items-center gap-2 text-warning text-sm">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span>Nenhum painel IPTV configurado</span>
-                  </div>
+                  {provedoresDisponiveis.length === 0 ? (
+                    <div className="flex items-center gap-2 text-warning text-sm">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>Nenhum painel IPTV configurado. Configure em Servidores.</span>
+                    </div>
+                  ) : formData.provedorIptv && paineisFiltrados.length > 0 ? (
+                    <div className="flex items-center gap-2 text-primary text-sm">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>{paineisFiltrados.length} painel(éis) {PROVIDER_LABELS[formData.provedorIptv] || formData.provedorIptv} disponível(eis)</span>
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>

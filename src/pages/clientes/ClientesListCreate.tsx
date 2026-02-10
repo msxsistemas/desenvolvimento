@@ -234,13 +234,23 @@ export default function ClientesListCreate() {
       const produto = produtos.find(p => String(p.id) === clienteParaRenovar.produto);
       if (produto?.provedor_iptv && clienteParaRenovar.usuario) {
         try {
-          // Buscar painel do provedor
-          const { data: paineis } = await supabase
-            .from('paineis_integracao')
-            .select('id, nome, provedor')
-            .eq('provedor', produto.provedor_iptv);
-
-          const painel = paineis?.[0];
+          // Usar painel_id específico do produto, ou buscar pelo provedor
+          let painel: any = null;
+          if ((produto as any).painel_id) {
+            const { data } = await supabase
+              .from('paineis_integracao')
+              .select('id, nome, provedor')
+              .eq('id', (produto as any).painel_id)
+              .single();
+            painel = data;
+          }
+          if (!painel) {
+            const { data: paineis } = await supabase
+              .from('paineis_integracao')
+              .select('id, nome, provedor')
+              .eq('provedor', produto.provedor_iptv);
+            painel = paineis?.[0];
+          }
           if (painel) {
             // Mapear duração do plano para o formato do painel
             let durationIn = 'months';
