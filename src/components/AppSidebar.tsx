@@ -218,7 +218,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r border-border" collapsible="icon">
-      <SidebarContent className="bg-background">
+      <SidebarContent className="bg-sidebar">
         {/* Logo Header */}
         <div className="flex justify-center py-6">
           <div className="w-16 h-16 rounded-full overflow-hidden shadow-lg shadow-destructive/30">
