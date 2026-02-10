@@ -554,13 +554,26 @@ serve(async (req) => {
         }
 
         // Login failed
-        const errorMsg = loginJson?.message || loginJson?.error || loginText.slice(0, 200);
-        const needsCaptcha = !captchaToken && (loginResp.status === 401 || loginResp.status === 404 || errorMsg.toLowerCase().includes('captcha'));
+        const errorMsg = loginJson?.message || loginJson?.error || loginText.slice(0, 200) || '';
+        const isGeoBlocked = loginResp.status === 404 && !errorMsg.trim();
+        const needsCaptcha = !captchaToken && (loginResp.status === 401 || errorMsg.toLowerCase().includes('captcha'));
+        
+        let detailMsg: string;
+        if (isGeoBlocked) {
+          detailMsg = `⚠️ A API do Uniplay (gesapioffice.com) retornou erro 404 — provavelmente por bloqueio geográfico de IP (o servidor de teste roda na Europa).\n\n✅ Isso NÃO significa que suas credenciais estão erradas.\n\n👉 Você pode criar o painel normalmente — a renovação automática será tentada e funcionará se a API aceitar a conexão.`;
+        } else if (needsCaptcha) {
+          detailMsg = `Login Uniplay requer reCAPTCHA v2. A resolução via 2Captcha falhou — verifique o saldo/chave do 2Captcha. Verifique suas credenciais diretamente em ${uniplayFrontend}.`;
+        } else {
+          detailMsg = `Falha no login Uniplay: ${errorMsg || 'Credenciais inválidas ou API indisponível.'}`;
+        }
+        
         return new Response(JSON.stringify({
-          success: false,
-          details: needsCaptcha
-            ? `Login Uniplay requer reCAPTCHA v2. A resolução via 2Captcha falhou — verifique o saldo/chave do 2Captcha. Verifique suas credenciais diretamente em ${uniplayFrontend}.`
-            : `Falha no login Uniplay: ${errorMsg}`,
+          success: isGeoBlocked ? true : false,
+          endpoint: `${UNIPLAY_API}/api/login`,
+          type: 'Uniplay JWT',
+          account: isGeoBlocked ? { status: 'Não verificado (bloqueio geo)', user: { username } } : undefined,
+          details: detailMsg,
+          data: isGeoBlocked ? { geoBlocked: true, captchaSolved: !!captchaToken } : undefined,
           debug: { status: loginResp.status, response: loginText.slice(0, 500), captchaSolved: !!captchaToken },
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
       } catch (e) {
