@@ -504,25 +504,29 @@ serve(async (req) => {
         let apiBaseUrl = '';
         let foundSiteKey = siteKey;
 
-        // Known URL mappings (frontend → API) as priority fallback
-        const KNOWN_API_MAP: Record<string, string> = {
-          'gestordefender.com': 'https://gesapioffice.com',
-          'www.gestordefender.com': 'https://gesapioffice.com',
-        };
-        const hostname = new URL(frontendUrl).hostname.toLowerCase();
-        const knownApi = KNOWN_API_MAP[hostname];
-        if (knownApi) {
-          console.log(`🗺️ Uniplay: Usando mapeamento conhecido: ${hostname} → ${knownApi}`);
-          apiBaseUrl = knownApi;
-        }
+        // Try the frontend URL itself first (many SPAs serve API on same domain)
+        // Then fall back to JS bundle discovery
         // Try to find API URL in JS bundles (check up to 3 bundles)
-        for (const jsPath of jsPaths.slice(0, 3)) {
+        for (const jsPath of jsPaths.filter(p => p.includes('app')).slice(0, 1)) {
           try {
             const jsResp = await withTimeout(fetch(`${frontendUrl}${jsPath}`, {
               method: 'GET',
               headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': '*/*' },
             }), 10000);
             const jsCode = await jsResp.text();
+            console.log(`📦 Uniplay: Bundle ${jsPath} tamanho: ${jsCode.length} chars`);
+            
+            // Debug: find baseURL context
+            const baseUrlContexts = jsCode.match(/.{0,50}baseURL.{0,80}/g) || [];
+            console.log(`🔍 baseURL contexts: ${JSON.stringify(baseUrlContexts.slice(0, 5))}`);
+            
+            // Debug: find login-related API paths
+            const loginContexts = jsCode.match(/.{0,30}\/api\/login.{0,50}/g) || [];
+            console.log(`🔍 /api/login contexts: ${JSON.stringify(loginContexts.slice(0, 5))}`);
+            
+            // Debug: find axios create patterns
+            const axiosContexts = jsCode.match(/.{0,50}axios\.create.{0,100}/g) || [];
+            console.log(`🔍 axios.create contexts: ${JSON.stringify(axiosContexts.slice(0, 3))}`);
             
             // Look for API base URL patterns in the JS code
             // Common patterns: baseURL:"https://api.example.com", VUE_APP_API_URL, axios.defaults.baseURL
@@ -567,16 +571,15 @@ serve(async (req) => {
           }
         }
         
-        // If no API URL found in bundles, try common patterns
+        // If no API URL found in bundles, try the frontend URL itself and common patterns
         if (!apiBaseUrl) {
-          // Try known API patterns
           const hostname = new URL(frontendUrl).hostname;
           const candidateApis = [
+            frontendUrl, // same domain first (most common for SPAs)
             `https://gesapi${hostname.replace(/^(www\.)?gestor/, '')}`,
             `https://api.${hostname}`,
-            frontendUrl, // fallback to same domain
           ];
-          console.log(`🔍 Uniplay: API URL não encontrada nos bundles, tentando candidatos: ${JSON.stringify(candidateApis)}`);
+          console.log(`🔍 Uniplay: Tentando candidatos de API: ${JSON.stringify(candidateApis)}`);
           
           for (const candidate of candidateApis) {
             try {
@@ -593,6 +596,12 @@ serve(async (req) => {
                 console.log(`✅ Uniplay: API encontrada em ${candidate} (status: ${testResp.status})`);
                 break;
               } catch {
+                // Check if it's not HTML (could be plain text error)
+                if (!testText.includes('<html') && !testText.includes('<!DOCTYPE') && testText.length < 500) {
+                  apiBaseUrl = candidate;
+                  console.log(`✅ Uniplay: API encontrada em ${candidate} (texto não-HTML, status: ${testResp.status})`);
+                  break;
+                }
                 console.log(`❌ ${candidate}/api/login retornou HTML, não é a API`);
               }
             } catch (e) {

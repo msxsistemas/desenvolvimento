@@ -1,13 +1,9 @@
 import { ProviderConfig } from "./types";
 
 /**
- * Mapeamento de URLs de frontend para URLs de API do Uniplay/Franquias.
- * O frontend (SPA Vue.js) roda em um domínio e a API em outro.
+ * URLs conhecidas das franquias Uniplay.
+ * A API geralmente roda no mesmo domínio do frontend.
  */
-export const UNIPLAY_URL_MAP: Record<string, string> = {
-  'gestordefender.com': 'gesapioffice.com',
-  'www.gestordefender.com': 'gesapioffice.com',
-};
 
 /** URLs conhecidas das franquias */
 export const UNIPLAY_KNOWN_URLS = [
@@ -18,17 +14,11 @@ export const UNIPLAY_KNOWN_URLS = [
 ];
 
 /**
- * Converte URL de frontend para URL da API real.
- * Se a URL já for a API ou não tiver mapeamento, retorna a própria URL.
+ * Retorna a URL base (origin) da URL informada.
  */
 export function resolveUniplayApiUrl(inputUrl: string): string {
   try {
     const url = new URL(inputUrl.replace(/\/$/, ''));
-    const host = url.hostname.toLowerCase();
-    const apiHost = UNIPLAY_URL_MAP[host];
-    if (apiHost) {
-      return `${url.protocol}//${apiHost}`;
-    }
     return url.origin;
   } catch {
     return inputUrl.replace(/\/$/, '');
