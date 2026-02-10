@@ -634,8 +634,9 @@ serve(async (req) => {
           }
         }
 
-        // Even without verify, if redirect was to dashboard, consider success
-        if (isRedirectToApp || isRedirectToRoot) {
+        // Even without verify, if redirect was to a real dashboard path, consider success
+        // But for kOffice, './' is ambiguous (returns ./ even on failed login), so only trust verify result
+        if ((isRedirectToApp && !isKoffice) || isRedirectToRoot) {
           console.log(`✅ Login via formulário bem-sucedido (redirect para dashboard)!`);
           return new Response(JSON.stringify({
             success: true,
@@ -650,6 +651,19 @@ serve(async (req) => {
               redirect: formLocation || null,
               response: formText.slice(0, 500),
             },
+            logs,
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+        
+        // For kOffice: if we got here, verify failed = credentials are wrong
+        if (isKoffice) {
+          console.log('❌ KOffice: Login form retornou ./ mas sessão não foi validada pelo dashboard API');
+          return new Response(JSON.stringify({
+            success: false,
+            details: '❌ Credenciais inválidas. O login retornou redirecionamento mas a sessão não foi validada pelo painel.',
             logs,
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
