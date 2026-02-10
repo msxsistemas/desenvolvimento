@@ -71,21 +71,52 @@ async function formLogin(cleanBase: string, panelUser: string, panelPass: string
   const postLocation = postResp.headers.get('location') || '';
   console.log(`📊 Form login → status: ${postResp.status}, location: ${postLocation}`);
 
-  // Follow redirect
+  // Follow redirect (may need multiple hops)
   if (postLocation) {
-    const followUrl = postLocation.startsWith('http') ? postLocation : `${cleanBase}/${postLocation.replace(/^\.\//, '')}`;
-    const followResp = await withTimeout(fetch(followUrl, {
-      method: 'GET',
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html', 'Cookie': allCookies },
-      redirect: 'manual',
-    }), 10000);
-    allCookies = mergeSetCookies(allCookies, followResp.headers.get('set-cookie'));
-    const dashHtml = await followResp.text();
-    const dashCsrf = dashHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
-    if (dashCsrf) return { success: true, cookies: allCookies, csrf: dashCsrf[1] };
+    let followUrl = postLocation.startsWith('http') ? postLocation : `${cleanBase}/${postLocation.replace(/^\.\//, '')}`;
+    let hops = 0;
+    while (hops < 5) {
+      hops++;
+      console.log(`🔗 Follow redirect #${hops}: ${followUrl}`);
+      const followResp = await withTimeout(fetch(followUrl, {
+        method: 'GET',
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html', 'Cookie': allCookies },
+        redirect: 'manual',
+      }), 10000);
+      allCookies = mergeSetCookies(allCookies, followResp.headers.get('set-cookie'));
+      const nextLocation = followResp.headers.get('location');
+      console.log(`📊 Follow #${hops} → status: ${followResp.status}, location: ${nextLocation}, cookies: ${allCookies.substring(0, 100)}`);
+      
+      if (followResp.status >= 300 && followResp.status < 400 && nextLocation) {
+        // Check if redirected back to login = failed
+        if (nextLocation.includes('/login')) {
+          await followResp.text();
+          return { success: false, cookies: allCookies, csrf: csrfToken, error: 'Login falhou - redirecionado para login' };
+        }
+        followUrl = nextLocation.startsWith('http') ? nextLocation : `${cleanBase}/${nextLocation.replace(/^\.\//, '')}`;
+        await followResp.text();
+        continue;
+      }
+      
+      const dashHtml = await followResp.text();
+      console.log(`📄 Follow #${hops} body snippet: ${dashHtml.substring(0, 300)}`);
+      
+      // If we landed on dashboard (not login page), session is valid
+      if (!dashHtml.includes('/login') && (dashHtml.includes('dashboard') || dashHtml.includes('Dashboard') || followResp.ok)) {
+        const dashCsrf = dashHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
+        return { success: true, cookies: allCookies, csrf: dashCsrf ? dashCsrf[1] : csrfToken };
+      }
+      
+      // Landed on login page = failed
+      if (dashHtml.includes('/login') || dashHtml.includes('try_login')) {
+        return { success: false, cookies: allCookies, csrf: csrfToken, error: 'Login falhou - credenciais inválidas' };
+      }
+      break;
+    }
   }
 
-  // Verify session
+  // Verify session via API
+  console.log(`🔍 Verifying session via API with cookies: ${allCookies.substring(0, 100)}`);
   const verifyResp = await withTimeout(fetch(`${cleanBase}/dashboard/api?get_info&month=0`, {
     method: 'GET',
     headers: {
@@ -97,6 +128,7 @@ async function formLogin(cleanBase: string, panelUser: string, panelPass: string
     },
   }), 10000);
   const verifyText = await verifyResp.text();
+  console.log(`📊 Verify API → status: ${verifyResp.status}, snippet: ${verifyText.substring(0, 200)}`);
   let verifyJson: any = null;
   try { verifyJson = JSON.parse(verifyText); } catch {}
 
