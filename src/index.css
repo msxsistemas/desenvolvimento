@@ -42,13 +42,13 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
-    --sidebar-background: 220 20% 10%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-background: 220 14% 80%;
+    --sidebar-foreground: 220 20% 14%;
+    --sidebar-primary: 217 91% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 18%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 15% 18%;
+    --sidebar-accent: 220 14% 74%;
+    --sidebar-accent-foreground: 220 20% 14%;
+    --sidebar-border: 220 14% 72%;
     --sidebar-ring: 217 91% 60%;
 
     /* Brand and support tokens */
@@ -116,13 +116,13 @@ All colors MUST be HSL.
     --input: 220 15% 22%;
     --ring: 217 91% 60%;
 
-    --sidebar-background: 220 20% 10%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-background: 220 14% 80%;
+    --sidebar-foreground: 220 20% 14%;
+    --sidebar-primary: 217 91% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 18%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 15% 18%;
+    --sidebar-accent: 220 14% 74%;
+    --sidebar-accent-foreground: 220 20% 14%;
+    --sidebar-border: 220 14% 72%;
     --sidebar-ring: 217 91% 60%;
 
     /* Brand and support tokens (dark) */
