@@ -13,6 +13,27 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+/** Cria um fetch que roteia pela proxy brasileira se configurada */
+function createProxiedFetch(): typeof fetch {
+  const proxyUrl = Deno.env.get('BRAZIL_PROXY_URL');
+  if (!proxyUrl) {
+    console.log('⚠️ BRAZIL_PROXY_URL não configurada, usando fetch direto');
+    return fetch;
+  }
+  console.log(`🌐 Usando proxy BR: ${proxyUrl.replace(/\/\/.*@/, '//***@')}`);
+  try {
+    const client = (Deno as any).createHttpClient({ proxy: { url: proxyUrl } });
+    return (input: string | URL | Request, init?: RequestInit) => {
+      return fetch(input, { ...init, client } as any);
+    };
+  } catch (e) {
+    console.log(`⚠️ Erro ao criar proxy client: ${(e as Error).message}, usando fetch direto`);
+    return fetch;
+  }
+}
+
+const proxiedFetch = createProxiedFetch();
+
 /**
  * Resolve reCAPTCHA usando 2Captcha API
  * @param version 'v2' ou 'v3'
@@ -495,7 +516,7 @@ serve(async (req) => {
         }
 
         // Step 3: Login com captcha resolvido
-        const loginResp = await withTimeout(fetch(`${UNIPLAY_API}/api/login`, {
+        const loginResp = await withTimeout(proxiedFetch(`${UNIPLAY_API}/api/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -527,7 +548,7 @@ serve(async (req) => {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
           };
           try {
-            const dashResp = await withTimeout(fetch(`${UNIPLAY_API}/api/dash-reseller`, { method: 'GET', headers: authHdrs }), 10000);
+            const dashResp = await withTimeout(proxiedFetch(`${UNIPLAY_API}/api/dash-reseller`, { method: 'GET', headers: authHdrs }), 10000);
             const dashText = await dashResp.text();
             let dashJson: any = null;
             try { dashJson = JSON.parse(dashText); } catch {}
