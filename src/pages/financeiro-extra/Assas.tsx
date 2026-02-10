@@ -122,7 +122,7 @@ export default function Assas() {
             </CardHeader>
             <CardContent>
               <div className="rounded-md border px-3 py-2 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Status Gateway</span>
+                <span className="text-sm font-semibold text-foreground">Status Gateway</span>
                 <div className="flex items-center gap-2">
                   <Switch checked={isConfigured} disabled />
                   <Badge variant={isConfigured ? "default" : "destructive"}>
