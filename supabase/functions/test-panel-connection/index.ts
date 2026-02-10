@@ -563,10 +563,12 @@ serve(async (req) => {
 
       // Success indicators: redirect to dashboard/home OR 200 with dashboard content
       const locationLower = formLocation.toLowerCase();
-      const isRedirectToApp = locationLower.includes('dashboard') || locationLower.includes('/home') || locationLower.includes('/admin') || locationLower.includes('/panel');
+      const isRedirectToApp = locationLower.includes('dashboard') || locationLower.includes('/home') || locationLower.includes('/admin') || locationLower.includes('/panel') || (isKoffice && (locationLower === './' || locationLower === '.'));
       // For MundoGF, redirect to '/' means success (it's the dashboard)
       const isRedirectToRoot = isMundogf && locationLower === '/';
-      const isRedirectToLogin = !formLocation || locationLower === './' || locationLower === '.' || locationLower.includes('/login');
+      // For kOffice, './' means redirect to dashboard root (success), not back to login
+      const isRelativeRoot = locationLower === './' || locationLower === '.';
+      const isRedirectToLogin = !formLocation || (!isKoffice && isRelativeRoot) || locationLower.includes('/login');
       const isRedirectToLoginOnly = isRedirectToLogin && !isRedirectToRoot;
       
       const isFormLoginSuccess = (
