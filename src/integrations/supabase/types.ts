@@ -98,6 +98,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ciabra_config: {
+        Row: {
+          api_key_hash: string
+          created_at: string
+          id: string
+          is_configured: boolean | null
+          updated_at: string
+          user_id: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key_hash: string
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          updated_at?: string
+          user_id: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key_hash?: string
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          updated_at?: string
+          user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           aniversario: string | null

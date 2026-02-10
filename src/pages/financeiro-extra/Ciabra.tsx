@@ -1,12 +1,78 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Construction } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { 
+  Key, 
+  Copy,
+  Webhook,
+  ExternalLink,
+  Settings,
+} from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Ciabra() {
+  const [apiKey, setApiKey] = useState("");
+  const [isConfigured, setIsConfigured] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
+
+  const webhookUrl = `https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/ciabra-integration`;
+
   useEffect(() => {
     document.title = "Ciabra - Gateway de Pagamentos | Gestor Tech Play";
+    loadConfig();
   }, []);
+
+  const loadConfig = async () => {
+    try {
+      const { data } = await (supabase as any)
+        .from('ciabra_config')
+        .select('*')
+        .eq('is_configured', true)
+        .maybeSingle();
+      if (data) setIsConfigured(true);
+    } catch (e) {
+      console.error('Erro ao carregar config Ciabra:', e);
+    }
+  };
+
+  const handleConfigure = async () => {
+    if (!apiKey.trim()) {
+      toast.error("Por favor, insira a API Key do Ciabra");
+      return;
+    }
+
+    setErrorDetails(null);
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ciabra-integration', {
+        body: { action: 'configure', apiKey, webhookUrl }
+      });
+
+      if (error) throw error;
+      if (data?.success) {
+        setIsConfigured(true);
+        toast.success('Ciabra configurado com sucesso!');
+      } else {
+        throw new Error(data?.error || 'Erro ao configurar Ciabra');
+      }
+    } catch (e: any) {
+      const msg = e?.message || 'Erro desconhecido';
+      setErrorDetails(msg);
+      toast.error(`Erro: ${msg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copiado!`);
+  };
 
   return (
     <div>
@@ -16,28 +82,110 @@ export default function Ciabra() {
             <Settings className="h-5 w-5" aria-hidden="true" />
             <h1 className="text-base font-semibold tracking-tight">Configuração do Ciabra</h1>
           </div>
-          <p className="text-xs/6 opacity-90">Configure seu gateway de pagamentos Ciabra.</p>
+          <p className="text-xs/6 opacity-90">Configure seu gateway de pagamentos Ciabra Invoice para receber pagamentos dos seus clientes.</p>
         </div>
       </header>
 
       <main className="space-y-4">
-        <Card className="shadow-sm">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Construction className="h-4 w-4 text-foreground/70" />
-              <CardTitle className="text-sm">Em Breve</CardTitle>
-              <Badge variant="secondary">Coming Soon</Badge>
-            </div>
-            <CardDescription>
-              A integração com o Ciabra está em desenvolvimento e será disponibilizada em breve.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Em breve você poderá configurar o Ciabra como gateway de pagamentos para seus clientes.
-            </p>
-          </CardContent>
-        </Card>
+        <section className="grid gap-4 md:grid-cols-2">
+          <Card className="shadow-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Webhook className="h-4 w-4 text-foreground/70" />
+                <CardTitle className="text-sm">Webhook URL</CardTitle>
+              </div>
+              <CardDescription>
+                Copie esta URL e adicione na plataforma Ciabra em: Integração → Webhooks.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Input readOnly value={webhookUrl} className="font-mono text-xs bg-muted/50" />
+                <Button variant="default" size="sm" onClick={() => copyToClipboard(webhookUrl, "URL do Webhook")} className="shrink-0">
+                  <Copy className="h-3 w-3 mr-1" />
+                  Copiar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <ExternalLink className="h-4 w-4 text-foreground/70" />
+                <CardTitle className="text-sm">Documentação</CardTitle>
+              </div>
+              <CardDescription>
+                Acesse a plataforma Ciabra → Integração → API Keys para obter sua chave de API.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border px-3 py-2 flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">Status Gateway</span>
+                <div className="flex items-center gap-2">
+                  <Switch checked={isConfigured} disabled />
+                  <Badge variant={isConfigured ? "default" : "destructive"}>
+                    {isConfigured ? "Ativado" : "Desativado"}
+                  </Badge>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 w-full"
+                onClick={() => window.open("https://plataforma.ciabra.com.br", "_blank")}
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Abrir Plataforma Ciabra
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section>
+          <Card className="shadow-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Key className="h-4 w-4 text-foreground/70" />
+                <CardTitle className="text-sm">API Key Ciabra</CardTitle>
+              </div>
+              <CardDescription>
+                Cole a API Key do Ciabra abaixo para ativar a integração. Base da API: https://api.az.center
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Input
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="Sua API Key do Ciabra..."
+                  className="font-mono text-sm"
+                />
+                {errorDetails && (
+                  <p className="text-sm text-destructive">{errorDetails}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section>
+          <Card className="shadow-sm">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div>
+                  <p className="text-sm font-medium">Finalizar Configuração</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Clique em "Ativar Ciabra" para validar sua API Key e ativar o gateway de pagamentos.
+                  </p>
+                </div>
+                <Button size="lg" onClick={handleConfigure} disabled={loading}>
+                  {loading ? "Verificando..." : "Ativar Ciabra"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
       </main>
     </div>
   );
