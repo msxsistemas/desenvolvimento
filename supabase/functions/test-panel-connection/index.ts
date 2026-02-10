@@ -525,12 +525,17 @@ serve(async (req) => {
               /["'](https?:\/\/[^"']*gesapi[^"']*\.com[^"']*)["']/i,
             ];
             
+            const excludedDomains = ['googleapis.com', 'google.com', 'gstatic.com', 'pusher.com', 'pusherapp.com', 'cloudflare.com', 'sentry.io', 'facebook.com', 'fbcdn.net', 'hotjar.com', 'analytics.', 'cdn.'];
             for (const pattern of apiUrlPatterns) {
               const match = jsCode.match(pattern);
-              if (match && match[1] && !match[1].includes('googleapis.com') && !match[1].includes('google.com') && !match[1].includes('gstatic.com')) {
-                apiBaseUrl = match[1].replace(/\/$/, '');
-                console.log(`🔗 Uniplay: API URL encontrada no JS: ${apiBaseUrl}`);
-                break;
+              if (match && match[1]) {
+                const matchedUrl = match[1].toLowerCase();
+                const isExcluded = excludedDomains.some(d => matchedUrl.includes(d));
+                if (!isExcluded) {
+                  apiBaseUrl = match[1].replace(/\/$/, '');
+                  console.log(`🔗 Uniplay: API URL encontrada no JS: ${apiBaseUrl}`);
+                  break;
+                }
               }
             }
             

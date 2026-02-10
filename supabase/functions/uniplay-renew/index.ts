@@ -37,12 +37,17 @@ async function discoverApiUrl(frontendUrl: string): Promise<string> {
           /["'](https?:\/\/[^"']*office[^"']*\.com[^"']*)["']/i,
           /["'](https?:\/\/[^"']*gesapi[^"']*\.com[^"']*)["']/i,
         ];
+        const excludedDomains = ['googleapis.com', 'google.com', 'gstatic.com', 'pusher.com', 'pusherapp.com', 'cloudflare.com', 'sentry.io', 'facebook.com', 'fbcdn.net', 'hotjar.com', 'analytics.', 'cdn.'];
         for (const pattern of patterns) {
           const match = jsCode.match(pattern);
-          if (match && match[1] && !match[1].includes('googleapis.com') && !match[1].includes('google.com') && !match[1].includes('gstatic.com')) {
-            const apiUrl = match[1].replace(/\/$/, '');
-            console.log(`🔗 Uniplay: API URL descoberta no JS: ${apiUrl}`);
-            return apiUrl;
+          if (match && match[1]) {
+            const matchedUrl = match[1].toLowerCase();
+            const isExcluded = excludedDomains.some(d => matchedUrl.includes(d));
+            if (!isExcluded) {
+              const apiUrl = match[1].replace(/\/$/, '');
+              console.log(`🔗 Uniplay: API URL descoberta no JS: ${apiUrl}`);
+              return apiUrl;
+            }
           }
         }
       } catch {}
