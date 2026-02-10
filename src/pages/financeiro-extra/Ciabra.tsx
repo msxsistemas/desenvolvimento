@@ -15,7 +15,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Ciabra() {
-  const [apiKey, setApiKey] = useState("");
+  const [publicKey, setPublicKey] = useState("");
+  const [secretKey, setSecretKey] = useState("");
   const [isConfigured, setIsConfigured] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
@@ -41,8 +42,8 @@ export default function Ciabra() {
   };
 
   const handleConfigure = async () => {
-    if (!apiKey.trim()) {
-      toast.error("Por favor, insira a API Key do Ciabra");
+    if (!publicKey.trim() || !secretKey.trim()) {
+      toast.error("Por favor, insira a Chave Pública e a Chave Secreta do Ciabra");
       return;
     }
 
@@ -50,7 +51,7 @@ export default function Ciabra() {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('ciabra-integration', {
-        body: { action: 'configure', apiKey, webhookUrl }
+        body: { action: 'configure', apiKey: secretKey, publicKey, webhookUrl }
       });
 
       if (error) throw error;
@@ -147,23 +148,43 @@ export default function Ciabra() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Key className="h-4 w-4 text-foreground/70" />
-                <CardTitle className="text-sm">API Key Ciabra</CardTitle>
+                <CardTitle className="text-sm">Chaves de API Ciabra</CardTitle>
               </div>
               <CardDescription>
-                Cole a API Key do Ciabra abaixo para ativar a integração. Base da API: https://api.az.center
+                Cole suas chaves de API do Ciabra abaixo. Encontre-as em: Perfil → Integração → Chave da API.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <Input
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Sua API Key do Ciabra..."
-                  className="font-mono text-sm"
-                />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">Chave Pública</label>
+                    <Input
+                      value={publicKey}
+                      onChange={(e) => setPublicKey(e.target.value)}
+                      placeholder="pk_live_..."
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">Chave Secreta</label>
+                    <Input
+                      type="password"
+                      value={secretKey}
+                      onChange={(e) => setSecretKey(e.target.value)}
+                      placeholder="sk_live_..."
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                </div>
                 {errorDetails && (
                   <p className="text-sm text-destructive">{errorDetails}</p>
                 )}
+                <div className="rounded-md bg-accent/50 border px-3 py-2">
+                  <p className="text-xs text-muted-foreground">
+                    ⚠️ <strong>CUIDADO</strong> ao compartilhar suas chaves com terceiros!
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
