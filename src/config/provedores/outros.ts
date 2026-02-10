@@ -2,7 +2,6 @@ import { ProviderConfig } from "./types";
 
 // Provedores ainda não integrados
 export const PROVEDORES_NAO_INTEGRADOS: ProviderConfig[] = [
-  { id: 'playfast', nome: 'PLAYFAST', descricao: 'Painel IPTV Playfast', integrado: false },
   { id: 'now', nome: 'NOW', descricao: 'Painel NOW IPTV', integrado: false },
   { id: 'thebest', nome: 'THEBEST', descricao: 'Painel TheBest IPTV', integrado: false },
   { id: 'wplay', nome: 'WPLAY', descricao: 'Painel WPlay IPTV', integrado: false },
