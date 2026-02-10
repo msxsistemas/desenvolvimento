@@ -66,8 +66,9 @@ export function AppSidebar() {
   const logsActive = currentPath.startsWith("/logs");
   const indicacoesActive = currentPath.startsWith("/indicacoes");
   const outrosActive = currentPath.startsWith("/outros") || currentPath === "/configuracoes/mensagens-padroes";
+  const gatewaysActive = currentPath === "/configuracoes" || currentPath.startsWith("/configuracoes/asaas");
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(
-    clientesActive ? "clientes" : planosActive ? "planos" : aplicativosActive ? "aplicativos" : produtosActive ? "produtos" : currentPath.startsWith("/servidores") ? "servidores" : financeiroActive ? "financeiro" : whatsappActive ? "whatsapp" : logsActive ? "logs" : indicacoesActive ? "indicacoes" : outrosActive ? "outros" : null
+    clientesActive ? "clientes" : planosActive ? "planos" : aplicativosActive ? "aplicativos" : produtosActive ? "produtos" : currentPath.startsWith("/servidores") ? "servidores" : financeiroActive ? "financeiro" : whatsappActive ? "whatsapp" : logsActive ? "logs" : indicacoesActive ? "indicacoes" : outrosActive ? "outros" : gatewaysActive ? "gateways" : null
   );
 
   const toggleSubmenu = (menu: string) => {
@@ -107,7 +108,7 @@ export function AppSidebar() {
     { to: "/servidores", icon: Server, label: "Servidores", hasServidoresSubmenu: true },
     { to: "/financeiro", icon: DollarSign, label: "Financeiro", hasFinanceiroSubmenu: true },
     { to: "/relatorios", icon: Filter, label: "Relatórios" },
-    { to: "/configuracoes", icon: Globe, label: "Gateways" },
+    { to: "/configuracoes", icon: Globe, label: "Gateways", hasGatewaysSubmenu: true },
     { to: "/whatsapp", icon: WhatsAppIcon, label: "WhatsApp", hasWhatsappSubmenu: true },
     { to: "/indicacoes", icon: Share2, label: "Indicações", hasIndicacoesSubmenu: true },
     { to: "/outros", icon: MoreHorizontal, label: "Outros", hasOutrosSubmenu: true },
@@ -151,6 +152,9 @@ export function AppSidebar() {
   ];
   const outrosSubItems = [
     { to: "/outros/cupom", label: "Cupom" },
+  ];
+  const gatewaysSubItems = [
+    { to: "/configuracoes/asaas", label: "Asaas" },
   ];
   const servidoresSubItems = [
     { to: "/servidores", label: "Todos os Servidores" },
@@ -241,6 +245,7 @@ export function AppSidebar() {
                 if (item.hasLogsSubmenu) return renderSubmenuParent(item, "logs", logsActive, logsSubItems);
                 if (item.hasIndicacoesSubmenu) return renderSubmenuParent(item, "indicacoes", indicacoesActive, indicacoesSubItems);
                 if (item.hasOutrosSubmenu) return renderSubmenuParent(item, "outros", outrosActive, outrosSubItems);
+                if (item.hasGatewaysSubmenu) return renderSubmenuParent(item, "gateways", gatewaysActive, gatewaysSubItems);
 
                 // WhatsApp - special styling
                 if (item.hasWhatsappSubmenu) {
