@@ -13,6 +13,62 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+/**
+ * Resolve reCAPTCHA v3 usando 2Captcha API
+ * @returns token do reCAPTCHA resolvido ou null se falhar
+ */
+async function solve2Captcha(siteKey: string, pageUrl: string): Promise<string | null> {
+  const apiKey = Deno.env.get('TWOCAPTCHA_API_KEY');
+  if (!apiKey) {
+    console.log('⚠️ TWOCAPTCHA_API_KEY não configurada, pulando resolução de captcha');
+    return null;
+  }
+
+  try {
+    console.log(`🤖 2Captcha: Enviando reCAPTCHA v3 para resolução (siteKey: ${siteKey.slice(0, 15)}...)`);
+    
+    // Step 1: Submit captcha task
+    const submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&version=v3&action=login&min_score=0.3&json=1`;
+    const submitResp = await withTimeout(fetch(submitUrl), 15000);
+    const submitJson = await submitResp.json();
+    
+    if (submitJson.status !== 1) {
+      console.log(`❌ 2Captcha submit error: ${JSON.stringify(submitJson)}`);
+      return null;
+    }
+    
+    const taskId = submitJson.request;
+    console.log(`🤖 2Captcha: Task criada: ${taskId}, aguardando resolução...`);
+    
+    // Step 2: Poll for result (max ~120s with 5s intervals)
+    for (let i = 0; i < 24; i++) {
+      await new Promise(r => setTimeout(r, 5000));
+      
+      const resultUrl = `https://2captcha.com/res.php?key=${apiKey}&action=get&id=${taskId}&json=1`;
+      const resultResp = await withTimeout(fetch(resultUrl), 10000);
+      const resultJson = await resultResp.json();
+      
+      if (resultJson.status === 1) {
+        console.log(`✅ 2Captcha: reCAPTCHA resolvido com sucesso! (${i * 5 + 5}s)`);
+        return resultJson.request;
+      }
+      
+      if (resultJson.request !== 'CAPCHA_NOT_READY') {
+        console.log(`❌ 2Captcha error: ${JSON.stringify(resultJson)}`);
+        return null;
+      }
+      
+      console.log(`⏳ 2Captcha: Aguardando... (${(i + 1) * 5}s)`);
+    }
+    
+    console.log('❌ 2Captcha: Timeout após 120s');
+    return null;
+  } catch (e) {
+    console.log(`❌ 2Captcha error: ${(e as Error).message}`);
+    return null;
+  }
+}
+
 async function testOnWaveLogin(
   url: string,
   username: string,
@@ -217,14 +273,20 @@ serve(async (req) => {
         const recaptchaSiteKey = recaptchaSiteKeyMatch ? recaptchaSiteKeyMatch[1] : null;
         console.log(`🔑 CSRF: ${csrfToken ? csrfToken.slice(0, 20) + '...' : 'não'}, reCAPTCHA key: ${recaptchaSiteKey || 'não encontrada'}`);
 
+        // ---- Resolve reCAPTCHA v3 via 2Captcha ----
+        let recaptchaToken: string | null = null;
+        if (recaptchaSiteKey) {
+          recaptchaToken = await solve2Captcha(recaptchaSiteKey, `${cleanBase}/login`);
+        }
+        const captchaResponse = recaptchaToken || 'server-test-token';
+
         // ---- Strategy 1: Non-AJAX POST (follow redirects like a browser) ----
         console.log('🔄 Strategy 1: POST sem AJAX (simulando browser)...');
         const formBody1 = new URLSearchParams();
         if (csrfToken) formBody1.append('_token', csrfToken);
         formBody1.append('username', username);
         formBody1.append('password', password);
-        // Include a dummy g-recaptcha-response - some panels only check presence
-        formBody1.append('g-recaptcha-response', 'server-test-token');
+        formBody1.append('g-recaptcha-response', captchaResponse);
 
         const postHeaders1: Record<string, string> = {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -304,11 +366,18 @@ serve(async (req) => {
         const cookies2 = loginPageResp2.headers.get('set-cookie') || '';
         const cookieParts2 = cookies2.split(',').map(c => c.split(';')[0].trim()).join('; ');
 
+        // Resolve fresh reCAPTCHA for Strategy 2 if needed and first one wasn't solved
+        let captchaResponse2 = captchaResponse;
+        if (recaptchaSiteKey && !recaptchaToken) {
+          const freshToken = await solve2Captcha(recaptchaSiteKey, `${cleanBase}/login`);
+          if (freshToken) captchaResponse2 = freshToken;
+        }
+
         const formBody2 = new URLSearchParams();
         if (csrfToken2) formBody2.append('_token', csrfToken2);
         formBody2.append('username', username);
         formBody2.append('password', password);
-        formBody2.append('g-recaptcha-response', 'server-test-token');
+        formBody2.append('g-recaptcha-response', captchaResponse2);
 
         const postHeaders2: Record<string, string> = {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -351,6 +420,9 @@ serve(async (req) => {
           // Only recaptcha error = credentials might be valid but can't confirm password
           const onlyRecaptcha = errorKeys.length === 1 && errorKeys[0] === 'g-recaptcha-response';
           if (onlyRecaptcha) {
+            const recaptchaNote = recaptchaToken
+              ? 'Usuário encontrado mas o token reCAPTCHA resolvido pelo 2Captcha foi rejeitado. Tente novamente.'
+              : 'Usuário encontrado no servidor. A senha não pôde ser verificada automaticamente pois o reCAPTCHA v3 impede a validação completa e a chave 2Captcha não está configurada.';
             return new Response(JSON.stringify({
               success: true,
               endpoint: `${cleanBase}/login`,
@@ -360,7 +432,8 @@ serve(async (req) => {
                 connectivity: true,
                 credentialsValidated: false,
                 usernameValidated: true,
-                note: 'Usuário encontrado no servidor. A senha não pôde ser verificada automaticamente pois o reCAPTCHA v3 impede a validação completa. Verifique a senha manualmente.',
+                captchaSolved: !!recaptchaToken,
+                note: recaptchaNote,
               },
               logs,
             }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
