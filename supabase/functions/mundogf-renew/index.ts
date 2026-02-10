@@ -228,10 +228,10 @@ serve(async (req) => {
       });
     }
 
-    if (action === 'renew_client') {
-      const { clientUserId, duration, durationIn } = body;
-      if (!clientUserId || !duration || !durationIn) {
-        return new Response(JSON.stringify({ success: false, error: 'clientUserId, duration e durationIn são obrigatórios' }), {
+    if (action === 'renew_client' || action === 'renew_by_username') {
+      const { clientUserId, username, duration, durationIn } = body;
+      if ((!clientUserId && !username) || !duration || !durationIn) {
+        return new Response(JSON.stringify({ success: false, error: 'clientUserId ou username, duration e durationIn são obrigatórios' }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400,
         });
       }
@@ -239,20 +239,62 @@ serve(async (req) => {
       const { data: panel } = await supabase.from('paineis_integracao').select('*').eq('id', panelId).eq('provedor', 'mundogf').single();
       if (!panel) return new Response(JSON.stringify({ success: false, error: 'Painel não encontrado' }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
 
-      console.log(`🔄 Renovando cliente ${clientUserId} no painel ${panel.nome} (${duration} ${durationIn})`);
+      console.log(`🔄 Renovando cliente ${clientUserId || username} no painel ${panel.nome} (${duration} ${durationIn})`);
 
       const login = await loginMundoGF(panel.url, panel.usuario, panel.senha);
       if (!login.success) return new Response(JSON.stringify({ success: false, error: login.error }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
 
       const cleanBase = panel.url.replace(/\/$/, '');
       
-      // POST /clients/{clientUserId}/extend
+      // If renew_by_username, first find the client user_id from the panel
+      let resolvedUserId = clientUserId;
+      if (!resolvedUserId && username) {
+        const dtBody = new URLSearchParams();
+        dtBody.append('draw', '1');
+        dtBody.append('start', '0');
+        dtBody.append('length', '1000');
+        dtBody.append('search[value]', username);
+
+        const searchResp = await withTimeout(fetch(`${cleanBase}/ajax/getClients`, {
+          method: 'POST',
+          headers: {
+            'Cookie': login.cookies,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': login.csrf,
+            'User-Agent': 'Mozilla/5.0',
+            'Referer': `${cleanBase}/clients`,
+          },
+          body: dtBody.toString(),
+        }), 15000);
+        const searchText = await searchResp.text();
+        let searchJson: any = null;
+        try { searchJson = JSON.parse(searchText); } catch {}
+
+        if (searchJson?.data) {
+          const match = searchJson.data.find((c: any) => {
+            const cleanUsername = (c.username || '').replace(/<[^>]*>/g, '').trim();
+            return cleanUsername.toLowerCase() === username.toLowerCase();
+          });
+          if (match) {
+            resolvedUserId = match.user_id;
+          }
+        }
+
+        if (!resolvedUserId) {
+          return new Response(JSON.stringify({ success: false, error: `Usuário "${username}" não encontrado no painel MundoGF` }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+          });
+        }
+      }
+
+      // POST /clients/{resolvedUserId}/extend
       const extendBody = new URLSearchParams();
       extendBody.append('_token', login.csrf);
       extendBody.append('duration', String(duration));
       extendBody.append('duration_in', durationIn);
 
-      const extendResp = await withTimeout(fetch(`${cleanBase}/clients/${clientUserId}/extend`, {
+      const extendResp = await withTimeout(fetch(`${cleanBase}/clients/${resolvedUserId}/extend`, {
         method: 'POST',
         headers: {
           'Cookie': login.cookies,
@@ -273,7 +315,6 @@ serve(async (req) => {
       console.log(`📊 Extend → status: ${extendResp.status}, response: ${extendText.slice(0, 300)}`);
 
       if (extendResp.ok && extendJson?.success) {
-        // Log the renewal
         const authHeader = req.headers.get('authorization');
         let userId: string | null = null;
         if (authHeader) {
@@ -285,7 +326,7 @@ serve(async (req) => {
         if (userId) {
           await supabase.from('logs_painel').insert({
             user_id: userId,
-            acao: `Renovação MundoGF: cliente ${clientUserId} → +${duration} ${durationIn} (Painel: ${panel.nome})`,
+            acao: `Renovação MundoGF: cliente ${username || resolvedUserId} → +${duration} ${durationIn} (Painel: ${panel.nome})`,
             tipo: 'renovacao',
           });
         }

@@ -229,9 +229,57 @@ export default function ClientesListCreate() {
         return;
       }
 
+      // Renovar no painel do servidor se o produto tiver integração configurada
+      let painelRenovado = false;
+      const produto = produtos.find(p => String(p.id) === clienteParaRenovar.produto);
+      if (produto?.provedor_iptv && clienteParaRenovar.usuario) {
+        try {
+          // Buscar painel do provedor
+          const { data: paineis } = await supabase
+            .from('paineis_integracao')
+            .select('id, nome, provedor')
+            .eq('provedor', produto.provedor_iptv);
+
+          const painel = paineis?.[0];
+          if (painel) {
+            // Mapear duração do plano para o formato do painel
+            let durationIn = 'months';
+            let duration = qtd;
+            if (plano.tipo === 'dias') durationIn = 'days';
+            else if (plano.tipo === 'meses') durationIn = 'months';
+            else if (plano.tipo === 'anos') durationIn = 'years';
+
+            const { data: renewResult } = await supabase.functions.invoke('mundogf-renew', {
+              body: {
+                action: 'renew_by_username',
+                panelId: painel.id,
+                username: clienteParaRenovar.usuario,
+                duration,
+                durationIn,
+              },
+            });
+
+            if (renewResult?.success) {
+              painelRenovado = true;
+            } else {
+              console.warn('Renovação no painel falhou:', renewResult?.error);
+              toast({
+                title: "Aviso",
+                description: `Plano renovado localmente, mas falha no painel: ${renewResult?.error || 'Erro desconhecido'}`,
+                variant: "destructive",
+              });
+            }
+          }
+        } catch (err) {
+          console.error('Erro ao renovar no painel:', err);
+        }
+      }
+
       carregarClientes();
       
-      const mensagem = `Plano renovado até ${novaDataVencimento.toLocaleDateString('pt-BR')}`;
+      const mensagem = painelRenovado 
+        ? `Plano renovado até ${novaDataVencimento.toLocaleDateString('pt-BR')} (painel atualizado ✅)`
+        : `Plano renovado até ${novaDataVencimento.toLocaleDateString('pt-BR')}`;
       
       toast({
         title: "Sucesso",
