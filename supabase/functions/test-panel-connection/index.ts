@@ -14,10 +14,11 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 }
 
 /**
- * Resolve reCAPTCHA v3 usando 2Captcha API
+ * Resolve reCAPTCHA usando 2Captcha API
+ * @param version 'v2' ou 'v3'
  * @returns token do reCAPTCHA resolvido ou null se falhar
  */
-async function solve2Captcha(siteKey: string, pageUrl: string): Promise<string | null> {
+async function solve2Captcha(siteKey: string, pageUrl: string, version: 'v2' | 'v3' = 'v3'): Promise<string | null> {
   const apiKey = Deno.env.get('TWOCAPTCHA_API_KEY');
   if (!apiKey) {
     console.log('⚠️ TWOCAPTCHA_API_KEY não configurada, pulando resolução de captcha');
@@ -25,10 +26,13 @@ async function solve2Captcha(siteKey: string, pageUrl: string): Promise<string |
   }
 
   try {
-    console.log(`🤖 2Captcha: Enviando reCAPTCHA v3 para resolução (siteKey: ${siteKey.slice(0, 15)}...)`);
+    console.log(`🤖 2Captcha: Enviando reCAPTCHA ${version} para resolução (siteKey: ${siteKey.slice(0, 15)}...)`);
     
     // Step 1: Submit captcha task
-    const submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&version=v3&action=login&min_score=0.3&json=1`;
+    let submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&json=1`;
+    if (version === 'v3') {
+      submitUrl += '&version=v3&action=login&min_score=0.3';
+    }
     const submitResp = await withTimeout(fetch(submitUrl), 15000);
     const submitJson = await submitResp.json();
     
@@ -49,7 +53,7 @@ async function solve2Captcha(siteKey: string, pageUrl: string): Promise<string |
       const resultJson = await resultResp.json();
       
       if (resultJson.status === 1) {
-        console.log(`✅ 2Captcha: reCAPTCHA resolvido com sucesso! (${i * 5 + 5}s)`);
+        console.log(`✅ 2Captcha: reCAPTCHA ${version} resolvido com sucesso! (${i * 5 + 5}s)`);
         return resultJson.request;
       }
       
@@ -480,6 +484,111 @@ serve(async (req) => {
         return new Response(JSON.stringify({
           success: false,
           details: `Erro ao conectar: ${(e as Error).message}`,
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+      }
+    }
+
+    // --- Uniplay: JSON POST with reCAPTCHA v2 solving ---
+    if (isUniplay) {
+      try {
+        console.log('🔄 Uniplay: Buscando página de login para extrair sitekey do reCAPTCHA...');
+        // Fetch the frontend login page (gestordefender.com) to get the reCAPTCHA sitekey
+        const frontendUrl = String(baseUrl).replace(/\/$/, '');
+        const loginPageResp = await withTimeout(fetch(`${frontendUrl}/login`, {
+          method: 'GET',
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
+        }), 10000);
+        const loginHtml = await loginPageResp.text();
+
+        // Extract reCAPTCHA v2 sitekey
+        const siteKeyMatch = loginHtml.match(/data-sitekey=["']([0-9A-Za-z_-]{20,})["']/i)
+          || loginHtml.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i)
+          || loginHtml.match(/grecaptcha\.render\([^,]+,\s*\{[^}]*sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i);
+        const siteKey = siteKeyMatch ? siteKeyMatch[1] : null;
+        console.log(`🔑 Uniplay reCAPTCHA v2 sitekey: ${siteKey || 'não encontrada'}`);
+
+        let recaptchaToken: string | null = null;
+        if (siteKey) {
+          recaptchaToken = await solve2Captcha(siteKey, `${frontendUrl}/login`, 'v2');
+        }
+
+        // POST login to the API with captcha token
+        const loginPayloadUniplay: Record<string, string> = {
+          username,
+          password,
+        };
+        if (recaptchaToken) {
+          loginPayloadUniplay['g-recaptcha-response'] = recaptchaToken;
+        }
+
+        console.log(`🔄 Uniplay: POST ${cleanBase}/api/login (com${recaptchaToken ? '' : ' SEM'} captcha)`);
+        const loginResp = await withTimeout(fetch(`${cleanBase}/api/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          },
+          body: JSON.stringify(loginPayloadUniplay),
+        }), 15000);
+
+        const loginText = await loginResp.text();
+        let loginJson: any = null;
+        try { loginJson = JSON.parse(loginText); } catch {}
+        console.log(`📊 Uniplay login → status: ${loginResp.status}, snippet: ${loginText.slice(0, 300)}`);
+
+        const token = loginJson?.access_token || loginJson?.token || loginJson?.jwt;
+
+        // Credential rejection
+        const isRejection = !loginResp.ok && (
+          loginText.toLowerCase().includes('credenciais') ||
+          loginText.toLowerCase().includes('invalid') ||
+          loginText.toLowerCase().includes('unauthorized')
+        );
+
+        if (isRejection) {
+          return new Response(JSON.stringify({
+            success: false,
+            details: `❌ Credenciais inválidas no Uniplay.${!recaptchaToken ? ' ⚠️ reCAPTCHA não resolvido (2Captcha pode ter falhado).' : ''}`,
+            debug: { url: `${cleanBase}/api/login`, status: loginResp.status, response: loginText.slice(0, 300) },
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+        }
+
+        if (loginResp.ok && token) {
+          // Try to get credits
+          let credits = null;
+          try {
+            const dashResp = await withTimeout(fetch(`${cleanBase}/api/dash-reseller`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+              body: '{}',
+            }), 10000);
+            const dashJson = await dashResp.json();
+            credits = dashJson?.credits ?? dashJson?.credit ?? dashJson?.saldo ?? null;
+            if (credits !== null) console.log(`💰 Uniplay créditos: ${credits}`);
+          } catch {}
+
+          return new Response(JSON.stringify({
+            success: true,
+            endpoint: `${cleanBase}/api/login`,
+            type: 'Uniplay JWT',
+            account: { status: 'Active', user: { username }, token_received: true, credits },
+            data: { token, credits, captchaSolved: !!recaptchaToken, response: loginJson },
+            logs,
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+        }
+
+        // Not ok but not credential rejection - maybe captcha issue
+        return new Response(JSON.stringify({
+          success: false,
+          details: `❌ Login Uniplay falhou (status ${loginResp.status}).${!recaptchaToken ? ' ⚠️ reCAPTCHA não foi resolvido - verifique a chave 2Captcha.' : ' O token reCAPTCHA pode ter expirado.'}`,
+          debug: { url: `${cleanBase}/api/login`, status: loginResp.status, response: loginText.slice(0, 500), captchaSolved: !!recaptchaToken },
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+
+      } catch (e) {
+        return new Response(JSON.stringify({
+          success: false,
+          details: `Erro ao conectar ao Uniplay: ${(e as Error).message}`,
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
       }
     }

@@ -32,10 +32,57 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-async function loginUniplay(baseUrl: string, username: string, password: string): Promise<{ success: boolean; token: string; error?: string }> {
+async function solveRecaptchaV2(siteKey: string, pageUrl: string): Promise<string | null> {
+  const apiKey = Deno.env.get('TWOCAPTCHA_API_KEY');
+  if (!apiKey) return null;
+  try {
+    const submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&json=1`;
+    const submitResp = await withTimeout(fetch(submitUrl), 15000);
+    const submitJson = await submitResp.json();
+    if (submitJson.status !== 1) return null;
+    const taskId = submitJson.request;
+    for (let i = 0; i < 24; i++) {
+      await new Promise(r => setTimeout(r, 5000));
+      const resultResp = await withTimeout(fetch(`https://2captcha.com/res.php?key=${apiKey}&action=get&id=${taskId}&json=1`), 10000);
+      const resultJson = await resultResp.json();
+      if (resultJson.status === 1) return resultJson.request;
+      if (resultJson.request !== 'CAPCHA_NOT_READY') return null;
+    }
+    return null;
+  } catch { return null; }
+}
+
+async function extractSiteKey(frontendUrl: string): Promise<string | null> {
+  try {
+    const resp = await withTimeout(fetch(`${frontendUrl}/login`, {
+      method: 'GET',
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
+    }), 10000);
+    const html = await resp.text();
+    const match = html.match(/data-sitekey=["']([0-9A-Za-z_-]{20,})["']/i)
+      || html.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i);
+    return match ? match[1] : null;
+  } catch { return null; }
+}
+
+async function loginUniplay(baseUrl: string, username: string, password: string, frontendUrl?: string): Promise<{ success: boolean; token: string; error?: string }> {
   const cleanBase = baseUrl.replace(/\/$/, '');
 
   try {
+    // Try to solve reCAPTCHA v2 if frontend URL available
+    let recaptchaToken: string | null = null;
+    if (frontendUrl) {
+      const siteKey = await extractSiteKey(frontendUrl);
+      if (siteKey) {
+        console.log(`🔑 reCAPTCHA sitekey found: ${siteKey.slice(0, 15)}...`);
+        recaptchaToken = await solveRecaptchaV2(siteKey, `${frontendUrl}/login`);
+        console.log(`🤖 reCAPTCHA solved: ${!!recaptchaToken}`);
+      }
+    }
+
+    const payload: Record<string, string> = { username, password };
+    if (recaptchaToken) payload['g-recaptcha-response'] = recaptchaToken;
+
     const resp = await withTimeout(fetch(`${cleanBase}/api/login`, {
       method: 'POST',
       headers: {
@@ -43,7 +90,7 @@ async function loginUniplay(baseUrl: string, username: string, password: string)
         'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
-      body: JSON.stringify({ username, password, code: '' }),
+      body: JSON.stringify(payload),
     }), 15000);
 
     const text = await resp.text();
@@ -89,8 +136,9 @@ serve(async (req) => {
     }
 
     const cleanBase = resolveApiUrl(panel.url);
+    const frontendUrl = panel.url.replace(/\/$/, '');
     console.log(`🔗 Uniplay: URL original: ${panel.url} → API: ${cleanBase}`);
-    const login = await loginUniplay(cleanBase, panel.usuario, panel.senha);
+    const login = await loginUniplay(cleanBase, panel.usuario, panel.senha, frontendUrl);
     if (!login.success) {
       return new Response(JSON.stringify({ success: false, error: login.error }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
