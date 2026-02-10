@@ -98,7 +98,7 @@ export default function Assas() {
                   className="font-mono text-xs bg-muted/50"
                 />
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={() => copyToClipboard(webhookUrl, "URL do Webhook")}
                   className="shrink-0"
