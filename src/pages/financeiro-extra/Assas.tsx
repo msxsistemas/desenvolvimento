@@ -87,7 +87,7 @@ export default function Assas() {
                 <CardTitle className="text-sm">Webhook URL</CardTitle>
               </div>
               <CardDescription>
-                Copie esta URL e adicione nas configurações do Asaas em: Configurações → Integrações → Webhooks.
+                Copie esta URL e adicione no painel do Asaas em: Configurações → Integrações → Webhooks.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -117,7 +117,7 @@ export default function Assas() {
                 <CardTitle className="text-sm">Documentação</CardTitle>
               </div>
               <CardDescription>
-                Para obter seu Token, abra uma conta no Banco Asaas e acesse as configurações da API.
+                Acesse o painel Asaas → Configurações → Integrações → API para obter sua chave.
               </CardDescription>
             </CardHeader>
             <CardContent>
