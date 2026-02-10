@@ -7,7 +7,7 @@ export const PROVEDORES_NAO_INTEGRADOS: ProviderConfig[] = [
   { id: 'thebest', nome: 'THEBEST', descricao: 'Painel TheBest IPTV', integrado: false },
   { id: 'wplay', nome: 'WPLAY', descricao: 'Painel WPlay IPTV', integrado: false },
   { id: 'natv', nome: 'NATV', descricao: 'Painel NATV', integrado: false },
-  { id: 'uniplay', nome: 'UNIPLAY E FRANQUIAS', descricao: 'Painel Uniplay e Franquias', integrado: false },
+  
   { id: 'tvs', nome: 'TVS E FRANQUIAS', descricao: 'Painel TVS e Franquias', integrado: false },
   
   { id: 'painelfoda', nome: 'PAINELFODA', descricao: 'Painel Foda IPTV', integrado: false },

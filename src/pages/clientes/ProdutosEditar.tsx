@@ -24,6 +24,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   'sigma-v2': 'Sigma',
   'koffice-api': 'KOffice API',
   'koffice-v2': 'KOffice V2',
+  'uniplay': 'Uniplay e Franquias',
 };
 
 export default function ProdutosEditar() {

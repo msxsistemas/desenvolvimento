@@ -263,6 +263,7 @@ export default function ClientesListCreate() {
             const providerFunctionMap: Record<string, string> = {
               'mundogf': 'mundogf-renew',
               'sigma-v2': 'sigma-renew',
+              'uniplay': 'uniplay-renew',
               'koffice-api': 'koffice-renew',
               'koffice-v2': 'koffice-renew',
             };

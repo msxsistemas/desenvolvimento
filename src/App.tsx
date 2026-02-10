@@ -25,6 +25,7 @@ import ServidorSigma from "./pages/servidores/ServidorSigma";
 import ServidorKofficeApi from "./pages/servidores/ServidorKofficeApi";
 import ServidorKofficeV2 from "./pages/servidores/ServidorKofficeV2";
 import ServidorMundogf from "./pages/servidores/ServidorMundogf";
+import ServidorUniplay from "./pages/servidores/ServidorUniplay";
 import Financeiro from "./pages/Financeiro";
 import FinanceiroNovaTransacao from "./pages/financeiro/FinanceiroNovaTransacao";
 import FinanceiroEditarTransacao from "./pages/financeiro/FinanceiroEditarTransacao";
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="/servidores/koffice-api" element={<ServidorKofficeApi />} />
             <Route path="/servidores/koffice-v2" element={<ServidorKofficeV2 />} />
             <Route path="/servidores/mundogf" element={<ServidorMundogf />} />
+            <Route path="/servidores/uniplay" element={<ServidorUniplay />} />
             <Route path="/financeiro-extra/checkout" element={<Checkout />} />
             <Route path="/financeiro-extra/assas" element={<Assas />} />
             {/* WhatsApp routes */}

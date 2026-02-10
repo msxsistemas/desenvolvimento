@@ -9,6 +9,7 @@ const PROVIDER_ROUTES: Record<string, string> = {
   'koffice-api': '/servidores/koffice-api',
   'koffice-v2': '/servidores/koffice-v2',
   'mundogf': '/servidores/mundogf',
+  'uniplay': '/servidores/uniplay',
 };
 
 export default function ServidoresIndex() {
