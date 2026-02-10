@@ -139,8 +139,8 @@ export function useServidorPage(providerId: string) {
         return;
       }
 
-      // Uniplay: resolver URL de frontend para API
-      const resolvedBaseUrl = providerId === 'uniplay' ? resolveUniplayApiUrl(baseUrl) : baseUrl;
+      // Usa a URL exata informada pelo usuário
+      const resolvedBaseUrl = baseUrl;
 
       const endpoint = provider?.loginEndpoint || '/api/auth/login';
       const payload = provider?.buildLoginPayload
