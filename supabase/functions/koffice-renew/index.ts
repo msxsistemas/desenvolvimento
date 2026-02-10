@@ -190,9 +190,10 @@ async function formLogin(cleanBase: string, panelUser: string, panelPass: string
   return { success: false, cookies: allCookies, csrf: csrfToken, error: 'Login falhou - sessão não validada' };
 }
 
-// Test connection - try Xtream API first (no session needed), then form login
+// Test connection - try multiple API key strategies, then form login
 async function testConnection(baseUrl: string, panelUser: string, panelPass: string): Promise<{ success: boolean; clients_count?: string; active_clients_count?: string; error?: string }> {
   const cleanBase = baseUrl.replace(/\/$/, '');
+  const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
   
   // Strategy 1: Try Xtream/Panel API (stateless, no cookies needed)
   const apiPaths = ['/panel_api.php', '/api.php', '/player_api.php'];
@@ -202,7 +203,7 @@ async function testConnection(baseUrl: string, panelUser: string, panelPass: str
       console.log(`🔍 Trying Xtream API: ${path}`);
       const resp = await withTimeout(fetch(apiUrl, {
         method: 'GET',
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+        headers: { 'User-Agent': ua, 'Accept': 'application/json' },
       }), 10000);
       const text = await resp.text();
       let json: any = null;
@@ -210,47 +211,84 @@ async function testConnection(baseUrl: string, panelUser: string, panelPass: str
       console.log(`📊 Xtream ${path} → status: ${resp.status}, isJSON: ${!!json}, snippet: ${text.substring(0, 200)}`);
       
       if (resp.ok && json && typeof json === 'object') {
-        // Check if it's a valid authenticated response (has user_info, server_info, or client data)
         if (json.user_info || json.server_info || json.result === true || json.success) {
-          const clientsCount = json.user_info?.active_cons || json.active_clients_count;
           return {
             success: true,
             clients_count: json.clients_count || json.user_info?.max_connections || 'n/d',
-            active_clients_count: clientsCount || 'n/d',
+            active_clients_count: json.user_info?.active_cons || json.active_clients_count || 'n/d',
           };
         }
-        // If response has data keys (list of users), it means auth worked
         const keys = Object.keys(json);
         if (keys.length > 0 && !json.error && !json.message?.toLowerCase?.().includes('invalid')) {
-          return {
-            success: true,
-            clients_count: String(keys.length),
-            active_clients_count: 'n/d',
-          };
+          return { success: true, clients_count: String(keys.length), active_clients_count: 'n/d' };
         }
-      }
-      // Check for auth failure indicators
-      if (text.includes('incorrect') || text.includes('invalid') || text.includes('Authentication')) {
-        console.log(`❌ Xtream ${path}: auth failed`);
       }
     } catch (e) {
       console.log(`⚠️ Xtream ${path}: ${(e as Error).message}`);
     }
   }
   
-  // Strategy 2: Try form-based login (for V2 panels)
-  console.log(`🔄 Xtream API not available, trying form login...`);
+  // Strategy 2: Try direct API with api_key parameter (some KOffice panels support this)
+  const apiKeyEndpoints = [
+    { url: `${cleanBase}/api/login`, method: 'POST', body: JSON.stringify({ username: panelUser, api_key: panelPass }), ct: 'application/json' },
+    { url: `${cleanBase}/api/auth`, method: 'POST', body: JSON.stringify({ username: panelUser, api_key: panelPass }), ct: 'application/json' },
+    { url: `${cleanBase}/dashboard/api?get_info&month=0`, method: 'GET', body: null, ct: null, useApiKey: true },
+    { url: `${cleanBase}/api/v1/auth/login`, method: 'POST', body: JSON.stringify({ username: panelUser, password: panelPass }), ct: 'application/json' },
+  ];
+  
+  for (const ep of apiKeyEndpoints) {
+    try {
+      const headers: Record<string, string> = {
+        'User-Agent': ua,
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      };
+      if (ep.ct) headers['Content-Type'] = ep.ct;
+      // Try Basic Auth and API key header
+      if (ep.useApiKey) {
+        headers['Authorization'] = `Basic ${btoa(`${panelUser}:${panelPass}`)}`;
+        headers['X-API-Key'] = panelPass;
+      }
+      
+      console.log(`🔑 Trying API key auth: ${ep.method} ${ep.url}`);
+      const resp = await withTimeout(fetch(ep.url, {
+        method: ep.method,
+        headers,
+        body: ep.body || undefined,
+      }), 10000);
+      const text = await resp.text();
+      let json: any = null;
+      try { json = JSON.parse(text); } catch {}
+      console.log(`📊 API key ${ep.url} → status: ${resp.status}, isJSON: ${!!json}, snippet: ${text.substring(0, 300)}`);
+      
+      if (resp.ok && json && typeof json === 'object') {
+        // Check for valid auth response
+        if (json.token || json.access_token || json.success || json.user_info || json.iptv || json.user || json.result === true) {
+          return {
+            success: true,
+            clients_count: json.iptv?.clients_count || json.clients_count || 'n/d',
+            active_clients_count: json.iptv?.active_clients_count || json.active_clients_count || 'n/d',
+          };
+        }
+      }
+    } catch (e) {
+      console.log(`⚠️ API key endpoint: ${(e as Error).message}`);
+    }
+  }
+  
+  // Strategy 3: Try form-based login with API key as password (some panels accept it)
+  console.log(`🔄 API key endpoints not available, trying form login with API key as password...`);
   const loginResult = await formLogin(cleanBase, panelUser, panelPass);
 
   if (!loginResult.success) {
-    return { success: false, error: loginResult.error || 'Credenciais inválidas.' };
+    return { success: false, error: `Login falhou. Verifique se o usuário "${panelUser}" e a API key estão corretos. Detalhes: ${loginResult.error}` };
   }
 
   // Try to get dashboard info with session
   const infoResp = await withTimeout(fetch(`${cleanBase}/dashboard/api?get_info&month=0`, {
     method: 'GET',
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'User-Agent': ua,
       'Accept': 'application/json, text/javascript, */*; q=0.01',
       'X-Requested-With': 'XMLHttpRequest',
       'Cookie': loginResult.cookies,
@@ -271,7 +309,7 @@ async function testConnection(baseUrl: string, panelUser: string, panelPass: str
   }
 
   if (infoText.includes('/login')) {
-    return { success: false, error: 'Credenciais inválidas. Login falhou.' };
+    return { success: false, error: 'API key não aceita como senha de login. Verifique se o painel suporta autenticação via API key.' };
   }
 
   return { success: false, error: 'Não foi possível verificar a sessão no painel.' };
