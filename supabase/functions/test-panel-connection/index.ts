@@ -503,7 +503,18 @@ serve(async (req) => {
 
         let apiBaseUrl = '';
         let foundSiteKey = siteKey;
-        
+
+        // Known URL mappings (frontend → API) as priority fallback
+        const KNOWN_API_MAP: Record<string, string> = {
+          'gestordefender.com': 'https://gesapioffice.com',
+          'www.gestordefender.com': 'https://gesapioffice.com',
+        };
+        const hostname = new URL(frontendUrl).hostname.toLowerCase();
+        const knownApi = KNOWN_API_MAP[hostname];
+        if (knownApi) {
+          console.log(`🗺️ Uniplay: Usando mapeamento conhecido: ${hostname} → ${knownApi}`);
+          apiBaseUrl = knownApi;
+        }
         // Try to find API URL in JS bundles (check up to 3 bundles)
         for (const jsPath of jsPaths.slice(0, 3)) {
           try {

@@ -9,6 +9,20 @@ const corsHeaders = {
 // Descobre a URL da API real a partir dos bundles JS da SPA Vue.js
 async function discoverApiUrl(frontendUrl: string): Promise<string> {
   const cleanFrontend = frontendUrl.replace(/\/$/, '');
+
+  // Known URL mappings (frontend → API) as priority
+  const KNOWN_API_MAP: Record<string, string> = {
+    'gestordefender.com': 'https://gesapioffice.com',
+    'www.gestordefender.com': 'https://gesapioffice.com',
+  };
+  try {
+    const host = new URL(cleanFrontend).hostname.toLowerCase();
+    if (KNOWN_API_MAP[host]) {
+      console.log(`🗺️ Uniplay: Usando mapeamento conhecido: ${host} → ${KNOWN_API_MAP[host]}`);
+      return KNOWN_API_MAP[host];
+    }
+  } catch {}
+
   try {
     const spaResp = await withTimeout(fetch(cleanFrontend, {
       method: 'GET',
