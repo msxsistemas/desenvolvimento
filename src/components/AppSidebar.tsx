@@ -196,7 +196,7 @@ export function AppSidebar() {
         onClick={() => toggleSubmenu(menuKey)}
         className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none"
       >
-        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
+        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all border-b border-b-border/30 ${
           isMenuHighlighted(menuKey, sectionActive)
             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium" 
             : "text-muted-foreground hover:text-muted-foreground/80"
@@ -250,7 +250,7 @@ export function AppSidebar() {
                         onClick={() => toggleSubmenu("whatsapp")}
                         className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none"
                       >
-                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
+                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all border-b border-b-border/30 ${
                           isMenuHighlighted("whatsapp", whatsappActive)
                             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium" 
                             : "text-muted-foreground hover:text-muted-foreground/80"
@@ -276,7 +276,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none">
                       <NavLink to={item.to} end onClick={() => setOpenSubmenu(null)}>
-                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
+                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all border-b border-b-border/30 ${
                           isActive(item.to) && openSubmenu === null
                             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium"
                             : "text-muted-foreground hover:text-muted-foreground/80"
