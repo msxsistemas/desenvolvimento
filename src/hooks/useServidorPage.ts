@@ -213,14 +213,47 @@ export function useServidorPage(providerId: string) {
       // Uniplay: todas as franquias usam gesapioffice.com como API
       const resolvedBaseUrl = providerId === 'uniplay' ? UNIPLAY_API_BASE : baseUrl;
 
-      // Uniplay: API tem bloqueio geográfico (só aceita IP brasileiro)
-      // Edge Function roda na Europa, então o teste não funciona.
-      // Permitir criar painel sem teste, e informar o usuário.
+      // Uniplay: usar Edge Function para teste (servidor BR, sem bloqueio geo)
       if (providerId === 'uniplay') {
-        setTestResultModal({
-          isOpen: true, success: true, message: "TESTE NÃO DISPONÍVEL",
-          details: `⚠️ Painel: ${nomePainel}\n🔗 API: ${resolvedBaseUrl}/api/login\n👤 Usuário: ${usuario}\n\n⚠️ A API do Uniplay (gesapioffice.com) possui bloqueio geográfico e só aceita conexões de IPs brasileiros.\n\nO servidor de testes está na Europa, por isso o teste direto não funciona.\n\n✅ Crie o painel normalmente — a renovação e as operações funcionarão quando acessadas do seu servidor/domínio com IP brasileiro.\n\n💡 Verifique suas credenciais diretamente em ${formData.urlPainel.trim() || 'gestordefender.com'}.`,
-        });
+        try {
+          const { data, error } = await supabase.functions.invoke('test-panel-connection', {
+            body: {
+              baseUrl: resolvedBaseUrl, username: usuario, password: senha,
+              endpointPath: '/api/login',
+              endpointMethod: 'POST',
+              loginPayload: { username: usuario, password: senha, code: '' },
+              providerId: 'uniplay',
+              testSteps: [{ type: 'json-post', endpoints: ['/api/login'], label: 'Uniplay JWT API' }],
+              extraHeaders: { Accept: 'application/json' },
+            },
+          });
+
+          if (error || !data) {
+            setTestResultModal({
+              isOpen: true, success: false, message: 'Erro no Teste',
+              details: `Não foi possível executar o teste. ${error?.message ?? ''}`.trim(),
+            });
+            return;
+          }
+
+          if (data.success) {
+            const account = data.account;
+            setTestResultModal({
+              isOpen: true, success: true, message: "CONEXÃO REAL BEM-SUCEDIDA!",
+              details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}${account?.credits ? `\n💰 Créditos: ${account.credits}` : ''}${data.data?.expires_in ? `\n⏰ Token expira em: ${Math.round(data.data.expires_in / 3600)}h` : ''}\n\n✅ Autenticação JWT realizada com sucesso.`,
+            });
+          } else {
+            setTestResultModal({
+              isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO",
+              details: `❌ Painel: ${nomePainel}\n🔗 API: ${resolvedBaseUrl}/api/login\n👤 Usuário: ${usuario}\n\n❌ ${data.details || 'Credenciais inválidas.'}`,
+            });
+          }
+        } catch (err: any) {
+          setTestResultModal({
+            isOpen: true, success: false, message: "Erro no Teste",
+            details: `Erro inesperado: ${err.message}`,
+          });
+        }
         return;
       }
 
