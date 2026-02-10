@@ -213,56 +213,46 @@ export function useServidorPage(providerId: string) {
       // Uniplay: todas as franquias usam gesapioffice.com como API
       const resolvedBaseUrl = providerId === 'uniplay' ? UNIPLAY_API_BASE : baseUrl;
 
-      // Uniplay: teste direto do navegador do usuário (evita bloqueio geo da Edge Function)
+      // Uniplay: usar Edge Function com proxy BR para teste
       if (providerId === 'uniplay') {
         try {
-          const loginResp = await fetch(`${UNIPLAY_API_BASE}/api/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
+          const { data, error } = await supabase.functions.invoke('test-panel-connection', {
+            body: {
+              baseUrl: resolvedBaseUrl, username: usuario, password: senha,
+              endpointPath: '/api/login',
+              endpointMethod: 'POST',
+              loginPayload: { username: usuario, password: senha, code: '' },
+              providerId: 'uniplay',
+              frontendUrl: formData.urlPainel.trim() || 'https://gestordefender.com',
+              testSteps: [{ type: 'json-post', endpoints: ['/api/login'], label: 'Uniplay JWT API' }],
+              extraHeaders: { Accept: 'application/json' },
             },
-            body: JSON.stringify({ username: usuario, password: senha, code: '' }),
           });
 
-          const loginText = await loginResp.text();
-          let loginJson: any = null;
-          try { loginJson = JSON.parse(loginText); } catch {}
+          if (error || !data) {
+            setTestResultModal({
+              isOpen: true, success: false, message: 'Erro no Teste',
+              details: `Não foi possível executar o teste. ${error?.message ?? ''}`.trim(),
+            });
+            return;
+          }
 
-          if (loginResp.ok && loginJson?.access_token) {
-            // Sucesso - tentar pegar créditos
-            let credits = null;
-            try {
-              const dashResp = await fetch(`${UNIPLAY_API_BASE}/api/dash-reseller`, {
-                method: 'GET',
-                headers: {
-                  'Authorization': `Bearer ${loginJson.access_token}`,
-                  'Accept': 'application/json',
-                },
-              });
-              const dashJson = await dashResp.json();
-              credits = dashJson?.credits ?? dashJson?.data?.credits ?? null;
-            } catch {}
-
+          if (data.success) {
+            const account = data.account;
             setTestResultModal({
               isOpen: true, success: true, message: "CONEXÃO REAL BEM-SUCEDIDA!",
-              details: `✅ Painel: ${nomePainel}\n🔗 API: ${UNIPLAY_API_BASE}/api/login\n👤 Usuário: ${usuario}${credits !== null ? `\n💰 Créditos: ${credits}` : ''}${loginJson.expires_in ? `\n⏰ Token expira em: ${Math.round(loginJson.expires_in / 3600)}h` : ''}\n\n✅ Autenticação JWT realizada com sucesso.`,
+              details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}${account?.credits ? `\n💰 Créditos: ${account.credits}` : ''}${data.data?.expires_in ? `\n⏰ Token expira em: ${Math.round(data.data.expires_in / 3600)}h` : ''}\n\n✅ Autenticação JWT realizada com sucesso.`,
             });
           } else {
-            // Falha - pode precisar de captcha ou credenciais erradas
-            const errorMsg = loginJson?.message || loginJson?.error || '';
-            const needsCaptcha = errorMsg.toLowerCase().includes('captcha') || errorMsg.toLowerCase().includes('code');
             setTestResultModal({
               isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO",
-              details: needsCaptcha
-                ? `❌ Painel: ${nomePainel}\n🔗 API: ${UNIPLAY_API_BASE}/api/login\n👤 Usuário: ${usuario}\n\n⚠️ A API exige reCAPTCHA. O painel pode ser criado normalmente — a renovação automática resolve o captcha via 2Captcha.\n\nErro: ${errorMsg}`
-                : `❌ Painel: ${nomePainel}\n🔗 API: ${UNIPLAY_API_BASE}/api/login\n👤 Usuário: ${usuario}\n\n❌ ${errorMsg || `Credenciais inválidas ou API indisponível (status: ${loginResp.status}).`}`,
+              details: `❌ Painel: ${nomePainel}\n🔗 API: ${resolvedBaseUrl}/api/login\n👤 Usuário: ${usuario}\n\n❌ ${data.details || 'Credenciais inválidas.'}`,
             });
           }
         } catch (err: any) {
           setTestResultModal({
             isOpen: true, success: false, message: "Erro no Teste",
-            details: `Erro ao conectar com a API Uniplay: ${err.message}`,
+            details: `Erro inesperado: ${err.message}`,
           });
         }
         return;

@@ -16,6 +16,27 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+/** Cria um fetch que roteia pela proxy brasileira se configurada */
+function createProxiedFetch(): typeof fetch {
+  const proxyUrl = Deno.env.get('BRAZIL_PROXY_URL');
+  if (!proxyUrl) {
+    console.log('⚠️ BRAZIL_PROXY_URL não configurada, usando fetch direto');
+    return fetch;
+  }
+  console.log(`🌐 Usando proxy BR: ${proxyUrl.replace(/\/\/.*@/, '//***@')}`);
+  try {
+    const client = (Deno as any).createHttpClient({ proxy: { url: proxyUrl } });
+    return (input: string | URL | Request, init?: RequestInit) => {
+      return fetch(input, { ...init, client } as any);
+    };
+  } catch (e) {
+    console.log(`⚠️ Erro ao criar proxy client: ${(e as Error).message}, usando fetch direto`);
+    return fetch;
+  }
+}
+
+const proxiedFetch = createProxiedFetch();
+
 const API_HEADERS = {
   'Content-Type': 'application/json',
   'Accept': 'application/json',
@@ -70,7 +91,7 @@ async function loginUniplay(username: string, password: string): Promise<LoginRe
     const solved = await solve2CaptchaV2(UNIPLAY_RECAPTCHA_SITEKEY, 'https://gestordefender.com/login');
     if (solved) captchaToken = solved;
 
-    const resp = await withTimeout(fetch(`${UNIPLAY_API_BASE}/api/login`, {
+    const resp = await withTimeout(proxiedFetch(`${UNIPLAY_API_BASE}/api/login`, {
       method: 'POST',
       headers: API_HEADERS,
       body: JSON.stringify({ username, password, code: captchaToken }),
@@ -146,7 +167,7 @@ serve(async (req) => {
         const url = login.cryptPass
           ? `${UNIPLAY_API_BASE}/api/users-iptv?reg_password=${encodeURIComponent(login.cryptPass)}`
           : `${UNIPLAY_API_BASE}/api/users-iptv`;
-        const resp = await withTimeout(fetch(url, { method: 'GET', headers: hdrs }), 15000);
+        const resp = await withTimeout(proxiedFetch(url, { method: 'GET', headers: hdrs }), 15000);
         const text = await resp.text();
         let json: any = null;
         try { json = JSON.parse(text); } catch {}
@@ -177,7 +198,7 @@ serve(async (req) => {
 
       console.log(`🧪 Uniplay: Criando teste P2P para "${clientName}" (produto: ${productId}, horas: ${testHours || 6})`);
       try {
-        const resp = await withTimeout(fetch(`${UNIPLAY_API_BASE}/api/users-p2p`, {
+        const resp = await withTimeout(proxiedFetch(`${UNIPLAY_API_BASE}/api/users-p2p`, {
           method: 'POST',
           headers: hdrs,
           body: JSON.stringify({
@@ -217,7 +238,7 @@ serve(async (req) => {
       const perPage = body.perPage || 50;
       console.log(`📋 Uniplay: Listando usuários do painel (page ${page})...`);
       try {
-        const resp = await withTimeout(fetch(`${UNIPLAY_API_BASE}/api/reg-users?page=${page}&per_page=${perPage}`, {
+        const resp = await withTimeout(proxiedFetch(`${UNIPLAY_API_BASE}/api/reg-users?page=${page}&per_page=${perPage}`, {
           method: 'GET', headers: hdrs,
         }), 15000);
         const text = await resp.text();
@@ -252,7 +273,7 @@ serve(async (req) => {
         : `${UNIPLAY_API_BASE}/api/users-iptv`;
 
       try {
-        const resp = await withTimeout(fetch(searchUrl, { method: 'GET', headers: hdrs }), 15000);
+        const resp = await withTimeout(proxiedFetch(searchUrl, { method: 'GET', headers: hdrs }), 15000);
         const text = await resp.text();
         let json: any = null;
         try { json = JSON.parse(text); } catch {}
@@ -289,7 +310,7 @@ serve(async (req) => {
 
       for (const ep of extendEndpoints) {
         try {
-          const resp = await withTimeout(fetch(`${UNIPLAY_API_BASE}${ep.url}`, {
+          const resp = await withTimeout(proxiedFetch(`${UNIPLAY_API_BASE}${ep.url}`, {
             method: ep.method,
             headers: hdrs,
             body: JSON.stringify({ duration: Number(duration), duration_in: durationIn }),
