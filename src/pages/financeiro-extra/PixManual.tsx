@@ -158,7 +158,7 @@ export default function PixManual() {
         </div>
       </header>
 
-      <main className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      <main className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Coluna esquerda */}
         <div className="flex flex-col gap-4 order-1">
           <Card className="shadow-sm">
@@ -182,7 +182,7 @@ export default function PixManual() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
+          <Card className="shadow-sm flex-1">
             <CardContent className="pt-6">
               <div className="text-center space-y-3">
                 <p className="text-sm font-medium">Finalizar Configuração</p>
