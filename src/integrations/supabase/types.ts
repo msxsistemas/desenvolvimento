@@ -373,6 +373,36 @@ export type Database = {
         }
         Relationships: []
       }
+      mercadopago_config: {
+        Row: {
+          access_token_hash: string
+          created_at: string
+          id: string
+          is_configured: boolean | null
+          updated_at: string
+          user_id: string
+          webhook_url: string | null
+        }
+        Insert: {
+          access_token_hash: string
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          updated_at?: string
+          user_id: string
+          webhook_url?: string | null
+        }
+        Update: {
+          access_token_hash?: string
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          updated_at?: string
+          user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       paineis_integracao: {
         Row: {
           auto_renovacao: boolean

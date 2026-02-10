@@ -29,7 +29,7 @@ export default function MercadoPago() {
 
   const loadConfig = async () => {
     try {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('mercadopago_config')
         .select('*')
         .eq('is_configured', true)
