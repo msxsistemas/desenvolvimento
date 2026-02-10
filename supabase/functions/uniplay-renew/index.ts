@@ -6,22 +6,63 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Mapeamento de URLs frontend → API
-const URL_MAP: Record<string, string> = {
-  'gestordefender.com': 'gesapioffice.com',
-  'www.gestordefender.com': 'gesapioffice.com',
-};
-
-function resolveApiUrl(inputUrl: string): string {
+// Descobre a URL da API real a partir dos bundles JS da SPA Vue.js
+async function discoverApiUrl(frontendUrl: string): Promise<string> {
+  const cleanFrontend = frontendUrl.replace(/\/$/, '');
   try {
-    const url = new URL(inputUrl.replace(/\/$/, ''));
-    const host = url.hostname.toLowerCase();
-    const apiHost = URL_MAP[host];
-    if (apiHost) return `${url.protocol}//${apiHost}`;
-    return url.origin;
-  } catch {
-    return inputUrl.replace(/\/$/, '');
+    const spaResp = await withTimeout(fetch(cleanFrontend, {
+      method: 'GET',
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
+    }), 10000);
+    const spaHtml = await spaResp.text();
+
+    const jsMatches = spaHtml.match(/src=["'](\/js\/[^"']+\.js)["']/g) || [];
+    const jsPaths = jsMatches.map((m: string) => {
+      const match = m.match(/src=["'](\/js\/[^"']+\.js)["']/);
+      return match ? match[1] : null;
+    }).filter(Boolean) as string[];
+
+    for (const jsPath of jsPaths.slice(0, 3)) {
+      try {
+        const jsResp = await withTimeout(fetch(`${cleanFrontend}${jsPath}`, {
+          method: 'GET', headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': '*/*' },
+        }), 10000);
+        const jsCode = await jsResp.text();
+        const patterns = [
+          /baseURL\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
+          /VUE_APP_API_URL\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
+          /VUE_APP_BASE_URL\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
+          /api[_\-]?url\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
+          /["'](https?:\/\/[^"']*api[^"']*\.com[^"']*)["']/i,
+          /["'](https?:\/\/[^"']*office[^"']*\.com[^"']*)["']/i,
+          /["'](https?:\/\/[^"']*gesapi[^"']*\.com[^"']*)["']/i,
+        ];
+        for (const pattern of patterns) {
+          const match = jsCode.match(pattern);
+          if (match && match[1] && !match[1].includes('googleapis.com') && !match[1].includes('google.com') && !match[1].includes('gstatic.com')) {
+            const apiUrl = match[1].replace(/\/$/, '');
+            console.log(`🔗 Uniplay: API URL descoberta no JS: ${apiUrl}`);
+            return apiUrl;
+          }
+        }
+      } catch {}
+    }
+  } catch (e) {
+    console.log(`⚠️ Erro ao descobrir API: ${(e as Error).message}`);
   }
+
+  // Fallback: tenta a URL fornecida diretamente
+  try {
+    const testResp = await withTimeout(fetch(`${cleanFrontend}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ username: 'test', password: 'test' }),
+    }), 8000);
+    const testText = await testResp.text();
+    try { JSON.parse(testText); return cleanFrontend; } catch {}
+  } catch {}
+
+  return cleanFrontend;
 }
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -135,8 +176,8 @@ serve(async (req) => {
       });
     }
 
-    const cleanBase = resolveApiUrl(panel.url);
     const frontendUrl = panel.url.replace(/\/$/, '');
+    const cleanBase = await discoverApiUrl(frontendUrl);
     console.log(`🔗 Uniplay: URL original: ${panel.url} → API: ${cleanBase}`);
     const login = await loginUniplay(cleanBase, panel.usuario, panel.senha, frontendUrl);
     if (!login.success) {
