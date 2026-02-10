@@ -122,7 +122,7 @@ serve(async (req) => {
   }
 
   try {
-    const { baseUrl, username, password, extraHeaders, cf_clearance, cookie, endpointPath, endpointMethod, loginPayload, providerId, testSteps } = await req.json();
+    const { baseUrl, username, password, extraHeaders, cf_clearance, cookie, endpointPath, endpointMethod, loginPayload, providerId, testSteps, frontendUrl } = await req.json();
     
     if (!baseUrl || !username || !password) {
       return new Response(JSON.stringify({ 
@@ -474,94 +474,15 @@ serve(async (req) => {
       }
     }
 
-    // --- Uniplay: Login direto via JWT (API já resolvida pelo frontend) ---
+    // --- Uniplay: API bloqueia por IP/geo. Teste deve ser feito pelo browser do usuário ---
     if (isUniplay) {
-      try {
-        const apiBase = cleanBase; // Frontend já envia gesapioffice.com
-        const loginUrl = `${apiBase}/api/login`;
-        console.log(`🎯 Uniplay: POST para ${loginUrl}`);
-
-        const loginPayloadUniplay = loginPayload || { username, password, code: '' };
-
-        const loginResp = await withTimeout(fetch(loginUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          },
-          body: JSON.stringify(loginPayloadUniplay),
-        }), 15000);
-
-        const loginText = await loginResp.text();
-        let loginJson: any = null;
-        try { loginJson = JSON.parse(loginText); } catch {}
-        console.log(`📊 Uniplay login → status: ${loginResp.status}, snippet: ${loginText.slice(0, 300)}`);
-
-        const token = loginJson?.access_token || loginJson?.token;
-
-        // Credential rejection
-        const isRejection = !loginResp.ok && (
-          loginText.toLowerCase().includes('credenciais') ||
-          loginText.toLowerCase().includes('credencias') ||
-          loginText.toLowerCase().includes('invalid') ||
-          loginText.toLowerCase().includes('unauthorized')
-        );
-
-        if (isRejection) {
-          return new Response(JSON.stringify({
-            success: false,
-            details: `❌ Credenciais inválidas no Uniplay. Verifique usuário e senha.`,
-            debug: { url: loginUrl, status: loginResp.status, response: loginText.slice(0, 300) },
-          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-        }
-
-        if (loginResp.ok && token) {
-          let credits = null;
-          try {
-            const dashResp = await withTimeout(fetch(`${apiBase}/api/dash-reseller`, {
-              method: 'GET',
-              headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
-            }), 10000);
-            const dashJson = await dashResp.json();
-            credits = dashJson?.credits ?? dashJson?.credit ?? dashJson?.saldo ?? null;
-            if (credits !== null) console.log(`💰 Uniplay créditos: ${credits}`);
-          } catch {}
-
-          return new Response(JSON.stringify({
-            success: true,
-            endpoint: loginUrl,
-            type: 'Uniplay JWT',
-            account: { status: 'Active', user: { username }, token_received: true, credits },
-            data: { token, credits, response: loginJson },
-            logs,
-          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-        }
-
-        // JSON response but no token
-        if (loginResp.ok && loginJson) {
-          return new Response(JSON.stringify({
-            success: true,
-            endpoint: loginUrl,
-            type: 'Uniplay JWT',
-            account: { status: 'Active', user: { username }, token_received: false },
-            data: { response: loginJson },
-            logs,
-          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-        }
-
-        return new Response(JSON.stringify({
-          success: false,
-          details: `❌ Login Uniplay falhou (status ${loginResp.status}).`,
-          debug: { url: loginUrl, status: loginResp.status, response: loginText.slice(0, 500) },
-        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-
-      } catch (e) {
-        return new Response(JSON.stringify({
-          success: false,
-          details: `Erro ao conectar ao Uniplay: ${(e as Error).message}`,
-        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-      }
+      // Edge function não consegue acessar gesapioffice.com (geo-block).
+      // Retornar instrução para o frontend testar direto.
+      return new Response(JSON.stringify({
+        success: false,
+        useDirectBrowserTest: true,
+        details: 'Uniplay requer teste direto pelo browser.',
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
 
     if (!providerId || isKoffice) {

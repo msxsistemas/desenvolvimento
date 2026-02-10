@@ -147,10 +147,11 @@ export function useServidorPage(providerId: string) {
         ? provider.buildLoginPayload(usuario, senha)
         : { username: usuario, password: senha };
 
-      // Uniplay: API valida Origin header, deve usar Edge Function
+      // Uniplay: API valida Origin header E bloqueia IPs fora do Brasil
+      // Única opção: testar direto pelo browser sem edge function
       const strategy = getTestStrategy(providerId);
       const isXtream = strategy.steps.some(s => s.type === 'xtream');
-      const skipBrowserTest = providerId === 'uniplay';
+      const skipBrowserTest = false; // Sempre tenta browser primeiro
 
       if (!skipBrowserTest) {
         try {
@@ -177,17 +178,26 @@ export function useServidorPage(providerId: string) {
           }
 
           let data: any = null;
-          try { data = await response.json(); } catch { data = await response.text().catch(() => null); }
+          const responseText = await response.text();
+          try { data = JSON.parse(responseText); } catch { data = responseText; }
 
-          const responseText = typeof data === 'string' ? data : '';
-          const isCredentialRejection = !response.ok && (
-            responseText.toLowerCase().includes('credenciais') ||
-            responseText.toLowerCase().includes('credencias') ||
-            responseText.toLowerCase().includes('invalid') ||
-            (typeof data === 'object' && data?.message?.toLowerCase?.().includes('invalid'))
-          );
+          const textLower = (typeof data === 'string' ? data : '').toLowerCase();
+          
+          // Uniplay retorna 500 com "Credencias inválidas" quando Origin é bloqueado
+          // Mas também quando credenciais são realmente inválidas
+          // Verificar se é rejeição de credenciais vs bloqueio de Origin
+          const isCredentialText = textLower.includes('credenciais') || textLower.includes('credencias') || textLower.includes('invalid');
+          const isMessageInvalid = typeof data === 'object' && data?.message?.toLowerCase?.().includes('invalid');
 
-          if (isCredentialRejection) {
+          if (!response.ok && (isCredentialText || isMessageInvalid)) {
+            // Para Uniplay, 500 com "credencias" pode ser bloqueio de Origin
+            if (providerId === 'uniplay' && response.status === 500) {
+              setTestResultModal({
+                isOpen: true, success: false, message: "BLOQUEIO DE ORIGEM",
+                details: `⚠️ Painel: ${nomePainel}\n🔗 API: ${directUrl}\n👤 Usuário: ${usuario}\n\n⚠️ A API do Uniplay bloqueou a requisição porque o domínio de origem não é autorizado.\n\n💡 Isso é normal no ambiente de preview. Crie o painel e teste após publicar o app no seu domínio próprio, ou verifique as credenciais diretamente no site ${formData.urlPainel.trim()}.`,
+              });
+              return;
+            }
             setTestResultModal({
               isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO",
               details: `❌ Painel: ${nomePainel}\n🔗 Endpoint: ${directUrl}\n👤 Usuário: ${usuario}\n\n❌ Credenciais inválidas. Verifique usuário e senha.`,
@@ -229,8 +239,18 @@ export function useServidorPage(providerId: string) {
         }
       }
 
-      // Fallback: via Edge Function
+      // Uniplay: edge function não funciona (geo-block), não tentar fallback
+      if (providerId === 'uniplay') {
+        setTestResultModal({
+          isOpen: true, success: false, message: "BLOQUEIO DE ORIGEM",
+          details: `⚠️ Painel: ${nomePainel}\n🔗 API: ${resolvedBaseUrl}${endpoint}\n👤 Usuário: ${usuario}\n\n⚠️ A API do Uniplay bloqueou a requisição do ambiente de preview.\n\n💡 Crie o painel e verifique as credenciais diretamente no site ${formData.urlPainel.trim()}.`,
+        });
+        return;
+      }
+
+      // Fallback: via Edge Function (outros provedores)
       const fallbackStrategy = getTestStrategy(providerId);
+      const originalFrontendUrl = formData.urlPainel.trim().replace(/\/$/, '');
       const { data, error } = await supabase.functions.invoke('test-panel-connection', {
         body: {
           baseUrl: resolvedBaseUrl, username: usuario, password: senha,
@@ -240,6 +260,7 @@ export function useServidorPage(providerId: string) {
           providerId,
           testSteps: fallbackStrategy.steps,
           extraHeaders: { Accept: 'application/json' },
+          frontendUrl: originalFrontendUrl,
         },
       });
 
