@@ -1,11 +1,12 @@
 import { ProviderConfig } from "./types";
 
 /**
- * URLs conhecidas das franquias Uniplay.
- * A API geralmente roda no mesmo domínio do frontend.
+ * A API real do Uniplay roda em gesapioffice.com (separada do frontend).
+ * Frontend → gestordefender.com, officeplayon.com, etc.
+ * API → gesapioffice.com (CORS: *)
  */
 
-/** URLs conhecidas das franquias */
+/** URLs conhecidas das franquias (frontend → API compartilhada) */
 export const UNIPLAY_KNOWN_URLS = [
   { label: 'Uniplay', url: 'https://gestordefender.com' },
   { label: 'PlayOn', url: 'https://officeplayon.com' },
@@ -13,16 +14,15 @@ export const UNIPLAY_KNOWN_URLS = [
   { label: 'E3PLAY', url: 'https://e3office.click' },
 ];
 
+/** URL fixa da API compartilhada por todas as franquias Uniplay */
+export const UNIPLAY_API_BASE = 'https://gesapioffice.com';
+
 /**
- * Retorna a URL base (origin) da URL informada.
+ * Retorna a URL da API real do Uniplay.
+ * Todas as franquias usam a mesma API: gesapioffice.com
  */
-export function resolveUniplayApiUrl(inputUrl: string): string {
-  try {
-    const url = new URL(inputUrl.replace(/\/$/, ''));
-    return url.origin;
-  } catch {
-    return inputUrl.replace(/\/$/, '');
-  }
+export function resolveUniplayApiUrl(_inputUrl: string): string {
+  return UNIPLAY_API_BASE;
 }
 
 export const UNIPLAY_CONFIG: ProviderConfig = {
@@ -40,5 +40,6 @@ export const UNIPLAY_CONFIG: ProviderConfig = {
   buildLoginPayload: (usuario: string, senha: string) => ({
     username: usuario,
     password: senha,
+    code: '',
   }),
 };

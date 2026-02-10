@@ -6,72 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Descobre a URL da API real a partir dos bundles JS da SPA Vue.js
-async function discoverApiUrl(frontendUrl: string): Promise<string> {
-  const cleanFrontend = frontendUrl.replace(/\/$/, '');
-
-  // Try JS bundle discovery first, then fallback to same-domain API
-
-  try {
-    const spaResp = await withTimeout(fetch(cleanFrontend, {
-      method: 'GET',
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
-    }), 10000);
-    const spaHtml = await spaResp.text();
-
-    const jsMatches = spaHtml.match(/src=["'](\/js\/[^"']+\.js)["']/g) || [];
-    const jsPaths = jsMatches.map((m: string) => {
-      const match = m.match(/src=["'](\/js\/[^"']+\.js)["']/);
-      return match ? match[1] : null;
-    }).filter(Boolean) as string[];
-
-    for (const jsPath of jsPaths.slice(0, 3)) {
-      try {
-        const jsResp = await withTimeout(fetch(`${cleanFrontend}${jsPath}`, {
-          method: 'GET', headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': '*/*' },
-        }), 10000);
-        const jsCode = await jsResp.text();
-        const patterns = [
-          /baseURL\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
-          /VUE_APP_API_URL\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
-          /VUE_APP_BASE_URL\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
-          /api[_\-]?url\s*[:=]\s*["'](https?:\/\/[^"']+)["']/i,
-          /["'](https?:\/\/[^"']*api[^"']*\.com[^"']*)["']/i,
-          /["'](https?:\/\/[^"']*office[^"']*\.com[^"']*)["']/i,
-          /["'](https?:\/\/[^"']*gesapi[^"']*\.com[^"']*)["']/i,
-        ];
-        const excludedDomains = ['googleapis.com', 'google.com', 'gstatic.com', 'pusher.com', 'pusherapp.com', 'cloudflare.com', 'sentry.io', 'facebook.com', 'fbcdn.net', 'hotjar.com', 'analytics.', 'cdn.'];
-        for (const pattern of patterns) {
-          const match = jsCode.match(pattern);
-          if (match && match[1]) {
-            const matchedUrl = match[1].toLowerCase();
-            const isExcluded = excludedDomains.some(d => matchedUrl.includes(d));
-            if (!isExcluded) {
-              const apiUrl = match[1].replace(/\/$/, '');
-              console.log(`🔗 Uniplay: API URL descoberta no JS: ${apiUrl}`);
-              return apiUrl;
-            }
-          }
-        }
-      } catch {}
-    }
-  } catch (e) {
-    console.log(`⚠️ Erro ao descobrir API: ${(e as Error).message}`);
-  }
-
-  // Fallback: tenta a URL fornecida diretamente
-  try {
-    const testResp = await withTimeout(fetch(`${cleanFrontend}/api/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ username: 'test', password: 'test' }),
-    }), 8000);
-    const testText = await testResp.text();
-    try { JSON.parse(testText); return cleanFrontend; } catch {}
-  } catch {}
-
-  return cleanFrontend;
-}
+// URL fixa da API Uniplay (todas as franquias usam esta)
+const UNIPLAY_API_BASE = 'https://gesapioffice.com';
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -81,78 +17,29 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-async function solveRecaptchaV2(siteKey: string, pageUrl: string): Promise<string | null> {
-  const apiKey = Deno.env.get('TWOCAPTCHA_API_KEY');
-  if (!apiKey) return null;
+async function loginUniplay(username: string, password: string): Promise<{ success: boolean; token: string; error?: string }> {
   try {
-    const submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&json=1`;
-    const submitResp = await withTimeout(fetch(submitUrl), 15000);
-    const submitJson = await submitResp.json();
-    if (submitJson.status !== 1) return null;
-    const taskId = submitJson.request;
-    for (let i = 0; i < 24; i++) {
-      await new Promise(r => setTimeout(r, 5000));
-      const resultResp = await withTimeout(fetch(`https://2captcha.com/res.php?key=${apiKey}&action=get&id=${taskId}&json=1`), 10000);
-      const resultJson = await resultResp.json();
-      if (resultJson.status === 1) return resultJson.request;
-      if (resultJson.request !== 'CAPCHA_NOT_READY') return null;
-    }
-    return null;
-  } catch { return null; }
-}
-
-async function extractSiteKey(frontendUrl: string): Promise<string | null> {
-  try {
-    const resp = await withTimeout(fetch(`${frontendUrl}/login`, {
-      method: 'GET',
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
-    }), 10000);
-    const html = await resp.text();
-    const match = html.match(/data-sitekey=["']([0-9A-Za-z_-]{20,})["']/i)
-      || html.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i);
-    return match ? match[1] : null;
-  } catch { return null; }
-}
-
-async function loginUniplay(baseUrl: string, username: string, password: string, frontendUrl?: string): Promise<{ success: boolean; token: string; error?: string }> {
-  const cleanBase = baseUrl.replace(/\/$/, '');
-
-  try {
-    // Try to solve reCAPTCHA v2 if frontend URL available
-    let recaptchaToken: string | null = null;
-    if (frontendUrl) {
-      const siteKey = await extractSiteKey(frontendUrl);
-      if (siteKey) {
-        console.log(`🔑 reCAPTCHA sitekey found: ${siteKey.slice(0, 15)}...`);
-        recaptchaToken = await solveRecaptchaV2(siteKey, `${frontendUrl}/login`);
-        console.log(`🤖 reCAPTCHA solved: ${!!recaptchaToken}`);
-      }
-    }
-
-    const payload: Record<string, string> = { username, password };
-    if (recaptchaToken) payload['g-recaptcha-response'] = recaptchaToken;
-
-    const resp = await withTimeout(fetch(`${cleanBase}/api/login`, {
+    const resp = await withTimeout(fetch(`${UNIPLAY_API_BASE}/api/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ username, password, code: '' }),
     }), 15000);
 
     const text = await resp.text();
     let json: any = null;
     try { json = JSON.parse(text); } catch {}
 
-    const token = json?.access_token || json?.token || json?.jwt;
+    const token = json?.access_token;
     if (resp.ok && token) {
       console.log(`✅ Uniplay login OK`);
       return { success: true, token };
     }
 
-    return { success: false, token: '', error: json?.message || json?.error || `Login falhou (${resp.status})` };
+    return { success: false, token: '', error: json?.message || json?.error || text.slice(0, 200) };
   } catch (e) {
     return { success: false, token: '', error: (e as Error).message };
   }
@@ -184,10 +71,9 @@ serve(async (req) => {
       });
     }
 
-    const frontendUrl = panel.url.replace(/\/$/, '');
-    const cleanBase = await discoverApiUrl(frontendUrl);
-    console.log(`🔗 Uniplay: URL original: ${panel.url} → API: ${cleanBase}`);
-    const login = await loginUniplay(cleanBase, panel.usuario, panel.senha, frontendUrl);
+    const cleanBase = UNIPLAY_API_BASE;
+    console.log(`🔗 Uniplay: Frontend: ${panel.url} → API: ${cleanBase}`);
+    const login = await loginUniplay(panel.usuario, panel.senha);
     if (!login.success) {
       return new Response(JSON.stringify({ success: false, error: login.error }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
