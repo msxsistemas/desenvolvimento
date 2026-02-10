@@ -6,7 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// URL fixa da API Uniplay (todas as franquias usam esta)
 const UNIPLAY_API_BASE = 'https://gesapioffice.com';
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -17,17 +16,26 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-async function loginUniplay(username: string, password: string): Promise<{ success: boolean; token: string; error?: string }> {
+const API_HEADERS = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
+  'Origin': 'https://gestordefender.com',
+  'Referer': 'https://gestordefender.com/',
+};
+
+interface LoginResult {
+  success: boolean;
+  token: string;
+  cryptPass: string;
+  error?: string;
+}
+
+async function loginUniplay(username: string, password: string): Promise<LoginResult> {
   try {
     const resp = await withTimeout(fetch(`${UNIPLAY_API_BASE}/api/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
-        'Origin': 'https://gestordefender.com',
-        'Referer': 'https://gestordefender.com/',
-      },
+      headers: API_HEADERS,
       body: JSON.stringify({ username, password, code: '' }),
     }), 15000);
 
@@ -36,15 +44,26 @@ async function loginUniplay(username: string, password: string): Promise<{ succe
     try { json = JSON.parse(text); } catch {}
 
     const token = json?.access_token;
+    const cryptPass = json?.crypt_pass || '';
+
     if (resp.ok && token) {
-      console.log(`✅ Uniplay login OK`);
-      return { success: true, token };
+      console.log(`✅ Uniplay login OK (token expires_in: ${json?.expires_in}s, crypt_pass: ${cryptPass ? 'sim' : 'não'})`);
+      return { success: true, token, cryptPass };
     }
 
-    return { success: false, token: '', error: json?.message || json?.error || text.slice(0, 200) };
+    return { success: false, token: '', cryptPass: '', error: json?.message || json?.error || text.slice(0, 200) };
   } catch (e) {
-    return { success: false, token: '', error: (e as Error).message };
+    return { success: false, token: '', cryptPass: '', error: (e as Error).message };
   }
+}
+
+function authHeaders(token: string): Record<string, string> {
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'User-Agent': API_HEADERS['User-Agent'],
+  };
 }
 
 serve(async (req) => {
@@ -73,22 +92,113 @@ serve(async (req) => {
       });
     }
 
-    const cleanBase = UNIPLAY_API_BASE;
-    console.log(`🔗 Uniplay: Frontend: ${panel.url} → API: ${cleanBase}`);
+    console.log(`🔗 Uniplay: Painel "${panel.nome}" → API: ${UNIPLAY_API_BASE}`);
     const login = await loginUniplay(panel.usuario, panel.senha);
     if (!login.success) {
-      return new Response(JSON.stringify({ success: false, error: login.error }), {
+      return new Response(JSON.stringify({ success: false, error: `Falha no login: ${login.error}` }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
       });
     }
 
-    const authHeaders: Record<string, string> = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${login.token}`,
-    };
+    const hdrs = authHeaders(login.token);
 
+    // ==================== LIST USERS ====================
+    if (action === 'list_users') {
+      console.log(`📋 Uniplay: Listando usuários IPTV...`);
+      try {
+        const url = login.cryptPass
+          ? `${UNIPLAY_API_BASE}/api/users-iptv?reg_password=${encodeURIComponent(login.cryptPass)}`
+          : `${UNIPLAY_API_BASE}/api/users-iptv`;
+        const resp = await withTimeout(fetch(url, { method: 'GET', headers: hdrs }), 15000);
+        const text = await resp.text();
+        let json: any = null;
+        try { json = JSON.parse(text); } catch {}
+
+        console.log(`📊 Uniplay users-iptv → status: ${resp.status}, items: ${Array.isArray(json?.data) ? json.data.length : Array.isArray(json) ? json.length : '?'}`);
+
+        return new Response(JSON.stringify({
+          success: resp.ok,
+          users: json?.data || json || [],
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ success: false, error: (e as Error).message }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+        });
+      }
+    }
+
+    // ==================== CREATE TEST P2P ====================
+    if (action === 'create_test') {
+      const { productId, clientName, note, testHours } = body;
+      if (!productId || !clientName) {
+        return new Response(JSON.stringify({ success: false, error: 'productId e clientName são obrigatórios' }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400,
+        });
+      }
+
+      console.log(`🧪 Uniplay: Criando teste P2P para "${clientName}" (produto: ${productId}, horas: ${testHours || 6})`);
+      try {
+        const resp = await withTimeout(fetch(`${UNIPLAY_API_BASE}/api/users-p2p`, {
+          method: 'POST',
+          headers: hdrs,
+          body: JSON.stringify({
+            isOficial: false,
+            productid: productId,
+            credits: 1,
+            name: clientName,
+            nota: note || '',
+            test_hours: testHours || 6,
+          }),
+        }), 15000);
+
+        const text = await resp.text();
+        let json: any = null;
+        try { json = JSON.parse(text); } catch {}
+        console.log(`📊 Uniplay create test → status: ${resp.status}, response: ${text.slice(0, 300)}`);
+
+        if (resp.ok && json) {
+          return new Response(JSON.stringify({ success: true, data: json }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+          });
+        }
+
+        return new Response(JSON.stringify({ success: false, error: json?.message || text.slice(0, 200) }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ success: false, error: (e as Error).message }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+        });
+      }
+    }
+
+    // ==================== LIST PANEL USERS ====================
+    if (action === 'list_panel_users') {
+      const page = body.page || 1;
+      const perPage = body.perPage || 50;
+      console.log(`📋 Uniplay: Listando usuários do painel (page ${page})...`);
+      try {
+        const resp = await withTimeout(fetch(`${UNIPLAY_API_BASE}/api/reg-users?page=${page}&per_page=${perPage}`, {
+          method: 'GET', headers: hdrs,
+        }), 15000);
+        const text = await resp.text();
+        let json: any = null;
+        try { json = JSON.parse(text); } catch {}
+        console.log(`📊 Uniplay reg-users → status: ${resp.status}`);
+
+        return new Response(JSON.stringify({ success: resp.ok, data: json }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ success: false, error: (e as Error).message }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+        });
+      }
+    }
+
+    // ==================== RENEW BY USERNAME ====================
     if (action === 'renew_by_username') {
       if (!username || !duration || !durationIn) {
         return new Response(JSON.stringify({ success: false, error: 'username, duration e durationIn são obrigatórios' }), {
@@ -96,45 +206,33 @@ serve(async (req) => {
         });
       }
 
-      console.log(`🔄 Uniplay: Buscando cliente "${username}" no painel ${panel.nome}`);
+      console.log(`🔄 Uniplay: Buscando cliente "${username}" para renovação...`);
 
-      // Search for user
-      const searchEndpoints = [
-        `/api/clients?search=${encodeURIComponent(username)}`,
-        `/api/users?search=${encodeURIComponent(username)}`,
-        `/api/lines?search=${encodeURIComponent(username)}`,
-        `/api/client?search=${encodeURIComponent(username)}`,
-        `/api/dash-reseller?search=${encodeURIComponent(username)}`,
-      ];
-
+      // Search user in IPTV users list
       let clientId: string | null = null;
-      for (const ep of searchEndpoints) {
-        try {
-          const resp = await withTimeout(fetch(`${cleanBase}${ep}`, {
-            method: 'GET',
-            headers: authHeaders,
-          }), 15000);
-          const text = await resp.text();
-          let json: any = null;
-          try { json = JSON.parse(text); } catch {}
+      const searchUrl = login.cryptPass
+        ? `${UNIPLAY_API_BASE}/api/users-iptv?reg_password=${encodeURIComponent(login.cryptPass)}`
+        : `${UNIPLAY_API_BASE}/api/users-iptv`;
 
-          if (resp.ok && json) {
-            const items = json.data || json.clients || json.users || json.lines || (Array.isArray(json) ? json : null);
-            if (Array.isArray(items)) {
-              const match = items.find((c: any) => {
-                const u = (c.username || c.user || c.login || '').toLowerCase();
-                return u === username.toLowerCase();
-              });
-              if (match) {
-                clientId = String(match.id || match.user_id || match.client_id);
-                console.log(`✅ Uniplay: Cliente encontrado (ID: ${clientId}) via ${ep}`);
-                break;
-              }
-            }
+      try {
+        const resp = await withTimeout(fetch(searchUrl, { method: 'GET', headers: hdrs }), 15000);
+        const text = await resp.text();
+        let json: any = null;
+        try { json = JSON.parse(text); } catch {}
+
+        if (resp.ok && json) {
+          const items = json.data || (Array.isArray(json) ? json : []);
+          const match = items.find((c: any) => {
+            const u = (c.username || c.user || c.login || c.name || '').toLowerCase();
+            return u === username.toLowerCase();
+          });
+          if (match) {
+            clientId = String(match.id || match.user_id || match.client_id);
+            console.log(`✅ Uniplay: Cliente encontrado (ID: ${clientId})`);
           }
-        } catch (e) {
-          console.log(`⚠️ Uniplay search ${ep}: ${(e as Error).message}`);
         }
+      } catch (e) {
+        console.log(`⚠️ Uniplay search users-iptv: ${(e as Error).message}`);
       }
 
       if (!clientId) {
@@ -146,17 +244,17 @@ serve(async (req) => {
       // Try extend endpoints
       console.log(`🔄 Uniplay: Renovando cliente ${clientId} → +${duration} ${durationIn}`);
       const extendEndpoints = [
+        { url: `/api/users-iptv/${clientId}/extend`, method: 'POST' },
+        { url: `/api/users-p2p/${clientId}/extend`, method: 'POST' },
         { url: `/api/clients/${clientId}/extend`, method: 'POST' },
         { url: `/api/users/${clientId}/extend`, method: 'POST' },
-        { url: `/api/lines/${clientId}/extend`, method: 'POST' },
-        { url: `/api/client/${clientId}/extend`, method: 'PUT' },
       ];
 
       for (const ep of extendEndpoints) {
         try {
-          const resp = await withTimeout(fetch(`${cleanBase}${ep.url}`, {
+          const resp = await withTimeout(fetch(`${UNIPLAY_API_BASE}${ep.url}`, {
             method: ep.method,
-            headers: authHeaders,
+            headers: hdrs,
             body: JSON.stringify({ duration: Number(duration), duration_in: durationIn }),
           }), 15000);
           const text = await resp.text();
@@ -200,7 +298,10 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: false, error: 'Action inválida. Use: renew_by_username' }), {
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Action inválida. Use: renew_by_username, list_users, create_test, list_panel_users',
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400,
     });
   } catch (error) {
