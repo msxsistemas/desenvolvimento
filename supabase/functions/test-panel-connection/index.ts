@@ -474,21 +474,55 @@ serve(async (req) => {
       }
     }
 
-    // --- Uniplay: REST API com JWT em gesapioffice.com ---
+    // --- Uniplay: REST API com JWT em gesapioffice.com (com reCAPTCHA v2) ---
     if (isUniplay) {
       const UNIPLAY_API = 'https://gesapioffice.com';
+      const uniplayFrontend = frontendUrl || 'https://gestordefender.com';
       console.log(`🔄 Uniplay: Testando login JWT em ${UNIPLAY_API}/api/login...`);
       try {
+        // Step 1: Buscar a página de login para extrair siteKey do reCAPTCHA v2
+        let recaptchaSiteKey: string | null = null;
+        try {
+          console.log(`🔍 Uniplay: Buscando siteKey do reCAPTCHA em ${uniplayFrontend}/login...`);
+          const pageResp = await withTimeout(fetch(`${uniplayFrontend}/login`, {
+            method: 'GET',
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
+          }), 10000);
+          const pageHtml = await pageResp.text();
+          // Extrair siteKey do reCAPTCHA v2
+          const siteKeyMatch = pageHtml.match(/data-sitekey=["']([0-9A-Za-z_-]{20,})["']/i)
+            || pageHtml.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i)
+            || pageHtml.match(/grecaptcha\.render\([^)]*['"]([0-9A-Za-z_-]{20,})['"]/i);
+          recaptchaSiteKey = siteKeyMatch ? siteKeyMatch[1] : null;
+          console.log(`🔑 Uniplay reCAPTCHA v2 siteKey: ${recaptchaSiteKey || 'não encontrada'}`);
+        } catch (e) {
+          console.log(`⚠️ Uniplay: Erro ao buscar siteKey: ${(e as Error).message}`);
+        }
+
+        // Step 2: Resolver reCAPTCHA v2 via 2Captcha
+        let captchaToken = '';
+        if (recaptchaSiteKey) {
+          console.log('🤖 Uniplay: Resolvendo reCAPTCHA v2 via 2Captcha...');
+          const solved = await solve2Captcha(recaptchaSiteKey, `${uniplayFrontend}/login`, 'v2');
+          if (solved) {
+            captchaToken = solved;
+            console.log('✅ Uniplay: reCAPTCHA v2 resolvido!');
+          } else {
+            console.log('⚠️ Uniplay: Não foi possível resolver reCAPTCHA v2, tentando sem...');
+          }
+        }
+
+        // Step 3: Login com captcha resolvido
         const loginResp = await withTimeout(fetch(`${UNIPLAY_API}/api/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
-            'Origin': 'https://gestordefender.com',
-            'Referer': 'https://gestordefender.com/',
+            'Origin': uniplayFrontend,
+            'Referer': `${uniplayFrontend}/`,
           },
-          body: JSON.stringify({ username, password, code: '' }),
+          body: JSON.stringify({ username, password, code: captchaToken }),
         }), 15000);
 
         const loginText = await loginResp.text();
@@ -531,6 +565,7 @@ serve(async (req) => {
               expires_in: loginJson.expires_in,
               crypt_pass: loginJson.crypt_pass ? true : false,
               credits,
+              captchaSolved: !!captchaToken,
             },
             logs,
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
@@ -538,10 +573,13 @@ serve(async (req) => {
 
         // Login failed
         const errorMsg = loginJson?.message || loginJson?.error || loginText.slice(0, 200);
+        const needsCaptcha = !captchaToken && (loginResp.status === 401 || loginResp.status === 404 || errorMsg.toLowerCase().includes('captcha'));
         return new Response(JSON.stringify({
           success: false,
-          details: `Falha no login Uniplay: ${errorMsg}`,
-          debug: { status: loginResp.status, response: loginText.slice(0, 500) },
+          details: needsCaptcha
+            ? `Login Uniplay requer reCAPTCHA v2.${recaptchaSiteKey ? ' A resolução via 2Captcha falhou — verifique o saldo/chave.' : ' Não foi possível extrair a siteKey do reCAPTCHA.'} Verifique suas credenciais diretamente em ${uniplayFrontend}.`
+            : `Falha no login Uniplay: ${errorMsg}`,
+          debug: { status: loginResp.status, response: loginText.slice(0, 500), captchaSolved: !!captchaToken },
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
       } catch (e) {
         return new Response(JSON.stringify({

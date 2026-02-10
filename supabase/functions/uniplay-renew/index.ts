@@ -31,12 +31,63 @@ interface LoginResult {
   error?: string;
 }
 
+/**
+ * Resolve reCAPTCHA v2 usando 2Captcha API
+ */
+async function solve2CaptchaV2(siteKey: string, pageUrl: string): Promise<string | null> {
+  const apiKey = Deno.env.get('TWOCAPTCHA_API_KEY');
+  if (!apiKey) {
+    console.log('⚠️ TWOCAPTCHA_API_KEY não configurada');
+    return null;
+  }
+  try {
+    console.log(`🤖 2Captcha: Resolvendo reCAPTCHA v2...`);
+    const submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&json=1`;
+    const submitResp = await withTimeout(fetch(submitUrl), 15000);
+    const submitJson = await submitResp.json();
+    if (submitJson.status !== 1) return null;
+    const taskId = submitJson.request;
+    for (let i = 0; i < 24; i++) {
+      await new Promise(r => setTimeout(r, 5000));
+      const resultResp = await withTimeout(fetch(`https://2captcha.com/res.php?key=${apiKey}&action=get&id=${taskId}&json=1`), 10000);
+      const resultJson = await resultResp.json();
+      if (resultJson.status === 1) { console.log(`✅ reCAPTCHA v2 resolvido!`); return resultJson.request; }
+      if (resultJson.request !== 'CAPCHA_NOT_READY') return null;
+    }
+    return null;
+  } catch (e) { console.log(`❌ 2Captcha: ${(e as Error).message}`); return null; }
+}
+
+/**
+ * Extrai siteKey do reCAPTCHA v2 da página de login
+ */
+async function getRecaptchaSiteKey(frontendUrl: string): Promise<string | null> {
+  try {
+    const resp = await withTimeout(fetch(`${frontendUrl}/login`, {
+      method: 'GET',
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
+    }), 10000);
+    const html = await resp.text();
+    const match = html.match(/data-sitekey=["']([0-9A-Za-z_-]{20,})["']/i)
+      || html.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i);
+    return match ? match[1] : null;
+  } catch { return null; }
+}
+
 async function loginUniplay(username: string, password: string): Promise<LoginResult> {
   try {
+    // Resolver reCAPTCHA v2 antes do login
+    let captchaToken = '';
+    const siteKey = await getRecaptchaSiteKey('https://gestordefender.com');
+    if (siteKey) {
+      const solved = await solve2CaptchaV2(siteKey, 'https://gestordefender.com/login');
+      if (solved) captchaToken = solved;
+    }
+
     const resp = await withTimeout(fetch(`${UNIPLAY_API_BASE}/api/login`, {
       method: 'POST',
       headers: API_HEADERS,
-      body: JSON.stringify({ username, password, code: '' }),
+      body: JSON.stringify({ username, password, code: captchaToken }),
     }), 15000);
 
     const text = await resp.text();

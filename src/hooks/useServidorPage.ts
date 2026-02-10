@@ -223,6 +223,7 @@ export function useServidorPage(providerId: string) {
               endpointMethod: 'POST',
               loginPayload: { username: usuario, password: senha, code: '' },
               providerId: 'uniplay',
+              frontendUrl: formData.urlPainel.trim() || 'https://gestordefender.com',
               testSteps: [{ type: 'json-post', endpoints: ['/api/login'], label: 'Uniplay JWT API' }],
               extraHeaders: { Accept: 'application/json' },
             },
