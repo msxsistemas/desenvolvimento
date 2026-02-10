@@ -32,6 +32,20 @@ async function formLogin(cleanBase: string, panelUser: string, panelPass: string
   }), 10000);
   const loginHtml = await loginResp.text();
 
+  // Extract all form inputs to detect actual field names
+  const inputMatches = [...loginHtml.matchAll(/<input[^>]*name=["']([^"']+)["'][^>]*/gi)];
+  const formInputs = inputMatches.map(m => {
+    const typeMatch = m[0].match(/type=["']([^"']+)["']/i);
+    const valueMatch = m[0].match(/value=["']([^"']*?)["']/i);
+    return { name: m[1], type: typeMatch?.[1] || 'text', value: valueMatch?.[1] || '' };
+  });
+  console.log(`📋 Login form inputs: ${JSON.stringify(formInputs)}`);
+
+  // Also check form action
+  const formActionMatch = loginHtml.match(/<form[^>]*action=["']([^"']*?)["']/i);
+  const formAction = formActionMatch?.[1] || '/login';
+  console.log(`📋 Form action: ${formAction}`);
+
   const csrfMatch = loginHtml.match(/name=["']csrf_token["']\s+value=["'](.*?)["']/);
   const laravelCsrf = loginHtml.match(/name=["']_token["']\s+value=["'](.*?)["']/);
   const metaCsrf = loginHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
@@ -39,14 +53,25 @@ async function formLogin(cleanBase: string, panelUser: string, panelPass: string
 
   let allCookies = mergeSetCookies('', loginResp.headers.get('set-cookie'));
 
+  // Build form body dynamically
   const formBody = new URLSearchParams();
-  formBody.append('try_login', '1');
-  if (csrfToken) {
-    formBody.append('csrf_token', csrfToken);
-    formBody.append('_token', csrfToken);
+  
+  // Add all hidden fields first (CSRF tokens, etc.)
+  for (const input of formInputs) {
+    if (input.type === 'hidden' && input.value) {
+      formBody.append(input.name, input.value);
+    }
   }
-  formBody.append('username', panelUser);
-  formBody.append('password', panelPass);
+  
+  // Find actual username/password field names
+  const userField = formInputs.find(f => /user|email|login|uname/i.test(f.name) && f.type !== 'hidden');
+  const passField = formInputs.find(f => /pass|pwd|senha/i.test(f.name));
+  const userFieldName = userField?.name || 'username';
+  const passFieldName = passField?.name || 'password';
+  console.log(`🔑 Using fields: user="${userFieldName}", pass="${passFieldName}"`);
+  
+  formBody.append(userFieldName, panelUser);
+  formBody.append(passFieldName, panelPass);
 
   const postHeaders: Record<string, string> = {
     'Content-Type': 'application/x-www-form-urlencoded',
