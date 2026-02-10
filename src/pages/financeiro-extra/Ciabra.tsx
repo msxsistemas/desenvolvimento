@@ -180,11 +180,6 @@ export default function Ciabra() {
                 {errorDetails && (
                   <p className="text-sm text-destructive">{errorDetails}</p>
                 )}
-                <div className="rounded-md bg-accent/50 border px-3 py-2">
-                  <p className="text-xs text-muted-foreground">
-                    ⚠️ <strong>CUIDADO</strong> ao compartilhar suas chaves com terceiros!
-                  </p>
-                </div>
               </div>
             </CardContent>
           </Card>
