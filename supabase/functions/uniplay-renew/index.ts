@@ -59,30 +59,16 @@ async function solve2CaptchaV2(siteKey: string, pageUrl: string): Promise<string
 }
 
 /**
- * Extrai siteKey do reCAPTCHA v2 da página de login
+ * Extrai ou usa siteKey conhecida do reCAPTCHA v2 do Uniplay
  */
-async function getRecaptchaSiteKey(frontendUrl: string): Promise<string | null> {
-  try {
-    const resp = await withTimeout(fetch(`${frontendUrl}/login`, {
-      method: 'GET',
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
-    }), 10000);
-    const html = await resp.text();
-    const match = html.match(/data-sitekey=["']([0-9A-Za-z_-]{20,})["']/i)
-      || html.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i);
-    return match ? match[1] : null;
-  } catch { return null; }
-}
+const UNIPLAY_RECAPTCHA_SITEKEY = '6LfTwuwfAAAAAGfw3TatjhOOCP2jNuPqO4U2xske';
 
 async function loginUniplay(username: string, password: string): Promise<LoginResult> {
   try {
     // Resolver reCAPTCHA v2 antes do login
     let captchaToken = '';
-    const siteKey = await getRecaptchaSiteKey('https://gestordefender.com');
-    if (siteKey) {
-      const solved = await solve2CaptchaV2(siteKey, 'https://gestordefender.com/login');
-      if (solved) captchaToken = solved;
-    }
+    const solved = await solve2CaptchaV2(UNIPLAY_RECAPTCHA_SITEKEY, 'https://gestordefender.com/login');
+    if (solved) captchaToken = solved;
 
     const resp = await withTimeout(fetch(`${UNIPLAY_API_BASE}/api/login`, {
       method: 'POST',
