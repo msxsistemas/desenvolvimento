@@ -294,7 +294,7 @@ export const useEvolutionAPISimple = () => {
     return digitsOnly;
   };
 
-  const sendMessage = useCallback(async (phone: string, message: string) => {
+  const sendMessage = useCallback(async (phone: string, message: string, skipRecord = false) => {
     if (!userId) {
       throw new Error('Você precisa estar logado');
     }
@@ -307,6 +307,21 @@ export const useEvolutionAPISimple = () => {
       const data = await callEvolutionAPI('sendMessage', { phone: normalizedPhone, message });
       
       if (data.success) {
+        // Registrar mensagem na tabela whatsapp_messages (se não for chamada da fila)
+        if (!skipRecord) {
+          try {
+            await supabase.from('whatsapp_messages').insert({
+              user_id: userId,
+              session_id: `user_${userId}`,
+              phone: normalizedPhone,
+              message: message,
+              status: 'sent',
+              sent_at: new Date().toISOString(),
+            });
+          } catch (dbErr) {
+            console.error('Erro ao registrar mensagem no banco:', dbErr);
+          }
+        }
         toast.success('Mensagem enviada com sucesso!');
         return data.data;
       } else {
