@@ -136,22 +136,8 @@ serve(async (req) => {
 
     let cleanBase = String(baseUrl).replace(/\/$/, "");
     
-    // Uniplay: mapear URLs de frontend para API
+    // Uniplay: usa a URL exata informada pelo usuário (sem mapeamento)
     const isUniplay = providerId === 'uniplay';
-    if (isUniplay) {
-      const UNIPLAY_URL_MAP: Record<string, string> = {
-        'gestordefender.com': 'gesapioffice.com',
-        'www.gestordefender.com': 'gesapioffice.com',
-      };
-      try {
-        const parsed = new URL(cleanBase);
-        const apiHost = UNIPLAY_URL_MAP[parsed.hostname.toLowerCase()];
-        if (apiHost) {
-          cleanBase = `${parsed.protocol}//${apiHost}`;
-          console.log(`🔗 Uniplay URL mapping: ${baseUrl} → ${cleanBase}`);
-        }
-      } catch {}
-    }
     
     console.log(`🚀 Iniciando teste para: ${cleanBase} (provedor: ${providerId || 'auto'})`);
     console.log(`👤 Username: ${username}`);
