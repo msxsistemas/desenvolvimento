@@ -158,6 +158,7 @@ export function AppSidebar() {
     { to: "/servidores/koffice-api", label: "KOffice API" },
     { to: "/servidores/koffice-v2", label: "KOffice V2" },
     { to: "/servidores/mundogf", label: "MundoGF" },
+    { to: "/servidores/uniplay", label: "Uniplay e Franquias" },
   ];
   const servidoresActive = currentPath.startsWith("/servidores");
 
