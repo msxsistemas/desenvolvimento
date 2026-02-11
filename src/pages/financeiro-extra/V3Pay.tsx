@@ -14,7 +14,7 @@ export default function V3Pay() {
   const { isConfigured, loading, configureV3Pay } = useV3Pay();
 
   useEffect(() => {
-    document.title = "V3Pay (PagBank) - Gateway de Pagamentos | Gestor IPTV";
+    document.title = "V3Pay - Gateway de Pagamentos | Gestor IPTV";
   }, []);
 
   const handleConfigure = async () => {
@@ -43,7 +43,7 @@ export default function V3Pay() {
         <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
           <div className="flex items-center gap-2">
             <Settings className="h-5 w-5" aria-hidden="true" />
-            <h1 className="text-base font-semibold tracking-tight">Configuração do V3Pay (PagBank)</h1>
+            <h1 className="text-base font-semibold tracking-tight">Configuração do V3Pay</h1>
           </div>
           <p className="text-xs/6 opacity-90">Configure seu gateway V3Pay para receber pagamentos PIX, cartão e boleto.</p>
         </div>
