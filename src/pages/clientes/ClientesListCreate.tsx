@@ -444,7 +444,6 @@ export default function ClientesListCreate() {
       }
     );
   };
-  };
 
   // Função para confirmar envio de WhatsApp
   const confirmarEnvioWhatsApp = async () => {
