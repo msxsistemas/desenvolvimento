@@ -293,11 +293,47 @@ serve(async (req) => {
         }
       }
 
+      // Get client's current max_cons before extending
+      let maxCons = '1';
+      if (username) {
+        const dtBody2 = new URLSearchParams();
+        dtBody2.append('draw', '1');
+        dtBody2.append('start', '0');
+        dtBody2.append('length', '50');
+        dtBody2.append('search[value]', username);
+        try {
+          const infoResp = await withTimeout(fetch(`${cleanBase}/ajax/getClients`, {
+            method: 'POST',
+            headers: {
+              'Cookie': login.cookies,
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRF-TOKEN': login.csrf,
+              'User-Agent': 'Mozilla/5.0',
+              'Referer': `${cleanBase}/clients`,
+            },
+            body: dtBody2.toString(),
+          }), 10000);
+          const infoJson = await infoResp.json();
+          const found = infoJson?.data?.find((c: any) => (c.username || '').replace(/<[^>]*>/g, '').trim().toLowerCase() === username.toLowerCase());
+          if (found?.max_cons) maxCons = String(found.max_cons);
+        } catch {}
+      }
+
+      // Convert duration to option format expected by Rboys panel
+      // option: number of months (e.g., "1" = 1 month)
+      let option = String(duration);
+      if (durationIn === 'days') {
+        option = String(Math.max(1, Math.ceil(Number(duration) / 30)));
+      }
+
+      console.log(`📤 Extend payload: user_id=${resolvedUserId}, option=${option}, connections=${maxCons}`);
+
       // POST /clients/{resolvedUserId}/extend
       const extendBody = new URLSearchParams();
       extendBody.append('_token', login.csrf);
-      extendBody.append('duration', String(duration));
-      extendBody.append('duration_in', durationIn);
+      extendBody.append('option', option);
+      extendBody.append('connections', maxCons);
 
       const extendResp = await withTimeout(fetch(`${cleanBase}/clients/${resolvedUserId}/extend`, {
         method: 'POST',
