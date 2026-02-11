@@ -401,6 +401,7 @@ serve(async (req) => {
                   body: JSON.stringify({
                     fullName: fatura.cliente_nome || 'Cliente',
                     phone: phone,
+                    document: generateValidCpf().replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'),
                   }),
                 });
                 const custText = await customerResp.text();
