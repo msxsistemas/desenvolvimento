@@ -214,45 +214,92 @@ export function useServidorPage(providerId: string) {
       // Uniplay: todas as franquias usam gesapioffice.com como API
       const resolvedBaseUrl = providerId === 'uniplay' ? UNIPLAY_API_BASE : baseUrl;
 
-      // Uniplay: usar Edge Function com proxy BR para teste
+      // Uniplay: usar Browserbase para automação de login (fallback: proxy BR)
       if (providerId === 'uniplay') {
         try {
-          const { data, error } = await supabase.functions.invoke('test-panel-connection', {
-            body: {
-              baseUrl: resolvedBaseUrl, username: usuario, password: senha,
-              endpointPath: '/api/login',
-              endpointMethod: 'POST',
-              loginPayload: { username: usuario, password: senha, code: '' },
-              providerId: 'uniplay',
-              frontendUrl: formData.urlPainel.trim() || 'https://gestordefender.com',
-              testSteps: [{ type: 'json-post', endpoints: ['/api/login'], label: 'Uniplay JWT API' }],
-              extraHeaders: { Accept: 'application/json' },
-            },
+          console.log('🌐 Uniplay: Tentando via Browserbase...');
+
+          // Primeiro: salvar painel temporário para o Browserbase usar
+          const { data: session } = await supabase.auth.getSession();
+          if (!session.session) {
+            setTestResultModal({ isOpen: true, success: false, message: 'Erro', details: 'Você precisa estar logado' });
+            return;
+          }
+
+          // Criar painel temporário para teste se ainda não existe
+          let testPanelId: string | null = null;
+          try {
+            const { data: tempPanel } = await supabase
+              .from('paineis_integracao' as any)
+              .insert([{
+                user_id: session.session.user.id,
+                nome: `_test_${nomePainel}`,
+                url: baseUrl || 'https://gestordefender.com',
+                usuario,
+                senha,
+                status: 'Ativo',
+                auto_renovacao: false,
+                provedor: 'uniplay',
+              }])
+              .select()
+              .single();
+            testPanelId = (tempPanel as any)?.id;
+          } catch {}
+
+          if (!testPanelId) {
+            // Fallback: tentar via proxy BR
+            const { data, error } = await supabase.functions.invoke('test-panel-connection', {
+              body: {
+                baseUrl: resolvedBaseUrl, username: usuario, password: senha,
+                endpointPath: '/api/login', endpointMethod: 'POST',
+                loginPayload: { username: usuario, password: senha, code: '' },
+                providerId: 'uniplay',
+                frontendUrl: formData.urlPainel.trim() || 'https://gestordefender.com',
+                testSteps: [{ type: 'json-post', endpoints: ['/api/login'], label: 'Uniplay JWT API' }],
+                extraHeaders: { Accept: 'application/json' },
+              },
+            });
+
+            if (data?.success) {
+              setTestResultModal({ isOpen: true, success: true, message: 'CONEXÃO BEM-SUCEDIDA (Proxy)', details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n\n✅ Autenticação realizada com sucesso.` });
+            } else {
+              setTestResultModal({ isOpen: true, success: false, message: 'FALHA NA AUTENTICAÇÃO', details: data?.details || error?.message || 'Credenciais inválidas.' });
+            }
+            return;
+          }
+
+          // Teste via Browserbase
+          const { data, error } = await supabase.functions.invoke('browserbase-uniplay', {
+            body: { action: 'test_connection', panelId: testPanelId },
           });
 
-          if (error || !data) {
+          // Limpar painel temporário
+          try {
+            await supabase.from('paineis_integracao' as any).delete().eq('id', testPanelId);
+          } catch {}
+
+          if (error) {
             setTestResultModal({
-              isOpen: true, success: false, message: 'Erro no Teste',
-              details: `Não foi possível executar o teste. ${error?.message ?? ''}`.trim(),
+              isOpen: true, success: false, message: 'Erro no Teste Browserbase',
+              details: `❌ Painel: ${nomePainel}\n\n❌ ${error.message}`,
             });
             return;
           }
 
-          if (data.success) {
-            const account = data.account;
+          if (data?.success) {
             setTestResultModal({
-              isOpen: true, success: true, message: "CONEXÃO REAL BEM-SUCEDIDA!",
-              details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}${account?.credits ? `\n💰 Créditos: ${account.credits}` : ''}${data.data?.expires_in ? `\n⏰ Token expira em: ${Math.round(data.data.expires_in / 3600)}h` : ''}\n\n✅ Autenticação JWT realizada com sucesso.`,
+              isOpen: true, success: true, message: 'CONEXÃO VIA BROWSERBASE BEM-SUCEDIDA!',
+              details: `✅ Painel: ${nomePainel}\n🔗 URL: ${baseUrl || 'gestordefender.com'}\n👤 Usuário: ${usuario}\n🌐 Método: Browserbase (navegador cloud + proxy BR)\n🔑 Token JWT: ${data.hasToken ? 'Obtido' : 'Sessão'}\n📡 Session: ${data.browserbaseSessionId || 'OK'}\n\n✅ Login automático realizado com sucesso via navegador headless.`,
             });
           } else {
             setTestResultModal({
-              isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO",
-              details: `❌ Painel: ${nomePainel}\n🔗 API: ${resolvedBaseUrl}/api/login\n👤 Usuário: ${usuario}\n\n❌ ${data.details || 'Credenciais inválidas.'}`,
+              isOpen: true, success: false, message: 'FALHA NO LOGIN (Browserbase)',
+              details: `❌ Painel: ${nomePainel}\n🔗 URL: ${baseUrl || 'gestordefender.com'}\n👤 Usuário: ${usuario}\n\n❌ ${data?.error || 'Falha no login automático via navegador.'}`,
             });
           }
         } catch (err: any) {
           setTestResultModal({
-            isOpen: true, success: false, message: "Erro no Teste",
+            isOpen: true, success: false, message: 'Erro no Teste',
             details: `Erro inesperado: ${err.message}`,
           });
         }

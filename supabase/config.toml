@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.ciabra-integration]
 verify_jwt = false
+
+[functions.browserbase-uniplay]
+verify_jwt = false
