@@ -166,15 +166,16 @@ export function PanelsList({
               <Badge variant={p.status === 'Ativo' ? 'default' : 'secondary'} className={p.status === 'Ativo' ? 'bg-green-500 hover:bg-green-500' : ''}>
                 {p.status}
               </Badge>
-              <div className="flex gap-1">
+              <div className="flex gap-1 items-center">
+                <Button onClick={() => onTestPanel(p)} disabled={isTestingConnection} variant="outline" size="sm" className="h-8 text-xs border-primary/50 text-primary hover:bg-primary/10">
+                  <RefreshCw className={`h-3 w-3 mr-1 ${isTestingConnection ? 'animate-spin' : ''}`} />
+                  Testar
+                </Button>
                 <Button onClick={() => onEditPanel(p)} variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary/80">
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button onClick={() => onToggleStatus(p.id)} variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary/80">
                   {p.status === 'Ativo' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                </Button>
-                <Button onClick={() => onTestPanel(p)} title="Testar conexão" disabled={isTestingConnection} variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary/80">
-                  <RefreshCw className="h-4 w-4" />
                 </Button>
                 <Button onClick={() => onDeletePanel(p)} variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive/80">
                   <Trash2 className="h-4 w-4" />
