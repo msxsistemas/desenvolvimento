@@ -13,6 +13,7 @@ export function useServidorPage(providerId: string) {
   const [showPassword, setShowPassword] = useState(false);
   const [autoRenewal, setAutoRenewal] = useState(false);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [testingPanelId, setTestingPanelId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ nomePainel: "", urlPainel: "", usuario: "", senha: "" });
 
   const [testResultModal, setTestResultModal] = useState<{
@@ -316,6 +317,7 @@ export function useServidorPage(providerId: string) {
 
   const testPanel = async (panel: Panel) => {
     setIsTestingConnection(true);
+    setTestingPanelId(panel.id);
     try {
       const baseUrl = panel.url.trim().replace(/\/$/, '');
       const prov = PROVEDORES.find(p => p.id === panel.provedor);
@@ -374,6 +376,7 @@ export function useServidorPage(providerId: string) {
       });
     } finally {
       setIsTestingConnection(false);
+      setTestingPanelId(null);
     }
   };
 
@@ -467,7 +470,7 @@ export function useServidorPage(providerId: string) {
     isConfigModalOpen, setIsConfigModalOpen,
     showPassword, setShowPassword,
     autoRenewal, setAutoRenewal,
-    isTestingConnection,
+    isTestingConnection, testingPanelId,
     formData, setFormData,
     testResultModal, setTestResultModal,
     createResultModal, setCreateResultModal,

@@ -103,7 +103,7 @@ export function ProviderCard({ provider, stats }: ProviderCardProps) {
 interface PanelsListProps {
   panels: Panel[];
   providerName: string;
-  isTestingConnection: boolean;
+  testingPanelId?: string | null;
   onAddPanel: () => void;
   onEditPanel: (panel: Panel) => void;
   onToggleStatus: (id: string) => void;
@@ -114,7 +114,7 @@ interface PanelsListProps {
 export function PanelsList({ 
   panels, 
   providerName, 
-  isTestingConnection, 
+  testingPanelId, 
   onAddPanel, 
   onEditPanel, 
   onToggleStatus, 
@@ -167,9 +167,9 @@ export function PanelsList({
                 {p.status}
               </Badge>
               <div className="flex gap-1 items-center">
-                <Button onClick={() => onTestPanel(p)} disabled={isTestingConnection} variant="outline" size="sm" className="h-8 text-xs border-primary/50 text-primary hover:bg-primary/10">
-                  <RefreshCw className={`h-3 w-3 mr-1 ${isTestingConnection ? 'animate-spin' : ''}`} />
-                  Testar
+                <Button onClick={() => onTestPanel(p)} disabled={!!testingPanelId} variant="outline" size="sm" className="h-8 text-xs border-primary/50 text-primary hover:bg-primary/10">
+                  <RefreshCw className={`h-3 w-3 mr-1 ${testingPanelId === p.id ? 'animate-spin' : ''}`} />
+                  {testingPanelId === p.id ? 'Testando...' : 'Testar'}
                 </Button>
                 <Button onClick={() => onEditPanel(p)} variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary/80">
                   <Edit className="h-4 w-4" />

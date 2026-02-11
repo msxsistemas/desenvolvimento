@@ -14,6 +14,7 @@ export default function ClientesIntegracoes() {
   const [showPassword, setShowPassword] = useState(false);
   const [autoRenewal, setAutoRenewal] = useState(false);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [testingPanelId, setTestingPanelId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<string>('sigma-v2');
   
@@ -226,6 +227,7 @@ export default function ClientesIntegracoes() {
 
   const testPanel = async (panel: Panel) => {
     setIsTestingConnection(true);
+    setTestingPanelId(panel.id);
     try {
       const baseUrl = panel.url.trim().replace(/\/$/, '');
       const provider = PROVEDORES.find(p => p.id === panel.provedor);
@@ -298,6 +300,7 @@ export default function ClientesIntegracoes() {
       });
     } finally {
       setIsTestingConnection(false);
+      setTestingPanelId(null);
     }
   };
 
@@ -463,7 +466,7 @@ export default function ClientesIntegracoes() {
         <PanelsList
           panels={providerPanels}
           providerName={currentProvider?.nome || ''}
-          isTestingConnection={isTestingConnection}
+          testingPanelId={testingPanelId}
           onAddPanel={() => {
             setFormData({ nomePainel: "", urlPainel: "", usuario: "", senha: "" });
             setAutoRenewal(false);

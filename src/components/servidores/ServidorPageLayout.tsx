@@ -15,7 +15,7 @@ export default function ServidorPageLayout({ providerId, title }: ServidorPageLa
     isConfigModalOpen, setIsConfigModalOpen,
     showPassword, setShowPassword,
     autoRenewal, setAutoRenewal,
-    isTestingConnection,
+    isTestingConnection, testingPanelId,
     formData, setFormData,
     testResultModal, setTestResultModal,
     createResultModal, setCreateResultModal,
@@ -61,7 +61,7 @@ export default function ServidorPageLayout({ providerId, title }: ServidorPageLa
         <PanelsList
           panels={panels}
           providerName={provider.nome}
-          isTestingConnection={isTestingConnection}
+          testingPanelId={testingPanelId}
           onAddPanel={openAddPanel}
           onEditPanel={startEditPanel}
           onToggleStatus={handleToggleStatus}
