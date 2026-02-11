@@ -920,7 +920,9 @@ serve(async (req) => {
     // Deduplicate
     candidates = Array.from(new Set(candidates));
 
-    for (const path of candidates) {
+    for (const rawPath of candidates) {
+      // Replace {username} placeholder with actual username (e.g. Playfast: /profile/{username})
+      const path = rawPath.replace('{username}', encodeURIComponent(username));
       const url = `${cleanBase}${path.startsWith('/') ? '' : '/'}${path}`;
       console.log(`🧪 Testando POST endpoint: ${path}`);
       try {
@@ -949,20 +951,28 @@ serve(async (req) => {
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
         }
 
-        const isSuccess = resp.ok && (
+        // Playfast: result === true with data means success
+        const isPlayfastSuccess = resp.ok && resultField === true && resp.json?.data;
+
+        const isSuccess = isPlayfastSuccess || (resp.ok && (
           token || 
           resp.json?.success === true || 
           resp.json?.status === 'ok' || 
           resp.json?.user ||
           resultField === 'success' ||
           resultField === 'ok'
-        );
+        ));
         
         if (isSuccess) {
           console.log(`✅ Login bem-sucedido em: ${url}`);
           
           // Uniplay: buscar créditos via /api/dash-reseller
           let credits = null;
+          // Playfast: credits come directly in response data
+          if (isPlayfastSuccess && resp.json?.data?.credits !== undefined) {
+            credits = resp.json.data.credits;
+            console.log(`💰 Playfast créditos: ${credits}`);
+          }
           if (isUniplay && token) {
             try {
               const dashResp = await withTimeout(fetch(`${cleanBase}/api/dash-reseller`, {
@@ -989,7 +999,7 @@ serve(async (req) => {
           return new Response(JSON.stringify({
             success: true,
             endpoint: url,
-            type: isUniplay ? 'Uniplay JWT' : 'Panel',
+            type: isUniplay ? 'Uniplay JWT' : isPlayfastSuccess ? 'Playfast API' : 'Panel',
             account: {
               status: 'Active',
               user: resp.json?.user || resp.json?.data?.user || { username },
