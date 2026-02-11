@@ -1388,6 +1388,18 @@ export default function ClientesListCreate() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-8 w-8 text-primary hover:text-primary/80"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEnviarWhatsApp(cliente);
+                            }}
+                            title="Enviar WhatsApp"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 text-accent-foreground hover:text-accent-foreground/80"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1401,18 +1413,6 @@ export default function ClientesListCreate() {
                             ) : (
                               <FileText className="h-4 w-4" />
                             )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-primary hover:text-primary/80"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEnviarWhatsApp(cliente);
-                            }}
-                            title="Enviar WhatsApp"
-                          >
-                            <Send className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
