@@ -228,36 +228,69 @@ async function automateUniplayLogin(cdp: CDPSession, username: string, password:
     });
 
     // Wait for navigation/response
-    await new Promise(r => setTimeout(r, 8000));
+    await new Promise(r => setTimeout(r, 10000));
 
-    // Extract JWT token from localStorage or cookies
-    console.log("🔍 Extraindo token JWT...");
+    // First try to extract token from network responses (most reliable)
+    console.log("🔍 Extraindo token de network responses...");
+    const networkEvents = cdp.getEvents("Network.responseReceived");
+    console.log(`📡 Network events: ${networkEvents.length} responses captured`);
+    
+    for (const evt of networkEvents) {
+      const url = evt.params?.response?.url || "";
+      if (url.includes("/api/login") || url.includes("/auth") || url.includes("/token") || url.includes("/oauth")) {
+        console.log(`🔎 Checking network response: ${url} (status: ${evt.params?.response?.status})`);
+        try {
+          const bodyResult = await cdp.send("Network.getResponseBody", { requestId: evt.params.requestId });
+          const bodyText = bodyResult.body || "";
+          console.log(`📦 Response body preview: ${bodyText.substring(0, 200)}`);
+          try {
+            const body = JSON.parse(bodyText);
+            const token = body.access_token || body.token || body.jwt || body.accessToken || body.data?.access_token || body.data?.token;
+            if (token) {
+              console.log("✅ Token encontrado via network response!");
+              return { success: true, token };
+            }
+          } catch {}
+        } catch (e) {
+          console.log(`⚠️ Could not get response body: ${(e as Error).message}`);
+        }
+      }
+    }
+
+    // Then check localStorage/sessionStorage
+    console.log("🔍 Extraindo token de storage...");
     const result = await cdp.send("Runtime.evaluate", {
       expression: `
         (function() {
-          // Check localStorage
-          const keys = ['access_token', 'token', 'auth_token', 'jwt', 'user_token'];
-          for (const key of keys) {
-            const val = localStorage.getItem(key);
-            if (val) return JSON.stringify({ source: 'localStorage', key, value: val });
-          }
-          // Check all localStorage
+          // Check localStorage for JWT-like tokens
           for (let i = 0; i < localStorage.length; i++) {
             const k = localStorage.key(i);
             const v = localStorage.getItem(k);
-            if (v && v.startsWith('eyJ')) return JSON.stringify({ source: 'localStorage', key: k, value: v });
-          }
-          // Check current URL for token
-          if (window.location.href !== ${JSON.stringify(UNIPLAY_LOGIN_URL)}) {
-            return JSON.stringify({ source: 'redirect', url: window.location.href });
+            if (v && (v.startsWith('eyJ') || k.toLowerCase().includes('token') || k.toLowerCase().includes('auth') || k.toLowerCase().includes('jwt'))) {
+              return JSON.stringify({ source: 'localStorage', key: k, value: v });
+            }
           }
           // Check sessionStorage
           for (let i = 0; i < sessionStorage.length; i++) {
             const k = sessionStorage.key(i);
             const v = sessionStorage.getItem(k);
-            if (v && v.startsWith('eyJ')) return JSON.stringify({ source: 'sessionStorage', key: k, value: v });
+            if (v && (v.startsWith('eyJ') || k.toLowerCase().includes('token') || k.toLowerCase().includes('auth'))) {
+              return JSON.stringify({ source: 'sessionStorage', key: k, value: v });
+            }
           }
-          return JSON.stringify({ source: 'none', currentUrl: window.location.href, localStorageKeys: Object.keys(localStorage) });
+          // Check cookies
+          const cookies = document.cookie;
+          // Report current state for debugging
+          const allLSKeys = [];
+          for (let i = 0; i < localStorage.length; i++) allLSKeys.push(localStorage.key(i));
+          return JSON.stringify({ 
+            source: 'none', 
+            currentUrl: window.location.href, 
+            hash: window.location.hash,
+            localStorageKeys: allLSKeys,
+            cookieCount: cookies.split(';').length,
+            bodyText: document.body?.innerText?.substring(0, 300) || ''
+          });
         })()
       `,
       returnByValue: true,
@@ -270,35 +303,29 @@ async function automateUniplayLogin(cdp: CDPSession, username: string, password:
       return { success: true, token: tokenData.value };
     }
 
-    // If redirected away from login, consider success (session-based)
-    if (tokenData.source === "redirect" && !tokenData.url?.includes("/login")) {
-      // Try to get token from network responses
-      const networkEvents = cdp.getEvents("Network.responseReceived");
-      for (const evt of networkEvents) {
-        if (evt.params?.response?.url?.includes("/api/login")) {
-          try {
-            const bodyResult = await cdp.send("Network.getResponseBody", { requestId: evt.params.requestId });
-            const body = JSON.parse(bodyResult.body || "{}");
-            if (body.access_token) {
-              return { success: true, token: body.access_token };
-            }
-          } catch {}
-        }
-      }
-      return { success: true, token: "" }; // Session-based auth
+    // Check if hash changed (SPA routing) - hash !== #/login means we navigated away
+    const currentHash = tokenData.hash || "";
+    const onLoginPage = currentHash === "" || currentHash === "#/login" || currentHash === "#/";
+    
+    if (!onLoginPage) {
+      console.log(`✅ Hash changed to ${currentHash} - login succeeded (session-based)`);
+      return { success: true, token: "" };
     }
 
     // Check page for error messages
+    const pageText = tokenData.bodyText || "";
+    console.log(`📄 Page text: ${pageText.substring(0, 200)}`);
+    
     const errorCheck = await cdp.send("Runtime.evaluate", {
       expression: `
-        const errorEl = document.querySelector('.error, .alert-danger, .toast-error, [class*="error"]');
-        errorEl ? errorEl.textContent?.trim() : '';
+        const errorEl = document.querySelector('.error, .alert-danger, .toast-error, .swal2-popup, [class*="error"], [class*="alert"]');
+        errorEl ? errorEl.textContent?.trim().substring(0, 200) : '';
       `,
       returnByValue: true,
     });
 
     const errorMsg = errorCheck.result?.value;
-    return { success: false, error: errorMsg || "Login falhou - token não encontrado" };
+    return { success: false, error: errorMsg || "Login falhou - token não encontrado. Hash: " + currentHash };
   } catch (e) {
     return { success: false, error: (e as Error).message };
   }
