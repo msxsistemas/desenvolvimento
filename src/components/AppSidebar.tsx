@@ -158,7 +158,7 @@ export function AppSidebar() {
     { to: "/configuracoes/mercado-pago", label: "Mercado Pago" },
     { to: "/configuracoes/ciabra", label: "Ciabra" },
     { to: "/configuracoes/pix-manual", label: "PIX Manual" },
-    { to: "/configuracoes/v3pay", label: "V3Pay (PagBank)" },
+    { to: "/configuracoes/v3pay", label: "V3Pay" },
   ];
   const servidoresSubItems = [
     { to: "/servidores", label: "Todos os Servidores" },
