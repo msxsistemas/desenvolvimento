@@ -153,14 +153,35 @@ serve(async (req) => {
               const privateKey = atob(ciabraConfig.api_key_hash);
               const publicKey = ciabraConfig.public_key_hash ? atob(ciabraConfig.public_key_hash) : '';
               const basicToken = btoa(`${publicKey}:${privateKey}`);
+              const ciabraHeaders = { 'Authorization': `Basic ${basicToken}`, 'Content-Type': 'application/json' };
+              
+              // Check invoice status
               const statusResp = await fetch(`https://api.az.center/invoices/applications/invoices/${fatura.gateway_charge_id}`, {
-                headers: { 'Authorization': `Basic ${basicToken}`, 'Content-Type': 'application/json' }
+                headers: ciabraHeaders
               });
               const statusText = await statusResp.text();
+              console.log(`🔍 Ciabra status check for ${fatura.gateway_charge_id}: ${statusText.substring(0, 300)}`);
               let statusData: any = {};
               try { statusData = JSON.parse(statusText); } catch { /* empty */ }
 
-              const isPaid = statusData.status === 'paid' || statusData.status === 'approved' || statusData.status === 'confirmed';
+              const invoiceStatus = (statusData.status || '').toUpperCase();
+              let isPaid = ['PAID', 'APPROVED', 'CONFIRMED', 'COMPLETED'].includes(invoiceStatus);
+
+              // Also check installment/PIX payment status if invoice level doesn't show paid
+              if (!isPaid && statusResp.ok && statusData.installments?.[0]?.id) {
+                const installmentId = statusData.installments[0].id;
+                const payResp = await fetch(`https://api.az.center/payments/applications/installments/${installmentId}`, {
+                  headers: ciabraHeaders
+                });
+                const payText = await payResp.text();
+                console.log(`🔍 Ciabra installment status: ${payText.substring(0, 300)}`);
+                let payData: any = {};
+                try { payData = JSON.parse(payText); } catch { /* */ }
+                const payment = Array.isArray(payData) ? payData[0] : payData;
+                const pixStatus = (payment?.pix?.status || payment?.status || '').toUpperCase();
+                isPaid = ['PAID', 'APPROVED', 'CONFIRMED', 'COMPLETED'].includes(pixStatus);
+              }
+
               if (statusResp.ok && isPaid) {
                 await supabaseAdmin
                   .from('faturas')
@@ -170,6 +191,25 @@ serve(async (req) => {
                 fatura.status = 'pago';
                 fatura.paid_at = new Date().toISOString();
                 console.log(`✅ Fatura ${fatura.id} marked as paid via Ciabra status check`);
+
+                // Trigger auto-renewal
+                try {
+                  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+                  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+                  await fetch(`${supabaseUrl}/functions/v1/auto-renew-client`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseKey}` },
+                    body: JSON.stringify({
+                      user_id: fatura.user_id,
+                      cliente_whatsapp: fatura.cliente_whatsapp,
+                      gateway: 'ciabra',
+                      gateway_charge_id: fatura.gateway_charge_id,
+                    }),
+                  });
+                  console.log(`🔄 Auto-renewal triggered for ${fatura.cliente_whatsapp}`);
+                } catch (renewErr: any) {
+                  console.error('Auto-renewal trigger error:', renewErr.message);
+                }
               }
             } catch (err: any) {
               console.error('Ciabra status check error:', err.message);
