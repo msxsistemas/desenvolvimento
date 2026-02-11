@@ -205,7 +205,7 @@ export default function ProdutosCadastro() {
               {formData.configuracoesIptv && (
                 <div className="space-y-3 pl-6 border-l-2 border-border">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Provedor IPTV</Label>
+                    <Label className="text-sm font-medium">Servidor</Label>
                     <Select value={formData.provedorIptv} onValueChange={(value) => handleInputChange("provedorIptv", value)}>
                       <SelectTrigger className="bg-background border-border">
                         <SelectValue placeholder="Selecione o provedor..." />
