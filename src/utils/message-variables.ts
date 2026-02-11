@@ -82,6 +82,7 @@ export function replaceMessageVariables(
   extraData?: {
     pix?: string;
     valor_plano?: string;
+    total?: string;
     link_fatura?: string;
     fatura_pdf?: string;
   }
@@ -109,15 +110,21 @@ export function replaceMessageVariables(
   const replacements: Record<string, string> = {
     "{saudacao}": getSaudacao(),
     "{nome_cliente}": nomeCompleto,
+    "{nome}": nomeCompleto,
+    "{cliente}": nomeCompleto,
     "{sobrenome}": sobrenome,
     "{whatsapp}": clientData.whatsapp || "",
     "{email}": clientData.email || "",
     "{usuario}": clientData.usuario || "",
     "{senha}": clientData.senha || "",
     "{vencimento}": vencimentoFormatado,
+    "{data_vencimento}": vencimentoFormatado,
     "{nome_plano}": clientData.plano || "",
+    "{plano}": clientData.plano || "",
     "{valor_plano}": extraData?.valor_plano || "",
+    "{valor}": extraData?.valor_plano || "",
     "{desconto}": clientData.desconto || "",
+    "{total}": extraData?.total || "",
     "{pix}": extraData?.pix || "",
     "{obs}": clientData.observacao || "",
     "{app}": clientData.app || "",

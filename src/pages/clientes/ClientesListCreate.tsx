@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useClientes, usePlanos, useProdutos, useAplicativos, useTemplatesCobranca } from "@/hooks/useDatabase";
 import { useTemplatesMensagens } from "@/hooks/useTemplatesMensagens";
+import { replaceMessageVariables } from "@/utils/message-variables";
 import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -388,21 +389,20 @@ export default function ClientesListCreate() {
     setWhatsappDialogOpen(true);
   };
 
-  // Função para obter mensagem final do template (não preenche a textarea)
+  // Função para obter mensagem final do template
   const getMensagemDoTemplate = (templateId: string): string => {
     if (!templateId || !clienteParaWhatsapp) return "";
 
     const template = allTemplates.find(t => t.id === templateId);
     if (!template) return "";
 
+    const normalize = (s: any) => String(s ?? '').trim().toLowerCase();
     const sanitizeNumber = (val: any) => {
       if (val === null || val === undefined) return 0;
       const cleaned = String(val).replace(/[^0-9,.-]/g, '').replace(',', '.');
       const n = parseFloat(cleaned);
       return isNaN(n) ? 0 : n;
     };
-
-    const normalize = (s: any) => String(s ?? '').trim().toLowerCase();
 
     const findPlano = () => {
       const cliVal = clienteParaWhatsapp.plano;
@@ -415,53 +415,35 @@ export default function ClientesListCreate() {
     };
 
     const plano = findPlano();
-    const planoNome = plano?.nome || clienteParaWhatsapp.plano || "N/A";
+    const planoNome = plano?.nome || clienteParaWhatsapp.plano || "";
     const valorPlano = sanitizeNumber(plano?.valor);
-
-    const hora = new Date().getHours();
-    let saudacao = "Bom dia";
-    if (hora >= 12 && hora < 18) saudacao = "Boa tarde";
-    else if (hora >= 18) saudacao = "Boa noite";
-
-    let dataVencimento = "N/A";
-    if (clienteParaWhatsapp.data_vencimento) {
-      try {
-        dataVencimento = format(new Date(clienteParaWhatsapp.data_vencimento), "dd/MM/yyyy");
-      } catch {
-        dataVencimento = String(clienteParaWhatsapp.data_vencimento);
-      }
-    }
-
     const desconto = sanitizeNumber(clienteParaWhatsapp.desconto);
     const total = Math.max(0, valorPlano - desconto);
-
-    let mensagemFinal = template.mensagem || "";
-    
     const f2 = (n: number) => n.toFixed(2);
-    const normalizeKey = (s: any) => String(s ?? "").toLowerCase().replace(/[\s_-]/g, "");
 
-    const map: Record<string, string> = {
-      saudacao,
-      nome: clienteParaWhatsapp.nome || "",
-      cliente: clienteParaWhatsapp.nome || "",
-      nomecliente: clienteParaWhatsapp.nome || "",
-      plano: planoNome,
-      valor: f2(valorPlano),
-      valorplano: f2(valorPlano),
-      desconto: f2(desconto),
-      total: f2(total),
-      vencimento: dataVencimento,
-      datavencimento: dataVencimento,
-      usuario: clienteParaWhatsapp.usuario || clienteParaWhatsapp.email || "",
-      senha: clienteParaWhatsapp.senha || "",
-    };
-
-    mensagemFinal = mensagemFinal.replace(/\{([^{}]+)\}/g, (full, key) => {
-      const k = normalizeKey(key);
-      return Object.prototype.hasOwnProperty.call(map, k) ? map[k] : full;
-    });
-
-    return mensagemFinal;
+    return replaceMessageVariables(
+      template.mensagem || "",
+      {
+        nome: clienteParaWhatsapp.nome,
+        usuario: clienteParaWhatsapp.usuario || undefined,
+        senha: clienteParaWhatsapp.senha || undefined,
+        data_vencimento: clienteParaWhatsapp.data_vencimento || undefined,
+        whatsapp: clienteParaWhatsapp.whatsapp,
+        email: clienteParaWhatsapp.email || undefined,
+        plano: planoNome,
+        desconto: f2(desconto),
+        observacao: clienteParaWhatsapp.observacao || undefined,
+        app: (clienteParaWhatsapp as any).app || undefined,
+        dispositivo: (clienteParaWhatsapp as any).dispositivo || undefined,
+        telas: (clienteParaWhatsapp as any).telas || undefined,
+        mac: (clienteParaWhatsapp as any).mac || undefined,
+      },
+      {
+        valor_plano: f2(valorPlano),
+        total: f2(total),
+      }
+    );
+  };
   };
 
   // Função para confirmar envio de WhatsApp
@@ -648,26 +630,32 @@ export default function ClientesListCreate() {
         return;
       }
 
-      // Processar mensagem com variáveis
-      const getSaudacao = () => {
-        const hora = new Date().getHours();
-        if (hora < 12) return "Bom dia";
-        if (hora < 18) return "Boa tarde";
-        return "Boa noite";
-      };
+      // Processar mensagem com variáveis usando função centralizada
+      const plano = planos.find(p => String(p.id) === String(cliente.plano));
+      const planoNome = plano?.nome || getPlanoNome(cliente.plano || '') || "";
+      const valorPlano = plano?.valor || "0,00";
 
-      const planoNome = cliente.plano ? getPlanoNome(cliente.plano) : "";
-      const vencimento = cliente.data_vencimento
-        ? new Date(cliente.data_vencimento).toLocaleDateString("pt-BR")
-        : "";
-
-      const mensagemProcessada = mensagemTemplate
-        .replace(/{nome_cliente}/g, cliente.nome)
-        .replace(/{usuario}/g, cliente.usuario || "")
-        .replace(/{vencimento}/g, vencimento)
-        .replace(/{plano}/g, planoNome)
-        .replace(/{saudacao}/g, getSaudacao())
-        .replace(/{br}/g, "\n");
+      const mensagemProcessada = replaceMessageVariables(
+        mensagemTemplate,
+        {
+          nome: cliente.nome,
+          usuario: cliente.usuario || undefined,
+          senha: cliente.senha || undefined,
+          data_vencimento: cliente.data_vencimento || undefined,
+          whatsapp: cliente.whatsapp,
+          email: cliente.email || undefined,
+          plano: planoNome,
+          desconto: cliente.desconto || undefined,
+          observacao: cliente.observacao || undefined,
+          app: (cliente as any).app || undefined,
+          dispositivo: (cliente as any).dispositivo || undefined,
+          telas: (cliente as any).telas || undefined,
+          mac: (cliente as any).mac || undefined,
+        },
+        {
+          valor_plano: valorPlano,
+        }
+      );
 
       // Obter user_id atual
       const { data: { user } } = await supabase.auth.getUser();
@@ -988,39 +976,26 @@ export default function ClientesListCreate() {
                 .single();
               
               if (mensagensPadroes?.bem_vindo) {
-                // Buscar dados do plano para substituição de variáveis
                 const plano = planos.find(p => String(p.id) === novoCliente.plano || p.nome === novoCliente.plano);
                 const planoNome = plano?.nome || novoCliente.plano || '';
                 const valorPlano = plano?.valor || '0,00';
-                
-                // Gerar saudação baseada no horário
-                const hora = new Date().getHours();
-                let saudacao = "Bom dia";
-                if (hora >= 12 && hora < 18) saudacao = "Boa tarde";
-                else if (hora >= 18) saudacao = "Boa noite";
 
-                // Formatar data de vencimento
-                let dataVencimento = '';
-                if (novoCliente.data_vencimento) {
-                  try {
-                    dataVencimento = format(new Date(novoCliente.data_vencimento), "dd/MM/yyyy");
-                  } catch {
-                    dataVencimento = novoCliente.data_vencimento;
+                const mensagemFinal = replaceMessageVariables(
+                  mensagensPadroes.bem_vindo,
+                  {
+                    nome: novoCliente.nome || '',
+                    usuario: novoCliente.usuario || undefined,
+                    senha: novoCliente.senha || undefined,
+                    data_vencimento: novoCliente.data_vencimento || undefined,
+                    whatsapp: novoCliente.whatsapp,
+                    email: novoCliente.email || undefined,
+                    plano: planoNome,
+                    desconto: novoCliente.desconto || undefined,
+                  },
+                  {
+                    valor_plano: valorPlano,
                   }
-                }
-                
-                // Substituir variáveis na mensagem
-                let mensagemFinal = mensagensPadroes.bem_vindo
-                  .replace(/{saudacao}/g, saudacao)
-                  .replace(/{nome_cliente}/g, novoCliente.nome || '')
-                  .replace(/{nome}/g, novoCliente.nome || '')
-                  .replace(/{usuario}/g, novoCliente.usuario || '')
-                  .replace(/{senha}/g, novoCliente.senha || '')
-                  .replace(/{vencimento}/g, dataVencimento)
-                  .replace(/{nome_plano}/g, planoNome)
-                  .replace(/{valor_plano}/g, valorPlano)
-                  .replace(/{email}/g, novoCliente.email || '')
-                  .replace(/{br}/g, '\n');
+                );
                 
                 // Agendar envio para 30 segundos após a criação
                 const scheduledTime = new Date();

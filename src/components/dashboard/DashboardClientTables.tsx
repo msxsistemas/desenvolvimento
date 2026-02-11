@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
+import { replaceMessageVariables } from "@/utils/message-variables";
 import { Send, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -339,26 +340,21 @@ export default function DashboardClientTables() {
     }
   };
 
-  const getSaudacao = () => {
-    const hora = new Date().getHours();
-    if (hora < 12) return "Bom dia";
-    if (hora < 18) return "Boa tarde";
-    return "Boa noite";
-  };
-
   const processarMensagem = (mensagem: string, cliente: Cliente) => {
-    const planoNome = cliente.plano ? planosMap.get(cliente.plano)?.nome || "" : "";
-    const vencimento = cliente.data_vencimento
-      ? new Date(cliente.data_vencimento).toLocaleDateString("pt-BR")
-      : "";
+    const plano = cliente.plano ? planosMap.get(cliente.plano) : null;
+    const planoNome = plano?.nome || "";
 
-    return mensagem
-      .replace(/{nome_cliente}/g, cliente.nome)
-      .replace(/{usuario}/g, cliente.usuario || "")
-      .replace(/{vencimento}/g, vencimento)
-      .replace(/{plano}/g, planoNome)
-      .replace(/{saudacao}/g, getSaudacao())
-      .replace(/{br}/g, "\n");
+    return replaceMessageVariables(
+      mensagem,
+      {
+        nome: cliente.nome,
+        usuario: cliente.usuario || undefined,
+        data_vencimento: cliente.data_vencimento || undefined,
+        whatsapp: cliente.whatsapp,
+        plano: planoNome,
+      },
+      {}
+    );
   };
 
   const handleNotify = async (cliente: Cliente, type: NotificationType) => {

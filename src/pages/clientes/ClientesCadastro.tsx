@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useClientes, usePlanos, useProdutos, useAplicativos } from "@/hooks/useDatabase";
 import { format } from "date-fns";
+import { replaceMessageVariables } from "@/utils/message-variables";
 
 export default function ClientesCadastro() {
   const navigate = useNavigate();
@@ -188,30 +189,22 @@ export default function ClientesCadastro() {
               const planoNome = plano?.nome || novoCliente.plano || '';
               const valorPlano = plano?.valor || '0,00';
 
-              const hora = new Date().getHours();
-              let saudacao = "Bom dia";
-              if (hora >= 12 && hora < 18) saudacao = "Boa tarde";
-              else if (hora >= 18) saudacao = "Boa noite";
-
-              let dataVencimento = '';
-              if (novoCliente.data_vencimento) {
-                try {
-                  dataVencimento = format(new Date(novoCliente.data_vencimento), "dd/MM/yyyy");
-                } catch {
-                  dataVencimento = novoCliente.data_vencimento;
+              const mensagemFinal = replaceMessageVariables(
+                mensagensPadroes.bem_vindo,
+                {
+                  nome: novoCliente.nome || '',
+                  usuario: novoCliente.usuario || undefined,
+                  senha: novoCliente.senha || undefined,
+                  data_vencimento: novoCliente.data_vencimento || undefined,
+                  whatsapp: novoCliente.whatsapp,
+                  email: novoCliente.email || undefined,
+                  plano: planoNome,
+                  desconto: novoCliente.desconto || undefined,
+                },
+                {
+                  valor_plano: valorPlano,
                 }
-              }
-
-              let mensagemFinal = mensagensPadroes.bem_vindo
-                .replace(/{saudacao}/g, saudacao)
-                .replace(/{nome_cliente}/g, novoCliente.nome || '')
-                .replace(/{nome}/g, novoCliente.nome || '')
-                .replace(/{usuario}/g, novoCliente.usuario || '')
-                .replace(/{senha}/g, novoCliente.senha || '')
-                .replace(/{vencimento}/g, dataVencimento)
-                .replace(/{nome_plano}/g, planoNome)
-                .replace(/{valor_plano}/g, valorPlano)
-                .replace(/{br}/g, '\n');
+              );
 
               const scheduledTime = new Date();
               scheduledTime.setSeconds(scheduledTime.getSeconds() + 30);
