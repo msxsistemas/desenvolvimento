@@ -172,7 +172,7 @@ async function testOnWaveLogin(
   console.log(`🔄 Fazendo ${method} para: ${url}`);
   console.log(`📝 Payload: ${JSON.stringify(payload, null, 2)}`);
 
-  const res = await withTimeout(fetch(url, {
+  const res = await withTimeout(proxiedFetch(url, {
     method,
     headers,
     body: method.toUpperCase() === 'GET' ? undefined : JSON.stringify(payload),
