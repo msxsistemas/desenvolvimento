@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useClientes, usePlanos, useProdutos, useAplicativos, useTemplatesCobranca } from "@/hooks/useDatabase";
+import { useTemplatesMensagens } from "@/hooks/useTemplatesMensagens";
 import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,7 @@ export default function ClientesListCreate() {
   const { buscar: buscarProdutos } = useProdutos();
   const { buscar: buscarAplicativos } = useAplicativos();
   const { buscar: buscarTemplates } = useTemplatesCobranca();
+  const { templates: templatesUsuario } = useTemplatesMensagens();
   const { sendMessage, session: whatsappSession, loading: sendingMessage } = useEvolutionAPISimple();
   const { dismiss, toast } = useToast();
   const [successMessage, setSuccessMessage] = useState("");
@@ -94,7 +96,13 @@ export default function ClientesListCreate() {
   const [notificandoId, setNotificandoId] = useState<string | null>(null);
   const [templatesVencimento, setTemplatesVencimento] = useState<any[]>([]);
 
-  // Funções auxiliares para obter nomes
+  // Combinar templates de cobrança + templates do usuário
+  const allTemplates = useMemo(() => {
+    const cobranca = templates.map(t => ({ ...t, _source: 'cobranca' }));
+    const usuario = templatesUsuario.map(t => ({ ...t, _source: 'usuario' }));
+    return [...cobranca, ...usuario];
+  }, [templates, templatesUsuario]);
+
   const getProdutoNome = (produtoId: string) => {
     if (!produtoId) return 'N/A';
     const produto = produtos.find(p => String(p.id) === produtoId);
@@ -388,7 +396,7 @@ export default function ClientesListCreate() {
   const getMensagemDoTemplate = (templateId: string): string => {
     if (!templateId || !clienteParaWhatsapp) return "";
 
-    const template = templates.find(t => t.id === templateId);
+    const template = allTemplates.find(t => t.id === templateId);
     if (!template) return "";
 
     const sanitizeNumber = (val: any) => {
@@ -724,7 +732,7 @@ export default function ClientesListCreate() {
       return;
     }
 
-    const template = templates.find(t => t.id === templateSelecionado);
+    const template = allTemplates.find(t => t.id === templateSelecionado);
     if (!template || !clienteParaMensagem) return;
 
     const sanitizeNumber = (val: any) => {
@@ -1890,7 +1898,7 @@ export default function ClientesListCreate() {
                   <SelectValue placeholder="Escolha um template" />
                 </SelectTrigger>
                 <SelectContent>
-                  {templates.map((template) => (
+                  {allTemplates.map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.nome}
                     </SelectItem>
@@ -1976,7 +1984,7 @@ export default function ClientesListCreate() {
                   <SelectValue placeholder="Selecione um template..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {templates.map((template) => (
+                  {allTemplates.map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.nome}
                     </SelectItem>
