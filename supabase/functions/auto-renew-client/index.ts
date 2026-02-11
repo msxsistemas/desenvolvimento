@@ -145,12 +145,26 @@ serve(async (req) => {
     let serverRenewalResult: any = null;
 
     if (cliente.produto) {
-      const { data: produto } = await supabase
+      // produto field may contain UUID (id) or name - try both
+      let produto: any = null;
+      const { data: produtoById } = await supabase
         .from('produtos')
         .select('*, paineis_integracao(*)')
         .eq('user_id', user_id)
-        .eq('nome', cliente.produto)
+        .eq('id', cliente.produto)
         .maybeSingle();
+      
+      if (produtoById) {
+        produto = produtoById;
+      } else {
+        const { data: produtoByNome } = await supabase
+          .from('produtos')
+          .select('*, paineis_integracao(*)')
+          .eq('user_id', user_id)
+          .eq('nome', cliente.produto)
+          .maybeSingle();
+        produto = produtoByNome;
+      }
 
       if (produto?.renovacao_automatica && produto?.painel_id && produto?.paineis_integracao) {
         const painel = produto.paineis_integracao;
