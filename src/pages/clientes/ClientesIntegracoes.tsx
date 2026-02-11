@@ -199,16 +199,11 @@ export default function ClientesIntegracoes() {
         if (data.data?.token) {
           localStorage.setItem("auth_token", data.data.token);
         }
-        // Se reCAPTCHA foi resolvido com sucesso, não mostra a nota
-        const details = account?.captchaSolved 
-          ? `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}\n\n✅ Autenticação realizada com sucesso no painel.`
-          : `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}\n\n${account?.note ? `⚠️ ${account.note}\n\n` : ''}✅ Autenticação realizada com sucesso no painel.`;
-        
         setTestResultModal({
           isOpen: true,
           success: true,
           message: "CONEXÃO REAL BEM-SUCEDIDA!",
-          details
+          details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}\n\n✅ Autenticação realizada com sucesso no painel.`
         });
       } else {
         setTestResultModal({
