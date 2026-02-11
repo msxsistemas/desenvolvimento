@@ -392,7 +392,15 @@ export default function ClientesListCreate() {
     try {
       const plano = planos.find(p => String(p.id) === String(cliente.plano));
       const planoNome = plano?.nome || cliente.plano || "Plano";
-      const valorPlano = plano?.valor && plano.valor.trim() !== "" ? plano.valor : "0";
+      const valorPlanoRaw = plano?.valor ?? "0";
+      const valorPlanoStr = typeof valorPlanoRaw === "string" ? valorPlanoRaw.replace(/\u00A0/g, " ") : String(valorPlanoRaw);
+      // normaliza "R$ 25,00" -> "25.00"
+      const valorPlano = (() => {
+        let cleaned = valorPlanoStr.trim().replace(/[^0-9,.-]/g, "");
+        if (cleaned.includes(",") && cleaned.includes(".")) cleaned = cleaned.replace(/\./g, "").replace(",", ".");
+        else if (cleaned.includes(",") && !cleaned.includes(".")) cleaned = cleaned.replace(",", ".");
+        return cleaned || "0";
+      })();
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {

@@ -8,6 +8,34 @@ const corsHeaders = {
 
 const ASAAS_BASE_URL = 'https://www.asaas.com/api/v3';
 
+function parseMoneyToNumber(input: unknown): number | null {
+  if (typeof input === 'number') {
+    return Number.isFinite(input) ? input : null;
+  }
+
+  if (typeof input !== 'string') return null;
+
+  const raw = input.replace(/\u00A0/g, ' ').trim();
+  if (!raw) return null;
+
+  // Remove currency symbols/letters and keep digits and separators
+  let cleaned = raw.replace(/[^0-9,.-]/g, '');
+  if (!cleaned) return null;
+
+  // If both dot and comma exist, assume dot is thousands and comma is decimal (pt-BR)
+  if (cleaned.includes(',') && cleaned.includes('.')) {
+    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (cleaned.includes(',') && !cleaned.includes('.')) {
+    // Only comma -> decimal
+    cleaned = cleaned.replace(',', '.');
+  }
+
+  const n = Number(cleaned);
+  if (!Number.isFinite(n)) return null;
+
+  return n;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -174,10 +202,10 @@ serve(async (req) => {
 
     if (action === 'create') {
       const { cliente_id, cliente_nome, cliente_whatsapp, plano_nome, valor } = body;
-      const parsedValor = parseFloat(valor) || 0;
+      const parsedValor = parseMoneyToNumber(valor);
 
-      if (!cliente_nome || !cliente_whatsapp || isNaN(parseFloat(valor))) {
-        return new Response(JSON.stringify({ error: 'Dados obrigatórios: cliente_nome, cliente_whatsapp, valor (numérico válido)' }),
+      if (!cliente_nome || !cliente_whatsapp || parsedValor === null) {
+        return new Response(JSON.stringify({ error: 'Dados obrigatórios: cliente_nome, cliente_whatsapp, valor (ex: 25.00 ou 25,00)' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
 
