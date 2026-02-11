@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { QrCode, Copy, CheckCircle, Clock, XCircle, Wallet } from "lucide-react";
+import { QrCode, Copy, CheckCircle, Clock, XCircle, Wallet, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Fatura {
@@ -20,6 +20,8 @@ interface Fatura {
   created_at: string;
 }
 
+const POLL_INTERVAL = 5000; // 5 seconds
+
 export default function FaturaPublica() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
@@ -27,13 +29,12 @@ export default function FaturaPublica() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [justPaid, setJustPaid] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const previousStatusRef = useRef<string | null>(null);
 
-  useEffect(() => {
+  const fetchFatura = useCallback(async (isPolling = false) => {
     if (!id) return;
-    fetchFatura();
-  }, [id]);
-
-  const fetchFatura = async () => {
     try {
       const resp = await fetch(
         `https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/generate-fatura`,
@@ -45,16 +46,51 @@ export default function FaturaPublica() {
       );
       const data = await resp.json();
       if (!resp.ok || !data.success) {
-        setError(data.error || "Fatura não encontrada");
+        if (!isPolling) setError(data.error || "Fatura não encontrada");
         return;
       }
-      setFatura(data.fatura);
+      const newFatura = data.fatura as Fatura;
+
+      // Detect transition to paid
+      if (previousStatusRef.current === "pendente" && newFatura.status === "pago") {
+        setJustPaid(true);
+        toast({ title: "✅ Pagamento confirmado!", description: "Seu plano será renovado automaticamente." });
+        // Stop polling
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      }
+
+      previousStatusRef.current = newFatura.status;
+      setFatura(newFatura);
     } catch {
-      setError("Erro ao carregar fatura");
+      if (!isPolling) setError("Erro ao carregar fatura");
     } finally {
-      setLoading(false);
+      if (!isPolling) setLoading(false);
     }
-  };
+  }, [id, toast]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchFatura(false);
+  }, [fetchFatura]);
+
+  // Polling for status updates (only while pending)
+  useEffect(() => {
+    if (!fatura || fatura.status === "pago") return;
+
+    intervalRef.current = setInterval(() => {
+      fetchFatura(true);
+    }, POLL_INTERVAL);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [fatura?.status, fetchFatura]);
 
   const handleCopy = async (text: string) => {
     await navigator.clipboard.writeText(text);
@@ -86,6 +122,7 @@ export default function FaturaPublica() {
   }
 
   const isPaid = fatura.status === "pago";
+  const isPending = fatura.status === "pendente";
   const statusConfig = isPaid
     ? { icon: CheckCircle, label: "Pago", variant: "default" as const, color: "text-green-600" }
     : { icon: Clock, label: "Aguardando Pagamento", variant: "secondary" as const, color: "text-yellow-600" };
@@ -218,6 +255,13 @@ export default function FaturaPublica() {
                   <p className="text-sm text-muted-foreground">
                     Nenhum método de pagamento configurado. Entre em contato com o vendedor.
                   </p>
+                </div>
+              )}
+
+              {isPending && (
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2 border-t mt-2">
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                  <span>Verificando pagamento automaticamente...</span>
                 </div>
               )}
             </CardContent>

@@ -41,6 +41,53 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
       }
 
+      // If pending and has Asaas gateway, check payment status in real-time
+      if (fatura.status === 'pendente' && fatura.gateway === 'asaas' && fatura.gateway_charge_id) {
+        const asaasApiKey = Deno.env.get('ASAAS_API_KEY');
+        if (asaasApiKey) {
+          try {
+            const statusResp = await fetch(`${ASAAS_BASE_URL}/payments/${fatura.gateway_charge_id}`, {
+              headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
+            });
+            const statusData = await statusResp.json();
+
+            if (statusResp.ok && (statusData.status === 'RECEIVED' || statusData.status === 'CONFIRMED')) {
+              // Update fatura to paid
+              await supabaseAdmin
+                .from('faturas')
+                .update({ status: 'pago', paid_at: new Date().toISOString() })
+                .eq('id', fatura.id);
+
+              fatura.status = 'pago';
+              fatura.paid_at = new Date().toISOString();
+              console.log(`✅ Fatura ${fatura.id} marked as paid via Asaas status check`);
+            }
+          } catch (err: any) {
+            console.error('Asaas status check error:', err.message);
+          }
+        }
+      }
+
+      // If pending, also check cobrancas table for webhook-confirmed payments
+      if (fatura.status === 'pendente' && fatura.gateway_charge_id) {
+        const { data: cobranca } = await supabaseAdmin
+          .from('cobrancas')
+          .select('renovado')
+          .eq('gateway_charge_id', fatura.gateway_charge_id)
+          .maybeSingle();
+
+        if (cobranca?.renovado) {
+          await supabaseAdmin
+            .from('faturas')
+            .update({ status: 'pago', paid_at: new Date().toISOString() })
+            .eq('id', fatura.id);
+
+          fatura.status = 'pago';
+          fatura.paid_at = new Date().toISOString();
+          console.log(`✅ Fatura ${fatura.id} marked as paid via cobranca webhook`);
+        }
+      }
+
       return new Response(JSON.stringify({ success: true, fatura }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
