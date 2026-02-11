@@ -317,8 +317,10 @@ export function useServidorPage(providerId: string) {
   const testPanel = async (panel: Panel) => {
     setIsTestingConnection(true);
     try {
-      const baseUrl = panel.url.trim().replace(/\/$/, '');
-      const prov = PROVEDORES.find(p => p.id === panel.provedor);
+      const rawUrl = panel.url.trim().replace(/\/$/, '');
+      const isUniplayPanel = (panel.provedor || providerId) === 'uniplay';
+      const baseUrl = isUniplayPanel ? UNIPLAY_API_BASE : rawUrl;
+      const prov = PROVEDORES.find(p => p.id === (panel.provedor || providerId));
       const endpoint = prov?.loginEndpoint || '/api/auth/login';
       const payload = prov?.buildLoginPayload
         ? prov.buildLoginPayload(panel.usuario, panel.senha)
@@ -334,6 +336,7 @@ export function useServidorPage(providerId: string) {
           providerId: panel.provedor || providerId,
           testSteps: strategy.steps,
           extraHeaders: { Accept: 'application/json' },
+          frontendUrl: rawUrl,
         },
       });
 
