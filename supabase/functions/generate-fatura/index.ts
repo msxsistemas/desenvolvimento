@@ -389,8 +389,30 @@ serve(async (req) => {
               const basicToken = btoa(`${publicKey}:${privateKey}`);
               const externalId = `fatura-${fatura.id.substring(0, 8)}`;
               const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+              const ciabraHeaders = { 'Authorization': `Basic ${basicToken}`, 'Content-Type': 'application/json' };
 
-              const ciabraPayload = {
+              // Step 1: Create or find customer in Ciabra
+              let customerId = '';
+              try {
+                const customerResp = await fetch('https://api.az.center/customers/applications/customers', {
+                  method: 'POST',
+                  headers: ciabraHeaders,
+                  body: JSON.stringify({
+                    name: fatura.cliente_nome || 'Cliente',
+                    phone: fatura.cliente_whatsapp || '',
+                    externalId: `cliente-${fatura.cliente_whatsapp || fatura.id.substring(0, 8)}`,
+                  }),
+                });
+                const custText = await customerResp.text();
+                console.log(`Ciabra customer response: ${customerResp.status}, body: ${custText.substring(0, 300)}`);
+                let custData: any = {};
+                try { custData = JSON.parse(custText); } catch { /* */ }
+                customerId = custData.id || '';
+              } catch (custErr: any) {
+                console.error('Ciabra customer creation error:', custErr.message);
+              }
+
+              const ciabraPayload: any = {
                 description: `Cobrança - ${fatura.cliente_nome || 'Cliente'}`,
                 dueDate: dueDate,
                 installmentCount: 1,
@@ -404,13 +426,11 @@ serve(async (req) => {
                 ],
                 notifications: []
               };
+              if (customerId) ciabraPayload.customerId = customerId;
 
               const ciabraResp = await fetch('https://api.az.center/invoices/applications/invoices', {
                 method: 'POST',
-                headers: { 
-                  'Authorization': `Basic ${basicToken}`, 
-                  'Content-Type': 'application/json' 
-                },
+                headers: ciabraHeaders,
                 body: JSON.stringify(ciabraPayload),
               });
               const ciabraText = await ciabraResp.text();
