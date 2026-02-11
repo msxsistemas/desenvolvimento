@@ -412,14 +412,22 @@ serve(async (req) => {
                 console.error('Ciabra customer creation error:', custErr.message);
               }
 
+              const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/ciabra-integration`;
               const ciabraPayload: any = {
                 description: `Cobrança - ${fatura.cliente_nome || 'Cliente'}`,
                 dueDate: dueDate,
                 installmentCount: 1,
                 invoiceType: "SINGLE",
+                items: [],
                 price: parseFloat(fatura.valor.toString()),
+                externalId: externalId,
                 paymentTypes: ["PIX"],
-                redirectTo: `${Deno.env.get('SUPABASE_URL')}/rest/v1/faturas?id=eq.${fatura.id}`
+                webhooks: [
+                  { hookType: "INVOICE_CREATED", url: webhookUrl },
+                  { hookType: "PAYMENT_GENERATED", url: webhookUrl },
+                  { hookType: "PAYMENT_CONFIRMED", url: webhookUrl }
+                ],
+                notifications: []
               };
               
               if (customerId) {
@@ -434,17 +442,68 @@ serve(async (req) => {
                 body: JSON.stringify(ciabraPayload),
               });
               const ciabraText = await ciabraResp.text();
-              console.log(`Ciabra response status: ${ciabraResp.status}, body: ${ciabraText.substring(0, 500)}`);
+              console.log(`Ciabra response status: ${ciabraResp.status}, body: ${ciabraText.substring(0, 800)}`);
               let ciabraData: any = {};
               try { ciabraData = JSON.parse(ciabraText); } catch { console.error('Ciabra returned non-JSON response'); }
 
-              if (ciabraResp.ok && ciabraData.id) {
-                gateway_charge_id = ciabraData.id;
-                pix_qr_code = ciabraData.payment?.pix?.qrCode || ciabraData.pix?.qr_code || null;
-                pix_copia_cola = ciabraData.payment?.pix?.brCode || ciabraData.pix?.copia_cola || null;
+              let invoiceId = ciabraData.id || '';
+
+              // If invoice was created but response had error, try to get details via GET
+              if (!ciabraResp.ok && !invoiceId) {
+                console.log('⚠️ Ciabra POST failed, but charge may have been created. Skipping PIX extraction.');
+              }
+
+              if (invoiceId) {
+                gateway_charge_id = invoiceId;
+                
+                // Try to extract PIX from create response first
+                pix_qr_code = ciabraData.payment?.pix?.qrCode || null;
+                pix_copia_cola = ciabraData.payment?.pix?.brCode || null;
+                
+                // If no PIX data in create response, fetch invoice details
+                if (!pix_qr_code && !pix_copia_cola) {
+                  console.log(`🔍 Fetching Ciabra invoice details for ${invoiceId}...`);
+                  try {
+                    const detailResp = await fetch(`https://api.az.center/invoices/applications/invoices/${invoiceId}`, {
+                      method: 'GET',
+                      headers: ciabraHeaders,
+                    });
+                    const detailText = await detailResp.text();
+                    console.log(`Ciabra detail response: ${detailResp.status}, body: ${detailText.substring(0, 800)}`);
+                    let detailData: any = {};
+                    try { detailData = JSON.parse(detailText); } catch { /* */ }
+                    
+                    // Try to get installment ID and then payment details
+                    const installmentId = detailData.installments?.[0]?.id;
+                    if (installmentId) {
+                      console.log(`🔍 Fetching payment details for installment ${installmentId}...`);
+                      const payResp = await fetch(`https://api.az.center/payments/applications/installments/${installmentId}`, {
+                        method: 'GET',
+                        headers: ciabraHeaders,
+                      });
+                      const payText = await payResp.text();
+                      console.log(`Ciabra payment response: ${payResp.status}, body: ${payText.substring(0, 800)}`);
+                      let payData: any = {};
+                      try { payData = JSON.parse(payText); } catch { /* */ }
+                      
+                      // Extract PIX data from payment details
+                      const payment = Array.isArray(payData) ? payData[0] : payData;
+                      pix_qr_code = payment?.pix?.qrCode || payment?.qrCode || null;
+                      pix_copia_cola = payment?.pix?.brCode || payment?.brCode || payment?.pixCode || null;
+                    }
+                    
+                    // Also try from invoice detail directly
+                    if (!pix_qr_code) {
+                      pix_qr_code = detailData.payment?.pix?.qrCode || detailData.pix?.qrCode || null;
+                      pix_copia_cola = detailData.payment?.pix?.brCode || detailData.pix?.brCode || null;
+                    }
+                  } catch (detailErr: any) {
+                    console.error('Ciabra detail fetch error:', detailErr.message);
+                  }
+                }
 
                 await supabaseAdmin.from('cobrancas').upsert({
-                  user_id: fatura.user_id, gateway: 'ciabra', gateway_charge_id: ciabraData.id,
+                  user_id: fatura.user_id, gateway: 'ciabra', gateway_charge_id: invoiceId,
                   cliente_whatsapp: fatura.cliente_whatsapp, cliente_nome: fatura.cliente_nome,
                   valor: fatura.valor, status: 'pendente',
                 }, { onConflict: 'gateway_charge_id' });

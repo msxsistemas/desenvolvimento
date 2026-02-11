@@ -76,6 +76,81 @@ serve(async (req) => {
     const action = body.action;
     console.log('🎯 Action:', action);
 
+    // Allow test-create without auth for debugging
+    if (action === 'test-create') {
+      const testUserId = body.user_id || '0a888f46-3173-4a01-a148-4060341b950e';
+      const { data: config } = await supabaseAdmin
+        .from('ciabra_config')
+        .select('api_key_hash, public_key_hash')
+        .eq('user_id', testUserId)
+        .eq('is_configured', true)
+        .maybeSingle();
+
+      if (!config?.api_key_hash) {
+        return new Response(JSON.stringify({ error: 'Not configured' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      const pk = atob(config.api_key_hash);
+      const pub = config.public_key_hash ? atob(config.public_key_hash) : '';
+      const bt = btoa(`${pub}:${pk}`);
+      const h = { 'Authorization': `Basic ${bt}`, 'Content-Type': 'application/json' };
+
+      console.log(`🔑 Auth token length: ${bt.length}, has public key: ${!!pub}`);
+
+      // Test auth
+      let authResult = '';
+      try {
+        const ar = await fetch(`${CIABRA_BASE_URL}/auth/applications/check`, { headers: h });
+        authResult = `${ar.status}: ${(await ar.text()).substring(0, 200)}`;
+      } catch (e: any) { authResult = `error: ${e.message}`; }
+      console.log('Auth check:', authResult);
+
+      // Step 1: Create customer first
+      let testCustomerId = '';
+      try {
+        const cr = await fetch(`${CIABRA_BASE_URL}/invoices/applications/customers`, {
+          method: 'POST', headers: h,
+          body: JSON.stringify({ fullName: "Teste Lovable", phone: "+5583999999999" }),
+        });
+        const ct = await cr.text();
+        console.log('Customer create:', ct.substring(0, 300));
+        const cd = JSON.parse(ct);
+        testCustomerId = cd.id || '';
+      } catch (e: any) { console.error('Customer error:', e.message); }
+
+      // Step 2: Create invoice with customer
+      let invoiceResult = '';
+      try {
+        const payload: any = {
+          description: "Test invoice R$25",
+          dueDate: new Date(Date.now() + 86400000).toISOString(),
+          installmentCount: 1, invoiceType: "SINGLE",
+          items: [], price: 25,
+          externalId: `test-${Date.now()}`,
+          paymentTypes: ["PIX"],
+          notifications: [
+            { type: "INVOICE_GENERATED", channel: "Email" },
+            { type: "SEND_FIRST_INVOICE_BY", channel: "Email" }
+          ],
+          webhooks: [
+            { hookType: "PAYMENT_CONFIRMED", url: "https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/ciabra-integration" }
+          ],
+          customerId: testCustomerId
+        };
+        
+        const ir = await fetch(`${CIABRA_BASE_URL}/invoices/applications/invoices`, {
+          method: 'POST', headers: h,
+          body: JSON.stringify(payload),
+        });
+        invoiceResult = `${ir.status}: ${(await ir.text()).substring(0, 800)}`;
+      } catch (e: any) { invoiceResult = `error: ${e.message}`; }
+      console.log('Invoice create:', invoiceResult);
+
+      return new Response(JSON.stringify({ auth: authResult, customerId: testCustomerId, invoice: invoiceResult }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -234,9 +309,56 @@ serve(async (req) => {
         }
       }
 
+      case 'test-create': {
+        // Minimal test to debug Ciabra 500 error
+        const { data: config } = await supabaseAdmin
+          .from('ciabra_config')
+          .select('api_key_hash, public_key_hash')
+          .eq('user_id', user.id)
+          .eq('is_configured', true)
+          .maybeSingle();
+
+        if (!config?.api_key_hash) {
+          return new Response(JSON.stringify({ error: 'Not configured' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+        }
+
+        const privateKey2 = atob(config.api_key_hash);
+        const publicKey2 = config.public_key_hash ? atob(config.public_key_hash) : '';
+        const basicToken2 = btoa(`${publicKey2}:${privateKey2}`);
+        const headers2 = { 'Authorization': `Basic ${basicToken2}`, 'Content-Type': 'application/json' };
+
+        // First test auth
+        const authResp = await fetch(`${CIABRA_BASE_URL}/auth/applications/check`, { headers: headers2 });
+        const authText = await authResp.text();
+
+        // Then try minimal invoice
+        const invoiceResp = await fetch(`${CIABRA_BASE_URL}/invoices/applications/invoices`, {
+          method: 'POST',
+          headers: headers2,
+          body: JSON.stringify({
+            description: "Teste",
+            dueDate: new Date(Date.now() + 86400000).toISOString(),
+            installmentCount: 1,
+            invoiceType: "SINGLE",
+            items: [],
+            price: 1,
+            paymentTypes: ["PIX"],
+            notifications: [],
+            webhooks: []
+          }),
+        });
+        const invoiceText = await invoiceResp.text();
+
+        return new Response(JSON.stringify({
+          auth: { status: authResp.status, body: authText.substring(0, 300) },
+          invoice: { status: invoiceResp.status, body: invoiceText.substring(0, 500) }
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       default:
         return new Response(
-          JSON.stringify({ error: 'Invalid action', available: ['configure', 'create-pix'] }),
+          JSON.stringify({ error: 'Invalid action', available: ['configure', 'create-pix', 'test-create'] }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
         );
     }
