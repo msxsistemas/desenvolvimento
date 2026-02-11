@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreditCard, QrCode, Settings, Wallet, Building2 } from "lucide-react";
+import { CreditCard, QrCode, Settings, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAssas } from "@/hooks/useAssas";
 import { useV3Pay } from "@/hooks/useV3Pay";
@@ -214,8 +214,8 @@ export default function Checkout() {
           </Card>
         </section>
 
-        {/* PIX Automático + PIX Manual */}
-        <section className="grid gap-4 md:grid-cols-2">
+        {/* PIX Automático */}
+        <section>
           <Card className="shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -245,47 +245,6 @@ export default function Checkout() {
                 <p className="text-xs text-muted-foreground mt-2">
                   ✅ PIX ativo via <strong>{gateways.find(g => g.id === gatewayAtivo)?.label}</strong>
                 </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Wallet className="h-4 w-4 text-foreground/70" />
-                <CardTitle className="text-sm">PIX Manual</CardTitle>
-              </div>
-              <CardDescription>
-                Configure uma chave PIX manual para receber pagamentos diretamente.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="rounded-md border px-3 py-2 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">PIX Manual</span>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={pixManualEnabled}
-                    onCheckedChange={setPixManualEnabled}
-                    id="pix-manual-toggle"
-                  />
-                  <Badge variant={pixManualEnabled ? "default" : "destructive"}>
-                    {pixManualEnabled ? "Habilitado" : "Desabilitado"}
-                  </Badge>
-                </div>
-              </div>
-              {pixManualEnabled && (
-                <div className="space-y-2">
-                  <label htmlFor="pix-manual-key" className="text-sm font-medium">
-                    Chave PIX
-                  </label>
-                  <Input
-                    id="pix-manual-key"
-                    placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"
-                    value={pixManualKey}
-                    onChange={(e) => setPixManualKey(e.target.value)}
-                    maxLength={100}
-                  />
-                </div>
               )}
             </CardContent>
           </Card>
