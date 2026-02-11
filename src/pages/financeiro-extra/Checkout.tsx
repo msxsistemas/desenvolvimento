@@ -31,7 +31,6 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
-  // Check Ciabra and MercadoPago config
   const [ciabraConfigured, setCiabraConfigured] = useState(false);
   const [mercadoPagoConfigured, setMercadoPagoConfigured] = useState(false);
 
@@ -92,7 +91,6 @@ export default function Checkout() {
 
   const configuredGateways = gateways.filter(g => g.configured);
 
-  // Auto-select first configured gateway if current is not configured
   useEffect(() => {
     if (configuredGateways.length > 0 && !configuredGateways.find(g => g.id === gatewayAtivo)) {
       setGatewayAtivo(configuredGateways[0].id);
@@ -147,24 +145,24 @@ export default function Checkout() {
         </div>
       </header>
 
-      <main>
+      <main className="space-y-4">
+        {/* Gateway Ativo + Status */}
         <section className="grid gap-4 md:grid-cols-2">
-          {/* Gateway Ativo */}
-          <Card className="shadow-sm md:col-span-2">
+          <Card className="shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-foreground/70" />
                 <CardTitle className="text-sm">Gateway Ativo</CardTitle>
               </div>
               <CardDescription>
-                Selecione qual gateway de pagamento será usado para gerar cobranças PIX automaticamente.
+                Selecione qual gateway será usado para gerar cobranças PIX automaticamente.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent>
               {configuredGateways.length === 0 ? (
-                <div className="p-3 bg-muted rounded-md border">
+                <div className="rounded-md border px-3 py-2">
                   <p className="text-sm text-muted-foreground">
-                    Nenhum gateway configurado. Configure pelo menos um gateway para habilitar pagamentos automáticos.
+                    Nenhum gateway configurado. Configure pelo menos um para habilitar pagamentos.
                   </p>
                   <div className="flex flex-wrap gap-2 mt-2">
                     <a href="/configuracoes/asaas" className="text-xs text-primary underline">Asaas</a>
@@ -174,42 +172,55 @@ export default function Checkout() {
                   </div>
                 </div>
               ) : (
-                <>
-                  <Select value={gatewayAtivo} onValueChange={setGatewayAtivo}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o gateway" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {configuredGateways.map((g) => (
-                        <SelectItem key={g.id} value={g.id}>
-                          {g.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <div className="flex flex-wrap gap-2">
-                    {gateways.map((g) => (
-                      <Badge
-                        key={g.id}
-                        variant={g.configured ? (g.id === gatewayAtivo ? "default" : "secondary") : "outline"}
-                        className="text-xs"
-                      >
-                        {g.label}: {g.configured ? (g.id === gatewayAtivo ? "✅ Ativo" : "Configurado") : "Não configurado"}
-                      </Badge>
+                <Select value={gatewayAtivo} onValueChange={setGatewayAtivo}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o gateway" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {configuredGateways.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {g.label}
+                      </SelectItem>
                     ))}
-                  </div>
-                </>
+                  </SelectContent>
+                </Select>
               )}
             </CardContent>
           </Card>
 
-          {/* PIX */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Settings className="h-4 w-4 text-foreground/70" />
+                <CardTitle className="text-sm">Status dos Gateways</CardTitle>
+              </div>
+              <CardDescription>
+                Veja quais gateways estão configurados e qual está ativo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {gateways.map((g) => (
+                  <Badge
+                    key={g.id}
+                    variant={g.configured ? (g.id === gatewayAtivo ? "default" : "secondary") : "outline"}
+                    className="text-xs"
+                  >
+                    {g.label}: {g.configured ? (g.id === gatewayAtivo ? "✅ Ativo" : "Configurado") : "Não configurado"}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* PIX Automático + PIX Manual */}
+        <section className="grid gap-4 md:grid-cols-2">
           <Card className="shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <QrCode className="h-4 w-4 text-foreground/70" />
-                <CardTitle className="text-sm">Pagamento PIX</CardTitle>
+                <CardTitle className="text-sm">PIX Automático</CardTitle>
               </div>
               <CardDescription>
                 Habilite o PIX automático usando o gateway ativo selecionado acima.
@@ -230,26 +241,14 @@ export default function Checkout() {
                   </Badge>
                 </div>
               </div>
-
-              {configuredGateways.length === 0 && (
-                <div className="mt-3 p-3 bg-muted rounded-md border">
-                  <p className="text-sm text-muted-foreground">
-                    Configure um gateway primeiro para habilitar o PIX automático.
-                  </p>
-                </div>
-              )}
-
               {pixEnabled && configuredGateways.length > 0 && (
-                <div className="mt-3 p-3 bg-primary/10 rounded-md border border-primary/20">
-                  <p className="text-sm text-primary">
-                    ✅ PIX ativo via <strong>{gateways.find(g => g.id === gatewayAtivo)?.label}</strong>
-                  </p>
-                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  ✅ PIX ativo via <strong>{gateways.find(g => g.id === gatewayAtivo)?.label}</strong>
+                </p>
               )}
             </CardContent>
           </Card>
 
-          {/* PIX Manual */}
           <Card className="shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -257,7 +256,7 @@ export default function Checkout() {
                 <CardTitle className="text-sm">PIX Manual</CardTitle>
               </div>
               <CardDescription>
-                Configure uma chave PIX manual para receber pagamentos diretamente, sem integração com gateway.
+                Configure uma chave PIX manual para receber pagamentos diretamente.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -274,7 +273,6 @@ export default function Checkout() {
                   </Badge>
                 </div>
               </div>
-
               {pixManualEnabled && (
                 <div className="space-y-2">
                   <label htmlFor="pix-manual-key" className="text-sm font-medium">
@@ -287,15 +285,14 @@ export default function Checkout() {
                     onChange={(e) => setPixManualKey(e.target.value)}
                     maxLength={100}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Insira sua chave PIX para que os clientes possam realizar pagamentos manuais.
-                  </p>
                 </div>
               )}
             </CardContent>
           </Card>
+        </section>
 
-          {/* Cartão de Crédito */}
+        {/* Cartão de Crédito */}
+        <section>
           <Card className="shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -303,12 +300,12 @@ export default function Checkout() {
                 <CardTitle className="text-sm">Cartão de Crédito</CardTitle>
               </div>
               <CardDescription>
-                Configure qual provedor será utilizado para processar pagamentos com cartão de crédito.
+                Configure o provedor utilizado para processar pagamentos com cartão de crédito.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border px-3 py-2 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Provedor Cartão de Crédito</span>
+                <span className="text-sm text-muted-foreground">Cartão de Crédito</span>
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={creditCardEnabled}
@@ -324,14 +321,15 @@ export default function Checkout() {
           </Card>
         </section>
 
-        <section className="mt-6">
+        {/* Salvar */}
+        <section>
           <Card className="shadow-sm">
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
                 <div>
                   <p className="text-sm font-medium">Finalizar Configuração</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Clique em "Salvar Configurações" para aplicar as mudanças e disponibilizar os métodos de pagamento selecionados.
+                    Clique em "Salvar Configurações" para aplicar as mudanças.
                   </p>
                 </div>
                 <Button size="lg" onClick={handleSave} disabled={loading}>
