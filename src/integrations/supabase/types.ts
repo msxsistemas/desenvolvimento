@@ -224,6 +224,48 @@ export type Database = {
         }
         Relationships: []
       }
+      cobrancas: {
+        Row: {
+          cliente_nome: string | null
+          cliente_whatsapp: string
+          created_at: string
+          gateway: string
+          gateway_charge_id: string
+          id: string
+          renovado: boolean
+          status: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          cliente_nome?: string | null
+          cliente_whatsapp: string
+          created_at?: string
+          gateway: string
+          gateway_charge_id: string
+          id?: string
+          renovado?: boolean
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          cliente_nome?: string | null
+          cliente_whatsapp?: string
+          created_at?: string
+          gateway?: string
+          gateway_charge_id?: string
+          id?: string
+          renovado?: boolean
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       cupons: {
         Row: {
           ativo: boolean
