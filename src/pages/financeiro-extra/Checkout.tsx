@@ -231,15 +231,13 @@ export default function Checkout() {
                 ✅ PIX ativo via <strong>{gateways.find(g => g.id === gatewayAtivo)?.label}</strong>
               </p>
             )}
+            <div className="flex justify-end pt-2">
+              <Button onClick={handleSave} disabled={loading}>
+                {loading ? "Salvando..." : "Salvar Configurações"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
-
-        {/* Salvar */}
-        <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? "Salvando..." : "Salvar Configurações"}
-          </Button>
-        </div>
       </main>
     </div>
   );
