@@ -61,6 +61,11 @@ import LogsSistema from "./pages/LogsSistema";
 import IndicacoesClientes from "./pages/indicacoes/IndicacoesClientes";
 import IndicacoesSistema from "./pages/indicacoes/IndicacoesSistema";
 import Cupom from "./pages/outros/Cupom";
+import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import AdminPlanos from "./pages/admin/AdminPlanos";
 
 const queryClient = new QueryClient();
 import Auth from "./pages/auth/Auth";
@@ -138,6 +143,13 @@ const App = () => (
             {/* Outros routes */}
             <Route path="/outros/cupom" element={<Cupom />} />
             <Route path="/indicacoes/sistema" element={<IndicacoesSistema />} />
+          </Route>
+
+          {/* Admin routes */}
+          <Route element={<ProtectedRoute><AdminProtectedRoute><AdminLayout /></AdminProtectedRoute></ProtectedRoute>}>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+            <Route path="/admin/planos" element={<AdminPlanos />} />
           </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
