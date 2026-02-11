@@ -21,7 +21,7 @@ async function solve2Captcha(siteKey: string, pageUrl: string, mode: 'v2' | 'v3'
     console.log(`🤖 2Captcha: Enviando reCAPTCHA ${mode} para resolução...`);
     let submitUrl: string;
     if (mode === 'v3') {
-      submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&version=v3&action=login&min_score=0.7&json=1`;
+      submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&version=v3&action=login&min_score=0.3&json=1`;
     } else if (mode === 'v2-invisible') {
       submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&invisible=1&json=1`;
     } else {
@@ -110,13 +110,12 @@ async function loginMundoGF(baseUrl: string, username: string, password: string)
   let captchaModes: CaptchaMode[] = [];
   if (siteKey) {
     if (hasV3Render || hasGrecaptchaExecute) {
-      // Site uses grecaptcha.execute() - this is v3, try v3 first then retry v3 again
-      captchaModes = ['v3', 'v3', 'v2-invisible'];
+      // Site uses grecaptcha.execute() - this is v3, try v3 multiple times
+      captchaModes = ['v3', 'v3', 'v3'];
     } else if (hasV2Checkbox) {
       captchaModes = ['v2', 'v2-invisible', 'v3'];
     } else {
-      // Default: try all, v2-invisible first (most common for badge-only)
-      captchaModes = ['v2-invisible', 'v3', 'v2'];
+      captchaModes = ['v3', 'v2-invisible', 'v2'];
     }
   }
 
@@ -157,25 +156,7 @@ async function loginMundoGF(baseUrl: string, username: string, password: string)
     return { success: isSuccess, cookies: updatedCookies, location: postLocation, status: postResp.status, body: respBody };
   }
 
-  // First try without captcha (some panels don't validate it)
-  {
-    console.log(`🤖 Tentando login SEM captcha...`);
-    const result = await attemptLogin('', csrfToken, allCookies);
-    console.log(`📊 Login sem-captcha → status: ${result.status}, redirect: ${result.location.slice(0, 80)}, success: ${result.success}, body: ${result.body.slice(0, 200)}`);
-    if (result.success) {
-      const followUrl = result.location.startsWith('http') ? result.location : `${cleanBase}${result.location}`;
-      const followResp = await withTimeout(fetch(followUrl, {
-        method: 'GET',
-        headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Cookie': result.cookies },
-        redirect: 'manual',
-      }), 10000);
-      const finalCookies = mergeSetCookies(result.cookies, followResp);
-      const dashHtml = await followResp.text();
-      const dashCsrf = dashHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
-      console.log(`✅ Login sem-captcha bem-sucedido!`);
-      return { success: true, cookies: finalCookies, csrf: dashCsrf ? dashCsrf[1] : csrfToken };
-    }
-  }
+  // Go straight to captcha-based login (skipping no-captcha attempt to avoid session flagging)
 
   // Try each captcha mode - use ORIGINAL cookies from first GET (don't re-fetch)
   for (const mode of captchaModes) {
