@@ -14,23 +14,26 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-async function solve2Captcha(siteKey: string, pageUrl: string, isV3: boolean = false): Promise<string | null> {
+async function solve2Captcha(siteKey: string, pageUrl: string, mode: 'v2' | 'v3' | 'v2-invisible' = 'v2'): Promise<string | null> {
   const apiKey = Deno.env.get('TWOCAPTCHA_API_KEY');
   if (!apiKey) { console.log('⚠️ 2Captcha: API key não configurada'); return null; }
   try {
-    console.log(`🤖 2Captcha: Enviando reCAPTCHA ${isV3 ? 'v3' : 'v2-invisible'} para resolução...`);
+    console.log(`🤖 2Captcha: Enviando reCAPTCHA ${mode} para resolução...`);
     let submitUrl: string;
-    if (isV3) {
+    if (mode === 'v3') {
       submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&version=v3&action=login&min_score=0.3&json=1`;
-    } else {
+    } else if (mode === 'v2-invisible') {
       submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&invisible=1&json=1`;
+    } else {
+      // v2 standard checkbox
+      submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&json=1`;
     }
     const submitResp = await withTimeout(fetch(submitUrl), 15000);
     const submitJson = await submitResp.json();
     if (submitJson.status !== 1) { console.log(`❌ 2Captcha submit falhou: ${JSON.stringify(submitJson)}`); return null; }
     const taskId = submitJson.request;
     console.log(`🤖 2Captcha: Task ${taskId}, aguardando...`);
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 24; i++) {
       await new Promise(r => setTimeout(r, 5000));
       const resultUrl = `https://2captcha.com/res.php?key=${apiKey}&action=get&id=${taskId}&json=1`;
       const resultResp = await withTimeout(fetch(resultUrl), 10000);
@@ -38,7 +41,7 @@ async function solve2Captcha(siteKey: string, pageUrl: string, isV3: boolean = f
       if (resultJson.status === 1) { console.log(`✅ 2Captcha resolvido em ${(i+1)*5}s`); return resultJson.request; }
       if (resultJson.request !== 'CAPCHA_NOT_READY') { console.log(`❌ 2Captcha erro: ${resultJson.request}`); return null; }
     }
-    console.log('❌ 2Captcha: timeout após 60s');
+    console.log('❌ 2Captcha: timeout após 120s');
     return null;
   } catch (e: any) { console.log(`❌ 2Captcha erro: ${e.message}`); return null; }
 }
@@ -134,14 +137,14 @@ async function loginMundoGF(baseUrl: string, username: string, password: string)
     return { success: isSuccess, cookies: updatedCookies, location: postLocation, status: postResp.status };
   }
 
-  // Try both captcha versions: v3 first, then v2 invisible
-  const captchaVersions: Array<{ label: string; isV3: boolean }> = siteKey 
-    ? [{ label: 'v3', isV3: true }, { label: 'v2-invisible', isV3: false }]
+  // Try captcha versions: v2 standard first (most common), then v3, then v2-invisible
+  const captchaVersions: Array<{ label: string; mode: 'v2' | 'v3' | 'v2-invisible' }> = siteKey 
+    ? [{ label: 'v2', mode: 'v2' }, { label: 'v3', mode: 'v3' }, { label: 'v2-invisible', mode: 'v2-invisible' }]
     : [];
 
   for (const ver of captchaVersions) {
     console.log(`🤖 Tentando reCAPTCHA ${ver.label}...`);
-    const solved = await solve2Captcha(siteKey!, `${cleanBase}/login`, ver.isV3);
+    const solved = await solve2Captcha(siteKey!, `${cleanBase}/login`, ver.mode);
     if (!solved) {
       console.log(`❌ 2Captcha ${ver.label}: falhou, tentando próximo...`);
       continue;
