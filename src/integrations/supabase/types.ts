@@ -529,6 +529,7 @@ export type Database = {
           painel_id: string | null
           provedor_iptv: string | null
           renovacao_automatica: boolean | null
+          tipo_servico: string
           user_id: string | null
           valor: string
         }
@@ -543,6 +544,7 @@ export type Database = {
           painel_id?: string | null
           provedor_iptv?: string | null
           renovacao_automatica?: boolean | null
+          tipo_servico?: string
           user_id?: string | null
           valor: string
         }
@@ -557,6 +559,7 @@ export type Database = {
           painel_id?: string | null
           provedor_iptv?: string | null
           renovacao_automatica?: boolean | null
+          tipo_servico?: string
           user_id?: string | null
           valor?: string
         }
