@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Copy, CheckCircle, XCircle, Wallet, RefreshCw, QrCode, Printer } from "lucide-react";
+import QRCode from "react-qr-code";
 import { useToast } from "@/hooks/use-toast";
 
 interface Fatura {
@@ -274,10 +275,14 @@ export default function FaturaPublica() {
                   )}
 
                   {/* QR Code */}
-                  {!generatingPix && fatura.pix_qr_code && (
+                  {!generatingPix && (fatura.pix_qr_code || fatura.pix_copia_cola) && (
                     <div className="flex flex-col items-center gap-2">
                       <div className="bg-white border border-slate-200 rounded-lg p-3">
-                        <img src={`data:image/png;base64,${fatura.pix_qr_code}`} alt="QR Code PIX" className="w-44 h-44" />
+                        {fatura.pix_qr_code ? (
+                          <img src={`data:image/png;base64,${fatura.pix_qr_code}`} alt="QR Code PIX" className="w-44 h-44" />
+                        ) : fatura.pix_copia_cola ? (
+                          <QRCode value={fatura.pix_copia_cola} size={176} />
+                        ) : null}
                       </div>
                     </div>
                   )}
