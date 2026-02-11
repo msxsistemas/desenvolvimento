@@ -470,10 +470,11 @@ serve(async (req) => {
         console.log(`⚠️ Could not fetch extend page: ${e.message}`);
       }
 
-      // Build maxCons from clienteScreens parameter
+      // Build maxCons from clienteScreens parameter (max 3 allowed by MundoGF)
       if (clienteScreens) {
-        maxCons = String(clienteScreens);
-        console.log(`📺 Usando telas do cliente: ${maxCons}`);
+        const screens = Math.min(Number(clienteScreens) || 1, 3);
+        maxCons = String(screens);
+        console.log(`📺 Telas do cliente: ${clienteScreens}, enviando ao servidor: ${maxCons} (max 3)`);
       }
 
       // Fallback to calculated option if not found in dropdown
