@@ -154,7 +154,9 @@ serve(async (req) => {
               const statusResp = await fetch(`https://api.az.center/v1/charges/${fatura.gateway_charge_id}`, {
                 headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
               });
-              const statusData = await statusResp.json();
+              const statusText = await statusResp.text();
+              let statusData: any = {};
+              try { statusData = JSON.parse(statusText); } catch { /* empty */ }
 
               const isPaid = statusData.status === 'paid' || statusData.status === 'approved' || statusData.status === 'confirmed';
               if (statusResp.ok && isPaid) {
@@ -390,7 +392,10 @@ serve(async (req) => {
                   payment_method: 'pix',
                 }),
               });
-              const ciabraData = await ciabraResp.json();
+              const ciabraText = await ciabraResp.text();
+              console.log(`Ciabra response status: ${ciabraResp.status}, body: ${ciabraText.substring(0, 500)}`);
+              let ciabraData: any = {};
+              try { ciabraData = JSON.parse(ciabraText); } catch { console.error('Ciabra returned non-JSON response'); }
 
               if (ciabraResp.ok && ciabraData.id) {
                 gateway_charge_id = ciabraData.id;
