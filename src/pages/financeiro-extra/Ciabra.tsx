@@ -181,21 +181,8 @@ export default function Ciabra() {
                   <p className="text-sm text-destructive">{errorDetails}</p>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section>
-          <Card className="shadow-sm">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-4">
-                <div>
-                  <p className="text-sm font-medium">Finalizar Configuração</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Clique em "Ativar Ciabra" para validar sua API Key e ativar o gateway de pagamentos.
-                  </p>
-                </div>
-                <Button size="lg" onClick={handleConfigure} disabled={loading}>
+              <div className="flex justify-center border-t pt-4 mt-2">
+                <Button onClick={handleConfigure} disabled={loading}>
                   {loading ? "Verificando..." : "Ativar Ciabra"}
                 </Button>
               </div>
