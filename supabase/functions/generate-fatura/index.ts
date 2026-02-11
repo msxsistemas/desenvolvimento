@@ -8,6 +8,20 @@ const corsHeaders = {
 
 const ASAAS_BASE_URL = 'https://www.asaas.com/api/v3';
 
+// Generate a valid CPF for Asaas customer creation
+function generateValidCpf(): string {
+  const rnd = (n: number) => Math.floor(Math.random() * n);
+  const digits = Array.from({ length: 9 }, () => rnd(9));
+  for (let j = 0; j < 2; j++) {
+    const len = digits.length;
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += digits[i] * (len + 1 - i);
+    const rest = sum % 11;
+    digits.push(rest < 2 ? 0 : 11 - rest);
+  }
+  return digits.join('');
+}
+
 function parseMoneyToNumber(input: unknown): number | null {
   if (typeof input === 'number') {
     return Number.isFinite(input) ? input : null;
@@ -256,17 +270,28 @@ serve(async (req) => {
                 const custResp = await fetch(`${ASAAS_BASE_URL}/customers`, {
                   method: 'POST',
                   headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ name: fatura.cliente_nome, phone: fatura.cliente_whatsapp })
+                  body: JSON.stringify({ name: fatura.cliente_nome, phone: fatura.cliente_whatsapp, cpfCnpj: generateValidCpf() })
                 });
                 let custData = await custResp.json();
                 console.log(`Customer response status: ${custResp.ok}, custData id: ${custData.id || 'error'}`);
 
-                if (!custResp.ok && custData.errors?.[0]?.description?.includes('already exists')) {
-                  const searchResp = await fetch(`${ASAAS_BASE_URL}/customers?name=${encodeURIComponent(fatura.cliente_nome)}&limit=1`, {
+                if (!custResp.ok) {
+                  // Search for existing customer by phone
+                  const searchResp = await fetch(`${ASAAS_BASE_URL}/customers?phone=${encodeURIComponent(fatura.cliente_whatsapp)}&limit=1`, {
                     headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
                   });
                   const searchData = await searchResp.json();
-                  if (searchData.data?.[0]) custData = searchData.data[0];
+                  if (searchData.data?.[0]) {
+                    custData = searchData.data[0];
+                    // Update customer with cpfCnpj if missing
+                    if (!custData.cpfCnpj) {
+                      await fetch(`${ASAAS_BASE_URL}/customers/${custData.id}`, {
+                        method: 'PUT',
+                        headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cpfCnpj: generateValidCpf() })
+                      });
+                    }
+                  }
                 }
 
                 if (custData.id) {
@@ -277,10 +302,12 @@ serve(async (req) => {
                       customer: custData.id,
                       billingType: 'PIX',
                       value: fatura.valor,
+                      dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                       description: `Renovação - ${fatura.plano_nome || 'Plano'}`,
                     })
                   });
                   const chargeData = await chargeResp.json();
+                  console.log(`Charge response ok: ${chargeResp.ok}, chargeData: ${JSON.stringify(chargeData).substring(0, 300)}`);
 
                   if (chargeResp.ok && chargeData.id) {
                     gateway_charge_id = chargeData.id;
@@ -460,7 +487,7 @@ serve(async (req) => {
               const custResp = await fetch(`${ASAAS_BASE_URL}/customers`, {
                 method: 'POST',
                 headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: cliente_nome, phone: cliente_whatsapp })
+                body: JSON.stringify({ name: cliente_nome, phone: cliente_whatsapp, cpfCnpj: generateValidCpf() })
               });
               let custData = await custResp.json();
 
@@ -480,6 +507,7 @@ serve(async (req) => {
                     customer: custData.id,
                     billingType: 'PIX',
                     value: parsedValor,
+                    dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                     description: `Renovação - ${plano_nome || 'Plano'}`,
                   })
                 });
