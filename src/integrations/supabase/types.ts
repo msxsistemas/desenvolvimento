@@ -308,6 +308,74 @@ export type Database = {
         }
         Relationships: []
       }
+      faturas: {
+        Row: {
+          cliente_id: string | null
+          cliente_nome: string
+          cliente_whatsapp: string
+          created_at: string
+          expires_at: string | null
+          gateway: string | null
+          gateway_charge_id: string | null
+          id: string
+          paid_at: string | null
+          pix_copia_cola: string | null
+          pix_manual_key: string | null
+          pix_qr_code: string | null
+          plano_nome: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          cliente_nome: string
+          cliente_whatsapp: string
+          created_at?: string
+          expires_at?: string | null
+          gateway?: string | null
+          gateway_charge_id?: string | null
+          id?: string
+          paid_at?: string | null
+          pix_copia_cola?: string | null
+          pix_manual_key?: string | null
+          pix_qr_code?: string | null
+          plano_nome?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          cliente_id?: string | null
+          cliente_nome?: string
+          cliente_whatsapp?: string
+          created_at?: string
+          expires_at?: string | null
+          gateway?: string | null
+          gateway_charge_id?: string | null
+          id?: string
+          paid_at?: string | null
+          pix_copia_cola?: string | null
+          pix_manual_key?: string | null
+          pix_qr_code?: string | null
+          plano_nome?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faturas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       indicacoes: {
         Row: {
           bonus: number
