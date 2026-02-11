@@ -158,9 +158,9 @@ export default function PixManual() {
         </div>
       </header>
 
-      <main className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <main className="space-y-4">
         {/* Status */}
-        <Card className="shadow-sm order-1">
+        <Card className="shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -181,8 +181,8 @@ export default function PixManual() {
           </CardContent>
         </Card>
 
-        {/* Chave PIX - no mobile fica segundo, no desktop ocupa a coluna direita com row-span */}
-        <Card className="shadow-sm order-2 lg:row-span-2">
+        {/* Chave PIX */}
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="text-sm">Chave PIX</CardTitle>
             <CardDescription>Selecione o tipo e insira sua chave PIX.</CardDescription>
@@ -247,16 +247,8 @@ export default function PixManual() {
                 <p className="text-sm text-muted-foreground">Ative o PIX Manual para configurar sua chave.</p>
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Salvar - terceiro no mobile, abaixo do Status no desktop */}
-        <Card className="shadow-sm order-3">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-3">
-              <p className="text-sm font-medium">Finalizar Configuração</p>
-              <p className="text-xs text-muted-foreground">Clique para salvar as configurações do PIX Manual.</p>
-              <Button size="lg" onClick={handleSave} disabled={loading || (pixManualEnabled && !!validationError)}>
+            <div className="flex justify-center border-t pt-4 mt-2">
+              <Button onClick={handleSave} disabled={loading || (pixManualEnabled && !!validationError)}>
                 {loading ? "Salvando..." : "Salvar Configurações"}
               </Button>
             </div>
