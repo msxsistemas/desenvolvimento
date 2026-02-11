@@ -72,37 +72,56 @@ function mergeSetCookies(existing: string, resp: Response): string {
 
 async function loginMundoGF(baseUrl: string, username: string, password: string): Promise<{ success: boolean; cookies: string; csrf: string; error?: string }> {
   const cleanBase = baseUrl.replace(/\/$/, '');
+  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36';
   console.log(`🔐 MundoGF Login: ${cleanBase} (user: ${username})`);
   
+  // Step 1: GET login page
   const loginResp = await withTimeout(fetch(`${cleanBase}/login`, {
     method: 'GET',
-    headers: { 
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36', 
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8',
-    },
+    headers: { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8' },
   }), 10000);
   const loginHtml = await loginResp.text();
   
-  const hasForm = loginHtml.includes('name="username"');
-  const hasCloudflare = loginHtml.includes('cf-browser-verification') || loginHtml.includes('challenge-platform');
-  console.log(`📄 Login page: ${loginResp.status}, hasForm=${hasForm}, cloudflare=${hasCloudflare}, length=${loginHtml.length}`);
+  const hasForm = loginHtml.includes('name="username"') || loginHtml.includes('name="email"');
+  console.log(`📄 Login page: ${loginResp.status}, hasForm=${hasForm}, length=${loginHtml.length}`);
+  
   const csrfInput = loginHtml.match(/name=["']_token["']\s+value=["'](.*?)["']/);
   const csrfMeta = loginHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
   const csrfToken = (csrfInput ? csrfInput[1] : null) || (csrfMeta ? csrfMeta[1] : null) || '';
   
   // Detect reCAPTCHA siteKey
-  const v3RenderMatch = loginHtml.match(/recaptcha[\/\w]*api\.js\?[^"']*render=([0-9A-Za-z_-]{20,})/i)
+  const siteKeyMatch = loginHtml.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i)
+    || loginHtml.match(/recaptcha[\/\w]*api\.js\?[^"']*render=([0-9A-Za-z_-]{20,})/i)
     || loginHtml.match(/grecaptcha\.execute\(\s*['"]([0-9A-Za-z_-]{20,})['"]/i);
-  const v2Match = loginHtml.match(/sitekey['":\s]+['"]([0-9A-Za-z_-]{20,})['"]/i);
-  const siteKey = v3RenderMatch ? v3RenderMatch[1] : (v2Match ? v2Match[1] : null);
-  console.log(`🔑 reCAPTCHA: siteKey=${siteKey?.slice(0, 15) || 'none'}`);
+  const siteKey = siteKeyMatch ? siteKeyMatch[1] : null;
+  
+  // Detect captcha type from HTML
+  const hasV3Render = /recaptcha[\/\w]*api\.js\?[^"']*render=/i.test(loginHtml);
+  const hasGrecaptchaExecute = /grecaptcha\.execute\s*\(/i.test(loginHtml);
+  const hasInvisibleBadge = /data-badge/i.test(loginHtml) || /invisible/i.test(loginHtml);
+  const hasV2Checkbox = /data-sitekey/i.test(loginHtml) && !hasInvisibleBadge;
+  console.log(`🔑 reCAPTCHA: siteKey=${siteKey?.slice(0, 20) || 'none'}, v3render=${hasV3Render}, execute=${hasGrecaptchaExecute}, checkbox=${hasV2Checkbox}, invisible=${hasInvisibleBadge}`);
 
   let allCookies = mergeSetCookies('', loginResp);
   console.log(`🍪 GET cookies: ${allCookies.slice(0, 200)}`);
 
-  // Helper to attempt login POST with a captcha token
-  async function attemptLogin(captchaToken: string, csrf: string, cookies: string): Promise<{ success: boolean; cookies: string; location: string; status: number }> {
+  // Determine captcha modes to try based on detection
+  type CaptchaMode = 'v2' | 'v3' | 'v2-invisible';
+  let captchaModes: CaptchaMode[] = [];
+  if (siteKey) {
+    if (hasV3Render || hasGrecaptchaExecute) {
+      // Site uses grecaptcha.execute() - likely v3 or v2-invisible
+      captchaModes = ['v2-invisible', 'v3', 'v2'];
+    } else if (hasV2Checkbox) {
+      captchaModes = ['v2', 'v2-invisible', 'v3'];
+    } else {
+      // Default: try all, v2-invisible first (most common for badge-only)
+      captchaModes = ['v2-invisible', 'v3', 'v2'];
+    }
+  }
+
+  // Helper to attempt login POST
+  async function attemptLogin(captchaToken: string, csrf: string, cookies: string): Promise<{ success: boolean; cookies: string; location: string; status: number; body: string }> {
     const formBody = new URLSearchParams();
     if (csrf) formBody.append('_token', csrf);
     formBody.append('username', username);
@@ -111,12 +130,13 @@ async function loginMundoGF(baseUrl: string, username: string, password: string)
     
     const postHeaders: Record<string, string> = {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+      'User-Agent': UA,
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
       'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
       'Origin': cleanBase,
       'Referer': `${cleanBase}/login`,
       'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
     };
     if (cookies) postHeaders['Cookie'] = cookies;
     const xsrfMatch = cookies.match(/XSRF-TOKEN=([^;,\s]+)/);
@@ -131,70 +151,67 @@ async function loginMundoGF(baseUrl: string, username: string, password: string)
 
     const postLocation = postResp.headers.get('location') || '';
     const updatedCookies = mergeSetCookies(cookies, postResp);
-    await postResp.text(); // consume body
+    const respBody = await postResp.text();
     
     const isSuccess = (postResp.status === 302 || postResp.status === 301) && postLocation && !postLocation.toLowerCase().includes('/login');
-    return { success: isSuccess, cookies: updatedCookies, location: postLocation, status: postResp.status };
+    return { success: isSuccess, cookies: updatedCookies, location: postLocation, status: postResp.status, body: respBody };
   }
 
-  // Try captcha versions: v2 standard first (most common), then v3, then v2-invisible
-  const captchaVersions: Array<{ label: string; mode: 'v2' | 'v3' | 'v2-invisible' }> = siteKey 
-    ? [{ label: 'v2', mode: 'v2' }, { label: 'v3', mode: 'v3' }, { label: 'v2-invisible', mode: 'v2-invisible' }]
-    : [];
+  // First try without captcha (some panels don't validate it)
+  {
+    console.log(`🤖 Tentando login SEM captcha...`);
+    const result = await attemptLogin('', csrfToken, allCookies);
+    console.log(`📊 Login sem-captcha → status: ${result.status}, redirect: ${result.location.slice(0, 80)}, success: ${result.success}, body: ${result.body.slice(0, 200)}`);
+    if (result.success) {
+      const followUrl = result.location.startsWith('http') ? result.location : `${cleanBase}${result.location}`;
+      const followResp = await withTimeout(fetch(followUrl, {
+        method: 'GET',
+        headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Cookie': result.cookies },
+        redirect: 'manual',
+      }), 10000);
+      const finalCookies = mergeSetCookies(result.cookies, followResp);
+      const dashHtml = await followResp.text();
+      const dashCsrf = dashHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
+      console.log(`✅ Login sem-captcha bem-sucedido!`);
+      return { success: true, cookies: finalCookies, csrf: dashCsrf ? dashCsrf[1] : csrfToken };
+    }
+  }
 
-  for (const ver of captchaVersions) {
-    console.log(`🤖 Tentando reCAPTCHA ${ver.label}...`);
-    const solved = await solve2Captcha(siteKey!, `${cleanBase}/login`, ver.mode);
+  // Try each captcha mode - use ORIGINAL cookies from first GET (don't re-fetch)
+  for (const mode of captchaModes) {
+    console.log(`🤖 Tentando reCAPTCHA ${mode}...`);
+    const solved = await solve2Captcha(siteKey!, `${cleanBase}/login`, mode);
     if (!solved) {
-      console.log(`❌ 2Captcha ${ver.label}: falhou, tentando próximo...`);
+      console.log(`❌ 2Captcha ${mode}: falhou, tentando próximo...`);
       continue;
     }
 
-    // Need fresh CSRF + cookies for each attempt
+    // Re-fetch login page for fresh CSRF + cookies (each POST invalidates the previous session)
     const freshResp = await withTimeout(fetch(`${cleanBase}/login`, {
       method: 'GET',
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
+      headers: { 'User-Agent': UA, 'Accept': 'text/html' },
     }), 10000);
     const freshHtml = await freshResp.text();
     const freshCsrfInput = freshHtml.match(/name=["']_token["']\s+value=["'](.*?)["']/);
     const freshCsrfMeta = freshHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
     const freshCsrf = (freshCsrfInput ? freshCsrfInput[1] : null) || (freshCsrfMeta ? freshCsrfMeta[1] : null) || csrfToken;
-    let freshCookies = mergeSetCookies('', freshResp);
+    const freshCookies = mergeSetCookies('', freshResp);
 
     const result = await attemptLogin(solved, freshCsrf, freshCookies);
-    console.log(`📊 Login ${ver.label} → status: ${result.status}, redirect: ${result.location.slice(0, 80)}, success: ${result.success}`);
+    console.log(`📊 Login ${mode} → status: ${result.status}, redirect: ${result.location.slice(0, 80)}, success: ${result.success}, body: ${result.body.slice(0, 200)}`);
 
     if (result.success) {
-      // Follow redirect to capture session cookies and get fresh CSRF
       const followUrl = result.location.startsWith('http') ? result.location : `${cleanBase}${result.location}`;
       const followResp = await withTimeout(fetch(followUrl, {
         method: 'GET',
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html', 'Cookie': result.cookies },
+        headers: { 'User-Agent': UA, 'Accept': 'text/html', 'Cookie': result.cookies },
         redirect: 'manual',
       }), 10000);
       const finalCookies = mergeSetCookies(result.cookies, followResp);
       const dashHtml = await followResp.text();
       const dashCsrf = dashHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
-      const finalCsrf = dashCsrf ? dashCsrf[1] : freshCsrf;
-      console.log(`✅ Login ${ver.label} bem-sucedido!`);
-      return { success: true, cookies: finalCookies, csrf: finalCsrf };
-    }
-  }
-
-  // No captcha or all captcha attempts failed - try without captcha
-  if (!siteKey) {
-    const result = await attemptLogin('', csrfToken, allCookies);
-    if (result.success) {
-      const followUrl = result.location.startsWith('http') ? result.location : `${cleanBase}${result.location}`;
-      const followResp = await withTimeout(fetch(followUrl, {
-        method: 'GET',
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html', 'Cookie': result.cookies },
-        redirect: 'manual',
-      }), 10000);
-      const finalCookies = mergeSetCookies(result.cookies, followResp);
-      const dashHtml = await followResp.text();
-      const dashCsrf = dashHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["'](.*?)["']/);
-      return { success: true, cookies: finalCookies, csrf: dashCsrf ? dashCsrf[1] : csrfToken };
+      console.log(`✅ Login ${mode} bem-sucedido!`);
+      return { success: true, cookies: finalCookies, csrf: dashCsrf ? dashCsrf[1] : freshCsrf };
     }
   }
 
