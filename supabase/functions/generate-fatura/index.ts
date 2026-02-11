@@ -41,29 +41,61 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
       }
 
-      // If pending and has Asaas gateway, check payment status in real-time
-      if (fatura.status === 'pendente' && fatura.gateway === 'asaas' && fatura.gateway_charge_id) {
-        const asaasApiKey = Deno.env.get('ASAAS_API_KEY');
-        if (asaasApiKey) {
-          try {
-            const statusResp = await fetch(`${ASAAS_BASE_URL}/payments/${fatura.gateway_charge_id}`, {
-              headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
-            });
-            const statusData = await statusResp.json();
+      // If pending, check payment status in real-time based on gateway
+      if (fatura.status === 'pendente' && fatura.gateway_charge_id) {
+        if (fatura.gateway === 'asaas') {
+          const asaasApiKey = Deno.env.get('ASAAS_API_KEY');
+          if (asaasApiKey) {
+            try {
+              const statusResp = await fetch(`${ASAAS_BASE_URL}/payments/${fatura.gateway_charge_id}`, {
+                headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
+              });
+              const statusData = await statusResp.json();
 
-            if (statusResp.ok && (statusData.status === 'RECEIVED' || statusData.status === 'CONFIRMED')) {
-              // Update fatura to paid
-              await supabaseAdmin
-                .from('faturas')
-                .update({ status: 'pago', paid_at: new Date().toISOString() })
-                .eq('id', fatura.id);
+              if (statusResp.ok && (statusData.status === 'RECEIVED' || statusData.status === 'CONFIRMED')) {
+                await supabaseAdmin
+                  .from('faturas')
+                  .update({ status: 'pago', paid_at: new Date().toISOString() })
+                  .eq('id', fatura.id);
 
-              fatura.status = 'pago';
-              fatura.paid_at = new Date().toISOString();
-              console.log(`✅ Fatura ${fatura.id} marked as paid via Asaas status check`);
+                fatura.status = 'pago';
+                fatura.paid_at = new Date().toISOString();
+                console.log(`✅ Fatura ${fatura.id} marked as paid via Asaas status check`);
+              }
+            } catch (err: any) {
+              console.error('Asaas status check error:', err.message);
             }
-          } catch (err: any) {
-            console.error('Asaas status check error:', err.message);
+          }
+        } else if (fatura.gateway === 'mercadopago') {
+          // Check MP payment status
+          const { data: mpConfig } = await supabaseAdmin
+            .from('mercadopago_config')
+            .select('access_token_hash')
+            .eq('user_id', fatura.user_id)
+            .eq('is_configured', true)
+            .maybeSingle();
+
+          if (mpConfig?.access_token_hash) {
+            try {
+              const accessToken = atob(mpConfig.access_token_hash);
+              const statusResp = await fetch(`https://api.mercadopago.com/v1/payments/${fatura.gateway_charge_id}`, {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+              });
+              const statusData = await statusResp.json();
+
+              if (statusResp.ok && statusData.status === 'approved') {
+                await supabaseAdmin
+                  .from('faturas')
+                  .update({ status: 'pago', paid_at: new Date().toISOString() })
+                  .eq('id', fatura.id);
+
+                fatura.status = 'pago';
+                fatura.paid_at = new Date().toISOString();
+                console.log(`✅ Fatura ${fatura.id} marked as paid via MercadoPago status check`);
+              }
+            } catch (err: any) {
+              console.error('MercadoPago status check error:', err.message);
+            }
           }
         }
       }
@@ -196,16 +228,77 @@ serve(async (req) => {
             if (v3Config) {
               const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
               const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-              // Call v3pay-integration to create charge
               console.log('📌 V3Pay gateway selected - charge creation delegated');
             }
           } catch (err: any) {
             console.error('V3Pay PIX error:', err.message);
           }
         } else if (gatewayAtivo === 'mercadopago') {
-          console.log('📌 MercadoPago gateway selected');
+          try {
+            const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+            const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+            const mpResp = await fetch(`${supabaseUrl}/functions/v1/mercadopago-integration`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authHeader,
+              },
+              body: JSON.stringify({
+                action: 'create-pix',
+                valor: String(valor),
+                descricao: `Renovação - ${plano_nome || 'Plano'}`,
+                cliente_nome,
+              }),
+            });
+            const mpData = await mpResp.json();
+            console.log('📋 MercadoPago PIX result:', JSON.stringify(mpData));
+
+            if (mpData.success && mpData.charge_id) {
+              gateway_charge_id = mpData.charge_id;
+              pix_qr_code = mpData.pix_qr_code || null;
+              pix_copia_cola = mpData.pix_copia_cola || null;
+
+              await supabaseAdmin.from('cobrancas').insert({
+                user_id: user.id, gateway: 'mercadopago', gateway_charge_id: mpData.charge_id,
+                cliente_whatsapp, cliente_nome, valor: parseFloat(valor), status: 'pendente',
+              });
+            }
+          } catch (err: any) {
+            console.error('MercadoPago PIX error:', err.message);
+          }
         } else if (gatewayAtivo === 'ciabra') {
-          console.log('📌 Ciabra gateway selected');
+          try {
+            const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+            const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+            const ciabraResp = await fetch(`${supabaseUrl}/functions/v1/ciabra-integration`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authHeader,
+              },
+              body: JSON.stringify({
+                action: 'create-pix',
+                valor: String(valor),
+                descricao: `Renovação - ${plano_nome || 'Plano'}`,
+                cliente_nome,
+              }),
+            });
+            const ciabraData = await ciabraResp.json();
+            console.log('📋 Ciabra PIX result:', JSON.stringify(ciabraData));
+
+            if (ciabraData.success && ciabraData.charge_id) {
+              gateway_charge_id = ciabraData.charge_id;
+              pix_qr_code = ciabraData.pix_qr_code || null;
+              pix_copia_cola = ciabraData.pix_copia_cola || null;
+
+              await supabaseAdmin.from('cobrancas').insert({
+                user_id: user.id, gateway: 'ciabra', gateway_charge_id: ciabraData.charge_id,
+                cliente_whatsapp, cliente_nome, valor: parseFloat(valor), status: 'pendente',
+              });
+            }
+          } catch (err: any) {
+            console.error('Ciabra PIX error:', err.message);
+          }
         }
       }
       

@@ -116,8 +116,8 @@ serve(async (req) => {
             throw new Error('Access Token inválido');
           }
 
-          // Save config to DB
-          const tokenHash = btoa(accessToken.substring(0, 10) + accessToken.substring(accessToken.length - 10));
+          // Store full token as base64 for later PIX generation
+          const tokenEncoded = btoa(accessToken);
 
           const { data: existing } = await supabaseAdmin
             .from('mercadopago_config')
@@ -129,7 +129,7 @@ serve(async (req) => {
             await supabaseAdmin
               .from('mercadopago_config')
               .update({
-                access_token_hash: tokenHash,
+                access_token_hash: tokenEncoded,
                 webhook_url: webhookUrl || null,
                 is_configured: true,
                 updated_at: new Date().toISOString()
@@ -140,7 +140,7 @@ serve(async (req) => {
               .from('mercadopago_config')
               .insert({
                 user_id: user.id,
-                access_token_hash: tokenHash,
+                access_token_hash: tokenEncoded,
                 webhook_url: webhookUrl || null,
                 is_configured: true
               });
@@ -159,9 +159,83 @@ serve(async (req) => {
         }
       }
 
+      case 'create-pix': {
+        const { valor, descricao, cliente_nome, cliente_email } = body;
+
+        if (!valor) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Valor é obrigatório' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          );
+        }
+
+        // Get stored access token
+        const { data: config } = await supabaseAdmin
+          .from('mercadopago_config')
+          .select('access_token_hash')
+          .eq('user_id', user.id)
+          .eq('is_configured', true)
+          .maybeSingle();
+
+        if (!config?.access_token_hash) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Mercado Pago não configurado' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          );
+        }
+
+        const accessToken = atob(config.access_token_hash);
+
+        try {
+          const paymentResp = await fetch(`${MP_BASE_URL}/v1/payments`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+              'X-Idempotency-Key': crypto.randomUUID(),
+            },
+            body: JSON.stringify({
+              transaction_amount: parseFloat(valor),
+              description: descricao || `Cobrança - ${cliente_nome || 'Cliente'}`,
+              payment_method_id: 'pix',
+              payer: {
+                email: cliente_email || `${Date.now()}@placeholder.com`,
+                first_name: cliente_nome || 'Cliente',
+              },
+            }),
+          });
+
+          const paymentData = await paymentResp.json();
+          console.log('📋 MP payment response status:', paymentResp.status);
+
+          if (!paymentResp.ok) {
+            const errMsg = paymentData.message || paymentData.cause?.[0]?.description || 'Erro ao criar pagamento MP';
+            throw new Error(errMsg);
+          }
+
+          const txData = paymentData.point_of_interaction?.transaction_data;
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              charge_id: String(paymentData.id),
+              pix_qr_code: txData?.qr_code_base64 || null,
+              pix_copia_cola: txData?.qr_code || null,
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (error: any) {
+          console.error('MP create-pix error:', error);
+          return new Response(
+            JSON.stringify({ success: false, error: error.message }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+          );
+        }
+      }
+
       default:
         return new Response(
-          JSON.stringify({ error: 'Invalid action', available: ['configure'] }),
+          JSON.stringify({ error: 'Invalid action', available: ['configure', 'create-pix'] }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
         );
     }

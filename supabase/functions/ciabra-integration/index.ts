@@ -108,9 +108,9 @@ serve(async (req) => {
           );
         }
 
-        // Save config directly — validation happens when charges are created
         try {
-          const keyHash = btoa(apiKey.substring(0, 10) + apiKey.substring(apiKey.length - 10));
+          // Store full key as base64 for later PIX generation
+          const keyEncoded = btoa(apiKey);
 
           const { data: existing } = await supabaseAdmin
             .from('ciabra_config')
@@ -122,7 +122,7 @@ serve(async (req) => {
             await supabaseAdmin
               .from('ciabra_config')
               .update({
-                api_key_hash: keyHash,
+                api_key_hash: keyEncoded,
                 webhook_url: webhookUrl || null,
                 is_configured: true,
                 updated_at: new Date().toISOString()
@@ -133,7 +133,7 @@ serve(async (req) => {
               .from('ciabra_config')
               .insert({
                 user_id: user.id,
-                api_key_hash: keyHash,
+                api_key_hash: keyEncoded,
                 webhook_url: webhookUrl || null,
                 is_configured: true
               });
@@ -152,9 +152,75 @@ serve(async (req) => {
         }
       }
 
+      case 'create-pix': {
+        const { valor, descricao, cliente_nome } = body;
+
+        if (!valor) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Valor é obrigatório' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          );
+        }
+
+        // Get stored API key
+        const { data: config } = await supabaseAdmin
+          .from('ciabra_config')
+          .select('api_key_hash')
+          .eq('user_id', user.id)
+          .eq('is_configured', true)
+          .maybeSingle();
+
+        if (!config?.api_key_hash) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Ciabra não configurado' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          );
+        }
+
+        const apiKey = atob(config.api_key_hash);
+
+        try {
+          const chargeResp = await fetch(`${CIABRA_BASE_URL}/v1/charges`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              amount: Math.round(parseFloat(valor) * 100),
+              payment_method: 'pix',
+              description: descricao || `Cobrança - ${cliente_nome || 'Cliente'}`,
+            }),
+          });
+
+          const chargeData = await chargeResp.json();
+          console.log('📋 Ciabra charge response:', JSON.stringify(chargeData));
+
+          if (!chargeResp.ok) {
+            throw new Error(chargeData.message || chargeData.error || 'Erro ao criar cobrança Ciabra');
+          }
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              charge_id: String(chargeData.id || chargeData.charge_id || ''),
+              pix_qr_code: chargeData.pix?.qr_code_base64 || chargeData.qr_code_base64 || chargeData.pix_qr_code || null,
+              pix_copia_cola: chargeData.pix?.qr_code || chargeData.pix_code || chargeData.pix_copia_cola || chargeData.br_code || null,
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (error: any) {
+          console.error('Ciabra create-pix error:', error);
+          return new Response(
+            JSON.stringify({ success: false, error: error.message }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+          );
+        }
+      }
+
       default:
         return new Response(
-          JSON.stringify({ error: 'Invalid action', available: ['configure'] }),
+          JSON.stringify({ error: 'Invalid action', available: ['configure', 'create-pix'] }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
         );
     }
