@@ -4,6 +4,7 @@ export interface ProviderConfig {
   nome: string;
   descricao: string;
   integrado: boolean;
+  emManutencao?: boolean;
   // Campos do formulário
   senhaLabel?: string;
   senhaPlaceholder?: string;

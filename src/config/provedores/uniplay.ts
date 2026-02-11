@@ -30,6 +30,7 @@ export const UNIPLAY_CONFIG: ProviderConfig = {
   nome: 'UNIPLAY E FRANQUIAS',
   descricao: 'Painel Uniplay e Franquias (IPTV e P2P)',
   integrado: true,
+  emManutencao: true,
   senhaLabel: 'Senha do Painel',
   senhaPlaceholder: 'sua_senha',
   nomePlaceholder: 'Ex: Uniplay Principal, Uniplay Backup',

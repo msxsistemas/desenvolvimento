@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { Server, Lock, ChevronRight } from "lucide-react";
+import { Server, Lock, ChevronRight, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PROVEDORES } from "@/config/provedores";
 
@@ -34,6 +34,27 @@ export default function ServidoresIndex() {
         {PROVEDORES.map((provedor) => {
           const route = PROVIDER_ROUTES[provedor.id];
           const isIntegrado = provedor.integrado;
+          const isManutencao = provedor.emManutencao;
+
+          if (isManutencao) {
+            return (
+              <div
+                key={provedor.id}
+                className="rounded-lg p-5 bg-card border border-border opacity-70"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 bg-orange-500/10 rounded-full flex items-center justify-center">
+                    <Wrench className="w-5 h-5 text-orange-500" />
+                  </div>
+                </div>
+                <h3 className="font-semibold text-foreground">{provedor.nome}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{provedor.descricao}</p>
+                <Badge variant="outline" className="mt-3 text-orange-400 border-orange-400/50 bg-orange-400/10">
+                  Em manutenção
+                </Badge>
+              </div>
+            );
+          }
 
           if (isIntegrado && route) {
             return (
