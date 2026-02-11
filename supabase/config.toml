@@ -36,5 +36,8 @@ verify_jwt = false
 [functions.auto-renew-client]
 verify_jwt = false
 
+[functions.generate-fatura]
+verify_jwt = false
+
 [functions.admin-api]
 verify_jwt = false
