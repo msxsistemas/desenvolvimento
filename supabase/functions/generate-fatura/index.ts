@@ -474,29 +474,54 @@ serve(async (req) => {
                     let detailData: any = {};
                     try { detailData = JSON.parse(detailText); } catch { /* */ }
                     
-                    // Try to get installment ID and then payment details
+                    // Extract payment URL as fallback
+                    const paymentUrl = detailData.url || ciabraData.url || '';
+                    
                     const installmentId = detailData.installments?.[0]?.id;
                     if (installmentId) {
-                      console.log(`🔍 Fetching payment details for installment ${installmentId}...`);
-                      const payResp = await fetch(`https://api.az.center/payments/applications/installments/${installmentId}`, {
-                        method: 'GET',
-                        headers: ciabraHeaders,
-                      });
-                      const payText = await payResp.text();
-                      console.log(`Ciabra payment response: ${payResp.status}, body: ${payText.substring(0, 800)}`);
-                      let payData: any = {};
-                      try { payData = JSON.parse(payText); } catch { /* */ }
-                      
-                      // Extract PIX data from payment details
-                      const payment = Array.isArray(payData) ? payData[0] : payData;
-                      pix_qr_code = payment?.pix?.qrCode || payment?.qrCode || null;
-                      pix_copia_cola = payment?.pix?.brCode || payment?.brCode || payment?.pixCode || null;
+                      // Try up to 3 times with delay to wait for PIX generation
+                      for (let attempt = 0; attempt < 3; attempt++) {
+                        if (attempt > 0) {
+                          console.log(`⏳ Waiting 3s for PIX generation (attempt ${attempt + 1})...`);
+                          await new Promise(r => setTimeout(r, 3000));
+                        }
+                        console.log(`🔍 Fetching payment details for installment ${installmentId} (attempt ${attempt + 1})...`);
+                        const payResp = await fetch(`https://api.az.center/payments/applications/installments/${installmentId}`, {
+                          method: 'GET',
+                          headers: ciabraHeaders,
+                        });
+                        const payText = await payResp.text();
+                        console.log(`Ciabra payment response: ${payResp.status}, body: ${payText.substring(0, 800)}`);
+                        let payData: any = {};
+                        try { payData = JSON.parse(payText); } catch { /* */ }
+                        
+                        const payment = Array.isArray(payData) ? payData[0] : payData;
+                        const pixObj = payment?.pix || payment;
+                        const emv = pixObj?.emv || pixObj?.brCode || pixObj?.pixCode || null;
+                        const qr = pixObj?.qrCode || null;
+                        
+                        if (emv) {
+                          pix_copia_cola = emv;
+                          pix_qr_code = qr;
+                          console.log(`✅ PIX EMV obtained on attempt ${attempt + 1}`);
+                          break;
+                        }
+                        
+                        if (pixObj?.status === 'GENERATING') {
+                          console.log(`⏳ PIX still generating...`);
+                          continue;
+                        }
+                      }
                     }
                     
-                    // Also try from invoice detail directly
+                    // If still no PIX data, use payment URL as pix_copia_cola fallback
+                    if (!pix_copia_cola && paymentUrl) {
+                      pix_copia_cola = paymentUrl;
+                      console.log(`📎 Using payment URL as fallback: ${paymentUrl}`);
+                    }
+                    
                     if (!pix_qr_code) {
                       pix_qr_code = detailData.payment?.pix?.qrCode || detailData.pix?.qrCode || null;
-                      pix_copia_cola = detailData.payment?.pix?.brCode || detailData.pix?.brCode || null;
                     }
                   } catch (detailErr: any) {
                     console.error('Ciabra detail fetch error:', detailErr.message);
