@@ -262,42 +262,43 @@ serve(async (req) => {
                 console.log(`Customer response status: ${custResp.ok}, custData id: ${custData.id || 'error'}`);
 
                 if (!custResp.ok && custData.errors?.[0]?.description?.includes('already exists')) {
-                const searchResp = await fetch(`${ASAAS_BASE_URL}/customers?name=${encodeURIComponent(fatura.cliente_nome)}&limit=1`, {
-                  headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
-                });
-                const searchData = await searchResp.json();
-                if (searchData.data?.[0]) custData = searchData.data[0];
-              }
-
-              if (custData.id) {
-                const chargeResp = await fetch(`${ASAAS_BASE_URL}/payments`, {
-                  method: 'POST',
-                  headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    customer: custData.id,
-                    billingType: 'PIX',
-                    value: fatura.valor,
-                    description: `Renovação - ${fatura.plano_nome || 'Plano'}`,
-                  })
-                });
-                const chargeData = await chargeResp.json();
-
-                if (chargeResp.ok && chargeData.id) {
-                  gateway_charge_id = chargeData.id;
-                  const pixResp = await fetch(`${ASAAS_BASE_URL}/payments/${chargeData.id}/pixQrCode`, {
+                  const searchResp = await fetch(`${ASAAS_BASE_URL}/customers?name=${encodeURIComponent(fatura.cliente_nome)}&limit=1`, {
                     headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
                   });
-                  const pixData = await pixResp.json();
-                  if (pixResp.ok) {
-                    pix_qr_code = pixData.encodedImage || null;
-                    pix_copia_cola = pixData.payload || null;
-                  }
+                  const searchData = await searchResp.json();
+                  if (searchData.data?.[0]) custData = searchData.data[0];
+                }
 
-                  await supabaseAdmin.from('cobrancas').upsert({
-                    user_id: fatura.user_id, gateway: 'asaas', gateway_charge_id: chargeData.id,
-                    cliente_whatsapp: fatura.cliente_whatsapp, cliente_nome: fatura.cliente_nome,
-                    valor: fatura.valor, status: 'pendente',
-                  }, { onConflict: 'gateway_charge_id' });
+                if (custData.id) {
+                  const chargeResp = await fetch(`${ASAAS_BASE_URL}/payments`, {
+                    method: 'POST',
+                    headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      customer: custData.id,
+                      billingType: 'PIX',
+                      value: fatura.valor,
+                      description: `Renovação - ${fatura.plano_nome || 'Plano'}`,
+                    })
+                  });
+                  const chargeData = await chargeResp.json();
+
+                  if (chargeResp.ok && chargeData.id) {
+                    gateway_charge_id = chargeData.id;
+                    const pixResp = await fetch(`${ASAAS_BASE_URL}/payments/${chargeData.id}/pixQrCode`, {
+                      headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
+                    });
+                    const pixData = await pixResp.json();
+                    if (pixResp.ok) {
+                      pix_qr_code = pixData.encodedImage || null;
+                      pix_copia_cola = pixData.payload || null;
+                    }
+
+                    await supabaseAdmin.from('cobrancas').upsert({
+                      user_id: fatura.user_id, gateway: 'asaas', gateway_charge_id: chargeData.id,
+                      cliente_whatsapp: fatura.cliente_whatsapp, cliente_nome: fatura.cliente_nome,
+                      valor: fatura.valor, status: 'pendente',
+                    }, { onConflict: 'gateway_charge_id' });
+                  }
                 }
               }
             } catch (err: any) {
