@@ -94,7 +94,8 @@ export function replaceMessageVariables(
   // Extract first and last name
   const nomeCompleto = clientData.nome || "";
   const partes = nomeCompleto.trim().split(" ");
-  const sobrenome = partes.length > 1 ? partes[partes.length - 1] : "";
+  const primeiroNome = partes[0] || "";
+  const sobrenome = partes.length > 1 ? partes.slice(1).join(" ") : "";
 
   // Format date
   let vencimentoFormatado = "";
@@ -110,7 +111,7 @@ export function replaceMessageVariables(
   const replacements: Record<string, string> = {
     "{saudacao}": getSaudacao(),
     "{nome_cliente}": nomeCompleto,
-    "{nome}": nomeCompleto,
+    "{nome}": primeiroNome,
     "{cliente}": nomeCompleto,
     "{sobrenome}": sobrenome,
     "{whatsapp}": clientData.whatsapp || "",
