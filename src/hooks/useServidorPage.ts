@@ -320,20 +320,78 @@ export function useServidorPage(providerId: string) {
     setTestingPanelId(panel.id);
     try {
       const baseUrl = panel.url.trim().replace(/\/$/, '');
-      const prov = PROVEDORES.find(p => p.id === panel.provedor);
+      const currentProviderId = panel.provedor || providerId;
+
+      // Playfast: usa playfast-renew diretamente com TOKEN + secret
+      if (currentProviderId === 'playfast') {
+        const { data, error } = await supabase.functions.invoke('playfast-renew', {
+          body: { token: panel.usuario, secret: panel.senha, action: 'profile' },
+        });
+
+        if (error) {
+          setTestResultModal({
+            isOpen: true, success: false, message: 'Erro no Teste',
+            details: `❌ Painel: ${panel.nome}\n\n❌ Não foi possível conectar à API Playfast.\nErro: ${error.message}`,
+          });
+          return;
+        }
+
+        if (data?.success) {
+          setTestResultModal({
+            isOpen: true, success: true, message: 'CONEXÃO REAL BEM-SUCEDIDA!',
+            details: `✅ Painel: ${panel.nome}\n🔗 API: ${PLAYFAST_API_BASE}\n👤 Usuário: ${data.username || panel.usuario}\n💰 Créditos: ${data.credits ?? 'n/d'}\n📧 Email: ${data.email || 'n/d'}\n📡 Status: ${data.status === 1 ? 'Ativo' : 'Inativo'}\n\n✅ Autenticação realizada com sucesso.`,
+          });
+        } else {
+          setTestResultModal({
+            isOpen: true, success: false, message: 'FALHA NA AUTENTICAÇÃO',
+            details: `❌ Painel: ${panel.nome}\n🔗 API: ${PLAYFAST_API_BASE}\n\n❌ ${data?.error || 'TOKEN ou Secret inválidos.'}`,
+          });
+        }
+        return;
+      }
+
+      // KOffice: usa koffice-renew diretamente
+      if (currentProviderId === 'koffice-api' || currentProviderId === 'koffice-v2') {
+        const { data, error } = await supabase.functions.invoke('koffice-renew', {
+          body: { action: 'test_connection', url: baseUrl, panelUser: panel.usuario, panelPass: panel.senha },
+        });
+
+        if (error) {
+          setTestResultModal({
+            isOpen: true, success: false, message: 'Erro no Teste',
+            details: `❌ Painel: ${panel.nome}\n\n❌ Não foi possível conectar ao painel KOffice.\nErro: ${error.message}`,
+          });
+          return;
+        }
+
+        if (data?.success) {
+          setTestResultModal({
+            isOpen: true, success: true, message: 'CONEXÃO REAL BEM-SUCEDIDA!',
+            details: `✅ Painel: ${panel.nome}\n🔗 URL: ${baseUrl}\n👤 Usuário: ${panel.usuario}\n👥 Total Clientes: ${data.clients_count ?? 'n/d'}\n✅ Clientes Ativos: ${data.active_clients_count ?? 'n/d'}\n\n✅ Autenticação realizada com sucesso no painel.`,
+          });
+        } else {
+          setTestResultModal({
+            isOpen: true, success: false, message: 'FALHA NA AUTENTICAÇÃO',
+            details: `❌ Painel: ${panel.nome}\n🔗 URL: ${baseUrl}\n\n❌ ${data?.error || 'Credenciais inválidas.'}`,
+          });
+        }
+        return;
+      }
+
+      const prov = PROVEDORES.find(p => p.id === currentProviderId);
       const endpoint = prov?.loginEndpoint || '/api/auth/login';
       const payload = prov?.buildLoginPayload
         ? prov.buildLoginPayload(panel.usuario, panel.senha)
         : { username: panel.usuario, password: panel.senha };
 
-      const strategy = getTestStrategy(panel.provedor || providerId);
+      const strategy = getTestStrategy(currentProviderId);
       const { data, error } = await supabase.functions.invoke('test-panel-connection', {
         body: {
           baseUrl, username: panel.usuario, password: panel.senha,
           endpointPath: endpoint,
           endpointMethod: prov?.loginMethod || 'POST',
           loginPayload: payload,
-          providerId: panel.provedor || providerId,
+          providerId: currentProviderId,
           testSteps: strategy.steps,
           extraHeaders: { Accept: 'application/json' },
         },
