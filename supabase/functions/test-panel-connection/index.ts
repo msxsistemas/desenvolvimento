@@ -884,6 +884,69 @@ serve(async (req) => {
     }
     } // end form-based login block
 
+    // --- Playfast: POST /profile/{username} with { secret: password } ---
+    const isPlayfast = providerId === 'playfast';
+    if (isPlayfast) {
+      try {
+        const profileUrl = `${cleanBase}/profile/${encodeURIComponent(username)}`;
+        console.log(`🔄 Playfast: POST ${profileUrl}`);
+        const pfResp = await withTimeout(fetch(profileUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            ...hdrs,
+          },
+          body: JSON.stringify({ secret: password }),
+        }), 15000);
+        const pfText = await pfResp.text();
+        let pfJson: any = null;
+        try { pfJson = JSON.parse(pfText); } catch (_) {}
+        console.log(`📊 Playfast → status: ${pfResp.status}, snippet: ${pfText.slice(0, 300)}`);
+        logs.push({ url: profileUrl, status: pfResp.status, ok: pfResp.ok, snippet: pfText.slice(0, 200) });
+
+        if (pfResp.ok && pfJson && typeof pfJson === 'object') {
+          const credits = pfJson.credits ?? pfJson.credit ?? pfJson.saldo ?? null;
+          console.log(`✅ Playfast: conexão bem-sucedida! Créditos: ${credits}`);
+          return new Response(JSON.stringify({
+            success: true,
+            endpoint: profileUrl,
+            type: 'Playfast Profile',
+            account: {
+              status: 'Active',
+              user: { username },
+              token_received: false,
+              credits,
+            },
+            data: {
+              credits,
+              response: pfJson,
+            },
+            logs,
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        } else {
+          return new Response(JSON.stringify({
+            success: false,
+            details: pfResp.status === 401 || pfResp.status === 403
+              ? '❌ Credenciais inválidas (TOKEN ou Secret incorretos).'
+              : `❌ Erro ${pfResp.status}: ${pfText.slice(0, 200)}`,
+            debug: { url: profileUrl, status: pfResp.status, response: pfText.slice(0, 300) },
+            logs,
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+      } catch (e) {
+        console.log(`⚠️ Playfast error: ${(e as Error).message}`);
+        logs.push({ url: `${cleanBase}/profile/${username}`, error: (e as Error).message });
+      }
+    }
+
     // --- Fallback: Try standard POST JSON login endpoints (sigma and others) ---
     // Build candidates from testSteps if available, otherwise use endpointPath or defaults
     let candidates: string[] = [];
