@@ -8,6 +8,24 @@ const corsHeaders = {
 
 const MP_BASE_URL = 'https://api.mercadopago.com';
 
+async function triggerAutoRenewal(userId: string, clienteWhatsapp: string, gateway: string, chargeId: string) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  try {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/auto-renew-client`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseKey}` },
+      body: JSON.stringify({ user_id: userId, cliente_whatsapp: clienteWhatsapp, gateway, gateway_charge_id: chargeId }),
+    });
+    const data = await resp.json();
+    console.log(`🔄 Auto-renewal result:`, JSON.stringify(data));
+    return data;
+  } catch (err: any) {
+    console.error(`❌ Auto-renewal failed:`, err.message);
+    return { success: false, error: err.message };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -22,13 +40,39 @@ serve(async (req) => {
       if (raw.trim()) body = JSON.parse(raw);
     }
 
-    const action = body.action;
-    console.log('🎯 Action:', action);
-
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Check if this is a webhook from Mercado Pago
+    if (body.type === 'payment' || body.action === 'payment.updated' || body.action === 'payment.created') {
+      console.log('📩 MP Webhook received:', body.type || body.action);
+      
+      const paymentId = body.data?.id;
+      if (paymentId && (body.action === 'payment.updated' || body.type === 'payment')) {
+        const chargeId = String(paymentId);
+        
+        const { data: cobranca } = await supabaseAdmin
+          .from('cobrancas')
+          .select('*')
+          .eq('gateway', 'mercadopago')
+          .eq('gateway_charge_id', chargeId)
+          .eq('status', 'pendente')
+          .maybeSingle();
+
+        if (cobranca) {
+          console.log(`📋 Cobrança MP encontrada para: ${cobranca.cliente_whatsapp}`);
+          await triggerAutoRenewal(cobranca.user_id, cobranca.cliente_whatsapp, 'mercadopago', chargeId);
+        }
+      }
+      
+      return new Response(JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const action = body.action;
+    console.log('🎯 Action:', action);
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {

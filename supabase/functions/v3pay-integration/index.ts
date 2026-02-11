@@ -18,6 +18,24 @@ async function verifyHmacSignature(data: any, signature: string, secret: string)
   return expected === signature;
 }
 
+async function triggerAutoRenewal(userId: string, clienteWhatsapp: string, gateway: string, chargeId: string) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  try {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/auto-renew-client`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseKey}` },
+      body: JSON.stringify({ user_id: userId, cliente_whatsapp: clienteWhatsapp, gateway, gateway_charge_id: chargeId }),
+    });
+    const data = await resp.json();
+    console.log(`🔄 Auto-renewal result for ${clienteWhatsapp}:`, JSON.stringify(data));
+    return data;
+  } catch (err: any) {
+    console.error(`❌ Auto-renewal failed:`, err.message);
+    return { success: false, error: err.message };
+  }
+}
+
 async function handleWebhook(body: any, supabaseAdmin: any) {
   const { event, data, signature } = body;
 
@@ -28,25 +46,24 @@ async function handleWebhook(body: any, supabaseAdmin: any) {
 
   console.log('📩 V3Pay Webhook received:', event);
 
-  // Try to find the user's config to validate signature if secret is set
-  // V3Pay webhooks don't include user_id, so we check all configs with webhook_secret
+  let verifiedUserId: string | null = null;
+
   if (signature) {
     const { data: configs } = await supabaseAdmin
       .from('v3pay_config')
       .select('user_id, webhook_secret')
       .not('webhook_secret', 'is', null);
 
-    let verified = false;
     if (configs) {
       for (const cfg of configs) {
         if (cfg.webhook_secret && await verifyHmacSignature(data, signature, cfg.webhook_secret)) {
-          verified = true;
+          verifiedUserId = cfg.user_id;
           console.log('✅ Webhook signature verified for user:', cfg.user_id);
           break;
         }
       }
     }
-    if (!verified) {
+    if (!verifiedUserId) {
       console.warn('⚠️ Webhook signature verification failed');
     }
   }
@@ -55,25 +72,43 @@ async function handleWebhook(body: any, supabaseAdmin: any) {
   switch (event) {
     case 'order.paid': {
       console.log('💰 Order paid:', JSON.stringify(data));
-      // Here you could update transaction status, activate client, etc.
+      
+      // Try to find the cobranca and auto-renew
+      const chargeId = data.id || data.order_id || data.charge_id || '';
+      if (chargeId) {
+        const { data: cobranca } = await supabaseAdmin
+          .from('cobrancas')
+          .select('*')
+          .eq('gateway', 'v3pay')
+          .eq('gateway_charge_id', String(chargeId))
+          .eq('status', 'pendente')
+          .maybeSingle();
+
+        if (cobranca) {
+          console.log(`📋 Cobrança encontrada para cliente: ${cobranca.cliente_whatsapp}`);
+          await triggerAutoRenewal(cobranca.user_id, cobranca.cliente_whatsapp, 'v3pay', String(chargeId));
+        } else if (verifiedUserId && data.customer_phone) {
+          // Fallback: use phone from webhook data
+          console.log(`📋 Usando telefone do webhook: ${data.customer_phone}`);
+          await triggerAutoRenewal(verifiedUserId, data.customer_phone, 'v3pay', String(chargeId));
+        } else {
+          console.warn('⚠️ Não foi possível identificar o cliente para renovação automática');
+        }
+      }
       break;
     }
-    case 'order.created': {
+    case 'order.created':
       console.log('📝 Order created:', JSON.stringify(data));
       break;
-    }
-    case 'login.detected': {
+    case 'login.detected':
       console.log('🔐 Login detected:', JSON.stringify(data));
       break;
-    }
-    case 'ebook.delivered': {
+    case 'ebook.delivered':
       console.log('📚 eBook delivered:', JSON.stringify(data));
       break;
-    }
-    case 'giftcard.delivered': {
+    case 'giftcard.delivered':
       console.log('🎁 Gift card delivered:', JSON.stringify(data));
       break;
-    }
     default:
       console.log('ℹ️ Unknown event:', event, JSON.stringify(data));
   }
@@ -161,6 +196,19 @@ async function handleAuthenticatedAction(action: string, body: any, user: any, s
       if (!chargeResp.ok) {
         return new Response(JSON.stringify({ success: false, error: chargeData.message || 'Erro ao criar cobrança.' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: chargeResp.status });
+      }
+
+      // Save cobranca for auto-renewal tracking
+      if (customer_phone && chargeData.id) {
+        await supabaseAdmin.from('cobrancas').insert({
+          user_id: user.id,
+          gateway: 'v3pay',
+          gateway_charge_id: String(chargeData.id),
+          cliente_whatsapp: customer_phone,
+          cliente_nome: customer_name || null,
+          valor: parseFloat(amount),
+          status: 'pendente',
+        });
       }
 
       return new Response(JSON.stringify({ success: true, charge: chargeData }),

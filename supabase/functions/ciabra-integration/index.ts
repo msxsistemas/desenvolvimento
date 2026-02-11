@@ -8,6 +8,24 @@ const corsHeaders = {
 
 const CIABRA_BASE_URL = 'https://api.az.center';
 
+async function triggerAutoRenewal(userId: string, clienteWhatsapp: string, gateway: string, chargeId: string) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  try {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/auto-renew-client`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseKey}` },
+      body: JSON.stringify({ user_id: userId, cliente_whatsapp: clienteWhatsapp, gateway, gateway_charge_id: chargeId }),
+    });
+    const data = await resp.json();
+    console.log(`🔄 Auto-renewal result:`, JSON.stringify(data));
+    return data;
+  } catch (err: any) {
+    console.error(`❌ Auto-renewal failed:`, err.message);
+    return { success: false, error: err.message };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -22,13 +40,41 @@ serve(async (req) => {
       if (raw.trim()) body = JSON.parse(raw);
     }
 
-    const action = body.action;
-    console.log('🎯 Action:', action);
-
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Check if this is a webhook from Ciabra
+    if (body.event || body.type === 'payment') {
+      console.log('📩 Ciabra Webhook received:', body.event || body.type);
+      
+      const isPaid = body.event === 'payment.confirmed' || body.event === 'payment.approved' || body.status === 'paid';
+      if (isPaid) {
+        const chargeId = String(body.id || body.payment_id || body.charge_id || '');
+        
+        if (chargeId) {
+          const { data: cobranca } = await supabaseAdmin
+            .from('cobrancas')
+            .select('*')
+            .eq('gateway', 'ciabra')
+            .eq('gateway_charge_id', chargeId)
+            .eq('status', 'pendente')
+            .maybeSingle();
+
+          if (cobranca) {
+            console.log(`📋 Cobrança Ciabra encontrada para: ${cobranca.cliente_whatsapp}`);
+            await triggerAutoRenewal(cobranca.user_id, cobranca.cliente_whatsapp, 'ciabra', chargeId);
+          }
+        }
+      }
+      
+      return new Response(JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const action = body.action;
+    console.log('🎯 Action:', action);
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {

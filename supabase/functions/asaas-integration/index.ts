@@ -8,6 +8,24 @@ const corsHeaders = {
 
 const ASAAS_BASE_URL = 'https://www.asaas.com/api/v3';
 
+async function triggerAutoRenewal(userId: string, clienteWhatsapp: string, gateway: string, chargeId: string) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  try {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/auto-renew-client`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseKey}` },
+      body: JSON.stringify({ user_id: userId, cliente_whatsapp: clienteWhatsapp, gateway, gateway_charge_id: chargeId }),
+    });
+    const data = await resp.json();
+    console.log(`🔄 Auto-renewal result:`, JSON.stringify(data));
+    return data;
+  } catch (err: any) {
+    console.error(`❌ Auto-renewal failed:`, err.message);
+    return { success: false, error: err.message };
+  }
+}
+
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -18,16 +36,14 @@ serve(async (req) => {
     console.log('🚀 Asaas Integration - Starting request processing...');
     
     // Parse request body
-    let body = {};
+    let body: any = {};
     try {
       if (req.method === 'POST') {
         const rawBody = await req.text();
         console.log('Raw body received, length:', rawBody.length);
         if (rawBody.trim()) {
           body = JSON.parse(rawBody);
-          console.log('Parsed body action:', (body as any).action);
-        } else {
-          console.log('Empty body received');
+          console.log('Parsed body action:', body.action);
         }
       }
     } catch (parseError) {
@@ -38,14 +54,44 @@ serve(async (req) => {
       );
     }
 
-    const action = (body as any).action;
-    console.log('🎯 Action extracted:', JSON.stringify(action));
-    
     // Initialize Supabase Admin Client
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
+
+    // Check if this is a webhook from Asaas (has 'event' field)
+    if (body.event) {
+      console.log('📩 Asaas Webhook received:', body.event);
+      
+      if (body.event === 'PAYMENT_CONFIRMED' || body.event === 'PAYMENT_RECEIVED') {
+        const payment = body.payment || body;
+        const chargeId = payment.id || payment.externalReference || '';
+        
+        if (chargeId) {
+          const { data: cobranca } = await supabaseAdmin
+            .from('cobrancas')
+            .select('*')
+            .eq('gateway', 'asaas')
+            .eq('gateway_charge_id', String(chargeId))
+            .eq('status', 'pendente')
+            .maybeSingle();
+
+          if (cobranca) {
+            console.log(`📋 Cobrança Asaas encontrada para: ${cobranca.cliente_whatsapp}`);
+            await triggerAutoRenewal(cobranca.user_id, cobranca.cliente_whatsapp, 'asaas', String(chargeId));
+          } else {
+            console.warn('⚠️ Cobrança não encontrada para auto-renovação:', chargeId);
+          }
+        }
+      }
+      
+      return new Response(JSON.stringify({ success: true, event: body.event }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const action = body.action;
+    console.log('🎯 Action extracted:', JSON.stringify(action));
 
     // Get authenticated user
     const authHeader = req.headers.get('Authorization');
@@ -205,6 +251,19 @@ serve(async (req) => {
 
           if (!chargeResponse.ok) {
             throw new Error(chargeData.errors?.[0]?.description || 'Erro ao criar cobrança');
+          }
+
+          // Save cobranca for auto-renewal tracking
+          if (customer.phone && chargeData.id) {
+            await supabaseAdmin.from('cobrancas').insert({
+              user_id: user.id,
+              gateway: 'asaas',
+              gateway_charge_id: String(chargeData.id),
+              cliente_whatsapp: customer.phone,
+              cliente_nome: customer.name || null,
+              valor: parseFloat(value),
+              status: 'pendente',
+            });
           }
 
           return new Response(
