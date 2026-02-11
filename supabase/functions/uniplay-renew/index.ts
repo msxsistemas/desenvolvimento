@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const UNIPLAY_API_BASE = 'https://gesapioffice.com';
@@ -16,47 +16,59 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-/**
- * Faz uma requisição via VPS Relay brasileiro.
- * O relay recebe { url, method, headers, body } e encaminha a requisição.
- */
-async function relayFetch(
-  url: string,
-  init: RequestInit = {}
-): Promise<Response> {
-  const relayUrl = Deno.env.get('VPS_RELAY_URL');
-  const relaySecret = Deno.env.get('VPS_RELAY_SECRET');
-
-  if (!relayUrl || !relaySecret) {
-    console.log('⚠️ VPS_RELAY_URL ou VPS_RELAY_SECRET não configurados, usando fetch direto');
-    return fetch(url, init);
+/** Normaliza o proxy URL para formato http://user:pass@host:port */
+function normalizeProxyUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (/^https?:\/\//.test(trimmed)) return trimmed;
+  const parts = trimmed.split(':');
+  if (parts.length === 4) {
+    const [host, port, user, pass] = parts;
+    return `http://${user}:${pass}@${host}:${port}`;
   }
-
-  console.log(`🌐 Relay: ${init.method || 'GET'} ${url}`);
-
-  const relayBody: Record<string, unknown> = {
-    url,
-    method: init.method || 'GET',
-    headers: init.headers || {},
-  };
-
-  if (init.body) {
-    relayBody.body = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
-  }
-
-  const resp = await fetch(`${relayUrl}/proxy`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-relay-secret': relaySecret,
-    },
-    body: JSON.stringify(relayBody),
-  });
-
-  return resp;
+  if (trimmed.includes('@')) return `http://${trimmed}`;
+  return `http://${trimmed}`;
 }
 
-const API_HEADERS: Record<string, string> = {
+/** Cria um fetch que roteia pela proxy brasileira se configurada */
+function createProxiedFetch(): typeof fetch {
+  const proxyUrl = Deno.env.get('BRAZIL_PROXY_URL');
+  if (!proxyUrl) {
+    console.log('⚠️ BRAZIL_PROXY_URL não configurada, usando fetch direto');
+    return fetch;
+  }
+  const normalizedUrl = normalizeProxyUrl(proxyUrl);
+  console.log(`🌐 Proxy BR: ${normalizedUrl.replace(/\/\/.*@/, '//***@')}`);
+
+  if (typeof (Deno as any).createHttpClient === 'function') {
+    try {
+      const client = (Deno as any).createHttpClient({ proxy: { url: normalizedUrl } });
+      if (client) {
+        console.log('✅ Proxy: Deno.createHttpClient criado');
+        return (input: string | URL | Request, init?: RequestInit) => {
+          return fetch(input, { ...init, client } as any);
+        };
+      }
+    } catch (e) {
+      console.log(`⚠️ Proxy createHttpClient falhou: ${(e as Error).message}`);
+    }
+  } else {
+    console.log('⚠️ Deno.createHttpClient não disponível');
+  }
+
+  try {
+    Deno.env.set('HTTP_PROXY', normalizedUrl);
+    Deno.env.set('HTTPS_PROXY', normalizedUrl);
+    console.log('🔄 Proxy: Env vars HTTP_PROXY/HTTPS_PROXY definidas');
+  } catch (e) {
+    console.log(`⚠️ Proxy env vars falhou: ${(e as Error).message}`);
+  }
+
+  return fetch;
+}
+
+const proxiedFetch = createProxiedFetch();
+
+const API_HEADERS = {
   'Content-Type': 'application/json',
   'Accept': 'application/json',
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
@@ -98,44 +110,33 @@ async function solve2CaptchaV2(siteKey: string, pageUrl: string): Promise<string
   } catch (e) { console.log(`❌ 2Captcha: ${(e as Error).message}`); return null; }
 }
 
+/**
+ * Extrai ou usa siteKey conhecida do reCAPTCHA v2 do Uniplay
+ */
 const UNIPLAY_RECAPTCHA_SITEKEY = '6LfTwuwfAAAAAGfw3TatjhOOCP2jNuPqO4U2xske';
 
 async function loginUniplay(username: string, password: string): Promise<LoginResult> {
   try {
+    // Resolver reCAPTCHA v2 antes do login
     let captchaToken = '';
     const solved = await solve2CaptchaV2(UNIPLAY_RECAPTCHA_SITEKEY, 'https://gestordefender.com/login');
     if (solved) captchaToken = solved;
 
-    const resp = await withTimeout(relayFetch(`${UNIPLAY_API_BASE}/api/login`, {
+    const resp = await withTimeout(proxiedFetch(`${UNIPLAY_API_BASE}/api/login`, {
       method: 'POST',
       headers: API_HEADERS,
       body: JSON.stringify({ username, password, code: captchaToken }),
-    }), 30000);
+    }), 15000);
 
     const text = await resp.text();
     let json: any = null;
     try { json = JSON.parse(text); } catch {}
 
-    // O relay retorna { status, headers, body } — precisamos extrair
-    if (json?.body) {
-      // Resposta veio empacotada pelo relay
-      const relayData = typeof json.body === 'string' ? JSON.parse(json.body) : json.body;
-      const token = relayData?.access_token;
-      const cryptPass = relayData?.crypt_pass || '';
-
-      if (json.status < 400 && token) {
-        console.log(`✅ Uniplay login OK via relay (token, crypt_pass: ${cryptPass ? 'sim' : 'não'})`);
-        return { success: true, token, cryptPass };
-      }
-      return { success: false, token: '', cryptPass: '', error: relayData?.message || relayData?.error || JSON.stringify(relayData).slice(0, 200) };
-    }
-
-    // Resposta direta (fallback sem relay)
     const token = json?.access_token;
     const cryptPass = json?.crypt_pass || '';
 
     if (resp.ok && token) {
-      console.log(`✅ Uniplay login OK (token, crypt_pass: ${cryptPass ? 'sim' : 'não'})`);
+      console.log(`✅ Uniplay login OK (token expires_in: ${json?.expires_in}s, crypt_pass: ${cryptPass ? 'sim' : 'não'})`);
       return { success: true, token, cryptPass };
     }
 
@@ -152,27 +153,6 @@ function authHeaders(token: string): Record<string, string> {
     'Content-Type': 'application/json',
     'User-Agent': API_HEADERS['User-Agent'],
   };
-}
-
-/**
- * Helper para parsear resposta do relay.
- * O relay retorna { status, headers, body } onde body pode ser string ou object.
- */
-function parseRelayResponse(text: string): { status: number; data: any; raw: string } {
-  let json: any = null;
-  try { json = JSON.parse(text); } catch {}
-
-  // Se a resposta veio empacotada pelo relay
-  if (json && typeof json.status === 'number' && json.body !== undefined) {
-    let data = json.body;
-    if (typeof data === 'string') {
-      try { data = JSON.parse(data); } catch {}
-    }
-    return { status: json.status, data, raw: text };
-  }
-
-  // Resposta direta (fallback)
-  return { status: 200, data: json, raw: text };
 }
 
 serve(async (req) => {
@@ -201,7 +181,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`🔗 Uniplay: Painel "${panel.nome}" → API: ${UNIPLAY_API_BASE} (via VPS Relay)`);
+    console.log(`🔗 Uniplay: Painel "${panel.nome}" → API: ${UNIPLAY_API_BASE}`);
     const login = await loginUniplay(panel.usuario, panel.senha);
     if (!login.success) {
       return new Response(JSON.stringify({ success: false, error: `Falha no login: ${login.error}` }), {
@@ -218,15 +198,16 @@ serve(async (req) => {
         const url = login.cryptPass
           ? `${UNIPLAY_API_BASE}/api/users-iptv?reg_password=${encodeURIComponent(login.cryptPass)}`
           : `${UNIPLAY_API_BASE}/api/users-iptv`;
-        const resp = await withTimeout(relayFetch(url, { method: 'GET', headers: hdrs }), 30000);
+        const resp = await withTimeout(proxiedFetch(url, { method: 'GET', headers: hdrs }), 15000);
         const text = await resp.text();
-        const { status, data } = parseRelayResponse(text);
+        let json: any = null;
+        try { json = JSON.parse(text); } catch {}
 
-        console.log(`📊 Uniplay users-iptv → status: ${status}, items: ${Array.isArray(data?.data) ? data.data.length : Array.isArray(data) ? data.length : '?'}`);
+        console.log(`📊 Uniplay users-iptv → status: ${resp.status}, items: ${Array.isArray(json?.data) ? json.data.length : Array.isArray(json) ? json.length : '?'}`);
 
         return new Response(JSON.stringify({
-          success: status < 400,
-          users: data?.data || data || [],
+          success: resp.ok,
+          users: json?.data || json || [],
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
         });
@@ -248,7 +229,7 @@ serve(async (req) => {
 
       console.log(`🧪 Uniplay: Criando teste P2P para "${clientName}" (produto: ${productId}, horas: ${testHours || 6})`);
       try {
-        const resp = await withTimeout(relayFetch(`${UNIPLAY_API_BASE}/api/users-p2p`, {
+        const resp = await withTimeout(proxiedFetch(`${UNIPLAY_API_BASE}/api/users-p2p`, {
           method: 'POST',
           headers: hdrs,
           body: JSON.stringify({
@@ -259,19 +240,20 @@ serve(async (req) => {
             nota: note || '',
             test_hours: testHours || 6,
           }),
-        }), 30000);
+        }), 15000);
 
         const text = await resp.text();
-        const { status, data } = parseRelayResponse(text);
-        console.log(`📊 Uniplay create test → status: ${status}, response: ${JSON.stringify(data).slice(0, 300)}`);
+        let json: any = null;
+        try { json = JSON.parse(text); } catch {}
+        console.log(`📊 Uniplay create test → status: ${resp.status}, response: ${text.slice(0, 300)}`);
 
-        if (status < 400 && data) {
-          return new Response(JSON.stringify({ success: true, data }), {
+        if (resp.ok && json) {
+          return new Response(JSON.stringify({ success: true, data: json }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
           });
         }
 
-        return new Response(JSON.stringify({ success: false, error: data?.message || JSON.stringify(data).slice(0, 200) }), {
+        return new Response(JSON.stringify({ success: false, error: json?.message || text.slice(0, 200) }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
         });
       } catch (e) {
@@ -287,14 +269,15 @@ serve(async (req) => {
       const perPage = body.perPage || 50;
       console.log(`📋 Uniplay: Listando usuários do painel (page ${page})...`);
       try {
-        const resp = await withTimeout(relayFetch(`${UNIPLAY_API_BASE}/api/reg-users?page=${page}&per_page=${perPage}`, {
+        const resp = await withTimeout(proxiedFetch(`${UNIPLAY_API_BASE}/api/reg-users?page=${page}&per_page=${perPage}`, {
           method: 'GET', headers: hdrs,
-        }), 30000);
+        }), 15000);
         const text = await resp.text();
-        const { data } = parseRelayResponse(text);
-        console.log(`📊 Uniplay reg-users → OK`);
+        let json: any = null;
+        try { json = JSON.parse(text); } catch {}
+        console.log(`📊 Uniplay reg-users → status: ${resp.status}`);
 
-        return new Response(JSON.stringify({ success: true, data }), {
+        return new Response(JSON.stringify({ success: resp.ok, data: json }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
         });
       } catch (e) {
@@ -314,18 +297,20 @@ serve(async (req) => {
 
       console.log(`🔄 Uniplay: Buscando cliente "${username}" para renovação...`);
 
+      // Search user in IPTV users list
       let clientId: string | null = null;
       const searchUrl = login.cryptPass
         ? `${UNIPLAY_API_BASE}/api/users-iptv?reg_password=${encodeURIComponent(login.cryptPass)}`
         : `${UNIPLAY_API_BASE}/api/users-iptv`;
 
       try {
-        const resp = await withTimeout(relayFetch(searchUrl, { method: 'GET', headers: hdrs }), 30000);
+        const resp = await withTimeout(proxiedFetch(searchUrl, { method: 'GET', headers: hdrs }), 15000);
         const text = await resp.text();
-        const { status, data } = parseRelayResponse(text);
+        let json: any = null;
+        try { json = JSON.parse(text); } catch {}
 
-        if (status < 400 && data) {
-          const items = data.data || (Array.isArray(data) ? data : []);
+        if (resp.ok && json) {
+          const items = json.data || (Array.isArray(json) ? json : []);
           const match = items.find((c: any) => {
             const u = (c.username || c.user || c.login || c.name || '').toLowerCase();
             return u === username.toLowerCase();
@@ -345,6 +330,7 @@ serve(async (req) => {
         });
       }
 
+      // Try extend endpoints
       console.log(`🔄 Uniplay: Renovando cliente ${clientId} → +${duration} ${durationIn}`);
       const extendEndpoints = [
         { url: `/api/users-iptv/${clientId}/extend`, method: 'POST' },
@@ -355,17 +341,18 @@ serve(async (req) => {
 
       for (const ep of extendEndpoints) {
         try {
-          const resp = await withTimeout(relayFetch(`${UNIPLAY_API_BASE}${ep.url}`, {
+          const resp = await withTimeout(proxiedFetch(`${UNIPLAY_API_BASE}${ep.url}`, {
             method: ep.method,
             headers: hdrs,
             body: JSON.stringify({ duration: Number(duration), duration_in: durationIn }),
-          }), 30000);
+          }), 15000);
           const text = await resp.text();
-          const { status, data } = parseRelayResponse(text);
+          let json: any = null;
+          try { json = JSON.parse(text); } catch {}
 
-          console.log(`📊 Uniplay extend ${ep.url} → status: ${status}, response: ${JSON.stringify(data).slice(0, 300)}`);
+          console.log(`📊 Uniplay extend ${ep.url} → status: ${resp.status}, response: ${text.slice(0, 300)}`);
 
-          if (status < 400 && (data?.success || data?.status === 'ok' || data?.message)) {
+          if (resp.ok && (json?.success || json?.status === 'ok' || json?.message)) {
             // Log renewal
             const authHeader = req.headers.get('authorization');
             if (authHeader) {
@@ -382,7 +369,7 @@ serve(async (req) => {
 
             return new Response(JSON.stringify({
               success: true,
-              message: data?.message || 'Cliente renovado com sucesso no Uniplay',
+              message: json?.message || 'Cliente renovado com sucesso no Uniplay',
             }), {
               headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
             });

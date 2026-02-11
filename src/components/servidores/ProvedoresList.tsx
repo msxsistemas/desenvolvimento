@@ -173,9 +173,8 @@ export function PanelsList({
                 <Button onClick={() => onToggleStatus(p.id)} variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary/80">
                   {p.status === 'Ativo' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 </Button>
-                <Button onClick={() => onTestPanel(p)} title="Testar conexão" disabled={isTestingConnection} variant="outline" size="sm" className="h-8 text-primary border-primary/30 hover:bg-primary/10 hover:text-primary">
-                  <RefreshCw className={`h-4 w-4 mr-1 ${isTestingConnection ? 'animate-spin' : ''}`} />
-                  Testar
+                <Button onClick={() => onTestPanel(p)} title="Testar conexão" disabled={isTestingConnection} variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary/80">
+                  <RefreshCw className="h-4 w-4" />
                 </Button>
                 <Button onClick={() => onDeletePanel(p)} variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive/80">
                   <Trash2 className="h-4 w-4" />

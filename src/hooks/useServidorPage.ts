@@ -315,118 +315,33 @@ export function useServidorPage(providerId: string) {
   };
 
   const testPanel = async (panel: Panel) => {
-    // Reutiliza a mesma lógica do handleTestConnection, preenchendo o formData temporariamente
-    const prevFormData = { ...formData };
-    setFormData({
-      nomePainel: panel.nome,
-      urlPainel: panel.url,
-      usuario: panel.usuario,
-      senha: panel.senha,
-    });
-
-    // Chamar handleTestConnection diretamente com os dados do painel
     setIsTestingConnection(true);
     try {
-      const panelProviderId = panel.provedor || providerId;
       const baseUrl = panel.url.trim().replace(/\/$/, '');
-      const usuario = panel.usuario;
-      const senha = panel.senha;
-      const nomePainel = panel.nome;
-
-      // Playfast: usa Edge Function diretamente
-      if (panelProviderId === 'playfast') {
-        try {
-          const { data, error } = await supabase.functions.invoke('playfast-renew', {
-            body: { token: usuario, secret: senha, action: 'profile' },
-          });
-          if (error) {
-            setTestResultModal({ isOpen: true, success: false, message: "Erro no Teste", details: `❌ Painel: ${nomePainel}\n\n❌ Não foi possível conectar à API Playfast.\nErro: ${error.message}` });
-            return;
-          }
-          if (data?.success) {
-            setTestResultModal({ isOpen: true, success: true, message: "CONEXÃO REAL BEM-SUCEDIDA!", details: `✅ Painel: ${nomePainel}\n🔗 API: ${PLAYFAST_API_BASE}\n👤 Usuário: ${data.username || usuario}\n💰 Créditos: ${data.credits ?? 'n/d'}\n📧 Email: ${data.email || 'n/d'}\n📡 Status: ${data.status === 1 ? 'Ativo' : 'Inativo'}\n\n✅ Autenticação realizada com sucesso.` });
-          } else {
-            setTestResultModal({ isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO", details: `❌ Painel: ${nomePainel}\n🔗 API: ${PLAYFAST_API_BASE}\n\n❌ ${data?.error || 'TOKEN ou Secret inválidos.'}` });
-          }
-        } catch (err: any) {
-          setTestResultModal({ isOpen: true, success: false, message: "Erro no Teste", details: `Erro inesperado: ${err.message}` });
-        }
-        return;
-      }
-
-      // KOffice API/V2
-      if (panelProviderId === 'koffice-api' || panelProviderId === 'koffice-v2') {
-        try {
-          const { data, error } = await supabase.functions.invoke('koffice-renew', {
-            body: { action: 'test_connection', url: baseUrl, panelUser: usuario, panelPass: senha },
-          });
-          if (error) {
-            setTestResultModal({ isOpen: true, success: false, message: "Erro no Teste", details: `❌ Painel: ${nomePainel}\n\n❌ Não foi possível conectar ao painel KOffice.\nErro: ${error.message}` });
-            return;
-          }
-          if (data?.success) {
-            setTestResultModal({ isOpen: true, success: true, message: "CONEXÃO REAL BEM-SUCEDIDA!", details: `✅ Painel: ${nomePainel}\n🔗 URL: ${baseUrl}\n👤 Usuário: ${usuario}\n👥 Total Clientes: ${data.clients_count ?? 'n/d'}\n✅ Clientes Ativos: ${data.active_clients_count ?? 'n/d'}\n\n✅ Autenticação realizada com sucesso no painel.` });
-          } else {
-            setTestResultModal({ isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO", details: `❌ Painel: ${nomePainel}\n🔗 URL: ${baseUrl}\n👤 Usuário: ${usuario}\n\n❌ ${data?.error || 'Usuário ou API key inválidos.'}` });
-          }
-        } catch (err: any) {
-          setTestResultModal({ isOpen: true, success: false, message: "Erro no Teste", details: `Erro inesperado: ${err.message}` });
-        }
-        return;
-      }
-
-      // Uniplay
-      const resolvedBaseUrl = panelProviderId === 'uniplay' ? UNIPLAY_API_BASE : baseUrl;
-      if (panelProviderId === 'uniplay') {
-        try {
-          const { data, error } = await supabase.functions.invoke('test-panel-connection', {
-            body: {
-              baseUrl: resolvedBaseUrl, username: usuario, password: senha,
-              endpointPath: '/api/login', endpointMethod: 'POST',
-              loginPayload: { username: usuario, password: senha, code: '' },
-              providerId: 'uniplay',
-              frontendUrl: panel.url.trim() || 'https://gestordefender.com',
-              testSteps: [{ type: 'json-post', endpoints: ['/api/login'], label: 'Uniplay JWT API' }],
-              extraHeaders: { Accept: 'application/json' },
-            },
-          });
-          if (error || !data) {
-            setTestResultModal({ isOpen: true, success: false, message: 'Erro no Teste', details: `Não foi possível executar o teste. ${error?.message ?? ''}`.trim() });
-            return;
-          }
-          if (data.success) {
-            const account = data.account;
-            setTestResultModal({ isOpen: true, success: true, message: "CONEXÃO REAL BEM-SUCEDIDA!", details: `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}${account?.credits ? `\n💰 Créditos: ${account.credits}` : ''}${data.data?.expires_in ? `\n⏰ Token expira em: ${Math.round(data.data.expires_in / 3600)}h` : ''}\n\n✅ Autenticação JWT realizada com sucesso.` });
-          } else {
-            setTestResultModal({ isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO", details: `❌ Painel: ${nomePainel}\n🔗 API: ${resolvedBaseUrl}/api/login\n👤 Usuário: ${usuario}\n\n❌ ${data.details || 'Credenciais inválidas.'}` });
-          }
-        } catch (err: any) {
-          setTestResultModal({ isOpen: true, success: false, message: "Erro no Teste", details: `Erro inesperado: ${err.message}` });
-        }
-        return;
-      }
-
-      // Fallback genérico (outros provedores)
-      const prov = PROVEDORES.find(p => p.id === panelProviderId);
+      const prov = PROVEDORES.find(p => p.id === panel.provedor);
       const endpoint = prov?.loginEndpoint || '/api/auth/login';
       const payload = prov?.buildLoginPayload
-        ? prov.buildLoginPayload(usuario, senha)
-        : { username: usuario, password: senha };
-      const fallbackStrategy = getTestStrategy(panelProviderId);
+        ? prov.buildLoginPayload(panel.usuario, panel.senha)
+        : { username: panel.usuario, password: panel.senha };
 
+      const strategy = getTestStrategy(panel.provedor || providerId);
       const { data, error } = await supabase.functions.invoke('test-panel-connection', {
         body: {
-          baseUrl: resolvedBaseUrl, username: usuario, password: senha,
-          endpointPath: endpoint, endpointMethod: prov?.loginMethod || 'POST',
-          loginPayload: payload, providerId: panelProviderId,
-          testSteps: fallbackStrategy.steps,
+          baseUrl, username: panel.usuario, password: panel.senha,
+          endpointPath: endpoint,
+          endpointMethod: prov?.loginMethod || 'POST',
+          loginPayload: payload,
+          providerId: panel.provedor || providerId,
+          testSteps: strategy.steps,
           extraHeaders: { Accept: 'application/json' },
-          frontendUrl: baseUrl,
         },
       });
 
       if (error || !data) {
-        setTestResultModal({ isOpen: true, success: false, message: 'Erro no Teste', details: `Não foi possível executar o teste. ${error?.message ?? ''}`.trim() });
+        setTestResultModal({
+          isOpen: true, success: false, message: 'Erro no Teste',
+          details: `Não foi possível executar o teste agora. ${error?.message ?? ''}`.trim(),
+        });
         return;
       }
 
@@ -434,9 +349,12 @@ export function useServidorPage(providerId: string) {
         const account = data.account;
         const isPartialValidation = data.data?.usernameValidated && !data.data?.credentialsValidated;
         const detailsMsg = isPartialValidation
-          ? `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: Conectado com sucesso!\n\n⚠️ Nota: O reCAPTCHA v3 impede verificação completa da senha.`
-          : `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: ${account?.status ?? 'OK'}\n⏱️ Expira: ${account?.exp_date ?? 'n/d'}\n\n✅ Autenticação realizada com sucesso no painel.`;
-        setTestResultModal({ isOpen: true, success: true, message: 'CONEXÃO REAL BEM-SUCEDIDA!', details: detailsMsg });
+          ? `✅ Painel: ${panel.nome}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${panel.usuario}\n📡 Status: Conectado com sucesso!\n\n⚠️ Nota: O reCAPTCHA v3 impede verificação completa da senha.`
+          : `✅ Painel: ${panel.nome}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${panel.usuario}\n📡 Status: ${account?.status ?? 'OK'}\n⏱️ Expira: ${account?.exp_date ?? 'n/d'}\n\n✅ Autenticação realizada com sucesso no painel.`;
+        setTestResultModal({
+          isOpen: true, success: true, message: 'CONEXÃO REAL BEM-SUCEDIDA!',
+          details: detailsMsg,
+        });
       } else {
         const logs = Array.isArray(data.logs)
           ? data.logs.slice(0, 4).map((l: any) => {
@@ -444,13 +362,18 @@ export function useServidorPage(providerId: string) {
               return `• ${l.url} ${s ? `(${s})` : ''}\n${(l.snippet || '').slice(0, 200)}`;
             }).join('\n\n')
           : '';
-        setTestResultModal({ isOpen: true, success: false, message: 'FALHA NA AUTENTICAÇÃO', details: `${data.details || 'Usuário/senha inválidos ou URL incorreta.'}${logs ? '\n\nTentativas:\n' + logs : ''}` });
+        setTestResultModal({
+          isOpen: true, success: false, message: 'FALHA NA AUTENTICAÇÃO',
+          details: `${data.details || 'Usuário/senha inválidos ou URL incorreta.'}${logs ? '\n\nTentativas:\n' + logs : ''}`,
+        });
       }
     } catch (error: any) {
-      setTestResultModal({ isOpen: true, success: false, message: 'Erro no Teste', details: `Erro inesperado durante o teste: ${error.message}` });
+      setTestResultModal({
+        isOpen: true, success: false, message: 'Erro no Teste',
+        details: `Erro inesperado durante o teste: ${error.message}`,
+      });
     } finally {
       setIsTestingConnection(false);
-      setFormData(prevFormData);
     }
   };
 

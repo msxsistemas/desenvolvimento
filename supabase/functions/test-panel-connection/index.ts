@@ -13,77 +13,72 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-/**
- * Faz uma requisição via VPS Relay brasileiro.
- * O relay recebe { url, method, headers, body } e encaminha a requisição.
- */
-async function relayFetch(
-  url: string,
-  init: RequestInit = {}
-): Promise<Response> {
-  const relayUrl = Deno.env.get('VPS_RELAY_URL');
-  const relaySecret = Deno.env.get('VPS_RELAY_SECRET');
-
-  if (!relayUrl || !relaySecret) {
-    console.log('⚠️ VPS_RELAY_URL ou VPS_RELAY_SECRET não configurados, usando fetch direto');
-    return fetch(url, init);
+/** Normaliza o proxy URL para formato http://user:pass@host:port */
+function normalizeProxyUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (/^https?:\/\//.test(trimmed)) return trimmed;
+  // Format: host:port:user:pass
+  const parts = trimmed.split(':');
+  if (parts.length === 4) {
+    const [host, port, user, pass] = parts;
+    return `http://${user}:${pass}@${host}:${port}`;
   }
+  if (trimmed.includes('@')) return `http://${trimmed}`;
+  return `http://${trimmed}`;
+}
 
-  console.log(`🌐 Relay: ${init.method || 'GET'} ${url}`);
+/** Cria um fetch que roteia pela proxy brasileira se configurada */
+function createProxiedFetch(): typeof fetch {
+  const proxyUrl = Deno.env.get('BRAZIL_PROXY_URL');
+  if (!proxyUrl) {
+    console.log('⚠️ BRAZIL_PROXY_URL não configurada, usando fetch direto');
+    return fetch;
+  }
+  const normalizedUrl = normalizeProxyUrl(proxyUrl);
+  const maskedUrl = normalizedUrl.replace(/\/\/.*@/, '//***@');
+  console.log(`🌐 Proxy BR configurada: ${maskedUrl}`);
 
-  const relayBody: Record<string, unknown> = {
-    url,
-    method: init.method || 'GET',
-    headers: init.headers || {},
-  };
-
-  if (init.body) {
+  // Strategy 1: Deno.createHttpClient (works in Deno CLI, may work in newer edge-runtime)
+  if (typeof (Deno as any).createHttpClient === 'function') {
     try {
-      relayBody.body = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
-    } catch {
-      relayBody.body = init.body;
+      const client = (Deno as any).createHttpClient({ proxy: { url: normalizedUrl } });
+      if (client) {
+        console.log('✅ Proxy: Deno.createHttpClient criado com sucesso');
+        return (input: string | URL | Request, init?: RequestInit) => {
+          return fetch(input, { ...init, client } as any);
+        };
+      }
+    } catch (e) {
+      console.log(`⚠️ Proxy Strategy 1 (createHttpClient) falhou: ${(e as Error).message}`);
     }
+  } else {
+    console.log('⚠️ Deno.createHttpClient não disponível neste runtime');
   }
 
-  return fetch(`${relayUrl}/proxy`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-relay-secret': relaySecret,
-    },
-    body: JSON.stringify(relayBody),
-  });
-}
-
-/**
- * Helper para parsear resposta do relay.
- * O relay retorna { status, headers, body } onde body pode ser string ou object.
- */
-function parseRelayResponse(text: string): { status: number; data: any; raw: string } {
-  let json: any = null;
-  try { json = JSON.parse(text); } catch {}
-
-  if (json && typeof json.status === 'number' && json.body !== undefined) {
-    let data = json.body;
-    if (typeof data === 'string') {
-      try { data = JSON.parse(data); } catch {}
-    }
-    return { status: json.status, data, raw: text };
-  }
-
-  return { status: 200, data: json, raw: text };
-}
-
-/** Verifica se o relay está funcionando testando o IP público */
-async function verifyRelay(): Promise<{ working: boolean; ip?: string; error?: string }> {
+  // Strategy 2: HTTP_PROXY/HTTPS_PROXY env vars
   try {
-    const resp = await withTimeout(relayFetch('https://api.ipify.org?format=json', { method: 'GET', headers: {} }), 15000);
-    const text = await resp.text();
-    const { data } = parseRelayResponse(text);
-    console.log(`🌐 Relay IP check: ${JSON.stringify(data)}`);
-    return { working: true, ip: data?.ip };
+    Deno.env.set('HTTP_PROXY', normalizedUrl);
+    Deno.env.set('HTTPS_PROXY', normalizedUrl);
+    console.log('🔄 Proxy: Env vars HTTP_PROXY/HTTPS_PROXY definidas');
   } catch (e) {
-    console.log(`❌ Relay IP check falhou: ${(e as Error).message}`);
+    console.log(`⚠️ Proxy Strategy 2 (env vars) falhou: ${(e as Error).message}`);
+  }
+
+  // Return regular fetch (will use env vars if the runtime supports them)
+  return fetch;
+}
+
+const proxiedFetch = createProxiedFetch();
+
+/** Verifica se a proxy está funcionando testando o IP público */
+async function verifyProxy(): Promise<{ working: boolean; ip?: string; error?: string }> {
+  try {
+    const resp = await withTimeout(proxiedFetch('https://api.ipify.org?format=json'), 10000);
+    const data = await resp.json();
+    console.log(`🌐 Proxy IP check: ${JSON.stringify(data)}`);
+    return { working: true, ip: data.ip };
+  } catch (e) {
+    console.log(`❌ Proxy IP check falhou: ${(e as Error).message}`);
     return { working: false, error: (e as Error).message };
   }
 }
@@ -230,7 +225,6 @@ serve(async (req) => {
     const isKoffice = providerId === 'koffice-api' || providerId === 'koffice-v2';
     const isMundogf = providerId === 'mundogf';
     const isSigma = providerId === 'sigma-v2';
-    const isPlayfast = providerId === 'playfast';
 
     // Only discover API structure for unknown providers
     if (!providerId || isKoffice || isMundogf) {
@@ -550,78 +544,18 @@ serve(async (req) => {
       }
     }
 
-    // --- Playfast: REST API com token na URL e secret no body ---
-    if (isPlayfast) {
-      const PLAYFAST_API = cleanBase || 'https://api.painelcliente.com';
-      console.log(`🔄 Playfast: Testando perfil em ${PLAYFAST_API}/profile/${username}...`);
-
-      try {
-        const profileResp = await withTimeout(fetch(`${PLAYFAST_API}/profile/${encodeURIComponent(username)}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          },
-          body: JSON.stringify({ secret: password }),
-        }), 15000);
-
-        const profileText = await profileResp.text();
-        let profileJson: any = null;
-        try { profileJson = JSON.parse(profileText); } catch {}
-
-        console.log(`📊 Playfast profile → status: ${profileResp.status}, result: ${profileJson?.result}`);
-
-        if (profileResp.ok && profileJson?.result === true && profileJson?.data) {
-          const d = profileJson.data;
-          console.log(`✅ Playfast login OK! Créditos: ${d.credits}, Status: ${d.status}`);
-          return new Response(JSON.stringify({
-            success: true,
-            endpoint: `${PLAYFAST_API}/profile/${username}`,
-            type: 'Playfast API',
-            account: {
-              status: d.status || 'Active',
-              user: { username: d.username || username, email: d.email },
-              credits: d.credits,
-            },
-            data: {
-              credits: d.credits,
-              username: d.username,
-              email: d.email,
-              status: d.status,
-            },
-            logs,
-          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-        }
-
-        // Auth failed
-        const errorMsg = profileJson?.mens || profileJson?.message || profileJson?.error || profileText.slice(0, 200);
-        return new Response(JSON.stringify({
-          success: false,
-          endpoint: `${PLAYFAST_API}/profile/${username}`,
-          type: 'Playfast API',
-          details: `❌ Falha na autenticação Playfast: ${errorMsg}`,
-          debug: { status: profileResp.status, response: profileText.slice(0, 500) },
-        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-      } catch (e) {
-        return new Response(JSON.stringify({
-          success: false,
-          details: `Erro ao conectar com Playfast: ${(e as Error).message}`,
-        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-      }
-    }
-
-    // --- Uniplay: REST API com JWT em gesapioffice.com (com reCAPTCHA v2, via VPS Relay) ---
+    // --- Uniplay: REST API com JWT em gesapioffice.com (com reCAPTCHA v2) ---
     if (isUniplay) {
       const UNIPLAY_API = 'https://gesapioffice.com';
       const uniplayFrontend = frontendUrl || 'https://gestordefender.com';
-      console.log(`🔄 Uniplay: Testando login JWT em ${UNIPLAY_API}/api/login (via VPS Relay)...`);
+      console.log(`🔄 Uniplay: Testando login JWT em ${UNIPLAY_API}/api/login...`);
       
-      // Verificar se o relay está funcionando
-      const relayCheck = await verifyRelay();
-      console.log(`🌐 Relay check: working=${relayCheck.working}, ip=${relayCheck.ip || 'n/a'}`);
+      // Verificar se a proxy está funcionando antes de continuar
+      const proxyCheck = await verifyProxy();
+      console.log(`🌐 Proxy check: working=${proxyCheck.working}, ip=${proxyCheck.ip || 'n/a'}`);
       
       try {
+        // siteKey conhecida do reCAPTCHA v2 do Uniplay (extraída do frontend)
         const UNIPLAY_RECAPTCHA_SITEKEY = '6LfTwuwfAAAAAGfw3TatjhOOCP2jNuPqO4U2xske';
 
         // Resolver reCAPTCHA v2 via 2Captcha
@@ -635,8 +569,8 @@ serve(async (req) => {
           console.log('⚠️ Uniplay: Não foi possível resolver reCAPTCHA v2');
         }
 
-        // Login via relay
-        const loginResp = await withTimeout(relayFetch(`${UNIPLAY_API}/api/login`, {
+        // Step 3: Login com captcha resolvido
+        const loginResp = await withTimeout(proxiedFetch(`${UNIPLAY_API}/api/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -646,28 +580,34 @@ serve(async (req) => {
             'Referer': `${uniplayFrontend}/`,
           },
           body: JSON.stringify({ username, password, code: captchaToken }),
-        }), 30000);
+        }), 15000);
 
         const loginText = await loginResp.text();
-        const { status: loginStatus, data: loginData } = parseRelayResponse(loginText);
+        let loginJson: any = null;
+        try { loginJson = JSON.parse(loginText); } catch {}
 
-        console.log(`📊 Uniplay login → relay status: ${loginStatus}, has_token: ${!!loginData?.access_token}`);
-        console.log(`📊 Uniplay response: ${JSON.stringify(loginData).slice(0, 500)}`);
+        // Log detalhado para debug
+        const respHeaders: Record<string, string> = {};
+        loginResp.headers.forEach((v, k) => { respHeaders[k] = v; });
+        console.log(`📊 Uniplay login → status: ${loginResp.status}, has_token: ${!!loginJson?.access_token}`);
+        console.log(`📊 Uniplay response body: ${loginText.slice(0, 500)}`);
+        console.log(`📊 Uniplay response headers: ${JSON.stringify(respHeaders)}`);
 
-        if (loginStatus < 400 && loginData?.access_token) {
-          // Try to get credits/account info via relay
+        if (loginResp.ok && loginJson?.access_token) {
+          // Try to get credits/account info
           let credits = null;
           const authHdrs = {
-            'Authorization': `Bearer ${loginData.access_token}`,
+            'Authorization': `Bearer ${loginJson.access_token}`,
             'Accept': 'application/json',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
           };
           try {
-            const dashResp = await withTimeout(relayFetch(`${UNIPLAY_API}/api/dash-reseller`, { method: 'GET', headers: authHdrs }), 15000);
+            const dashResp = await withTimeout(proxiedFetch(`${UNIPLAY_API}/api/dash-reseller`, { method: 'GET', headers: authHdrs }), 10000);
             const dashText = await dashResp.text();
-            const { data: dashData } = parseRelayResponse(dashText);
-            credits = dashData?.credits ?? dashData?.data?.credits ?? null;
-            console.log(`📊 Uniplay dash-reseller → credits: ${credits}`);
+            let dashJson: any = null;
+            try { dashJson = JSON.parse(dashText); } catch {}
+            credits = dashJson?.credits ?? dashJson?.data?.credits ?? null;
+            console.log(`📊 Uniplay dash-reseller → status: ${dashResp.status}, credits: ${credits}`);
           } catch (e) {
             console.log(`⚠️ Uniplay dash-reseller: ${(e as Error).message}`);
           }
@@ -683,28 +623,27 @@ serve(async (req) => {
               credits,
             },
             data: {
-              token_type: loginData.token_type,
-              expires_in: loginData.expires_in,
-              crypt_pass: loginData.crypt_pass ? true : false,
+              token_type: loginJson.token_type,
+              expires_in: loginJson.expires_in,
+              crypt_pass: loginJson.crypt_pass ? true : false,
               credits,
               captchaSolved: !!captchaToken,
-              relayIp: relayCheck.ip,
             },
             logs,
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
         }
 
         // Login failed
-        const errorMsg = loginData?.message || loginData?.error || JSON.stringify(loginData).slice(0, 200) || '';
-        const isGeoBlocked = loginStatus === 404 && !String(errorMsg).trim();
-        const needsCaptcha = !captchaToken && (loginStatus === 401 || String(errorMsg).toLowerCase().includes('captcha'));
+        const errorMsg = loginJson?.message || loginJson?.error || loginText.slice(0, 200) || '';
+        const isGeoBlocked = loginResp.status === 404 && !errorMsg.trim();
+        const needsCaptcha = !captchaToken && (loginResp.status === 401 || errorMsg.toLowerCase().includes('captcha'));
         
         let detailMsg: string;
         if (isGeoBlocked) {
-          const relayInfo = relayCheck.working 
-            ? `IP do relay: ${relayCheck.ip}` 
-            : `Relay não funcionou: ${relayCheck.error || 'desconhecido'}`;
-          detailMsg = `❌ A API do Uniplay (gesapioffice.com) retornou erro 404 — bloqueio geográfico de IP.\n\n⚠️ ${relayInfo}\n\n👉 Verifique se o relay está rodando e acessível. Verifique seu login diretamente em ${uniplayFrontend}.`;
+          const proxyInfo = proxyCheck.working 
+            ? `IP da proxy: ${proxyCheck.ip} (pode não ser brasileiro)` 
+            : `Proxy não funcionou: ${proxyCheck.error || 'desconhecido'}`;
+          detailMsg = `❌ A API do Uniplay (gesapioffice.com) retornou erro 404 — bloqueio geográfico de IP.\n\n⚠️ ${proxyInfo}\n\n💡 Deno.createHttpClient: ${typeof (Deno as any).createHttpClient === 'function' ? 'disponível' : 'NÃO disponível'}\n\n👉 Verifique se a proxy é brasileira e está ativa. Verifique seu login diretamente em ${uniplayFrontend}.`;
         } else if (needsCaptcha) {
           detailMsg = `Login Uniplay requer reCAPTCHA v2. A resolução via 2Captcha falhou — verifique o saldo/chave do 2Captcha. Verifique suas credenciais diretamente em ${uniplayFrontend}.`;
         } else {
@@ -716,7 +655,7 @@ serve(async (req) => {
           endpoint: `${UNIPLAY_API}/api/login`,
           type: 'Uniplay JWT',
           details: detailMsg,
-          debug: { status: loginStatus, response: JSON.stringify(loginData).slice(0, 500), captchaSolved: !!captchaToken, relayCheck },
+          debug: { status: loginResp.status, response: loginText.slice(0, 500), captchaSolved: !!captchaToken, proxyCheck },
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
       } catch (e) {
         return new Response(JSON.stringify({
@@ -982,9 +921,7 @@ serve(async (req) => {
     // Deduplicate
     candidates = Array.from(new Set(candidates));
 
-    for (const rawPath of candidates) {
-      // Replace {username} placeholder with actual username (e.g. Playfast: /profile/{username})
-      const path = rawPath.replace('{username}', encodeURIComponent(username));
+    for (const path of candidates) {
       const url = `${cleanBase}${path.startsWith('/') ? '' : '/'}${path}`;
       console.log(`🧪 Testando POST endpoint: ${path}`);
       try {
@@ -1013,28 +950,20 @@ serve(async (req) => {
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
         }
 
-        // Playfast: result === true with data means success
-        const isPlayfastSuccess = resp.ok && resultField === true && resp.json?.data;
-
-        const isSuccess = isPlayfastSuccess || (resp.ok && (
+        const isSuccess = resp.ok && (
           token || 
           resp.json?.success === true || 
           resp.json?.status === 'ok' || 
           resp.json?.user ||
           resultField === 'success' ||
           resultField === 'ok'
-        ));
+        );
         
         if (isSuccess) {
           console.log(`✅ Login bem-sucedido em: ${url}`);
           
           // Uniplay: buscar créditos via /api/dash-reseller
           let credits = null;
-          // Playfast: credits come directly in response data
-          if (isPlayfastSuccess && resp.json?.data?.credits !== undefined) {
-            credits = resp.json.data.credits;
-            console.log(`💰 Playfast créditos: ${credits}`);
-          }
           if (isUniplay && token) {
             try {
               const dashResp = await withTimeout(fetch(`${cleanBase}/api/dash-reseller`, {
@@ -1061,7 +990,7 @@ serve(async (req) => {
           return new Response(JSON.stringify({
             success: true,
             endpoint: url,
-            type: isUniplay ? 'Uniplay JWT' : isPlayfastSuccess ? 'Playfast API' : 'Panel',
+            type: isUniplay ? 'Uniplay JWT' : 'Panel',
             account: {
               status: 'Active',
               user: resp.json?.user || resp.json?.data?.user || { username },

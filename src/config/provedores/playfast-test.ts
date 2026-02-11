@@ -4,7 +4,7 @@ export const PLAYFAST_TEST_STRATEGY: TestStrategy = {
   steps: [
     {
       type: 'json-post',
-      endpoints: ['/profile/{username}'],
+      endpoints: ['/profile'],
       label: 'Playfast Profile Check',
     },
   ],
