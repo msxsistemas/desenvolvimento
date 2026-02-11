@@ -29,6 +29,7 @@ export default function FaturaPublica() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showPix, setShowPix] = useState(false);
+  const [generatingPix, setGeneratingPix] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const previousStatusRef = useRef<string | null>(null);
 
@@ -89,6 +90,32 @@ export default function FaturaPublica() {
     setCopied(true);
     toast({ title: "Copiado!", description: "Código PIX copiado para a área de transferência." });
     setTimeout(() => setCopied(false), 3000);
+  };
+
+  const handleGeneratePix = async () => {
+    if (!id) return;
+    setGeneratingPix(true);
+    try {
+      const resp = await fetch(
+        `https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/generate-fatura`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "generate-pix", fatura_id: id }),
+        }
+      );
+      const data = await resp.json();
+      if (data.success && data.fatura) {
+        setFatura(data.fatura as Fatura);
+        toast({ title: "✅ PIX gerado!", description: "QR Code e código disponíveis para pagamento." });
+      } else {
+        toast({ title: "Erro", description: data.error || "Não foi possível gerar o PIX.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Erro", description: "Erro ao gerar PIX. Tente novamente.", variant: "destructive" });
+    } finally {
+      setGeneratingPix(false);
+    }
   };
 
   if (loading) {
@@ -265,8 +292,21 @@ export default function FaturaPublica() {
                     </div>
                   )}
 
-                  {!fatura.pix_qr_code && !fatura.pix_copia_cola && fatura.gateway !== "pix_manual" && (
-                    <p className="text-sm text-slate-400 text-center py-2">Nenhum método de pagamento configurado.</p>
+                  {!fatura.pix_qr_code && !fatura.pix_copia_cola && !(fatura.gateway === "pix_manual" && fatura.pix_manual_key) && (
+                    <div className="flex flex-col items-center gap-3 py-4">
+                      <p className="text-sm text-slate-500 text-center">Clique abaixo para gerar seu código PIX</p>
+                      <Button
+                        className="h-11 gap-2 text-sm px-8 bg-[#3b9ede] hover:bg-[#2d8ace] text-white"
+                        onClick={handleGeneratePix}
+                        disabled={generatingPix}
+                      >
+                        {generatingPix ? (
+                          <><RefreshCw className="h-4 w-4 animate-spin" /> Gerando PIX...</>
+                        ) : (
+                          <><QrCode className="h-4 w-4" /> Gerar PIX</>
+                        )}
+                      </Button>
+                    </div>
                   )}
 
                   {isPending && (

@@ -184,6 +184,212 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Public action: generate PIX for existing fatura (no auth needed)
+    if (action === 'generate-pix') {
+      const { fatura_id } = body;
+      if (!fatura_id) {
+        return new Response(JSON.stringify({ error: 'fatura_id é obrigatório' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      const { data: fatura, error: faturaErr } = await supabaseAdmin
+        .from('faturas')
+        .select('*')
+        .eq('id', fatura_id)
+        .maybeSingle();
+
+      if (faturaErr || !fatura) {
+        return new Response(JSON.stringify({ error: 'Fatura não encontrada' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
+      }
+
+      if (fatura.status === 'pago') {
+        return new Response(JSON.stringify({ success: true, fatura, message: 'Fatura já paga' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // If PIX data already exists, just return it
+      if (fatura.pix_qr_code || fatura.pix_copia_cola || (fatura.gateway === 'pix_manual' && fatura.pix_manual_key)) {
+        return new Response(JSON.stringify({ success: true, fatura }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // Get checkout config from the fatura owner
+      const { data: checkoutConfig } = await supabaseAdmin
+        .from('checkout_config')
+        .select('*')
+        .eq('user_id', fatura.user_id)
+        .maybeSingle();
+
+      const gatewayAtivo = checkoutConfig?.gateway_ativo || fatura.gateway || 'asaas';
+      let pix_qr_code: string | null = null;
+      let pix_copia_cola: string | null = null;
+      let pix_manual_key: string | null = null;
+      let gateway_charge_id: string | null = fatura.gateway_charge_id;
+      let gateway = fatura.gateway;
+
+      if (checkoutConfig?.pix_enabled) {
+        gateway = gatewayAtivo;
+
+        if (gatewayAtivo === 'asaas') {
+          const asaasApiKey = Deno.env.get('ASAAS_API_KEY');
+          if (asaasApiKey) {
+            try {
+              // Create or find customer
+              const custResp = await fetch(`${ASAAS_BASE_URL}/customers`, {
+                method: 'POST',
+                headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: fatura.cliente_nome, phone: fatura.cliente_whatsapp })
+              });
+              let custData = await custResp.json();
+
+              if (!custResp.ok && custData.errors?.[0]?.description?.includes('already exists')) {
+                const searchResp = await fetch(`${ASAAS_BASE_URL}/customers?name=${encodeURIComponent(fatura.cliente_nome)}&limit=1`, {
+                  headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
+                });
+                const searchData = await searchResp.json();
+                if (searchData.data?.[0]) custData = searchData.data[0];
+              }
+
+              if (custData.id) {
+                const chargeResp = await fetch(`${ASAAS_BASE_URL}/payments`, {
+                  method: 'POST',
+                  headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    customer: custData.id,
+                    billingType: 'PIX',
+                    value: fatura.valor,
+                    description: `Renovação - ${fatura.plano_nome || 'Plano'}`,
+                  })
+                });
+                const chargeData = await chargeResp.json();
+
+                if (chargeResp.ok && chargeData.id) {
+                  gateway_charge_id = chargeData.id;
+                  const pixResp = await fetch(`${ASAAS_BASE_URL}/payments/${chargeData.id}/pixQrCode`, {
+                    headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
+                  });
+                  const pixData = await pixResp.json();
+                  if (pixResp.ok) {
+                    pix_qr_code = pixData.encodedImage || null;
+                    pix_copia_cola = pixData.payload || null;
+                  }
+
+                  await supabaseAdmin.from('cobrancas').upsert({
+                    user_id: fatura.user_id, gateway: 'asaas', gateway_charge_id: chargeData.id,
+                    cliente_whatsapp: fatura.cliente_whatsapp, cliente_nome: fatura.cliente_nome,
+                    valor: fatura.valor, status: 'pendente',
+                  }, { onConflict: 'gateway_charge_id' });
+                }
+              }
+            } catch (err: any) {
+              console.error('Asaas PIX generate error:', err.message);
+            }
+          }
+        } else if (gatewayAtivo === 'mercadopago') {
+          try {
+            const { data: mpConfig } = await supabaseAdmin
+              .from('mercadopago_config')
+              .select('access_token_hash')
+              .eq('user_id', fatura.user_id)
+              .eq('is_configured', true)
+              .maybeSingle();
+
+            if (mpConfig?.access_token_hash) {
+              const accessToken = atob(mpConfig.access_token_hash);
+              const mpResp = await fetch('https://api.mercadopago.com/v1/payments', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  transaction_amount: fatura.valor,
+                  description: `Renovação - ${fatura.plano_nome || 'Plano'}`,
+                  payment_method_id: 'pix',
+                  payer: { email: `${fatura.cliente_whatsapp}@fatura.com` },
+                }),
+              });
+              const mpData = await mpResp.json();
+
+              if (mpResp.ok && mpData.id) {
+                gateway_charge_id = String(mpData.id);
+                pix_qr_code = mpData.point_of_interaction?.transaction_data?.qr_code_base64 || null;
+                pix_copia_cola = mpData.point_of_interaction?.transaction_data?.qr_code || null;
+
+                await supabaseAdmin.from('cobrancas').upsert({
+                  user_id: fatura.user_id, gateway: 'mercadopago', gateway_charge_id: String(mpData.id),
+                  cliente_whatsapp: fatura.cliente_whatsapp, cliente_nome: fatura.cliente_nome,
+                  valor: fatura.valor, status: 'pendente',
+                }, { onConflict: 'gateway_charge_id' });
+              }
+            }
+          } catch (err: any) {
+            console.error('MercadoPago PIX generate error:', err.message);
+          }
+        } else if (gatewayAtivo === 'ciabra') {
+          try {
+            const { data: ciabraConfig } = await supabaseAdmin
+              .from('ciabra_config')
+              .select('api_key_hash')
+              .eq('user_id', fatura.user_id)
+              .eq('is_configured', true)
+              .maybeSingle();
+
+            if (ciabraConfig?.api_key_hash) {
+              const apiKey = atob(ciabraConfig.api_key_hash);
+              const ciabraResp = await fetch('https://api.az.center/v1/charges', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  amount: Math.round(fatura.valor * 100),
+                  description: `Renovação - ${fatura.plano_nome || 'Plano'}`,
+                  payment_method: 'pix',
+                }),
+              });
+              const ciabraData = await ciabraResp.json();
+
+              if (ciabraResp.ok && ciabraData.id) {
+                gateway_charge_id = ciabraData.id;
+                pix_qr_code = ciabraData.pix?.qr_code_base64 || ciabraData.qr_code_base64 || null;
+                pix_copia_cola = ciabraData.pix?.qr_code || ciabraData.pix_copia_cola || null;
+
+                await supabaseAdmin.from('cobrancas').upsert({
+                  user_id: fatura.user_id, gateway: 'ciabra', gateway_charge_id: ciabraData.id,
+                  cliente_whatsapp: fatura.cliente_whatsapp, cliente_nome: fatura.cliente_nome,
+                  valor: fatura.valor, status: 'pendente',
+                }, { onConflict: 'gateway_charge_id' });
+              }
+            }
+          } catch (err: any) {
+            console.error('Ciabra PIX generate error:', err.message);
+          }
+        }
+      }
+
+      // Fallback to PIX manual
+      if (!pix_qr_code && !pix_copia_cola && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
+        gateway = 'pix_manual';
+        pix_manual_key = checkoutConfig.pix_manual_key;
+      }
+
+      // Update fatura with PIX data
+      const updateData: Record<string, unknown> = {};
+      if (pix_qr_code) updateData.pix_qr_code = pix_qr_code;
+      if (pix_copia_cola) updateData.pix_copia_cola = pix_copia_cola;
+      if (pix_manual_key) updateData.pix_manual_key = pix_manual_key;
+      if (gateway) updateData.gateway = gateway;
+      if (gateway_charge_id) updateData.gateway_charge_id = gateway_charge_id;
+
+      if (Object.keys(updateData).length > 0) {
+        await supabaseAdmin.from('faturas').update(updateData).eq('id', fatura.id);
+      }
+
+      const updatedFatura = { ...fatura, ...updateData };
+      console.log(`✅ PIX generated on-demand for fatura ${fatura.id}, gateway: ${gateway}`);
+
+      return new Response(JSON.stringify({ success: true, fatura: updatedFatura }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+
     // Auth required for other actions
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
