@@ -10,7 +10,7 @@ export const UNIPLAY_TEST_STRATEGY: TestStrategy = {
   steps: [
     {
       type: 'json-post',
-      endpoints: ['/api/login'],
+      endpoints: ['/login'],
       label: 'Uniplay JWT API',
     },
   ],
