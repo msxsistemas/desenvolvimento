@@ -35,7 +35,7 @@ export const UNIPLAY_CONFIG: ProviderConfig = {
   nomePlaceholder: 'Ex: Uniplay Principal, Uniplay Backup',
   urlPlaceholder: 'https://gestordefender.com',
   usuarioPlaceholder: 'seu_usuario',
-  loginEndpoint: '/login',
+  loginEndpoint: '/api/login',
   loginMethod: 'POST',
   buildLoginPayload: (usuario: string, senha: string) => ({
     username: usuario,

@@ -615,7 +615,7 @@ serve(async (req) => {
     if (isUniplay) {
       const UNIPLAY_API = 'https://gesapioffice.com';
       const uniplayFrontend = frontendUrl || 'https://gestordefender.com';
-      console.log(`🔄 Uniplay: Testando login JWT em ${UNIPLAY_API}/login (via VPS Relay)...`);
+      console.log(`🔄 Uniplay: Testando login JWT em ${UNIPLAY_API}/api/login (via VPS Relay)...`);
       
       // Verificar se o relay está funcionando
       const relayCheck = await verifyRelay();
@@ -636,7 +636,7 @@ serve(async (req) => {
         }
 
         // Login via relay
-        const loginResp = await withTimeout(relayFetch(`${UNIPLAY_API}/login`, {
+        const loginResp = await withTimeout(relayFetch(`${UNIPLAY_API}/api/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -674,7 +674,7 @@ serve(async (req) => {
 
           return new Response(JSON.stringify({
             success: true,
-            endpoint: `${UNIPLAY_API}/login`,
+            endpoint: `${UNIPLAY_API}/api/login`,
             type: 'Uniplay JWT',
             account: {
               status: 'Active',
@@ -713,7 +713,7 @@ serve(async (req) => {
         
         return new Response(JSON.stringify({
           success: false,
-          endpoint: `${UNIPLAY_API}/login`,
+          endpoint: `${UNIPLAY_API}/api/login`,
           type: 'Uniplay JWT',
           details: detailMsg,
           debug: { status: loginStatus, response: JSON.stringify(loginData).slice(0, 500), captchaSolved: !!captchaToken, relayCheck },

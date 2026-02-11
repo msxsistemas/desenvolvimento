@@ -106,7 +106,7 @@ async function loginUniplay(username: string, password: string): Promise<LoginRe
     const solved = await solve2CaptchaV2(UNIPLAY_RECAPTCHA_SITEKEY, 'https://gestordefender.com/login');
     if (solved) captchaToken = solved;
 
-    const resp = await withTimeout(relayFetch(`${UNIPLAY_API_BASE}/login`, {
+    const resp = await withTimeout(relayFetch(`${UNIPLAY_API_BASE}/api/login`, {
       method: 'POST',
       headers: API_HEADERS,
       body: JSON.stringify({ username, password, code: captchaToken }),

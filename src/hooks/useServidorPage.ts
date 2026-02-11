@@ -219,12 +219,12 @@ export function useServidorPage(providerId: string) {
           const { data, error } = await supabase.functions.invoke('test-panel-connection', {
             body: {
               baseUrl: resolvedBaseUrl, username: usuario, password: senha,
-              endpointPath: '/login',
+              endpointPath: '/api/login',
               endpointMethod: 'POST',
               loginPayload: { username: usuario, password: senha, code: '' },
               providerId: 'uniplay',
               frontendUrl: formData.urlPainel.trim() || 'https://gestordefender.com',
-              testSteps: [{ type: 'json-post', endpoints: ['/login'], label: 'Uniplay JWT API' }],
+              testSteps: [{ type: 'json-post', endpoints: ['/api/login'], label: 'Uniplay JWT API' }],
               extraHeaders: { Accept: 'application/json' },
             },
           });
@@ -246,7 +246,7 @@ export function useServidorPage(providerId: string) {
           } else {
             setTestResultModal({
               isOpen: true, success: false, message: "FALHA NA AUTENTICAÇÃO",
-              details: `❌ Painel: ${nomePainel}\n🔗 API: ${resolvedBaseUrl}/login\n👤 Usuário: ${usuario}\n\n❌ ${data.details || 'Credenciais inválidas.'}`,
+              details: `❌ Painel: ${nomePainel}\n🔗 API: ${resolvedBaseUrl}/api/login\n👤 Usuário: ${usuario}\n\n❌ ${data.details || 'Credenciais inválidas.'}`,
             });
           }
         } catch (err: any) {
