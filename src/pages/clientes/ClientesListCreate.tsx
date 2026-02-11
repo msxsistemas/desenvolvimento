@@ -8,7 +8,7 @@ import { replaceMessageVariables } from "@/utils/message-variables";
 import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash, Plus, Send, RefreshCw, Power, Bell, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit, Trash, Plus, Send, RefreshCw, Power, Bell, Loader2, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { format } from "date-fns";
 import type { Cliente } from "@/types/database";
 import { Input } from "@/components/ui/input";
@@ -380,7 +380,64 @@ export default function ClientesListCreate() {
     });
   };
 
-  // Função para abrir diálogo de WhatsApp
+  // Função para gerar fatura
+  const [gerandoFaturaId, setGerandoFaturaId] = useState<string | null>(null);
+  const handleGerarFatura = async (cliente: Cliente) => {
+    if (!cliente.whatsapp || !cliente.nome) {
+      toast({ title: "Erro", description: "Cliente sem dados obrigatórios", variant: "destructive" });
+      return;
+    }
+
+    setGerandoFaturaId(cliente.id!);
+    try {
+      const plano = planos.find(p => String(p.id) === String(cliente.plano));
+      const planoNome = plano?.nome || cliente.plano || "Plano";
+      const valorPlano = plano?.valor || "0";
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: "Erro", description: "Usuário não autenticado", variant: "destructive" });
+        return;
+      }
+
+      const resp = await fetch(
+        `https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/generate-fatura`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            action: "create",
+            cliente_id: cliente.id,
+            cliente_nome: cliente.nome,
+            cliente_whatsapp: cliente.whatsapp,
+            plano_nome: planoNome,
+            valor: valorPlano,
+          }),
+        }
+      );
+
+      const result = await resp.json();
+      if (!resp.ok || result.error) {
+        throw new Error(result.error || "Erro ao gerar fatura");
+      }
+
+      toast({ title: "Fatura gerada!", description: `Fatura criada para ${cliente.nome}` });
+      
+      // Abrir fatura em nova aba se tiver ID
+      if (result.fatura?.id) {
+        window.open(`/fatura/${result.fatura.id}`, "_blank");
+      }
+    } catch (error: any) {
+      console.error("Erro ao gerar fatura:", error);
+      toast({ title: "Erro", description: error.message || "Erro ao gerar fatura", variant: "destructive" });
+    } finally {
+      setGerandoFaturaId(null);
+    }
+  };
+
   const handleEnviarWhatsApp = (cliente: Cliente) => {
     if (!cliente || !cliente.whatsapp) return;
     setClienteParaWhatsapp(cliente);
@@ -1326,6 +1383,23 @@ export default function ClientesListCreate() {
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               <Bell className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-accent-foreground hover:text-accent-foreground/80"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGerarFatura(cliente);
+                            }}
+                            disabled={gerandoFaturaId === cliente.id}
+                            title="Gerar fatura"
+                          >
+                            {gerandoFaturaId === cliente.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <FileText className="h-4 w-4" />
                             )}
                           </Button>
                           <Button
