@@ -27,6 +27,9 @@ const PROVIDER_LABELS: Record<string, string> = {
   'uniplay': 'Uniplay e Franquias',
 };
 
+// Provedores que suportam P2P (além de IPTV)
+const PROVEDORES_COM_P2P = ['mundogf'];
+
 export default function ProdutosCadastro() {
   const navigate = useNavigate();
   const { criar } = useProdutos();
@@ -44,6 +47,7 @@ export default function ProdutosCadastro() {
     provedorIptv: "",
     painelId: "",
     renovacaoAutomatica: false,
+    tipoServico: "iptv" as "iptv" | "p2p",
   });
 
   useEffect(() => {
@@ -67,7 +71,13 @@ export default function ProdutosCadastro() {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
       // Limpar painel quando trocar provedor
-      if (field === 'provedorIptv') updated.painelId = '';
+      if (field === 'provedorIptv') {
+        updated.painelId = '';
+        // Auto-set tipo: se provedor não tem P2P, força IPTV
+        if (!PROVEDORES_COM_P2P.includes(value as string)) {
+          updated.tipoServico = 'iptv';
+        }
+      }
       return updated;
     });
   };
@@ -105,6 +115,7 @@ export default function ProdutosCadastro() {
         provedor_iptv: formData.provedorIptv || null,
         painel_id: formData.painelId || null,
         renovacao_automatica: formData.renovacaoAutomatica,
+        tipo_servico: formData.tipoServico,
         user_id: user.id,
       });
 
@@ -219,6 +230,22 @@ export default function ProdutosCadastro() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {formData.provedorIptv && PROVEDORES_COM_P2P.includes(formData.provedorIptv) && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Tipo de Serviço</Label>
+                      <Select value={formData.tipoServico} onValueChange={(value) => handleInputChange("tipoServico", value)}>
+                        <SelectTrigger className="bg-background border-border">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="iptv">IPTV</SelectItem>
+                          <SelectItem value="p2p">P2P</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">Este servidor suporta IPTV e P2P</p>
+                    </div>
+                  )}
 
                   {formData.provedorIptv && paineisFiltrados.length > 0 && (
                     <div className="space-y-2">
