@@ -230,6 +230,7 @@ serve(async (req) => {
     const isKoffice = providerId === 'koffice-api' || providerId === 'koffice-v2';
     const isMundogf = providerId === 'mundogf';
     const isSigma = providerId === 'sigma-v2';
+    const isPlayfast = providerId === 'playfast';
 
     // Only discover API structure for unknown providers
     if (!providerId || isKoffice || isMundogf) {
@@ -545,6 +546,67 @@ serve(async (req) => {
         return new Response(JSON.stringify({
           success: false,
           details: `Erro ao conectar: ${(e as Error).message}`,
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+      }
+    }
+
+    // --- Playfast: REST API com token na URL e secret no body ---
+    if (isPlayfast) {
+      const PLAYFAST_API = cleanBase || 'https://api.painelcliente.com';
+      console.log(`🔄 Playfast: Testando perfil em ${PLAYFAST_API}/profile/${username}...`);
+
+      try {
+        const profileResp = await withTimeout(fetch(`${PLAYFAST_API}/profile/${encodeURIComponent(username)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          },
+          body: JSON.stringify({ secret: password }),
+        }), 15000);
+
+        const profileText = await profileResp.text();
+        let profileJson: any = null;
+        try { profileJson = JSON.parse(profileText); } catch {}
+
+        console.log(`📊 Playfast profile → status: ${profileResp.status}, result: ${profileJson?.result}`);
+
+        if (profileResp.ok && profileJson?.result === true && profileJson?.data) {
+          const d = profileJson.data;
+          console.log(`✅ Playfast login OK! Créditos: ${d.credits}, Status: ${d.status}`);
+          return new Response(JSON.stringify({
+            success: true,
+            endpoint: `${PLAYFAST_API}/profile/${username}`,
+            type: 'Playfast API',
+            account: {
+              status: d.status || 'Active',
+              user: { username: d.username || username, email: d.email },
+              credits: d.credits,
+            },
+            data: {
+              credits: d.credits,
+              username: d.username,
+              email: d.email,
+              status: d.status,
+            },
+            logs,
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+        }
+
+        // Auth failed
+        const errorMsg = profileJson?.mens || profileJson?.message || profileJson?.error || profileText.slice(0, 200);
+        return new Response(JSON.stringify({
+          success: false,
+          endpoint: `${PLAYFAST_API}/profile/${username}`,
+          type: 'Playfast API',
+          details: `❌ Falha na autenticação Playfast: ${errorMsg}`,
+          debug: { status: profileResp.status, response: profileText.slice(0, 500) },
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+      } catch (e) {
+        return new Response(JSON.stringify({
+          success: false,
+          details: `Erro ao conectar com Playfast: ${(e as Error).message}`,
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
       }
     }
