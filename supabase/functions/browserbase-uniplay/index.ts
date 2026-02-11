@@ -234,24 +234,24 @@ async function automateUniplayLogin(cdp: CDPSession, username: string, password:
     // === STEP 2: Type username ===
     console.log("📝 Preenchendo formulário de login...");
     const focusedUser = await cdp.send("Runtime.evaluate", {
-      expression: `
-        const el = document.querySelector('input[placeholder="Usuário"], input[type="text"]');
-        if (el) { el.focus(); el.value = ''; el.dispatchEvent(new Event('focus', {bubbles:true})); }
-        !!el;
-      `,
+      expression: `(function() {
+        const el = document.querySelector('input[placeholder="Usuário"]');
+        if (el) { el.click(); el.focus(); el.value = ''; }
+        return !!el;
+      })()`,
       returnByValue: true,
     });
     console.log(`👤 Username field found: ${focusedUser.result?.value}`);
     await cdpTypeText(cdp, username);
 
-    // === STEP 3: Type password ===
-    await new Promise(r => setTimeout(r, 200));
+    // === STEP 3: Type password (click to ensure focus moves) ===
+    await new Promise(r => setTimeout(r, 300));
     const focusedPass = await cdp.send("Runtime.evaluate", {
-      expression: `
-        const el = document.querySelector('input[type="password"]');
-        if (el) { el.focus(); el.value = ''; el.dispatchEvent(new Event('focus', {bubbles:true})); }
-        !!el;
-      `,
+      expression: `(function() {
+        const el = document.querySelector('input[placeholder="Senha"]');
+        if (el) { el.click(); el.focus(); el.value = ''; }
+        return !!el;
+      })()`,
       returnByValue: true,
     });
     console.log(`🔑 Password field found: ${focusedPass.result?.value}`);
