@@ -395,23 +395,40 @@ serve(async (req) => {
         } catch {}
       }
 
-      // Fetch the renewal page to extract valid option values from dropdown
+      // Fetch the extend modal to extract valid option values from dropdown
+      // The endpoint is GET /clients/{id}/extend (returns HTML modal with select options)
       try {
-        const renewPageResp = await withTimeout(fetch(`${cleanBase}/clients/${resolvedUserId}/edit`, {
+        const extendPageResp = await withTimeout(fetch(`${cleanBase}/clients/${resolvedUserId}/extend`, {
           method: 'GET',
           headers: {
             'Cookie': login.cookies,
-            'User-Agent': 'Mozilla/5.0',
-            'Referer': `${cleanBase}/clients`,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': '*/*',
+            'Referer': `${cleanBase}/clients/${resolvedUserId}`,
           },
         }), 10000);
-        const renewPageHtml = await renewPageResp.text();
+        const extendHtml = await extendPageResp.text();
+        console.log(`📄 Extend page: ${extendPageResp.status}, length=${extendHtml.length}`);
         
-        // Extract option values from the renewal period dropdown
-        // Look for select with options like <option value="1">1 Mês</option>
-        const optionMatches = renewPageHtml.match(/<option\s+value=["']([^"']+)["'][^>]*>([^<]+)<\/option>/gi);
+        // Extract option values from the select dropdown
+        // HTML format: <option value="92" data-credi...>1 Mês</option>
+        const optionMatches = extendHtml.match(/<option\s[^>]*value=["']([^"']+)["'][^>]*>\s*([\s\S]*?)\s*<\/option>/gi);
         if (optionMatches) {
-          console.log(`📋 Available options: ${optionMatches.map(m => m.replace(/<[^>]*>/g, '')).join(', ')}`);
+          const parsedOptions: { value: string; text: string }[] = [];
+          for (const match of optionMatches) {
+            const optionMatch = match.match(/<option\s[^>]*value=["']([^"']+)["'][^>]*>\s*([\s\S]*?)\s*<\/option>/i);
+            if (optionMatch) {
+              const val = optionMatch[1].trim();
+              const txt = optionMatch[2].trim();
+              // Skip non-numeric options like "custom" and "add_screens"
+              if (val && txt && val !== 'custom' && val !== 'add_screens') {
+                parsedOptions.push({ value: val, text: txt });
+              }
+            }
+          }
+          
+          console.log(`📋 Parsed options: ${JSON.stringify(parsedOptions)}`);
           
           // Map duration to month count
           let targetMonths = Number(duration);
@@ -419,22 +436,11 @@ serve(async (req) => {
             targetMonths = Math.max(1, Math.ceil(Number(duration) / 30));
           }
           
-          // Extract all options into a list
-          const parsedOptions: { value: string; text: string }[] = [];
-          for (const match of optionMatches) {
-            const optionMatch = match.match(/<option\s+value=["']([^"']+)["'][^>]*>([^<]+)<\/option>/i);
-            if (optionMatch) {
-              parsedOptions.push({ value: optionMatch[1], text: optionMatch[2].trim() });
-            }
-          }
-          
-          console.log(`📋 Parsed options: ${JSON.stringify(parsedOptions)}`);
-          
-          // Priority 1: Exact match like "1 Mês" or "3 Meses"
+          // Priority 1: Exact text match like "1 Mês" or "3 Meses"
           const exactMatch = parsedOptions.find(o => {
-            const textLower = o.text.toLowerCase();
-            if (targetMonths === 1 && (textLower === '1 mês' || textLower === '1 mes')) return true;
-            if (targetMonths > 1 && textLower === `${targetMonths} meses`) return true;
+            const textLower = o.text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            if (targetMonths === 1 && (textLower === '1 mes' || textLower.includes('1 mes'))) return true;
+            if (targetMonths > 1 && (textLower === `${targetMonths} meses` || textLower.includes(`${targetMonths} meses`))) return true;
             return false;
           });
           
@@ -450,11 +456,17 @@ serve(async (req) => {
             if (partialMatch) {
               validOption = partialMatch.value;
               console.log(`✅ Partial match: value="${partialMatch.value}", text="${partialMatch.text}"`);
+            } else if (parsedOptions.length > 0) {
+              // Priority 3: Use first available option as last resort
+              validOption = parsedOptions[0].value;
+              console.log(`⚠️ No month match, using first option: value="${parsedOptions[0].value}", text="${parsedOptions[0].text}"`);
             }
           }
+        } else {
+          console.log(`⚠️ No <option> tags found in extend page`);
         }
-      } catch (e) {
-        console.log(`⚠️ Could not fetch renewal page: ${e.message}`);
+      } catch (e: any) {
+        console.log(`⚠️ Could not fetch extend page: ${e.message}`);
       }
 
       // Build maxCons from clienteScreens parameter
