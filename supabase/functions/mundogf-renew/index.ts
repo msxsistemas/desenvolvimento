@@ -16,23 +16,26 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 
 async function solve2Captcha(siteKey: string, pageUrl: string): Promise<string | null> {
   const apiKey = Deno.env.get('TWOCAPTCHA_API_KEY');
-  if (!apiKey) return null;
+  if (!apiKey) { console.log('⚠️ 2Captcha: API key não configurada'); return null; }
   try {
+    console.log('🤖 2Captcha: Enviando reCAPTCHA para resolução...');
     const submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&version=v3&action=login&min_score=0.3&json=1`;
     const submitResp = await withTimeout(fetch(submitUrl), 15000);
     const submitJson = await submitResp.json();
-    if (submitJson.status !== 1) return null;
+    if (submitJson.status !== 1) { console.log(`❌ 2Captcha submit falhou: ${JSON.stringify(submitJson)}`); return null; }
     const taskId = submitJson.request;
-    for (let i = 0; i < 24; i++) {
+    console.log(`🤖 2Captcha: Task ${taskId}, aguardando...`);
+    for (let i = 0; i < 10; i++) {
       await new Promise(r => setTimeout(r, 5000));
       const resultUrl = `https://2captcha.com/res.php?key=${apiKey}&action=get&id=${taskId}&json=1`;
       const resultResp = await withTimeout(fetch(resultUrl), 10000);
       const resultJson = await resultResp.json();
-      if (resultJson.status === 1) return resultJson.request;
-      if (resultJson.request !== 'CAPCHA_NOT_READY') return null;
+      if (resultJson.status === 1) { console.log(`✅ 2Captcha resolvido em ${(i+1)*5}s`); return resultJson.request; }
+      if (resultJson.request !== 'CAPCHA_NOT_READY') { console.log(`❌ 2Captcha erro: ${resultJson.request}`); return null; }
     }
+    console.log('❌ 2Captcha: timeout após 50s');
     return null;
-  } catch { return null; }
+  } catch (e: any) { console.log(`❌ 2Captcha erro: ${e.message}`); return null; }
 }
 
 function mergeSetCookies(existing: string, setCookieHeader: string | null): string {
@@ -47,6 +50,7 @@ function mergeSetCookies(existing: string, setCookieHeader: string | null): stri
 
 async function loginMundoGF(baseUrl: string, username: string, password: string): Promise<{ success: boolean; cookies: string; csrf: string; error?: string }> {
   const cleanBase = baseUrl.replace(/\/$/, '');
+  console.log(`🔐 MundoGF Login: ${cleanBase} (user: ${username})`);
   
   const loginResp = await withTimeout(fetch(`${cleanBase}/login`, {
     method: 'GET',
@@ -100,8 +104,9 @@ async function loginMundoGF(baseUrl: string, username: string, password: string)
   await postResp.text();
 
   const isSuccess = (postResp.status === 302 || postResp.status === 301) && postLocation && !postLocation.toLowerCase().includes('/login');
+  console.log(`📊 Login POST → status: ${postResp.status}, redirect: ${postLocation.slice(0, 80)}, success: ${isSuccess}`);
   if (!isSuccess) {
-    return { success: false, cookies: '', csrf: '', error: `Login falhou (status: ${postResp.status})` };
+    return { success: false, cookies: '', csrf: '', error: `Login falhou (status: ${postResp.status}, location: ${postLocation.slice(0, 100)})` };
   }
 
   // Follow redirect to capture session cookies and get fresh CSRF
