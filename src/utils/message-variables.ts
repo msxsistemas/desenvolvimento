@@ -32,6 +32,8 @@ export const messageVariables: MessageVariable[] = [
   { key: "{dispositivo}", label: "Dispositivo", description: "Dispositivo do cliente", sampleValue: "Smart TV" },
   { key: "{telas}", label: "Telas", description: "Quantidade de telas do cliente", sampleValue: "2" },
   { key: "{mac}", label: "MAC", description: "Endereço MAC do dispositivo", sampleValue: "AA:BB:CC:DD:EE:FF" },
+  { key: "{link_fatura}", label: "Link da Fatura", description: "Link de pagamento da fatura do cliente", sampleValue: "https://seusite.com/fatura/abc123" },
+  { key: "{fatura_pdf}", label: "Fatura PDF", description: "Link para download da fatura em PDF", sampleValue: "https://seusite.com/fatura/abc123/pdf" },
 ];
 
 /** List of variable keys for display */
@@ -80,6 +82,8 @@ export function replaceMessageVariables(
   extraData?: {
     pix?: string;
     valor_plano?: string;
+    link_fatura?: string;
+    fatura_pdf?: string;
   }
 ): string {
   if (!template) return "";
@@ -120,6 +124,8 @@ export function replaceMessageVariables(
     "{dispositivo}": clientData.dispositivo || "",
     "{telas}": clientData.telas?.toString() || "",
     "{mac}": clientData.mac || "",
+    "{link_fatura}": extraData?.link_fatura || "",
+    "{fatura_pdf}": extraData?.fatura_pdf || "",
   };
 
   Object.entries(replacements).forEach(([key, value]) => {
