@@ -392,7 +392,7 @@ export default function ClientesListCreate() {
     try {
       const plano = planos.find(p => String(p.id) === String(cliente.plano));
       const planoNome = plano?.nome || cliente.plano || "Plano";
-      const valorPlano = plano?.valor || "0";
+      const valorPlano = plano?.valor && plano.valor.trim() !== "" ? plano.valor : "0";
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {

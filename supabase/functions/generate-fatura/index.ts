@@ -174,9 +174,10 @@ serve(async (req) => {
 
     if (action === 'create') {
       const { cliente_id, cliente_nome, cliente_whatsapp, plano_nome, valor } = body;
+      const parsedValor = parseFloat(valor) || 0;
 
-      if (!cliente_nome || !cliente_whatsapp || !valor) {
-        return new Response(JSON.stringify({ error: 'Dados obrigatórios: cliente_nome, cliente_whatsapp, valor' }),
+      if (!cliente_nome || !cliente_whatsapp || isNaN(parseFloat(valor))) {
+        return new Response(JSON.stringify({ error: 'Dados obrigatórios: cliente_nome, cliente_whatsapp, valor (numérico válido)' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
 
@@ -225,7 +226,7 @@ serve(async (req) => {
                   body: JSON.stringify({
                     customer: custData.id,
                     billingType: 'PIX',
-                    value: parseFloat(valor),
+                    value: parsedValor,
                     description: `Renovação - ${plano_nome || 'Plano'}`,
                   })
                 });
@@ -244,7 +245,7 @@ serve(async (req) => {
 
                   await supabaseAdmin.from('cobrancas').insert({
                     user_id: user.id, gateway: 'asaas', gateway_charge_id: chargeData.id,
-                    cliente_whatsapp, cliente_nome, valor: parseFloat(valor), status: 'pendente',
+                    cliente_whatsapp, cliente_nome, valor: parsedValor, status: 'pendente',
                   });
                 }
               }
@@ -292,7 +293,7 @@ serve(async (req) => {
 
               await supabaseAdmin.from('cobrancas').insert({
                 user_id: user.id, gateway: 'mercadopago', gateway_charge_id: mpData.charge_id,
-                cliente_whatsapp, cliente_nome, valor: parseFloat(valor), status: 'pendente',
+                cliente_whatsapp, cliente_nome, valor: parsedValor, status: 'pendente',
               });
             }
           } catch (err: any) {
@@ -325,7 +326,7 @@ serve(async (req) => {
 
               await supabaseAdmin.from('cobrancas').insert({
                 user_id: user.id, gateway: 'ciabra', gateway_charge_id: ciabraData.charge_id,
-                cliente_whatsapp, cliente_nome, valor: parseFloat(valor), status: 'pendente',
+                cliente_whatsapp, cliente_nome, valor: parsedValor, status: 'pendente',
               });
             }
           } catch (err: any) {
@@ -348,7 +349,7 @@ serve(async (req) => {
           cliente_nome,
           cliente_whatsapp,
           plano_nome: plano_nome || null,
-          valor: parseFloat(valor),
+          valor: parsedValor,
           gateway,
           gateway_charge_id,
           pix_qr_code,
@@ -384,7 +385,7 @@ serve(async (req) => {
           if (sessions && sessions.length > 0) {
             const sessionId = sessions[0].session_id;
             const phone = cliente_whatsapp.replace(/\D/g, '');
-            const message = `Olá ${cliente_nome}! 🧾\n\nSua fatura de renovação está disponível:\n\n📋 *Plano:* ${plano_nome || 'N/A'}\n💰 *Valor:* R$ ${parseFloat(valor).toFixed(2)}\n\n🔗 Acesse o link para pagar:\n${faturaUrl}\n\nObrigado! 🙏`;
+            const message = `Olá ${cliente_nome}! 🧾\n\nSua fatura de renovação está disponível:\n\n📋 *Plano:* ${plano_nome || 'N/A'}\n💰 *Valor:* R$ ${parsedValor.toFixed(2)}\n\n🔗 Acesse o link para pagar:\n${faturaUrl}\n\nObrigado! 🙏`;
             
             await fetch(`${evolutionUrl}/message/sendText/${sessionId}`, {
               method: 'POST',
