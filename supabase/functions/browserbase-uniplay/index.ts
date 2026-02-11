@@ -150,6 +150,23 @@ class CDPSession {
   close() { try { this.ws.close(); } catch {} }
 }
 
+// ==================== Helper: Type text via CDP Input domain ====================
+async function cdpTypeText(cdp: CDPSession, text: string): Promise<void> {
+  for (const char of text) {
+    await cdp.send("Input.dispatchKeyEvent", {
+      type: "keyDown",
+      key: char,
+      text: char,
+      unmodifiedText: char,
+    });
+    await cdp.send("Input.dispatchKeyEvent", {
+      type: "keyUp",
+      key: char,
+    });
+    await new Promise(r => setTimeout(r, 30));
+  }
+}
+
 // ==================== Automação de Login ====================
 async function automateUniplayLogin(cdp: CDPSession, username: string, password: string): Promise<{ success: boolean; token?: string; error?: string }> {
   try {
@@ -164,30 +181,57 @@ async function automateUniplayLogin(cdp: CDPSession, username: string, password:
     // Navigate to login page
     console.log(`🌐 Navegando para ${UNIPLAY_LOGIN_URL}...`);
     await cdp.send("Page.navigate", { url: UNIPLAY_LOGIN_URL });
-    await new Promise(r => setTimeout(r, 5000)); // Wait for page load
+    await new Promise(r => setTimeout(r, 6000)); // Wait for page load
 
-    // Wait for login form
+    // Log page state before filling
+    const pageState = await cdp.send("Runtime.evaluate", {
+      expression: `JSON.stringify({
+        url: location.href,
+        inputs: Array.from(document.querySelectorAll('input')).map(i => ({type: i.type, name: i.name, placeholder: i.placeholder, id: i.id})),
+        buttons: Array.from(document.querySelectorAll('button')).map(b => ({type: b.type, text: b.textContent?.trim(), class: b.className})),
+      })`,
+      returnByValue: true,
+    });
+    console.log(`📋 Page state: ${pageState.result?.value}`);
+
     console.log("📝 Preenchendo formulário de login...");
 
-    // Fill username
-    await cdp.send("Runtime.evaluate", {
+    // Focus and type username using CDP Input domain (works with Angular/Vue/React)
+    const focusedUser = await cdp.send("Runtime.evaluate", {
       expression: `
-        const usernameInput = document.querySelector('input[name="username"], input[type="text"], input[placeholder*="usu"], input[placeholder*="user"], #username');
-        if (usernameInput) { usernameInput.value = ${JSON.stringify(username)}; usernameInput.dispatchEvent(new Event('input', {bubbles:true})); usernameInput.dispatchEvent(new Event('change', {bubbles:true})); }
-        !!usernameInput;
+        const el = document.querySelector('input[name="username"], input[type="text"], input[placeholder*="usu"], input[placeholder*="user"], input[placeholder*="User"], #username, input[ng-model*="user"], input[formcontrolname*="user"]');
+        if (el) { el.focus(); el.value = ''; el.dispatchEvent(new Event('focus', {bubbles:true})); }
+        !!el;
       `,
+      returnByValue: true,
     });
+    console.log(`👤 Username field found: ${focusedUser.result?.value}`);
+    await cdpTypeText(cdp, username);
 
-    // Fill password
-    await cdp.send("Runtime.evaluate", {
+    // Tab to password field or focus it directly
+    await new Promise(r => setTimeout(r, 200));
+    const focusedPass = await cdp.send("Runtime.evaluate", {
       expression: `
-        const passwordInput = document.querySelector('input[name="password"], input[type="password"], #password');
-        if (passwordInput) { passwordInput.value = ${JSON.stringify(password)}; passwordInput.dispatchEvent(new Event('input', {bubbles:true})); passwordInput.dispatchEvent(new Event('change', {bubbles:true})); }
-        !!passwordInput;
+        const el = document.querySelector('input[name="password"], input[type="password"], #password, input[ng-model*="pass"], input[formcontrolname*="pass"]');
+        if (el) { el.focus(); el.value = ''; el.dispatchEvent(new Event('focus', {bubbles:true})); }
+        !!el;
       `,
+      returnByValue: true,
     });
+    console.log(`🔑 Password field found: ${focusedPass.result?.value}`);
+    await cdpTypeText(cdp, password);
 
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 500));
+
+    // Verify fields were filled
+    const fieldValues = await cdp.send("Runtime.evaluate", {
+      expression: `JSON.stringify({
+        user: (document.querySelector('input[type="text"], input[name="username"]') || {}).value || '',
+        pass: (document.querySelector('input[type="password"]') || {}).value ? '***filled***' : '',
+      })`,
+      returnByValue: true,
+    });
+    console.log(`📝 Field values: ${fieldValues.result?.value}`);
 
     // Solve reCAPTCHA
     const captchaToken = await solve2CaptchaV2(RECAPTCHA_SITEKEY, UNIPLAY_LOGIN_URL);
@@ -195,37 +239,56 @@ async function automateUniplayLogin(cdp: CDPSession, username: string, password:
       console.log("🔐 Injetando token reCAPTCHA...");
       await cdp.send("Runtime.evaluate", {
         expression: `
+          // Set the response textarea
           const textarea = document.querySelector('#g-recaptcha-response, textarea[name="g-recaptcha-response"]');
           if (textarea) { textarea.value = ${JSON.stringify(captchaToken)}; textarea.style.display = 'block'; }
-          if (typeof grecaptcha !== 'undefined' && grecaptcha.getResponse) {
-            try { grecaptcha.enterprise ? grecaptcha.enterprise.execute() : null; } catch(e) {}
-          }
-          // Also try callback approach
+          
+          // Try to find and call the reCAPTCHA callback
+          let callbackCalled = false;
           try {
-            const widgetId = 0;
             if (typeof ___grecaptcha_cfg !== 'undefined') {
-              const keys = Object.keys(___grecaptcha_cfg.clients || {});
-              if (keys.length > 0) {
-                const client = ___grecaptcha_cfg.clients[keys[0]];
-                const callback = client?.aa?.l?.callback || client?.ba?.l?.callback;
-                if (callback) callback(${JSON.stringify(captchaToken)});
+              const clients = ___grecaptcha_cfg.clients || {};
+              for (const key of Object.keys(clients)) {
+                const client = clients[key];
+                // Traverse the client object to find callback functions
+                const findCallback = (obj, depth) => {
+                  if (!obj || depth > 4) return null;
+                  if (typeof obj === 'function') return obj;
+                  if (typeof obj === 'object') {
+                    for (const k of Object.keys(obj)) {
+                      if (k === 'callback' && typeof obj[k] === 'function') return obj[k];
+                      const found = findCallback(obj[k], depth + 1);
+                      if (found) return found;
+                    }
+                  }
+                  return null;
+                };
+                const cb = findCallback(client, 0);
+                if (cb) { cb(${JSON.stringify(captchaToken)}); callbackCalled = true; break; }
               }
             }
-          } catch(e) {}
+          } catch(e) { console.log('captcha callback error:', e); }
+          callbackCalled;
         `,
+        returnByValue: true,
       });
       await new Promise(r => setTimeout(r, 1000));
     }
 
     // Click login button
     console.log("🔘 Clicando botão de login...");
-    await cdp.send("Runtime.evaluate", {
+    const clickResult = await cdp.send("Runtime.evaluate", {
       expression: `
-        const btn = document.querySelector('button[type="submit"], button.login-btn, button:has(span), .btn-login, input[type="submit"]');
-        if (btn) btn.click();
-        !!btn;
+        const btn = document.querySelector('button[type="submit"], button.btn-primary, button.login-btn, .btn-login, input[type="submit"], button:not([type="button"])');
+        if (btn) { 
+          console.log('Clicking button:', btn.textContent?.trim());
+          btn.click(); 
+        }
+        btn ? btn.textContent?.trim() : 'NOT FOUND';
       `,
+      returnByValue: true,
     });
+    console.log(`🔘 Button clicked: ${clickResult.result?.value}`);
 
     // Wait for navigation/response
     await new Promise(r => setTimeout(r, 10000));
