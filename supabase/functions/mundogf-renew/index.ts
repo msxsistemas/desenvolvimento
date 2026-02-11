@@ -21,7 +21,7 @@ async function solve2Captcha(siteKey: string, pageUrl: string, mode: 'v2' | 'v3'
     console.log(`🤖 2Captcha: Enviando reCAPTCHA ${mode} para resolução...`);
     let submitUrl: string;
     if (mode === 'v3') {
-      submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&version=v3&action=login&min_score=0.3&json=1`;
+      submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&version=v3&action=login&min_score=0.7&json=1`;
     } else if (mode === 'v2-invisible') {
       submitUrl = `https://2captcha.com/in.php?key=${apiKey}&method=userrecaptcha&googlekey=${siteKey}&pageurl=${encodeURIComponent(pageUrl)}&invisible=1&json=1`;
     } else {
@@ -110,8 +110,8 @@ async function loginMundoGF(baseUrl: string, username: string, password: string)
   let captchaModes: CaptchaMode[] = [];
   if (siteKey) {
     if (hasV3Render || hasGrecaptchaExecute) {
-      // Site uses grecaptcha.execute() - likely v3 or v2-invisible
-      captchaModes = ['v2-invisible', 'v3', 'v2'];
+      // Site uses grecaptcha.execute() - this is v3, try v3 first then retry v3 again
+      captchaModes = ['v3', 'v3', 'v2-invisible'];
     } else if (hasV2Checkbox) {
       captchaModes = ['v2', 'v2-invisible', 'v3'];
     } else {
