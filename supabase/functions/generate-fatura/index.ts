@@ -383,7 +383,8 @@ serve(async (req) => {
 
             if (ciabraConfig?.api_key_hash) {
               const apiKey = atob(ciabraConfig.api_key_hash);
-              const basicAuth = btoa(`admin:${apiKey}`);
+              // Ciabra docs say "Basic [TOKEN]" — token IS the apiKey directly
+              const basicAuth = apiKey;
               const externalId = `fatura-${fatura.id.substring(0, 8)}`;
               const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
