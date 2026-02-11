@@ -266,8 +266,9 @@ export default function ClientesListCreate() {
               'uniplay': 'uniplay-renew',
               'koffice-api': 'koffice-renew',
               'koffice-v2': 'koffice-renew',
+              'playfast': 'playfast-renew',
             };
-            const functionName = providerFunctionMap[painel.provedor] || 'mundogf-renew';
+            const functionName = providerFunctionMap[painel.provedor] || 'playfast-renew';
 
             const { data: renewResult } = await supabase.functions.invoke(functionName, {
               body: {
