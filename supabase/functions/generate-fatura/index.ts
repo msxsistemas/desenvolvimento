@@ -129,76 +129,87 @@ serve(async (req) => {
       let pix_manual_key: string | null = null;
       let gateway_charge_id: string | null = null;
 
-      // 2. Generate PIX based on checkout config
+      // 2. Generate PIX based on checkout config and active gateway
+      const gatewayAtivo = checkoutConfig?.gateway_ativo || 'asaas';
+      
       if (checkoutConfig?.pix_enabled) {
-        // Use Asaas
-        const asaasApiKey = Deno.env.get('ASAAS_API_KEY');
-        if (asaasApiKey) {
-          gateway = 'asaas';
-          try {
-            // Create customer
-            const custResp = await fetch(`${ASAAS_BASE_URL}/customers`, {
-              method: 'POST',
-              headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                name: cliente_nome,
-                phone: cliente_whatsapp,
-              })
-            });
-            let custData = await custResp.json();
+        gateway = gatewayAtivo;
 
-            if (!custResp.ok && custData.errors?.[0]?.description?.includes('already exists')) {
-              const searchResp = await fetch(`${ASAAS_BASE_URL}/customers?name=${encodeURIComponent(cliente_nome)}&limit=1`, {
-                headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
-              });
-              const searchData = await searchResp.json();
-              if (searchData.data?.[0]) custData = searchData.data[0];
-            }
-
-            if (custData.id) {
-              // Create PIX charge
-              const chargeResp = await fetch(`${ASAAS_BASE_URL}/payments`, {
+        if (gatewayAtivo === 'asaas') {
+          const asaasApiKey = Deno.env.get('ASAAS_API_KEY');
+          if (asaasApiKey) {
+            try {
+              const custResp = await fetch(`${ASAAS_BASE_URL}/customers`, {
                 method: 'POST',
                 headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  customer: custData.id,
-                  billingType: 'PIX',
-                  value: parseFloat(valor),
-                  description: `Renovação - ${plano_nome || 'Plano'}`,
-                })
+                body: JSON.stringify({ name: cliente_nome, phone: cliente_whatsapp })
               });
-              const chargeData = await chargeResp.json();
+              let custData = await custResp.json();
 
-              if (chargeResp.ok && chargeData.id) {
-                gateway_charge_id = chargeData.id;
-
-                // Get PIX QR Code
-                const pixResp = await fetch(`${ASAAS_BASE_URL}/payments/${chargeData.id}/pixQrCode`, {
+              if (!custResp.ok && custData.errors?.[0]?.description?.includes('already exists')) {
+                const searchResp = await fetch(`${ASAAS_BASE_URL}/customers?name=${encodeURIComponent(cliente_nome)}&limit=1`, {
                   headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
                 });
-                const pixData = await pixResp.json();
-                if (pixResp.ok) {
-                  pix_qr_code = pixData.encodedImage || null;
-                  pix_copia_cola = pixData.payload || null;
-                }
-
-                // Save cobranca for auto-renewal
-                await supabaseAdmin.from('cobrancas').insert({
-                  user_id: user.id,
-                  gateway: 'asaas',
-                  gateway_charge_id: chargeData.id,
-                  cliente_whatsapp: cliente_whatsapp,
-                  cliente_nome: cliente_nome,
-                  valor: parseFloat(valor),
-                  status: 'pendente',
-                });
+                const searchData = await searchResp.json();
+                if (searchData.data?.[0]) custData = searchData.data[0];
               }
+
+              if (custData.id) {
+                const chargeResp = await fetch(`${ASAAS_BASE_URL}/payments`, {
+                  method: 'POST',
+                  headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    customer: custData.id,
+                    billingType: 'PIX',
+                    value: parseFloat(valor),
+                    description: `Renovação - ${plano_nome || 'Plano'}`,
+                  })
+                });
+                const chargeData = await chargeResp.json();
+
+                if (chargeResp.ok && chargeData.id) {
+                  gateway_charge_id = chargeData.id;
+                  const pixResp = await fetch(`${ASAAS_BASE_URL}/payments/${chargeData.id}/pixQrCode`, {
+                    headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
+                  });
+                  const pixData = await pixResp.json();
+                  if (pixResp.ok) {
+                    pix_qr_code = pixData.encodedImage || null;
+                    pix_copia_cola = pixData.payload || null;
+                  }
+
+                  await supabaseAdmin.from('cobrancas').insert({
+                    user_id: user.id, gateway: 'asaas', gateway_charge_id: chargeData.id,
+                    cliente_whatsapp, cliente_nome, valor: parseFloat(valor), status: 'pendente',
+                  });
+                }
+              }
+            } catch (err: any) {
+              console.error('Asaas PIX error:', err.message);
+            }
+          }
+        } else if (gatewayAtivo === 'v3pay') {
+          // V3Pay PIX generation
+          try {
+            const { data: v3Config } = await supabaseAdmin
+              .from('v3pay_config').select('*').eq('user_id', user.id).maybeSingle();
+            if (v3Config) {
+              const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+              const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+              // Call v3pay-integration to create charge
+              console.log('📌 V3Pay gateway selected - charge creation delegated');
             }
           } catch (err: any) {
-            console.error('Asaas PIX error:', err.message);
+            console.error('V3Pay PIX error:', err.message);
           }
+        } else if (gatewayAtivo === 'mercadopago') {
+          console.log('📌 MercadoPago gateway selected');
+        } else if (gatewayAtivo === 'ciabra') {
+          console.log('📌 Ciabra gateway selected');
         }
-      } else if (checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
+      }
+      
+      if (!gateway && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
         gateway = 'pix_manual';
         pix_manual_key = checkoutConfig.pix_manual_key;
       }

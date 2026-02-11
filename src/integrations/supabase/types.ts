@@ -75,6 +75,7 @@ export type Database = {
         Row: {
           created_at: string
           credit_card_enabled: boolean
+          gateway_ativo: string
           id: string
           pix_enabled: boolean
           pix_manual_enabled: boolean
@@ -85,6 +86,7 @@ export type Database = {
         Insert: {
           created_at?: string
           credit_card_enabled?: boolean
+          gateway_ativo?: string
           id?: string
           pix_enabled?: boolean
           pix_manual_enabled?: boolean
@@ -95,6 +97,7 @@ export type Database = {
         Update: {
           created_at?: string
           credit_card_enabled?: boolean
+          gateway_ativo?: string
           id?: string
           pix_enabled?: boolean
           pix_manual_enabled?: boolean
