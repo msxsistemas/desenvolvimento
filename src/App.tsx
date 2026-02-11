@@ -45,6 +45,7 @@ import Assas from "./pages/financeiro-extra/Assas";
 import MercadoPago from "./pages/financeiro-extra/MercadoPago";
 
 import Ciabra from "./pages/financeiro-extra/Ciabra";
+import V3Pay from "./pages/financeiro-extra/V3Pay";
 // WhatsApp pages
 import GerenciarMensagens from "./pages/whatsapp/GerenciarMensagens";
 import FilaMensagens from "./pages/whatsapp/FilaMensagens";
@@ -118,6 +119,7 @@ const App = () => (
             <Route path="/configuracoes/mercado-pago" element={<MercadoPago />} />
             
             <Route path="/configuracoes/ciabra" element={<Ciabra />} />
+            <Route path="/configuracoes/v3pay" element={<V3Pay />} />
             <Route path="/configuracoes/pix-manual" element={<PixManual />} />
             {/* WhatsApp routes */}
             <Route path="/whatsapp/gerenciar-mensagens" element={<GerenciarMensagens />} />

@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.browserbase-uniplay]
 verify_jwt = false
+
+[functions.v3pay-integration]
+verify_jwt = false
