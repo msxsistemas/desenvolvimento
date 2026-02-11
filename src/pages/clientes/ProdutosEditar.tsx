@@ -11,6 +11,7 @@ import { Package, Settings, AlertTriangle, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProdutos } from "@/hooks/useDatabase";
 import { supabase } from "@/lib/supabase";
+import { PROVEDORES } from "@/config/provedores";
 
 const formatCurrencyBRL = (value: string) => {
   const digits = (value ?? "").toString().replace(/\D/g, "");
@@ -103,8 +104,9 @@ export default function ProdutosEditar() {
     setPaineis(data || []);
   };
 
+  const provedoresEmManutencao = PROVEDORES.filter(p => p.emManutencao).map(p => p.id);
   const paineisFiltrados = paineis.filter(p => p.provedor === formData.provedorIptv);
-  const provedoresDisponiveis = [...new Set(paineis.map(p => p.provedor))];
+  const provedoresDisponiveis = [...new Set(paineis.map(p => p.provedor))].filter(p => !provedoresEmManutencao.includes(p));
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => {
