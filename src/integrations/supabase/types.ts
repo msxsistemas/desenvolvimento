@@ -672,6 +672,36 @@ export type Database = {
         }
         Relationships: []
       }
+      v3pay_config: {
+        Row: {
+          api_token_hash: string
+          created_at: string
+          id: string
+          is_configured: boolean | null
+          updated_at: string
+          user_id: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_token_hash: string
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          updated_at?: string
+          user_id: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_token_hash?: string
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          updated_at?: string
+          user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       whatsapp_messages: {
         Row: {
           created_at: string
