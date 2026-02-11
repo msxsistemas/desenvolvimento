@@ -199,6 +199,7 @@ serve(async (req) => {
         .maybeSingle();
 
       if (faturaErr || !fatura) {
+        console.error(`Fatura ${fatura_id} not found:`, faturaErr);
         return new Response(JSON.stringify({ error: 'Fatura não encontrada' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
       }
@@ -233,17 +234,34 @@ serve(async (req) => {
 
         if (gatewayAtivo === 'asaas') {
           const asaasApiKey = Deno.env.get('ASAAS_API_KEY');
+          console.log(`Asaas ApiKey exists: ${!!asaasApiKey}, gateway_charge_id: ${fatura.gateway_charge_id}`);
           if (asaasApiKey) {
             try {
-              // Create or find customer
-              const custResp = await fetch(`${ASAAS_BASE_URL}/customers`, {
-                method: 'POST',
-                headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: fatura.cliente_nome, phone: fatura.cliente_whatsapp })
-              });
-              let custData = await custResp.json();
+              // If already has a charge ID, try to get PIX data from it
+              if (fatura.gateway_charge_id) {
+                console.log(`Fetching PIX for existing charge ${fatura.gateway_charge_id}`);
+                const pixResp = await fetch(`${ASAAS_BASE_URL}/payments/${fatura.gateway_charge_id}/pixQrCode`, {
+                  headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
+                });
+                const pixData = await pixResp.json();
+                console.log(`PixResp status: ${pixResp.ok}, pixData: ${JSON.stringify(pixData).substring(0, 200)}`);
+                if (pixResp.ok) {
+                  pix_qr_code = pixData.encodedImage || null;
+                  pix_copia_cola = pixData.payload || null;
+                  console.log(`✅ PIX data retrieved for existing charge`);
+                }
+              } else {
+                console.log(`No gateway_charge_id, creating new charge...`);
+                // Create or find customer
+                const custResp = await fetch(`${ASAAS_BASE_URL}/customers`, {
+                  method: 'POST',
+                  headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: fatura.cliente_nome, phone: fatura.cliente_whatsapp })
+                });
+                let custData = await custResp.json();
+                console.log(`Customer response status: ${custResp.ok}, custData id: ${custData.id || 'error'}`);
 
-              if (!custResp.ok && custData.errors?.[0]?.description?.includes('already exists')) {
+                if (!custResp.ok && custData.errors?.[0]?.description?.includes('already exists')) {
                 const searchResp = await fetch(`${ASAAS_BASE_URL}/customers?name=${encodeURIComponent(fatura.cliente_nome)}&limit=1`, {
                   headers: { 'access_token': asaasApiKey, 'Content-Type': 'application/json' }
                 });
