@@ -97,6 +97,38 @@ serve(async (req) => {
               console.error('MercadoPago status check error:', err.message);
             }
           }
+        } else if (fatura.gateway === 'ciabra') {
+          // Check Ciabra payment status
+          const { data: ciabraConfig } = await supabaseAdmin
+            .from('ciabra_config')
+            .select('api_key_hash')
+            .eq('user_id', fatura.user_id)
+            .eq('is_configured', true)
+            .maybeSingle();
+
+          if (ciabraConfig?.api_key_hash) {
+            try {
+              const apiKey = atob(ciabraConfig.api_key_hash);
+              const statusResp = await fetch(`https://api.az.center/v1/charges/${fatura.gateway_charge_id}`, {
+                headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+              });
+              const statusData = await statusResp.json();
+
+              const isPaid = statusData.status === 'paid' || statusData.status === 'approved' || statusData.status === 'confirmed';
+              if (statusResp.ok && isPaid) {
+                await supabaseAdmin
+                  .from('faturas')
+                  .update({ status: 'pago', paid_at: new Date().toISOString() })
+                  .eq('id', fatura.id);
+
+                fatura.status = 'pago';
+                fatura.paid_at = new Date().toISOString();
+                console.log(`✅ Fatura ${fatura.id} marked as paid via Ciabra status check`);
+              }
+            } catch (err: any) {
+              console.error('Ciabra status check error:', err.message);
+            }
+          }
         }
       }
 
