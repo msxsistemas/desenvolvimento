@@ -83,6 +83,7 @@ class CDPSession {
   private id = 0;
   private pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void }>();
   private events: Array<{ method: string; params: any }> = [];
+  private sessionId: string | null = null; // for Target-attached sessions
 
   async connect(url: string): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -90,7 +91,7 @@ class CDPSession {
       const timeout = setTimeout(() => reject(new Error("CDP WebSocket timeout")), 30000);
 
       this.ws.onopen = () => { clearTimeout(timeout); console.log("✅ CDP conectado"); resolve(); };
-      this.ws.onerror = (e) => { clearTimeout(timeout); reject(new Error(`CDP WS error`)); };
+      this.ws.onerror = () => { clearTimeout(timeout); reject(new Error("CDP WS error")); };
       this.ws.onmessage = (evt) => {
         try {
           const msg = JSON.parse(String(evt.data));
@@ -115,8 +116,31 @@ class CDPSession {
         resolve: (v) => { clearTimeout(timeout); resolve(v); },
         reject: (e) => { clearTimeout(timeout); reject(e); },
       });
-      this.ws.send(JSON.stringify({ id, method, params }));
+      const msg: any = { id, method, params };
+      if (this.sessionId) msg.sessionId = this.sessionId;
+      this.ws.send(JSON.stringify(msg));
     });
+  }
+
+  /** Attach to a page target so Page/Runtime/Network domains work */
+  async attachToPage(): Promise<void> {
+    // Discover targets
+    const { targetInfos } = await this.send("Target.getTargets");
+    console.log(`📋 CDP targets: ${(targetInfos || []).map((t: any) => `${t.type}:${t.url}`).join(', ')}`);
+
+    let pageTarget = (targetInfos || []).find((t: any) => t.type === "page");
+
+    if (!pageTarget) {
+      // Create a new page target
+      const { targetId } = await this.send("Target.createTarget", { url: "about:blank" });
+      pageTarget = { targetId };
+      console.log(`📄 Novo target criado: ${targetId}`);
+    }
+
+    // Attach to the page target with flatten=true for sessionId-based messaging
+    const result = await this.send("Target.attachToTarget", { targetId: pageTarget.targetId, flatten: true });
+    this.sessionId = result.sessionId;
+    console.log(`🔗 Attached to page target (session: ${this.sessionId})`);
   }
 
   getEvents(methodFilter?: string) {
@@ -129,7 +153,10 @@ class CDPSession {
 // ==================== Automação de Login ====================
 async function automateUniplayLogin(cdp: CDPSession, username: string, password: string): Promise<{ success: boolean; token?: string; error?: string }> {
   try {
-    // Enable necessary CDP domains
+    // Attach to a page target first (browser-level CDP)
+    await cdp.attachToPage();
+
+    // Now enable page-level CDP domains
     await cdp.send("Page.enable");
     await cdp.send("Network.enable");
     await cdp.send("Runtime.enable");
