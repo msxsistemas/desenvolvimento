@@ -231,12 +231,105 @@ serve(async (req) => {
         .eq('user_id', user_id);
     }
 
+    // 8. Send WhatsApp confirmation message
+    let whatsappResult: any = null;
+    try {
+      // Get confirmation message template
+      const { data: mensagensPadroes } = await supabase
+        .from('mensagens_padroes')
+        .select('confirmacao_pagamento')
+        .eq('user_id', user_id)
+        .maybeSingle();
+
+      const templateMsg = mensagensPadroes?.confirmacao_pagamento;
+      if (templateMsg) {
+        // Get plan value for variable replacement
+        let valorPlano = '';
+        if (cliente.plano) {
+          const { data: planoData } = await supabase
+            .from('planos')
+            .select('valor')
+            .eq('user_id', user_id)
+            .eq('nome', cliente.plano)
+            .maybeSingle();
+          if (planoData?.valor) {
+            valorPlano = `R$ ${parseFloat(planoData.valor).toFixed(2).replace('.', ',')}`;
+          }
+        }
+
+        // Replace variables in template
+        const nomeCompleto = cliente.nome || '';
+        const partes = nomeCompleto.trim().split(' ');
+        const sobrenome = partes.length > 1 ? partes[partes.length - 1] : '';
+        const hour = new Date().getHours();
+        const saudacao = hour >= 5 && hour < 12 ? 'Bom dia' : hour >= 12 && hour < 18 ? 'Boa tarde' : 'Boa noite';
+        const vencFormatado = newExpiry.toLocaleDateString('pt-BR');
+
+        const replacements: Record<string, string> = {
+          '{saudacao}': saudacao,
+          '{nome_cliente}': nomeCompleto,
+          '{sobrenome}': sobrenome,
+          '{whatsapp}': cliente.whatsapp || '',
+          '{email}': cliente.email || '',
+          '{usuario}': cliente.usuario || '',
+          '{senha}': cliente.senha || '',
+          '{vencimento}': vencFormatado,
+          '{nome_plano}': cliente.plano || '',
+          '{valor_plano}': valorPlano,
+          '{desconto}': cliente.desconto || '',
+          '{obs}': cliente.observacao || '',
+          '{app}': cliente.app || '',
+          '{dispositivo}': cliente.dispositivo || '',
+          '{telas}': cliente.telas?.toString() || '',
+          '{mac}': cliente.mac || '',
+        };
+
+        let finalMsg = templateMsg;
+        Object.entries(replacements).forEach(([key, value]) => {
+          finalMsg = finalMsg.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+        });
+        finalMsg = finalMsg.replace(/{br}/g, '\n');
+
+        // Send via Evolution API
+        const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
+        const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
+
+        if (EVOLUTION_API_URL && EVOLUTION_API_KEY) {
+          const instanceName = `user_${user_id.replace(/-/g, '_')}`;
+          const apiUrl = EVOLUTION_API_URL.replace(/\/$/, '');
+          const formattedPhone = (cliente.whatsapp || '').replace(/\D/g, '');
+
+          const sendResp = await withTimeout(
+            fetch(`${apiUrl}/message/sendText/${instanceName}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
+              body: JSON.stringify({ number: formattedPhone, text: finalMsg, delay: 1200 }),
+            }),
+            15000
+          );
+          const sendData = await sendResp.json();
+          whatsappResult = { success: sendResp.ok, data: sendData };
+          console.log(`📱 WhatsApp enviado para ${formattedPhone}: ${sendResp.ok ? '✅' : '❌'}`);
+        } else {
+          console.warn('⚠️ Evolution API não configurada, mensagem não enviada');
+          whatsappResult = { success: false, error: 'Evolution API não configurada' };
+        }
+      } else {
+        console.log('ℹ️ Sem template de confirmação de pagamento configurado');
+        whatsappResult = { success: false, error: 'Template não configurado' };
+      }
+    } catch (whatsErr: any) {
+      console.error(`❌ Erro ao enviar WhatsApp: ${whatsErr.message}`);
+      whatsappResult = { success: false, error: whatsErr.message };
+    }
+
     return new Response(JSON.stringify({
       success: true,
       message: `Cliente ${cliente.nome} renovado com sucesso`,
       cliente_nome: cliente.nome,
       nova_data_vencimento: newExpiry.toISOString(),
       server_renewal: serverRenewalResult,
+      whatsapp_message: whatsappResult,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error: any) {
