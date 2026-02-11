@@ -1,1 +1,28 @@
 project_id = "dxxfablfqigoewcfmjzl"
+
+[functions.test-panel-connection]
+verify_jwt = false
+
+[functions.mundogf-discover]
+verify_jwt = false
+
+[functions.mundogf-renew]
+verify_jwt = false
+
+[functions.sigma-renew]
+verify_jwt = false
+
+[functions.koffice-renew]
+verify_jwt = false
+
+[functions.uniplay-renew]
+verify_jwt = false
+
+[functions.playfast-renew]
+verify_jwt = false
+
+[functions.mercadopago-integration]
+verify_jwt = false
+
+[functions.ciabra-integration]
+verify_jwt = false
