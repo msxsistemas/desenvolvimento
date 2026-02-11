@@ -201,6 +201,10 @@ serve(async (req) => {
             };
           }
 
+          // MundoGF needs longer timeout due to 2Captcha solving (~50s)
+          const renewTimeout = functionName === 'mundogf-renew' ? 90000 : 30000;
+          console.log(`⏱️ Chamando ${functionName} (timeout: ${renewTimeout/1000}s)`);
+          
           const renewResp = await withTimeout(
             fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
               method: 'POST',
@@ -210,7 +214,7 @@ serve(async (req) => {
               },
               body: JSON.stringify(renewBody),
             }),
-            30000
+            renewTimeout
           );
 
           const renewData = await renewResp.json();
