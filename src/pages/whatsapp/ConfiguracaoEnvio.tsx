@@ -31,7 +31,7 @@ interface EnvioConfig {
 
 const DEFAULT_CONFIG: EnvioConfig = {
   tempoMinimo: "10",
-  tempoMaximo: "10",
+  tempoMaximo: "15",
   limiteLote: "10",
   pausaProlongada: "15",
   limiteDiario: "",
