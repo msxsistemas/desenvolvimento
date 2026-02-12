@@ -44,7 +44,8 @@ export default function Auth() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         setUser(user);
-        navigate('/');
+        const planParam = searchParams.get('plan');
+        navigate(planParam ? `/ativar-plano?plan=${planParam}` : '/');
       }
     });
 
@@ -53,7 +54,8 @@ export default function Auth() {
         setIsRecovery(true);
       } else if (session?.user && !isRecovery) {
         setUser(session.user);
-        navigate('/');
+        const planParam = searchParams.get('plan');
+        navigate(planParam ? `/ativar-plano?plan=${planParam}` : '/');
       } else if (!session) {
         setUser(null);
       }

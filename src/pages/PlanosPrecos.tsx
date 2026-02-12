@@ -66,8 +66,13 @@ export default function PlanosPrecos() {
     }
   };
 
-  const handleSelectPlan = (planId: string) => {
-    navigate(`/auth?plan=${planId}`);
+  const handleSelectPlan = async (planId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      navigate(`/ativar-plano?plan=${planId}`);
+    } else {
+      navigate(`/auth?plan=${planId}`);
+    }
   };
 
   const getFeaturesList = (plan: SystemPlan) => {
