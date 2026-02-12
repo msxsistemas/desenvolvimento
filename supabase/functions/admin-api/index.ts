@@ -112,38 +112,6 @@ serve(async (req) => {
         });
       }
 
-      // ─── CLIENTES (all users) ───────────────────────────
-      case 'list_clientes': {
-        const { data: { users: allUsers } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-        const emailMap: Record<string, string> = {};
-        allUsers?.forEach(u => { emailMap[u.id] = u.email || ''; });
-
-        const { data, count } = await supabase
-          .from('clientes')
-          .select('*', { count: 'exact' })
-          .order('created_at', { ascending: false })
-          .range((body.page || 0) * 50, ((body.page || 0) + 1) * 50 - 1);
-
-        const clientes = (data || []).map(c => ({ ...c, owner_email: emailMap[c.user_id] || '—' }));
-        return json({ success: true, clientes, total: count || 0 });
-      }
-
-      case 'update_cliente': {
-        const { cliente_id, updates } = body;
-        if (!cliente_id) throw new Error('cliente_id obrigatório');
-        const { error } = await supabase.from('clientes').update(updates).eq('id', cliente_id);
-        if (error) throw error;
-        return json({ success: true });
-      }
-
-      case 'delete_cliente': {
-        const { cliente_id } = body;
-        if (!cliente_id) throw new Error('cliente_id obrigatório');
-        const { error } = await supabase.from('clientes').delete().eq('id', cliente_id);
-        if (error) throw error;
-        return json({ success: true });
-      }
-
       // ─── MENSAGENS PADRÕES (all users) ──────────────────
       case 'list_mensagens_padroes': {
         const { data: { users: allUsers } } = await supabase.auth.admin.listUsers({ perPage: 1000 });

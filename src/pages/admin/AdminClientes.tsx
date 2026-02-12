@@ -4,36 +4,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Search, Trash2, Eye, ChevronLeft, ChevronRight } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Users, Search, Ban, Shield } from "lucide-react";
 
-interface AdminCliente {
+interface AdminUser {
   id: string;
-  nome: string;
-  whatsapp: string;
   email: string;
-  produto: string;
-  plano: string;
-  fatura: string;
-  ativo: boolean;
-  data_vencimento: string;
-  user_id: string;
-  owner_email: string;
+  full_name: string;
   created_at: string;
+  last_sign_in_at: string | null;
+  role: string;
+  clientes_count: number;
 }
 
 export default function AdminClientes() {
-  const [clientes, setClientes] = useState<AdminCliente[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [selected, setSelected] = useState<AdminCliente | null>(null);
   const { toast } = useToast();
 
-  const fetchClientes = async (p = 0) => {
+  const fetchUsers = async () => {
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -42,14 +34,11 @@ export default function AdminClientes() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
-          body: JSON.stringify({ action: "list_clientes", page: p }),
+          body: JSON.stringify({ action: "list_users" }),
         }
       );
       const result = await resp.json();
-      if (result.success) {
-        setClientes(result.clientes);
-        setTotal(result.total);
-      }
+      if (result.success) setUsers(result.users);
     } catch (err) {
       console.error(err);
     } finally {
@@ -57,89 +46,113 @@ export default function AdminClientes() {
     }
   };
 
-  useEffect(() => { fetchClientes(page); }, [page]);
+  useEffect(() => { fetchUsers(); }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
+  const handleRoleChange = async (userId: string, role: string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       await fetch(`https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/admin-api`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
-        body: JSON.stringify({ action: "delete_cliente", cliente_id: id }),
+        body: JSON.stringify({ action: "set_role", target_user_id: userId, role }),
       });
-      toast({ title: "Cliente excluído" });
-      fetchClientes(page);
+      toast({ title: "Papel atualizado com sucesso" });
+      fetchUsers();
     } catch {
-      toast({ title: "Erro ao excluir", variant: "destructive" });
+      toast({ title: "Erro ao atualizar papel", variant: "destructive" });
+    }
+  };
+
+  const handleToggleBan = async (userId: string, ban: boolean) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      await fetch(`https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/admin-api`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ action: "toggle_user_ban", target_user_id: userId, ban }),
+      });
+      toast({ title: ban ? "Usuário bloqueado" : "Usuário desbloqueado" });
+      fetchUsers();
+    } catch {
+      toast({ title: "Erro ao alterar status", variant: "destructive" });
     }
   };
 
   const filtered = search
-    ? clientes.filter(c =>
-        c.nome?.toLowerCase().includes(search.toLowerCase()) ||
-        c.whatsapp?.includes(search) ||
-        c.owner_email?.toLowerCase().includes(search.toLowerCase())
+    ? users.filter(u =>
+        u.email?.toLowerCase().includes(search.toLowerCase()) ||
+        u.full_name?.toLowerCase().includes(search.toLowerCase())
       )
-    : clientes;
-
-  const totalPages = Math.ceil(total / 50);
+    : users;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Gerenciar Clientes</h1>
-        <p className="text-muted-foreground">Todos os clientes de todos os usuários ({total})</p>
+        <h1 className="text-2xl font-bold">Usuários do Sistema</h1>
+        <p className="text-muted-foreground">
+          Gerenciar contas de usuários registrados — dados dos clientes são confidenciais e visíveis apenas para cada usuário
+        </p>
       </div>
 
       <div className="flex items-center gap-2">
         <Search className="h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Buscar por nome, WhatsApp ou dono..." value={search} onChange={e => setSearch(e.target.value)} className="max-w-sm" />
+        <Input placeholder="Buscar por e-mail ou nome..." value={search} onChange={e => setSearch(e.target.value)} className="max-w-sm" />
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" /> Clientes ({filtered.length})
+            <Users className="h-5 w-5" /> Usuários ({filtered.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Carregando...</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhum cliente encontrado</div>
+            <div className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>E-mail</TableHead>
                     <TableHead>Nome</TableHead>
-                    <TableHead>WhatsApp</TableHead>
-                    <TableHead>Produto</TableHead>
-                    <TableHead>Plano</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Fatura</TableHead>
-                    <TableHead>Dono</TableHead>
+                    <TableHead>Qtd. Clientes</TableHead>
+                    <TableHead>Papel</TableHead>
+                    <TableHead>Cadastro</TableHead>
+                    <TableHead>Último Login</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map(c => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">{c.nome}</TableCell>
-                      <TableCell>{c.whatsapp}</TableCell>
-                      <TableCell>{c.produto || "—"}</TableCell>
-                      <TableCell>{c.plano || "—"}</TableCell>
+                  {filtered.map(u => (
+                    <TableRow key={u.id}>
+                      <TableCell className="font-medium">{u.email}</TableCell>
+                      <TableCell>{u.full_name || "—"}</TableCell>
                       <TableCell>
-                        <Badge variant={c.ativo ? "default" : "secondary"}>{c.ativo ? "Ativo" : "Inativo"}</Badge>
+                        <Badge variant="secondary">{u.clientes_count}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={c.fatura === "Pago" ? "default" : "destructive"}>{c.fatura || "—"}</Badge>
+                        <Select value={u.role} onValueChange={(val) => handleRoleChange(u.id, val)}>
+                          <SelectTrigger className="w-28 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">Usuário</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{c.owner_email}</TableCell>
-                      <TableCell className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => setSelected(c)}><Eye className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(u.created_at).toLocaleDateString("pt-BR")}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("pt-BR") : "Nunca"}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => handleToggleBan(u.id, true)} className="text-destructive hover:text-destructive h-8">
+                          <Ban className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -147,40 +160,8 @@ export default function AdminClientes() {
               </Table>
             </div>
           )}
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm text-muted-foreground">Página {page + 1} de {totalPages}</span>
-              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
-
-      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Detalhes do Cliente</DialogTitle></DialogHeader>
-          {selected && (
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span className="font-semibold">Nome:</span> {selected.nome}</div>
-              <div><span className="font-semibold">WhatsApp:</span> {selected.whatsapp}</div>
-              <div><span className="font-semibold">Email:</span> {selected.email || "—"}</div>
-              <div><span className="font-semibold">Produto:</span> {selected.produto || "—"}</div>
-              <div><span className="font-semibold">Plano:</span> {selected.plano || "—"}</div>
-              <div><span className="font-semibold">Fatura:</span> {selected.fatura || "—"}</div>
-              <div><span className="font-semibold">Status:</span> {selected.ativo ? "Ativo" : "Inativo"}</div>
-              <div><span className="font-semibold">Vencimento:</span> {selected.data_vencimento ? new Date(selected.data_vencimento).toLocaleDateString("pt-BR") : "—"}</div>
-              <div className="col-span-2"><span className="font-semibold">Dono:</span> {selected.owner_email}</div>
-              <div className="col-span-2"><span className="font-semibold">Criado em:</span> {new Date(selected.created_at).toLocaleDateString("pt-BR")}</div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
