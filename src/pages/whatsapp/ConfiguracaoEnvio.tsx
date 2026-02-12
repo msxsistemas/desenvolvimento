@@ -321,7 +321,7 @@ export default function ConfiguracaoEnvio() {
               </div>
               <div>
                 <p className="text-xl font-bold text-foreground">
-                  {config.limiteLote || 0} msgs
+                  {config.limiteLote || 0} mensagens
                 </p>
                 <p className="text-xs text-muted-foreground">Antes da pausa</p>
               </div>
