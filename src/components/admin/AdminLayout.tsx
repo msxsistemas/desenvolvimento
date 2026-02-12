@@ -37,9 +37,39 @@ interface NavItem {
 
 const adminNavItems: NavItem[] = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Usuários", url: "/admin/usuarios", icon: Users },
-  { title: "Planos SaaS", url: "/admin/planos", icon: CreditCard },
-  { title: "Assinaturas", url: "/admin/assinaturas", icon: UserCheck },
+  {
+    title: "Usuários",
+    url: "/admin/usuarios",
+    icon: Users,
+    submenuKey: "usuarios",
+    subItems: [
+      { to: "/admin/usuarios", label: "Gerenciar" },
+      { to: "/admin/usuarios?filter=ativos", label: "Ativos" },
+      { to: "/admin/usuarios?filter=inativos", label: "Inativos" },
+    ],
+  },
+  {
+    title: "Planos SaaS",
+    url: "/admin/planos",
+    icon: CreditCard,
+    submenuKey: "planos",
+    subItems: [
+      { to: "/admin/planos", label: "Gerenciar" },
+      { to: "/admin/planos?action=novo", label: "Criar Novo" },
+    ],
+  },
+  {
+    title: "Assinaturas",
+    url: "/admin/assinaturas",
+    icon: UserCheck,
+    submenuKey: "assinaturas",
+    subItems: [
+      { to: "/admin/assinaturas", label: "Todas" },
+      { to: "/admin/assinaturas?filter=ativas", label: "Ativas" },
+      { to: "/admin/assinaturas?filter=pendentes", label: "Pendentes" },
+      { to: "/admin/assinaturas?filter=expiradas", label: "Expiradas" },
+    ],
+  },
   {
     title: "Gateways",
     url: "/admin/gateways",
@@ -54,7 +84,16 @@ const adminNavItems: NavItem[] = [
       { to: "/admin/gateways/ciabra", label: "Ciabra" },
     ],
   },
-  { title: "Templates", url: "/admin/templates", icon: MessageSquare },
+  {
+    title: "Templates",
+    url: "/admin/templates",
+    icon: MessageSquare,
+    submenuKey: "templates",
+    subItems: [
+      { to: "/admin/templates", label: "Gerenciar" },
+      { to: "/admin/templates?action=novo", label: "Criar Novo" },
+    ],
+  },
   { title: "Configurações", url: "/admin/configuracoes", icon: Settings },
   { title: "Logs", url: "/admin/logs", icon: ScrollText },
 ];
@@ -76,9 +115,16 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(getInitialSubmenu);
 
   const toggleSubmenu = (key: string) => setOpenSubmenu(prev => prev === key ? null : key);
-  const isActive = (path: string) => currentPath === path;
+  const fullPath = currentPath + location.search;
+  const isActive = (path: string) => {
+    if (path.includes("?")) return fullPath === path;
+    return currentPath === path;
+  };
   const isSectionActive = (item: NavItem) => {
-    if (item.subItems) return item.subItems.some(s => currentPath === s.to || currentPath.startsWith(s.to + "/"));
+    if (item.subItems) return item.subItems.some(s => {
+      if (s.to.includes("?")) return fullPath === s.to;
+      return currentPath === s.to || currentPath.startsWith(s.to + "/");
+    });
     return currentPath === item.url;
   };
   const isMenuHighlighted = (menuKey: string, sectionActive: boolean) =>
