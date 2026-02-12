@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Ban, CheckCircle } from "lucide-react";
+import { Users, Ban, CheckCircle, Shield } from "lucide-react";
 
 interface AdminUser {
   id: string;
@@ -46,7 +46,10 @@ export default function AdminUsuarios() {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    document.title = "Usuários | Admin Msx Gestor";
+    fetchUsers();
+  }, []);
 
   const handleRoleChange = async (userId: string, role: string) => {
     try {
@@ -91,18 +94,26 @@ export default function AdminUsuarios() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Gerenciar Usuários</h1>
-        <p className="text-muted-foreground">Visualize e gerencie os usuários do sistema</p>
-      </div>
+    <div>
+      <header className="rounded-lg border mb-6 overflow-hidden shadow">
+        <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            <h1 className="text-base font-semibold tracking-tight">Gerenciar Usuários</h1>
+          </div>
+          <p className="text-xs/6 opacity-90">Visualize, edite papéis e gerencie o acesso dos usuários do sistema.</p>
+        </div>
+      </header>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Usuários ({users.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-foreground/70" />
+              <CardTitle className="text-sm">Usuários ({users.length})</CardTitle>
+            </div>
+          </div>
+          <CardDescription>Lista de todos os usuários registrados na plataforma.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -124,16 +135,13 @@ export default function AdminUsuarios() {
                 <TableBody>
                   {users.map((u) => (
                     <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.email}</TableCell>
-                      <TableCell>{u.full_name || "—"}</TableCell>
+                      <TableCell className="font-medium text-sm">{u.email}</TableCell>
+                      <TableCell className="text-sm">{u.full_name || "—"}</TableCell>
                       <TableCell>
                         <Badge variant="secondary">{u.clientes_count}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Select
-                          value={u.role}
-                          onValueChange={(val) => handleRoleChange(u.id, val)}
-                        >
+                        <Select value={u.role} onValueChange={(val) => handleRoleChange(u.id, val)}>
                           <SelectTrigger className="w-28 h-8">
                             <SelectValue />
                           </SelectTrigger>
@@ -147,17 +155,10 @@ export default function AdminUsuarios() {
                         {new Date(u.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {u.last_sign_in_at
-                          ? new Date(u.last_sign_in_at).toLocaleDateString("pt-BR")
-                          : "Nunca"}
+                        {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("pt-BR") : "Nunca"}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleBan(u.id, true)}
-                          className="text-destructive hover:text-destructive h-8"
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleToggleBan(u.id, true)} className="text-destructive hover:text-destructive h-8">
                           <Ban className="h-4 w-4" />
                         </Button>
                       </TableCell>

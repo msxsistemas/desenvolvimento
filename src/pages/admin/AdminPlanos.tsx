@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { CreditCard, Plus, Pencil, Trash2, Star } from "lucide-react";
+import { CreditCard, Plus, Pencil, Trash2, Star, Package } from "lucide-react";
 
 interface SystemPlan {
   id: string;
@@ -49,7 +49,10 @@ export default function AdminPlanos() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchPlans(); }, []);
+  useEffect(() => {
+    document.title = "Planos SaaS | Admin Msx Gestor";
+    fetchPlans();
+  }, []);
 
   const openCreate = () => { setEditing(null); setForm(emptyPlan); setDialogOpen(true); };
   const openEdit = (p: SystemPlan) => { setEditing(p); setForm({ ...p }); setDialogOpen(true); };
@@ -88,18 +91,31 @@ export default function AdminPlanos() {
   const removeRecurso = (i: number) => setForm(f => ({ ...f, recursos: f.recursos.filter((_, idx) => idx !== i) }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Planos SaaS</h1>
-          <p className="text-muted-foreground">Gerencie os planos de assinatura do sistema</p>
+    <div>
+      <header className="rounded-lg border mb-6 overflow-hidden shadow">
+        <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                <h1 className="text-base font-semibold tracking-tight">Planos SaaS</h1>
+              </div>
+              <p className="text-xs/6 opacity-90">Gerencie os planos de assinatura disponíveis no sistema.</p>
+            </div>
+            <Button onClick={openCreate} size="sm" variant="secondary" className="gap-2">
+              <Plus className="h-4 w-4" /> Novo Plano
+            </Button>
+          </div>
         </div>
-        <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" /> Novo Plano</Button>
-      </div>
+      </header>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> Planos ({plans.length})</CardTitle>
+          <div className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-foreground/70" />
+            <CardTitle className="text-sm">Planos ({plans.length})</CardTitle>
+          </div>
+          <CardDescription>Planos exibidos na página pública de preços.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (

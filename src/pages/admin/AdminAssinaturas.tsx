@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { UserCheck, Pencil } from "lucide-react";
+import { UserCheck, Pencil, Receipt } from "lucide-react";
 
 interface Subscription {
   id: string;
@@ -36,12 +36,11 @@ export default function AdminAssinaturas() {
       supabase.from("user_subscriptions").select("*").order("created_at", { ascending: false }),
       supabase.from("system_plans").select("id, nome"),
     ]);
-    
+
     const planMap: Record<string, string> = {};
     (plansRes.data || []).forEach(p => { planMap[p.id] = p.nome; });
     setPlans((plansRes.data || []) as Plan[]);
 
-    // Get user emails via admin-api
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const resp = await fetch(`https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/admin-api`, {
@@ -64,7 +63,10 @@ export default function AdminAssinaturas() {
     setLoading(false);
   };
 
-  useEffect(() => { fetch_(); }, []);
+  useEffect(() => {
+    document.title = "Assinaturas | Admin Msx Gestor";
+    fetch_();
+  }, []);
 
   const openEdit = (s: Subscription) => { setEditSub(s); setEditStatus(s.status); setEditPlan(s.plan_id || ""); };
 
@@ -77,21 +79,30 @@ export default function AdminAssinaturas() {
   };
 
   const statusColor = (s: string) => {
-    if (s === "ativa") return "default";
-    if (s === "trial") return "secondary";
-    return "destructive";
+    if (s === "ativa") return "default" as const;
+    if (s === "trial") return "secondary" as const;
+    return "destructive" as const;
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Assinaturas</h1>
-        <p className="text-muted-foreground">Gerenciar assinaturas dos usuários do sistema</p>
-      </div>
+    <div>
+      <header className="rounded-lg border mb-6 overflow-hidden shadow">
+        <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
+          <div className="flex items-center gap-2">
+            <Receipt className="h-5 w-5" />
+            <h1 className="text-base font-semibold tracking-tight">Assinaturas</h1>
+          </div>
+          <p className="text-xs/6 opacity-90">Gerencie as assinaturas e status dos usuários do sistema.</p>
+        </div>
+      </header>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><UserCheck className="h-5 w-5" /> Assinaturas ({subs.length})</CardTitle>
+          <div className="flex items-center gap-2">
+            <UserCheck className="h-4 w-4 text-foreground/70" />
+            <CardTitle className="text-sm">Assinaturas ({subs.length})</CardTitle>
+          </div>
+          <CardDescription>Altere planos e status das assinaturas.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -135,8 +146,8 @@ export default function AdminAssinaturas() {
         <DialogContent>
           <DialogHeader><DialogTitle>Editar Assinatura</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">Usuário: {editSub?.user_email}</p>
+            <div className="rounded-md border px-3 py-2">
+              <p className="text-sm text-muted-foreground">Usuário: <span className="font-medium text-foreground">{editSub?.user_email}</span></p>
             </div>
             <div>
               <Select value={editPlan} onValueChange={setEditPlan}>
@@ -152,12 +163,13 @@ export default function AdminAssinaturas() {
                 <SelectContent>
                   <SelectItem value="ativa">Ativa</SelectItem>
                   <SelectItem value="trial">Trial</SelectItem>
+                  <SelectItem value="pendente">Pendente</SelectItem>
                   <SelectItem value="cancelada">Cancelada</SelectItem>
                   <SelectItem value="expirada">Expirada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={handleUpdate} className="w-full">Salvar</Button>
+            <Button onClick={handleUpdate} className="w-full">Salvar Alterações</Button>
           </div>
         </DialogContent>
       </Dialog>

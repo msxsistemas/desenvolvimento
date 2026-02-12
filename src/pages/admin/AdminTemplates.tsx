@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { MessageSquare, Plus, Pencil, Trash2 } from "lucide-react";
+import { MessageSquare, Plus, Pencil, Trash2, FileText } from "lucide-react";
 
 interface SystemTemplate {
   id: string;
@@ -48,7 +48,10 @@ export default function AdminTemplates() {
     setLoading(false);
   };
 
-  useEffect(() => { fetch_(); }, []);
+  useEffect(() => {
+    document.title = "Templates | Admin Msx Gestor";
+    fetch_();
+  }, []);
 
   const openCreate = () => { setEditing(null); setForm(emptyTpl); setDialogOpen(true); };
   const openEdit = (t: SystemTemplate) => { setEditing(t); setForm({ ...t }); setDialogOpen(true); };
@@ -77,18 +80,31 @@ export default function AdminTemplates() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Templates Padrão</h1>
-          <p className="text-muted-foreground">Mensagens padrão copiadas para novos usuários do sistema</p>
+    <div>
+      <header className="rounded-lg border mb-6 overflow-hidden shadow">
+        <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                <h1 className="text-base font-semibold tracking-tight">Templates Padrão</h1>
+              </div>
+              <p className="text-xs/6 opacity-90">Mensagens padrão copiadas para novos usuários do sistema.</p>
+            </div>
+            <Button onClick={openCreate} size="sm" variant="secondary" className="gap-2">
+              <Plus className="h-4 w-4" /> Novo Template
+            </Button>
+          </div>
         </div>
-        <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" /> Novo Template</Button>
-      </div>
+      </header>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5" /> Templates ({templates.length})</CardTitle>
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4 text-foreground/70" />
+            <CardTitle className="text-sm">Templates ({templates.length})</CardTitle>
+          </div>
+          <CardDescription>Modelos de mensagem disponíveis para todos os usuários.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -142,11 +158,11 @@ export default function AdminTemplates() {
               <Textarea value={form.mensagem} onChange={e => setForm(f => ({ ...f, mensagem: e.target.value }))} rows={4} placeholder="Use {nome}, {data_vencimento}, {plano}..." />
               <p className="text-xs text-muted-foreground mt-1">Variáveis: {"{nome}"}, {"{whatsapp}"}, {"{data_vencimento}"}, {"{plano}"}, {"{valor}"}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="rounded-md border px-3 py-2 flex items-center justify-between">
+              <span className="text-sm">Ativo</span>
               <Switch checked={form.ativo} onCheckedChange={v => setForm(f => ({ ...f, ativo: v }))} />
-              <Label>Ativo</Label>
             </div>
-            <Button onClick={handleSave} className="w-full">{editing ? "Salvar" : "Criar Template"}</Button>
+            <Button onClick={handleSave} className="w-full">{editing ? "Salvar Alterações" : "Criar Template"}</Button>
           </div>
         </DialogContent>
       </Dialog>

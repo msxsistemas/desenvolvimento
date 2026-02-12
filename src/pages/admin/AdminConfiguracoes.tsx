@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save } from "lucide-react";
+import { Settings, Save, Palette, UserPlus, Wrench, Headphones } from "lucide-react";
 
 interface SystemConfig {
   nome_sistema: string;
@@ -28,6 +28,7 @@ export default function AdminConfiguracoes() {
   const { toast } = useToast();
 
   useEffect(() => {
+    document.title = "Configurações | Admin Msx Gestor";
     const fetch_ = async () => {
       const { data } = await supabase.from("system_config").select("*").eq("id", 1).single();
       if (data) setConfig(data as SystemConfig);
@@ -55,73 +56,130 @@ export default function AdminConfiguracoes() {
   if (!config) return <div className="text-center py-8 text-muted-foreground">Erro ao carregar configurações</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Configurações do Sistema</h1>
-          <p className="text-muted-foreground">Configurações globais da plataforma</p>
+    <div>
+      <header className="rounded-lg border mb-6 overflow-hidden shadow">
+        <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                <h1 className="text-base font-semibold tracking-tight">Configurações do Sistema</h1>
+              </div>
+              <p className="text-xs/6 opacity-90">Configurações globais da plataforma Msx Gestor.</p>
+            </div>
+            <Button onClick={handleSave} disabled={saving} size="sm" variant="secondary" className="gap-2">
+              <Save className="h-4 w-4" /> {saving ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
         </div>
-        <Button onClick={handleSave} disabled={saving} className="gap-2"><Save className="h-4 w-4" /> Salvar</Button>
-      </div>
+      </header>
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> Geral</CardTitle></CardHeader>
+      <main className="space-y-4">
+        <Card className="shadow-sm">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Palette className="h-4 w-4 text-foreground/70" />
+              <CardTitle className="text-sm">Aparência & Geral</CardTitle>
+            </div>
+            <CardDescription>Nome, logo e cor primária do sistema.</CardDescription>
+          </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label>Nome do Sistema</Label><Input value={config.nome_sistema} onChange={e => set("nome_sistema", e.target.value)} /></div>
-              <div><Label>Cor Primária</Label><div className="flex gap-2"><Input type="color" value={config.cor_primaria} onChange={e => set("cor_primaria", e.target.value)} className="w-14 h-10 p-1" /><Input value={config.cor_primaria} onChange={e => set("cor_primaria", e.target.value)} /></div></div>
+              <div className="space-y-1.5">
+                <Label>Nome do Sistema</Label>
+                <Input value={config.nome_sistema} onChange={e => set("nome_sistema", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Cor Primária</Label>
+                <div className="flex gap-2">
+                  <Input type="color" value={config.cor_primaria} onChange={e => set("cor_primaria", e.target.value)} className="w-14 h-10 p-1" />
+                  <Input value={config.cor_primaria} onChange={e => set("cor_primaria", e.target.value)} />
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label>Logo URL</Label><Input value={config.logo_url || ""} onChange={e => set("logo_url", e.target.value)} placeholder="https://..." /></div>
-              <div><Label>Termos de Uso URL</Label><Input value={config.termos_url || ""} onChange={e => set("termos_url", e.target.value)} placeholder="https://..." /></div>
+              <div className="space-y-1.5">
+                <Label>Logo URL</Label>
+                <Input value={config.logo_url || ""} onChange={e => set("logo_url", e.target.value)} placeholder="https://..." />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Termos de Uso URL</Label>
+                <Input value={config.termos_url || ""} onChange={e => set("termos_url", e.target.value)} placeholder="https://..." />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle>Registro & Trial</CardTitle></CardHeader>
+        <Card className="shadow-sm">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-foreground/70" />
+              <CardTitle className="text-sm">Registro & Trial</CardTitle>
+            </div>
+            <CardDescription>Controle de cadastro e período de teste.</CardDescription>
+          </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="rounded-md border px-3 py-2 flex items-center justify-between">
               <div>
-                <Label>Registro Aberto</Label>
-                <p className="text-sm text-muted-foreground">Permitir novos cadastros no sistema</p>
+                <span className="text-sm font-medium">Registro Aberto</span>
+                <p className="text-xs text-muted-foreground">Permitir novos cadastros no sistema</p>
               </div>
               <Switch checked={config.registro_aberto} onCheckedChange={v => set("registro_aberto", v)} />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>Dias de Trial</Label>
               <Input type="number" value={config.trial_dias} onChange={e => set("trial_dias", Number(e.target.value))} className="max-w-[120px]" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle>Manutenção</CardTitle></CardHeader>
+        <Card className="shadow-sm">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Wrench className="h-4 w-4 text-foreground/70" />
+              <CardTitle className="text-sm">Manutenção</CardTitle>
+            </div>
+            <CardDescription>Ative o modo manutenção para bloquear acesso ao sistema.</CardDescription>
+          </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="rounded-md border px-3 py-2 flex items-center justify-between">
               <div>
-                <Label>Modo Manutenção</Label>
-                <p className="text-sm text-muted-foreground">Bloqueia acesso ao sistema com uma mensagem</p>
+                <span className="text-sm font-medium">Modo Manutenção</span>
+                <p className="text-xs text-muted-foreground">Bloqueia acesso com uma mensagem customizada</p>
               </div>
               <Switch checked={config.manutencao} onCheckedChange={v => set("manutencao", v)} />
             </div>
             {config.manutencao && (
-              <div><Label>Mensagem de Manutenção</Label><Input value={config.mensagem_manutencao || ""} onChange={e => set("mensagem_manutencao", e.target.value)} placeholder="Sistema em manutenção..." /></div>
+              <div className="space-y-1.5">
+                <Label>Mensagem de Manutenção</Label>
+                <Input value={config.mensagem_manutencao || ""} onChange={e => set("mensagem_manutencao", e.target.value)} placeholder="Sistema em manutenção..." />
+              </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle>Suporte</CardTitle></CardHeader>
+        <Card className="shadow-sm">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Headphones className="h-4 w-4 text-foreground/70" />
+              <CardTitle className="text-sm">Suporte</CardTitle>
+            </div>
+            <CardDescription>Canais de suporte exibidos para os usuários.</CardDescription>
+          </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label>WhatsApp Suporte</Label><Input value={config.suporte_whatsapp || ""} onChange={e => set("suporte_whatsapp", e.target.value)} placeholder="5511999999999" /></div>
-              <div><Label>E-mail Suporte</Label><Input value={config.suporte_email || ""} onChange={e => set("suporte_email", e.target.value)} placeholder="suporte@exemplo.com" /></div>
+              <div className="space-y-1.5">
+                <Label>WhatsApp Suporte</Label>
+                <Input value={config.suporte_whatsapp || ""} onChange={e => set("suporte_whatsapp", e.target.value)} placeholder="5511999999999" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>E-mail Suporte</Label>
+                <Input value={config.suporte_email || ""} onChange={e => set("suporte_email", e.target.value)} placeholder="suporte@exemplo.com" />
+              </div>
             </div>
           </CardContent>
         </Card>
-      </div>
+      </main>
     </div>
   );
 }

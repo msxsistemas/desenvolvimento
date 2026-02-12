@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
-import { ScrollText } from "lucide-react";
+import { ScrollText, Activity } from "lucide-react";
 
 interface LogItem {
   id: string;
@@ -24,6 +24,7 @@ export default function AdminLogs() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = "Logs | Admin Msx Gestor";
     const fetch_ = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -53,21 +54,30 @@ export default function AdminLogs() {
   }, []);
 
   const nivelColor = (n: string) => {
-    if (n === "error") return "destructive";
-    if (n === "warning" || n === "warn") return "secondary";
-    return "default";
+    if (n === "error") return "destructive" as const;
+    if (n === "warning" || n === "warn") return "secondary" as const;
+    return "default" as const;
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Logs do Sistema</h1>
-        <p className="text-muted-foreground">Logs de todos os usuários</p>
-      </div>
+    <div>
+      <header className="rounded-lg border mb-6 overflow-hidden shadow">
+        <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
+          <div className="flex items-center gap-2">
+            <ScrollText className="h-5 w-5" />
+            <h1 className="text-base font-semibold tracking-tight">Logs do Sistema</h1>
+          </div>
+          <p className="text-xs/6 opacity-90">Visualize logs de atividade de todos os usuários da plataforma.</p>
+        </div>
+      </header>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><ScrollText className="h-5 w-5" /> Logs</CardTitle>
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4 text-foreground/70" />
+            <CardTitle className="text-sm">Registros de Atividade</CardTitle>
+          </div>
+          <CardDescription>Logs de painel e sistema de todos os usuários.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
