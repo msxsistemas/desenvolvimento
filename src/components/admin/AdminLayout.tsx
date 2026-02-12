@@ -6,6 +6,12 @@ import {
   CreditCard,
   ArrowLeft,
   Shield,
+  UserCheck,
+  MessageSquare,
+  Wallet,
+  ScrollText,
+  Smartphone,
+  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,7 +19,13 @@ import { Button } from "@/components/ui/button";
 const adminNavItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Usuários", url: "/admin/usuarios", icon: Users },
-  { title: "Planos do Sistema", url: "/admin/planos", icon: CreditCard },
+  { title: "Clientes", url: "/admin/clientes", icon: UserCheck },
+  { title: "Planos", url: "/admin/planos", icon: CreditCard },
+  { title: "Mensagens", url: "/admin/mensagens", icon: MessageSquare },
+  { title: "Gateways", url: "/admin/gateways", icon: Wallet },
+  { title: "WhatsApp", url: "/admin/whatsapp", icon: Smartphone },
+  { title: "Transações", url: "/admin/transacoes", icon: DollarSign },
+  { title: "Logs", url: "/admin/logs", icon: ScrollText },
 ];
 
 export default function AdminLayout() {
@@ -22,7 +34,6 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen flex bg-background">
-      {/* Sidebar */}
       <aside className="w-64 border-r bg-sidebar flex flex-col flex-shrink-0">
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
@@ -30,7 +41,7 @@ export default function AdminLayout() {
             <span className="font-bold text-lg text-sidebar-foreground">Painel Admin</span>
           </div>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {adminNavItems.map((item) => (
             <NavLink
               key={item.url}
@@ -62,8 +73,6 @@ export default function AdminLayout() {
           </Button>
         </div>
       </aside>
-
-      {/* Main */}
       <main className="flex-1 overflow-y-auto p-6">
         <Outlet />
       </main>

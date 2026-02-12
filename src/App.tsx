@@ -67,6 +67,12 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminPlanos from "./pages/admin/AdminPlanos";
+import AdminClientes from "./pages/admin/AdminClientes";
+import AdminMensagens from "./pages/admin/AdminMensagens";
+import AdminGateways from "./pages/admin/AdminGateways";
+import AdminLogs from "./pages/admin/AdminLogs";
+import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
+import AdminTransacoes from "./pages/admin/AdminTransacoes";
 import AdminLogin from "./pages/admin/AdminLogin";
 
 const queryClient = new QueryClient();
@@ -155,7 +161,13 @@ const App = () => (
           <Route element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+            <Route path="/admin/clientes" element={<AdminClientes />} />
             <Route path="/admin/planos" element={<AdminPlanos />} />
+            <Route path="/admin/mensagens" element={<AdminMensagens />} />
+            <Route path="/admin/gateways" element={<AdminGateways />} />
+            <Route path="/admin/whatsapp" element={<AdminWhatsApp />} />
+            <Route path="/admin/transacoes" element={<AdminTransacoes />} />
+            <Route path="/admin/logs" element={<AdminLogs />} />
           </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
