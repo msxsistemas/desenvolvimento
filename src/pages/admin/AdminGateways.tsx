@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Wallet, Pencil, Trash2, Key, Settings, Webhook, Copy } from "lucide-react";
-import { toast as sonnerToast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
+import { Wallet, Settings, Building2, QrCode, CreditCard } from "lucide-react";
 
 interface SystemGateway {
   id: string;
@@ -28,15 +25,24 @@ const provedorLabels: Record<string, string> = {
   ciabra: "Ciabra",
 };
 
+const allGateways = ["asaas", "mercadopago", "stripe", "v3pay", "ciabra"];
+
 export default function AdminGateways() {
   const [gateways, setGateways] = useState<SystemGateway[]>([]);
   const [loading, setLoading] = useState(true);
+  const [gatewayAtivo, setGatewayAtivo] = useState("");
+  const [pixEnabled, setPixEnabled] = useState(true);
+  const [creditCardEnabled, setCreditCardEnabled] = useState(false);
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const fetch_ = async () => {
     const { data } = await supabase.from("system_gateways").select("*").order("created_at");
-    if (data) setGateways(data as SystemGateway[]);
+    if (data) {
+      setGateways(data as SystemGateway[]);
+      const active = data.find((g: any) => g.ativo);
+      if (active) setGatewayAtivo(active.provedor);
+    }
     setLoading(false);
   };
 
@@ -45,130 +51,141 @@ export default function AdminGateways() {
     fetch_();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Excluir este gateway?")) return;
-    await supabase.from("system_gateways").delete().eq("id", id);
-    toast({ title: "Gateway excluído" });
-    fetch_();
+  // configuredGateways derived from gateways list
+
+  const handleActivateGateway = async (provedor: string) => {
+    setGatewayAtivo(provedor);
+    // Deactivate all, activate selected
+    for (const g of gateways) {
+      await supabase.from("system_gateways").update({ ativo: g.provedor === provedor }).eq("id", g.id);
+    }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    sonnerToast.success("Copiado!");
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      for (const g of gateways) {
+        await supabase.from("system_gateways").update({ ativo: g.provedor === gatewayAtivo }).eq("id", g.id);
+      }
+      toast({ title: "Configurações salvas!" });
+    } catch {
+      toast({ title: "Erro ao salvar", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const activeGateway = gateways.find(g => g.ativo);
+  const gatewayList = allGateways.map(id => ({
+    id,
+    label: provedorLabels[id],
+    configured: gateways.some(g => g.provedor === id),
+  }));
+
+  const configuredList = gatewayList.filter(g => g.configured);
 
   return (
     <div>
       <header className="rounded-lg border mb-6 overflow-hidden shadow">
         <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
           <div className="flex items-center gap-2">
-            <Wallet className="h-5 w-5" />
-            <h1 className="text-base font-semibold tracking-tight">Gateways de Pagamento</h1>
+            <Settings className="h-5 w-5" />
+            <h1 className="text-base font-semibold tracking-tight">Configuração dos Gateways</h1>
           </div>
-          <p className="text-xs/6 opacity-90">Configure os gateways de pagamento globais para cobranças de planos.</p>
+          <p className="text-xs/6 opacity-90">Configure os gateways de pagamento disponíveis para cobranças de planos.</p>
         </div>
       </header>
 
       <main className="space-y-4">
-        <section className="grid gap-4 md:grid-cols-2">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Settings className="h-4 w-4 text-foreground/70" />
-                <CardTitle className="text-sm">Gateway Ativo</CardTitle>
-              </div>
-              <CardDescription>Gateway selecionado para processar pagamentos.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border px-3 py-2 flex items-center justify-between">
-                <span className="text-sm font-semibold text-foreground">
-                  {activeGateway ? provedorLabels[activeGateway.provedor] || activeGateway.provedor : "Nenhum"}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Switch checked={!!activeGateway} disabled />
-                  <Badge variant={activeGateway ? "default" : "destructive"}>
-                    {activeGateway ? "Ativado" : "Desativado"}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Webhook className="h-4 w-4 text-foreground/70" />
-                <CardTitle className="text-sm">Webhook URL</CardTitle>
-              </div>
-              <CardDescription>URL para receber notificações de pagamento.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {activeGateway?.webhook_url ? (
-                <div className="flex items-center gap-2">
-                  <Input readOnly value={activeGateway.webhook_url} className="font-mono text-xs bg-muted/50" />
-                  <Button variant="default" size="sm" onClick={() => copyToClipboard(activeGateway.webhook_url!)} className="shrink-0">
-                    <Copy className="h-3 w-3 mr-1" /> Copiar
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">Nenhum webhook configurado.</p>
-              )}
-            </CardContent>
-          </Card>
-        </section>
-
         <Card className="shadow-sm">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Key className="h-4 w-4 text-foreground/70" />
-              <CardTitle className="text-sm">Todos os Gateways ({gateways.length})</CardTitle>
+              <Building2 className="h-4 w-4 text-foreground/70" />
+              <CardTitle className="text-sm">Gateway e Métodos de Pagamento</CardTitle>
             </div>
-            <CardDescription>Lista de gateways cadastrados no sistema.</CardDescription>
+            <CardDescription>
+              Selecione o gateway ativo e habilite os métodos de pagamento.
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8 text-muted-foreground">Carregando...</div>
-            ) : gateways.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Nenhum gateway configurado. Use o submenu para configurar um gateway.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Provedor</TableHead>
-                      <TableHead>Ambiente</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {gateways.map(g => (
-                      <TableRow key={g.id}>
-                        <TableCell className="font-medium">{g.nome}</TableCell>
-                        <TableCell>{provedorLabels[g.provedor] || g.provedor}</TableCell>
-                        <TableCell>
-                          <Badge variant={g.ambiente === "producao" ? "default" : "secondary"}>{g.ambiente === "producao" ? "Produção" : "Sandbox"}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={g.ativo ? "default" : "secondary"}>{g.ativo ? "Ativo" : "Inativo"}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/gateways/${g.provedor}`)}><Pencil className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(g.id)}><Trash2 className="h-4 w-4" /></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+          <CardContent className="space-y-4">
+            {/* Gateway Selector */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Gateway Ativo</label>
+              {configuredList.length === 0 ? (
+                <div className="rounded-md border px-3 py-2">
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum gateway configurado. Use o submenu para configurar:{" "}
+                    {allGateways.map((id, i) => (
+                      <span key={id}>
+                        <a href={`/admin/gateways/${id}`} className="text-primary underline">{provedorLabels[id]}</a>
+                        {i < allGateways.length - 1 && " · "}
+                      </span>
                     ))}
-                  </TableBody>
-                </Table>
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Select value={gatewayAtivo} onValueChange={setGatewayAtivo}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {configuredList.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>{g.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex flex-wrap gap-1.5">
+                    {gatewayList.map((g) => (
+                      <Badge
+                        key={g.id}
+                        variant={g.configured ? (g.id === gatewayAtivo ? "default" : "secondary") : "outline"}
+                        className="text-[10px] px-1.5 py-0"
+                      >
+                        {g.label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Toggles */}
+            <div className="grid gap-2">
+              <div className="rounded-md border px-3 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <QrCode className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm">PIX Automático</span>
+                </div>
+                <Switch
+                  checked={pixEnabled}
+                  onCheckedChange={setPixEnabled}
+                  disabled={configuredList.length === 0}
+                />
               </div>
+
+              <div className="rounded-md border px-3 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm">Cartão de Crédito</span>
+                </div>
+                <Switch
+                  checked={creditCardEnabled}
+                  onCheckedChange={setCreditCardEnabled}
+                />
+              </div>
+            </div>
+
+            {pixEnabled && configuredList.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                ✅ PIX ativo via <strong>{provedorLabels[gatewayAtivo]}</strong>
+              </p>
             )}
+
+            <div className="flex justify-center border-t pt-4 mt-2">
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Salvando..." : "Salvar Configurações"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </main>

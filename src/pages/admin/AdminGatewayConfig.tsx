@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Key, Copy, Webhook, ExternalLink, Settings, Save } from "lucide-react";
+import { Key, Copy, Webhook, ExternalLink, Settings } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 
 const provedorLabels: Record<string, string> = {
@@ -101,20 +101,11 @@ export default function AdminGatewayConfig() {
     <div>
       <header className="rounded-lg border mb-6 overflow-hidden shadow">
         <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                <h1 className="text-base font-semibold tracking-tight">Configuração do {label}</h1>
-              </div>
-              <p className="text-xs/6 opacity-90">Configure o gateway {label} para processar pagamentos de assinaturas.</p>
-            </div>
-            {gateway && (
-              <Button onClick={handleSave} disabled={saving} size="sm" variant="secondary" className="gap-2">
-                <Save className="h-4 w-4" /> {saving ? "Salvando..." : "Salvar"}
-              </Button>
-            )}
+          <div className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            <h1 className="text-base font-semibold tracking-tight">Configuração do {label}</h1>
           </div>
+          <p className="text-xs/6 opacity-90">Configure o gateway {label} para processar pagamentos de assinaturas.</p>
         </div>
       </header>
 
@@ -216,6 +207,11 @@ export default function AdminGatewayConfig() {
                   placeholder="Chave pública (se necessário)"
                   className="font-mono text-sm"
                 />
+              </div>
+              <div className="flex justify-center border-t pt-4 mt-2">
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? "Salvando..." : "Salvar Configurações"}
+                </Button>
               </div>
             </CardContent>
           </Card>

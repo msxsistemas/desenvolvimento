@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Palette, UserPlus, Wrench, Headphones } from "lucide-react";
+import { Settings, Palette, UserPlus, Wrench, Headphones } from "lucide-react";
 
 interface SystemConfig {
   nome_sistema: string;
@@ -59,18 +59,11 @@ export default function AdminConfiguracoes() {
     <div>
       <header className="rounded-lg border mb-6 overflow-hidden shadow">
         <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                <h1 className="text-base font-semibold tracking-tight">Configurações do Sistema</h1>
-              </div>
-              <p className="text-xs/6 opacity-90">Configurações globais da plataforma Msx Gestor.</p>
-            </div>
-            <Button onClick={handleSave} disabled={saving} size="sm" variant="secondary" className="gap-2">
-              <Save className="h-4 w-4" /> {saving ? "Salvando..." : "Salvar"}
-            </Button>
+          <div className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            <h1 className="text-base font-semibold tracking-tight">Configurações do Sistema</h1>
           </div>
+          <p className="text-xs/6 opacity-90">Configurações globais da plataforma Msx Gestor.</p>
         </div>
       </header>
 
@@ -176,6 +169,11 @@ export default function AdminConfiguracoes() {
                 <Label>E-mail Suporte</Label>
                 <Input value={config.suporte_email || ""} onChange={e => set("suporte_email", e.target.value)} placeholder="suporte@exemplo.com" />
               </div>
+            </div>
+            <div className="flex justify-center border-t pt-4 mt-2">
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Salvando..." : "Salvar Configurações"}
+              </Button>
             </div>
           </CardContent>
         </Card>
