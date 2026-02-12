@@ -11,7 +11,7 @@ import {
   Layers,
   CirclePause,
   CalendarClock,
-  Shuffle,
+  
   Save,
   RotateCcw,
   Clock,
@@ -139,7 +139,7 @@ export default function ConfiguracaoEnvio() {
   const calcEstimatedTime = () => {
     const min = num(config.tempoMinimo);
     const max = num(config.tempoMaximo);
-    const avgInterval = config.variarIntervalo ? (min + max) / 2 : min;
+    const avgInterval = (min + max) / 2;
     const batches = Math.ceil(100 / (num(config.limiteLote) || 1));
     const pauses = batches - 1;
     const totalSeconds = 100 * avgInterval + pauses * num(config.pausaProlongada);
@@ -275,26 +275,6 @@ export default function ConfiguracaoEnvio() {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-sm font-semibold">
-                <Shuffle className="h-4 w-4 text-primary" />
-                Variar Intervalo entre Mensagens
-              </Label>
-              <div className="flex items-center gap-3 mt-1">
-                <Switch
-                  checked={config.variarIntervalo}
-                  onCheckedChange={(v) => setConfig((c) => ({ ...c, variarIntervalo: v }))}
-                />
-                <span className="text-sm text-muted-foreground">
-                  {config.variarIntervalo
-                    ? "Ativado — intervalo aleatório entre mín. e máx."
-                    : "Desativado — sempre usa o tempo mínimo"}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Varia os segundos de uma mensagem pra outra para não ter o mesmo intervalo sempre
-              </p>
-            </div>
           </div>
         </div>
 
@@ -307,9 +287,7 @@ export default function ConfiguracaoEnvio() {
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-xl font-bold text-primary">
-                {config.variarIntervalo
-                  ? `${config.tempoMinimo || 0}s - ${config.tempoMaximo || 0}s`
-                  : `${config.tempoMinimo || 0}s`}
+                {`${config.tempoMinimo || 0}s - ${config.tempoMaximo || 0}s`}
               </p>
               <p className="text-xs text-muted-foreground">Intervalo entre mensagens</p>
             </div>
