@@ -68,6 +68,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminGateways from "./pages/admin/AdminGateways";
+import AdminGatewayConfig from "./pages/admin/AdminGatewayConfig";
 import AdminLogs from "./pages/admin/AdminLogs";
 import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
 import AdminTemplates from "./pages/admin/AdminTemplates";
@@ -167,6 +168,7 @@ const App = () => (
             <Route path="/admin/planos" element={<AdminPlanos />} />
             <Route path="/admin/assinaturas" element={<AdminAssinaturas />} />
             <Route path="/admin/gateways" element={<AdminGateways />} />
+            <Route path="/admin/gateways/:provider" element={<AdminGatewayConfig />} />
             <Route path="/admin/templates" element={<AdminTemplates />} />
             <Route path="/admin/configuracoes" element={<AdminConfiguracoes />} />
             <Route path="/admin/logs" element={<AdminLogs />} />
