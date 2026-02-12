@@ -204,18 +204,30 @@ export const useWhatsApp = () => {
     }
   }, []);
 
-  // Enviar mensagem para múltiplos contatos
+  // Enviar mensagem para múltiplos contatos (respeitando configurações de envio)
   const sendBulkMessages = useCallback(async (contacts: Array<{ phone: string; message: string; name?: string }>) => {
     if (!session || session.status !== 'connected') {
       throw new Error('WhatsApp não está conectado');
     }
 
+    // Carregar configurações de envio do localStorage
+    const defaultCfg = { tempoMinimo: 5, tempoMaximo: 10, limiteLote: 10, pausaProlongada: 15, limiteDiario: '', variarIntervalo: true };
+    let cfg = defaultCfg;
+    try {
+      const saved = localStorage.getItem('whatsapp_envio_config');
+      if (saved) cfg = { ...defaultCfg, ...JSON.parse(saved) };
+    } catch { /* use defaults */ }
+
+    // Checar limite diário
+    const dailyLimit = cfg.limiteDiario ? Number(cfg.limiteDiario) : Infinity;
+    const contactsToSend = contacts.slice(0, dailyLimit);
+
     const results = [];
     setLoading(true);
 
     try {
-      for (let i = 0; i < contacts.length; i++) {
-        const contact = contacts[i];
+      for (let i = 0; i < contactsToSend.length; i++) {
+        const contact = contactsToSend[i];
         
         try {
           const messageId = await sendMessage(contact.phone, contact.message);
@@ -225,23 +237,32 @@ export const useWhatsApp = () => {
             success: true, 
             messageId 
           });
-          
-          // Delay entre mensagens para evitar spam
-          if (i < contacts.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
         } catch (error) {
           results.push({ 
             phone: contact.phone, 
             name: contact.name,
             success: false, 
-            error: error.message 
+            error: (error as Error).message 
           });
+        }
+
+        // Delay entre mensagens
+        if (i < contactsToSend.length - 1) {
+          // Verificar se atingiu limite do lote → pausa prolongada
+          if ((i + 1) % cfg.limiteLote === 0) {
+            await new Promise(resolve => setTimeout(resolve, cfg.pausaProlongada * 1000));
+          } else {
+            // Intervalo normal (variado ou fixo)
+            const delay = cfg.variarIntervalo
+              ? (cfg.tempoMinimo + Math.random() * (cfg.tempoMaximo - cfg.tempoMinimo)) * 1000
+              : cfg.tempoMinimo * 1000;
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
         }
       }
 
       const successCount = results.filter(r => r.success).length;
-      toast.success(`${successCount}/${contacts.length} mensagens enviadas com sucesso!`);
+      toast.success(`${successCount}/${contactsToSend.length} mensagens enviadas com sucesso!`);
       
       return results;
     } finally {
