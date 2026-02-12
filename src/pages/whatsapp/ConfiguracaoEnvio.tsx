@@ -40,6 +40,7 @@ const DEFAULT_CONFIG: EnvioConfig = {
 };
 
 const MIN_TEMPO = 10;
+const MIN_TEMPO_MAX = 15;
 const STORAGE_KEY = "whatsapp_envio_config";
 
 function ValidationWarning({ message }: { message: string | null }) {
@@ -86,8 +87,8 @@ export default function ConfiguracaoEnvio() {
         : null;
 
   const tempoMaximoWarn =
-    config.tempoMaximo !== "" && num(config.tempoMaximo) < MIN_TEMPO
-      ? `O valor tem de ser superior ou igual a ${MIN_TEMPO}.`
+    config.tempoMaximo !== "" && num(config.tempoMaximo) < MIN_TEMPO_MAX
+      ? `O valor tem de ser superior ou igual a ${MIN_TEMPO_MAX}.`
       : config.tempoMaximo !== "" && num(config.tempoMaximo) > 120
         ? "O valor máximo é 120 segundos."
         : config.tempoMaximo !== "" && config.tempoMinimo !== "" && num(config.tempoMaximo) < num(config.tempoMinimo)
@@ -207,13 +208,13 @@ export default function ConfiguracaoEnvio() {
                 </Label>
                 <Input
                   type="number"
-                  min={MIN_TEMPO}
+                  min={MIN_TEMPO_MAX}
                   max={120}
                   value={config.tempoMaximo}
                   onChange={(e) => setConfig((c) => ({ ...c, tempoMaximo: e.target.value }))}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Intervalo máximo entre mensagens ({MIN_TEMPO}-120 segundos)
+                  Intervalo máximo entre mensagens ({MIN_TEMPO_MAX}-120 segundos)
                 </p>
                 <ValidationWarning message={tempoMaximoWarn} />
               </div>
