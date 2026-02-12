@@ -92,7 +92,7 @@ const App = () => (
           {/* Public routes */}
           <Route path="/auth" element={<Auth />} />
           <Route path="/fatura/:id" element={<FaturaPublica />} />
-          <Route path="/planos" element={<PlanosPrecos />} />
+          <Route path="/precos" element={<PlanosPrecos />} />
           <Route path="/ativar-plano" element={<AtivarPlano />} />
 
           {/* Protected layout wrapper for main routes */}
