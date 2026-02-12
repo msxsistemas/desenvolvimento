@@ -2,128 +2,175 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
-import { Wallet } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Wallet, Plus, Pencil, Trash2 } from "lucide-react";
 
-interface GatewayItem {
+interface SystemGateway {
   id: string;
-  user_id: string;
-  owner_email: string;
-  is_configured?: boolean;
-  gateway?: string;
-  gateway_ativo?: string;
-  pix_enabled?: boolean;
-  credit_card_enabled?: boolean;
-  pix_manual_enabled?: boolean;
-  created_at: string;
+  nome: string;
+  provedor: string;
+  ativo: boolean;
+  ambiente: string;
+  api_key_hash: string | null;
+  public_key_hash: string | null;
+  webhook_url: string | null;
+  configuracoes: Record<string, any>;
 }
 
-interface GatewayData {
-  asaas: GatewayItem[];
-  mercadopago: GatewayItem[];
-  ciabra: GatewayItem[];
-  v3pay: GatewayItem[];
-  checkout: GatewayItem[];
-}
+const emptyGw: Omit<SystemGateway, "id"> = {
+  nome: "", provedor: "asaas", ativo: false, ambiente: "sandbox",
+  api_key_hash: "", public_key_hash: "", webhook_url: "", configuracoes: {},
+};
 
 export default function AdminGateways() {
-  const [data, setData] = useState<GatewayData | null>(null);
+  const [gateways, setGateways] = useState<SystemGateway[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<SystemGateway | null>(null);
+  const [form, setForm] = useState(emptyGw);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    const fetch_ = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const resp = await fetch(`https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/admin-api`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
-          body: JSON.stringify({ action: "list_gateways" }),
-        });
-        const result = await resp.json();
-        if (result.success) setData(result.gateways);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+  const fetch_ = async () => {
+    const { data } = await supabase.from("system_gateways").select("*").order("created_at");
+    if (data) setGateways(data as SystemGateway[]);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetch_(); }, []);
+
+  const openCreate = () => { setEditing(null); setForm(emptyGw); setDialogOpen(true); };
+  const openEdit = (g: SystemGateway) => { setEditing(g); setForm({ ...g }); setDialogOpen(true); };
+
+  const handleSave = async () => {
+    try {
+      if (editing) {
+        await supabase.from("system_gateways").update(form).eq("id", editing.id);
+        toast({ title: "Gateway atualizado!" });
+      } else {
+        await supabase.from("system_gateways").insert(form);
+        toast({ title: "Gateway adicionado!" });
       }
-    };
+      setDialogOpen(false);
+      fetch_();
+    } catch {
+      toast({ title: "Erro ao salvar", variant: "destructive" });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Excluir este gateway?")) return;
+    await supabase.from("system_gateways").delete().eq("id", id);
+    toast({ title: "Gateway excluído" });
     fetch_();
-  }, []);
-
-  const renderTable = (items: GatewayItem[], gateway: string) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Usuário</TableHead>
-          <TableHead>Status</TableHead>
-          {gateway === "Checkout" && <TableHead>Gateway Ativo</TableHead>}
-          {gateway === "Checkout" && <TableHead>PIX</TableHead>}
-          {gateway === "Checkout" && <TableHead>Cartão</TableHead>}
-          <TableHead>Criado em</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {items.length === 0 ? (
-          <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-4">Nenhuma configuração</TableCell></TableRow>
-        ) : items.map(g => (
-          <TableRow key={g.id}>
-            <TableCell className="text-sm">{g.owner_email}</TableCell>
-            <TableCell>
-              <Badge variant={g.is_configured !== false ? "default" : "secondary"}>
-                {g.is_configured !== false ? "Configurado" : "Pendente"}
-              </Badge>
-            </TableCell>
-            {gateway === "Checkout" && <TableCell className="text-sm">{g.gateway_ativo || "—"}</TableCell>}
-            {gateway === "Checkout" && <TableCell><Badge variant={g.pix_enabled ? "default" : "secondary"}>{g.pix_enabled ? "Sim" : "Não"}</Badge></TableCell>}
-            {gateway === "Checkout" && <TableCell><Badge variant={g.credit_card_enabled ? "default" : "secondary"}>{g.credit_card_enabled ? "Sim" : "Não"}</Badge></TableCell>}
-            <TableCell className="text-xs text-muted-foreground">{new Date(g.created_at).toLocaleDateString("pt-BR")}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-
-  const tabs = data ? [
-    { key: "asaas", label: `Asaas (${data.asaas.length})`, items: data.asaas },
-    { key: "mercadopago", label: `Mercado Pago (${data.mercadopago.length})`, items: data.mercadopago },
-    { key: "ciabra", label: `Ciabra (${data.ciabra.length})`, items: data.ciabra },
-    { key: "v3pay", label: `V3Pay (${data.v3pay.length})`, items: data.v3pay },
-    { key: "checkout", label: `Checkout (${data.checkout.length})`, items: data.checkout },
-  ] : [];
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Gateways de Pagamento</h1>
-        <p className="text-muted-foreground">Configurações de gateways de todos os usuários</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Gateways do Sistema</h1>
+          <p className="text-muted-foreground">Configure os gateways de pagamento globais da plataforma</p>
+        </div>
+        <Button onClick={openCreate} className="gap-2"><Plus className="h-4 w-4" /> Novo Gateway</Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wallet className="h-5 w-5" /> Gateways
-          </CardTitle>
+          <CardTitle className="flex items-center gap-2"><Wallet className="h-5 w-5" /> Gateways ({gateways.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+          ) : gateways.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">Nenhum gateway configurado</div>
           ) : (
-            <Tabs defaultValue="asaas">
-              <TabsList className="flex-wrap">
-                {tabs.map(t => (
-                  <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
-                ))}
-              </TabsList>
-              {tabs.map(t => (
-                <TabsContent key={t.key} value={t.key}>
-                  {renderTable(t.items, t.key === "checkout" ? "Checkout" : t.label.split(" (")[0])}
-                </TabsContent>
-              ))}
-            </Tabs>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Provedor</TableHead>
+                    <TableHead>Ambiente</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Webhook</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {gateways.map(g => (
+                    <TableRow key={g.id}>
+                      <TableCell className="font-medium">{g.nome}</TableCell>
+                      <TableCell className="capitalize">{g.provedor}</TableCell>
+                      <TableCell>
+                        <Badge variant={g.ambiente === "producao" ? "default" : "secondary"}>{g.ambiente}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={g.ativo ? "default" : "secondary"}>{g.ativo ? "Ativo" : "Inativo"}</Badge>
+                      </TableCell>
+                      <TableCell className="text-xs max-w-[200px] truncate">{g.webhook_url || "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(g)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(g.id)}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>{editing ? "Editar Gateway" : "Novo Gateway"}</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Nome</Label><Input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} /></div>
+              <div>
+                <Label>Provedor</Label>
+                <Select value={form.provedor} onValueChange={v => setForm(f => ({ ...f, provedor: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asaas">Asaas</SelectItem>
+                    <SelectItem value="mercadopago">Mercado Pago</SelectItem>
+                    <SelectItem value="stripe">Stripe</SelectItem>
+                    <SelectItem value="v3pay">V3Pay</SelectItem>
+                    <SelectItem value="ciabra">Ciabra</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>Ambiente</Label>
+              <Select value={form.ambiente} onValueChange={v => setForm(f => ({ ...f, ambiente: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sandbox">Sandbox</SelectItem>
+                  <SelectItem value="producao">Produção</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>API Key</Label><Input type="password" value={form.api_key_hash || ""} onChange={e => setForm(f => ({ ...f, api_key_hash: e.target.value }))} /></div>
+            <div><Label>Public Key</Label><Input value={form.public_key_hash || ""} onChange={e => setForm(f => ({ ...f, public_key_hash: e.target.value }))} /></div>
+            <div><Label>Webhook URL</Label><Input value={form.webhook_url || ""} onChange={e => setForm(f => ({ ...f, webhook_url: e.target.value }))} /></div>
+            <div className="flex items-center gap-2">
+              <Switch checked={form.ativo} onCheckedChange={v => setForm(f => ({ ...f, ativo: v }))} />
+              <Label>Ativo</Label>
+            </div>
+            <Button onClick={handleSave} className="w-full">{editing ? "Salvar" : "Adicionar Gateway"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

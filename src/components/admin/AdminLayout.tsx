@@ -6,12 +6,11 @@ import {
   CreditCard,
   ArrowLeft,
   Shield,
-  UserCheck,
   MessageSquare,
   Wallet,
   ScrollText,
-  Smartphone,
-  DollarSign,
+  Settings,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,12 +18,11 @@ import { Button } from "@/components/ui/button";
 const adminNavItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Usuários", url: "/admin/usuarios", icon: Users },
-  { title: "Clientes", url: "/admin/clientes", icon: UserCheck },
-  { title: "Planos", url: "/admin/planos", icon: CreditCard },
-  { title: "Mensagens", url: "/admin/mensagens", icon: MessageSquare },
+  { title: "Planos SaaS", url: "/admin/planos", icon: CreditCard },
+  { title: "Assinaturas", url: "/admin/assinaturas", icon: UserCheck },
   { title: "Gateways", url: "/admin/gateways", icon: Wallet },
-  { title: "WhatsApp", url: "/admin/whatsapp", icon: Smartphone },
-  { title: "Transações", url: "/admin/transacoes", icon: DollarSign },
+  { title: "Templates", url: "/admin/templates", icon: MessageSquare },
+  { title: "Configurações", url: "/admin/configuracoes", icon: Settings },
   { title: "Logs", url: "/admin/logs", icon: ScrollText },
 ];
 

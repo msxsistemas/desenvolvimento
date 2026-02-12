@@ -689,6 +689,177 @@ export type Database = {
           },
         ]
       }
+      system_config: {
+        Row: {
+          cor_primaria: string | null
+          id: number
+          logo_url: string | null
+          manutencao: boolean | null
+          mensagem_manutencao: string | null
+          nome_sistema: string | null
+          registro_aberto: boolean | null
+          suporte_email: string | null
+          suporte_whatsapp: string | null
+          termos_url: string | null
+          trial_dias: number | null
+          updated_at: string
+        }
+        Insert: {
+          cor_primaria?: string | null
+          id?: number
+          logo_url?: string | null
+          manutencao?: boolean | null
+          mensagem_manutencao?: string | null
+          nome_sistema?: string | null
+          registro_aberto?: boolean | null
+          suporte_email?: string | null
+          suporte_whatsapp?: string | null
+          termos_url?: string | null
+          trial_dias?: number | null
+          updated_at?: string
+        }
+        Update: {
+          cor_primaria?: string | null
+          id?: number
+          logo_url?: string | null
+          manutencao?: boolean | null
+          mensagem_manutencao?: string | null
+          nome_sistema?: string | null
+          registro_aberto?: boolean | null
+          suporte_email?: string | null
+          suporte_whatsapp?: string | null
+          termos_url?: string | null
+          trial_dias?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      system_gateways: {
+        Row: {
+          ambiente: string
+          api_key_hash: string | null
+          ativo: boolean
+          configuracoes: Json | null
+          created_at: string
+          id: string
+          nome: string
+          provedor: string
+          public_key_hash: string | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          ambiente?: string
+          api_key_hash?: string | null
+          ativo?: boolean
+          configuracoes?: Json | null
+          created_at?: string
+          id?: string
+          nome: string
+          provedor: string
+          public_key_hash?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          ambiente?: string
+          api_key_hash?: string | null
+          ativo?: boolean
+          configuracoes?: Json | null
+          created_at?: string
+          id?: string
+          nome?: string
+          provedor?: string
+          public_key_hash?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      system_plans: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          destaque: boolean
+          id: string
+          intervalo: string
+          limite_clientes: number | null
+          limite_mensagens: number | null
+          limite_paineis: number | null
+          limite_whatsapp_sessions: number | null
+          nome: string
+          ordem: number
+          recursos: Json | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          destaque?: boolean
+          id?: string
+          intervalo?: string
+          limite_clientes?: number | null
+          limite_mensagens?: number | null
+          limite_paineis?: number | null
+          limite_whatsapp_sessions?: number | null
+          nome: string
+          ordem?: number
+          recursos?: Json | null
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          destaque?: boolean
+          id?: string
+          intervalo?: string
+          limite_clientes?: number | null
+          limite_mensagens?: number | null
+          limite_paineis?: number | null
+          limite_whatsapp_sessions?: number | null
+          nome?: string
+          ordem?: number
+          recursos?: Json | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      system_templates: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          mensagem: string
+          nome: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          mensagem: string
+          nome: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          mensagem?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       templates_cobranca: {
         Row: {
           chave_pix: string | null
@@ -811,6 +982,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          expira_em: string | null
+          gateway_subscription_id: string | null
+          id: string
+          inicio: string
+          plan_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expira_em?: string | null
+          gateway_subscription_id?: string | null
+          id?: string
+          inicio?: string
+          plan_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expira_em?: string | null
+          gateway_subscription_id?: string | null
+          id?: string
+          inicio?: string
+          plan_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "system_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v3pay_config: {
         Row: {
