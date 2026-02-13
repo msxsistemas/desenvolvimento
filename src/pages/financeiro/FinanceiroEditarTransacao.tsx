@@ -10,6 +10,13 @@ import { DollarSign, RefreshCw } from "lucide-react";
 import { useFinanceiro } from "@/hooks/useFinanceiro";
 import { toast } from "sonner";
 
+const formatCurrencyBRL = (value: string) => {
+  const digits = (value ?? "").toString().replace(/\D/g, "");
+  const number = Number(digits) / 100;
+  if (isNaN(number)) return "R$ 0,00";
+  return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+};
+
 export default function FinanceiroEditarTransacao() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -33,7 +40,7 @@ export default function FinanceiroEditarTransacao() {
       const transacao = transacoes.find(t => t.id === id);
       if (transacao) {
         setFormData({
-          valor: transacao.valor.toString(),
+          valor: formatCurrencyBRL(Math.round(transacao.valor * 100).toString()),
           tipo: transacao.tipo as "entrada" | "saida",
           descricao: transacao.descricao || `${transacao.cliente}\n${transacao.detalheTitulo}: ${transacao.detalheValor}`,
         });
@@ -112,10 +119,12 @@ export default function FinanceiroEditarTransacao() {
               <div className="space-y-2" data-field="valor">
                 <Label className="text-sm font-medium">Valor <span className="text-destructive">*</span></Label>
                 <Input
+                  type="text"
+                  inputMode="numeric"
                   placeholder="R$ 0,00"
                   className={`bg-background border-border ${fieldErrors.valor ? 'border-destructive' : ''}`}
                   value={formData.valor}
-                  onChange={(e) => { setFormData(prev => ({ ...prev, valor: e.target.value })); setFieldErrors(prev => ({ ...prev, valor: '' })); }}
+                  onChange={(e) => { setFormData(prev => ({ ...prev, valor: formatCurrencyBRL(e.target.value) })); setFieldErrors(prev => ({ ...prev, valor: '' })); }}
                 />
                 {fieldErrors.valor && <span className="text-xs text-destructive">{fieldErrors.valor}</span>}
               </div>
