@@ -134,6 +134,12 @@ export default function AdminGatewayConfig() {
 
     setSaving(true);
     try {
+      // Desativar todos os outros gateways primeiro
+      await supabase
+        .from("system_gateways")
+        .update({ ativo: false })
+        .neq("provedor", provider!);
+
       const updatePayload = {
         nome: gateway.nome,
         provedor: gateway.provedor,
