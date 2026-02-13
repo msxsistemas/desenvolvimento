@@ -126,11 +126,29 @@ export default function GerenciarMensagens() {
     
     try {
       setSaving(true);
+
+      // Buscar templates ativos do admin (system_templates)
+      const { data: sysTemplates, error: fetchError } = await supabase
+        .from("system_templates")
+        .select("tipo, mensagem")
+        .eq("ativo", true);
+
+      if (fetchError) throw fetchError;
+
+      const restored: MensagensPadroes = { ...emptyMensagens };
+      if (sysTemplates) {
+        for (const t of sysTemplates) {
+          if (t.tipo in restored) {
+            (restored as any)[t.tipo] = t.mensagem;
+          }
+        }
+      }
+
       const { error } = await supabase
         .from("mensagens_padroes")
         .upsert({
           user_id: user.id,
-          ...defaultMensagens,
+          ...restored,
           updated_at: new Date().toISOString(),
         }, {
           onConflict: 'user_id'
@@ -138,7 +156,7 @@ export default function GerenciarMensagens() {
 
       if (error) throw error;
 
-      setMensagens(defaultMensagens);
+      setMensagens(restored);
       toast.success("Mensagens restauradas ao padrão!");
     } catch (error) {
       console.error("Erro ao restaurar mensagens:", error);
