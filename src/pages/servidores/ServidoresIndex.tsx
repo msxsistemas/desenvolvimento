@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Server, ChevronRight, Wrench } from "lucide-react";
+import { Server, ChevronRight, Wrench, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { PROVEDORES } from "@/config/provedores";
+import { supabase } from "@/lib/supabase";
 
 const PROVIDER_ROUTES: Record<string, string> = {
   'sigma-v2': '/servidores/sigma',
@@ -13,10 +13,38 @@ const PROVIDER_ROUTES: Record<string, string> = {
   'playfast': '/servidores/playfast',
 };
 
+interface ServidorDB {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  status: string;
+}
+
 export default function ServidoresIndex() {
+  const [servidores, setServidores] = useState<ServidorDB[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     document.title = "Servidores | Tech Play";
+    const fetch_ = async () => {
+      const { data } = await supabase
+        .from("system_servidores")
+        .select("*")
+        .in("status", ["ativo", "manutencao"])
+        .order("nome");
+      if (data) setServidores(data as ServidorDB[]);
+      setLoading(false);
+    };
+    fetch_();
   }, []);
+
+  if (loading) {
+    return (
+      <main className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </main>
+    );
+  }
 
   return (
     <main className="space-y-4">
@@ -31,23 +59,19 @@ export default function ServidoresIndex() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {PROVEDORES.filter(p => p.integrado || p.emManutencao).map((provedor) => {
-          const route = PROVIDER_ROUTES[provedor.id];
-          const isManutencao = provedor.emManutencao;
+        {servidores.map((srv) => {
+          const route = PROVIDER_ROUTES[srv.id];
 
-          if (isManutencao) {
+          if (srv.status === "manutencao") {
             return (
-              <div
-                key={provedor.id}
-                className="rounded-lg p-5 bg-card border border-border opacity-70"
-              >
+              <div key={srv.id} className="rounded-lg p-5 bg-card border border-border opacity-70">
                 <div className="flex items-center justify-between mb-3">
                   <div className="w-10 h-10 bg-orange-500/10 rounded-full flex items-center justify-center">
                     <Wrench className="w-5 h-5 text-orange-500" />
                   </div>
                 </div>
-                <h3 className="font-semibold text-foreground">{provedor.nome}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{provedor.descricao}</p>
+                <h3 className="font-semibold text-foreground">{srv.nome}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{srv.descricao}</p>
                 <Badge variant="outline" className="mt-3 text-orange-400 border-orange-400/50 bg-orange-400/10">
                   Em manutenção
                 </Badge>
@@ -58,7 +82,7 @@ export default function ServidoresIndex() {
           if (route) {
             return (
               <NavLink
-                key={provedor.id}
+                key={srv.id}
                 to={route}
                 className="rounded-lg p-5 bg-card border border-border hover:border-primary/50 transition-all group"
               >
@@ -68,8 +92,8 @@ export default function ServidoresIndex() {
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-                <h3 className="font-semibold text-foreground">{provedor.nome}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{provedor.descricao}</p>
+                <h3 className="font-semibold text-foreground">{srv.nome}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{srv.descricao}</p>
                 <Badge className="mt-3 bg-green-500/10 text-green-500 border-green-500/30 hover:bg-green-500/10">
                   Integrado
                 </Badge>
@@ -80,6 +104,12 @@ export default function ServidoresIndex() {
           return null;
         })}
       </div>
+
+      {servidores.length === 0 && (
+        <div className="rounded-lg p-8 bg-card border border-border text-center">
+          <p className="text-muted-foreground">Nenhum servidor disponível no momento.</p>
+        </div>
+      )}
     </main>
   );
 }

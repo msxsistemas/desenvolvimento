@@ -857,6 +857,30 @@ export type Database = {
         }
         Relationships: []
       }
+      system_servidores: {
+        Row: {
+          descricao: string | null
+          id: string
+          nome: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          descricao?: string | null
+          id: string
+          nome: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          descricao?: string | null
+          id?: string
+          nome?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_templates: {
         Row: {
           ativo: boolean
