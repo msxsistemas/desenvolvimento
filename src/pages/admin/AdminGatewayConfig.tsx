@@ -164,7 +164,12 @@ export default function AdminGatewayConfig() {
           .single();
 
         if (refreshed) {
-          setGateway(refreshed as GatewayData);
+          // Limpar credenciais da tela por privacidade
+          setGateway({
+            ...(refreshed as GatewayData),
+            api_key_hash: "",
+            public_key_hash: "",
+          });
         }
       } else {
         const { data, error } = await supabase
