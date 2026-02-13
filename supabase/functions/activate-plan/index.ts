@@ -150,8 +150,7 @@ Deno.serve(async (req) => {
       }
 
       const secretKey = gateway.api_key_hash;
-      const publicKey = gateway.public_key_hash || "";
-      const basicToken = btoa(`${publicKey}:${secretKey}`);
+      const basicToken = btoa(`:${secretKey}`);
       const pixHeaders = {
         Authorization: `Basic ${basicToken}`,
         "Content-Type": "application/json",
@@ -430,11 +429,12 @@ async function generateMercadoPagoPayment(gateway: any, plan: any, user: any) {
 
 async function generateCiabraPayment(gateway: any, plan: any, user: any) {
   const secretKey = gateway.api_key_hash;
-  const publicKey = gateway.public_key_hash || "";
   if (!secretKey) return { error: "Gateway Ciabra sem chave secreta configurada" };
 
   const CIABRA_BASE_URL = "https://api.az.center";
-  const basicToken = btoa(`${publicKey}:${secretKey}`);
+  // Usar apenas a chave secreta na autenticação Basic (sem public key)
+  // Isso é compatível com o create-pix do ciabra-integration que funciona
+  const basicToken = btoa(`:${secretKey}`);
   const headers = {
     Authorization: `Basic ${basicToken}`,
     "Content-Type": "application/json",
@@ -551,8 +551,7 @@ async function checkPaymentStatus(gateway: any, chargeId: string): Promise<boole
 
     if (provedor === "ciabra") {
       const secretKey = gateway.api_key_hash;
-      const publicKey = gateway.public_key_hash || "";
-      const basicToken = btoa(`${publicKey}:${secretKey}`);
+      const basicToken = btoa(`:${secretKey}`);
 
       const resp = await fetch(`https://api.az.center/invoices/applications/invoices/${chargeId}`, {
         headers: { Authorization: `Basic ${basicToken}` },
