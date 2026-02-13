@@ -134,18 +134,56 @@ export default function AdminGatewayConfig() {
 
     setSaving(true);
     try {
-      const { id, ...payload } = gateway;
-      payload.ativo = true;
-      payload.webhook_url = webhookUrl;
-      if (id) {
-        await supabase.from("system_gateways").update(payload).eq("id", id);
+      const updatePayload = {
+        nome: gateway.nome,
+        provedor: gateway.provedor,
+        ativo: true,
+        ambiente: gateway.ambiente,
+        api_key_hash: gateway.api_key_hash,
+        public_key_hash: gateway.public_key_hash,
+        webhook_url: webhookUrl,
+      };
+
+      if (gateway.id) {
+        const { error } = await supabase
+          .from("system_gateways")
+          .update(updatePayload)
+          .eq("id", gateway.id);
+
+        if (error) {
+          console.error("Erro ao salvar gateway:", error);
+          toast({ title: "Erro ao salvar credenciais", description: error.message, variant: "destructive" });
+          return;
+        }
+
+        // Recarregar dados do banco para confirmar persistência
+        const { data: refreshed } = await supabase
+          .from("system_gateways")
+          .select("*")
+          .eq("id", gateway.id)
+          .single();
+
+        if (refreshed) {
+          setGateway(refreshed as GatewayData);
+        }
       } else {
-        const { data } = await supabase.from("system_gateways").insert({ ...payload, provedor: provider! }).select().single();
+        const { data, error } = await supabase
+          .from("system_gateways")
+          .insert({ ...updatePayload, provedor: provider! })
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Erro ao criar gateway:", error);
+          toast({ title: "Erro ao criar gateway", description: error.message, variant: "destructive" });
+          return;
+        }
         if (data) setGateway(data as GatewayData);
       }
-      setGateway(g => g ? { ...g, ativo: true } : g);
+
       toast({ title: `${label} ativado com sucesso!` });
-    } catch {
+    } catch (err: any) {
+      console.error("Erro inesperado:", err);
       toast({ title: "Erro ao ativar", variant: "destructive" });
     } finally {
       setSaving(false);
