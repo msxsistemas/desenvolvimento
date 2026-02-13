@@ -16,7 +16,7 @@ export interface TemplateMensagem {
 }
 
 const defaultTemplates: Omit<TemplateMensagem, 'id' | 'user_id' | 'created_at' | 'updated_at'>[] = [
-  { nome: "Dados de acesso do cliente", mensagem: "{saudacao} *{nome_cliente}*.{br}Segue suas informações abaixo:{br}{br}Login: *{usuario}*{br}Senha: *{senha}*", midia: false, padrao: false },
+  
   { nome: "Confirmação de Pagamento", mensagem: "Olá, *{nome_cliente}*. {br}{br} ✅ *Seu pagamento foi realizado!*", midia: false, padrao: false },
   { nome: "Plano Venceu Ontem", mensagem: "{saudacao}. *{nome_cliente}*. {br}{br} 🟥 *SEU PLANO VENCEU*", midia: false, padrao: false },
   { nome: "Plano Vencendo Hoje", mensagem: "{saudacao}. *{nome_cliente}*. {br}{br} ⚠️ *SEU VENCIMENTO É HOJE!*", midia: false, padrao: false },
