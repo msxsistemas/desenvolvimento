@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useState, useMemo } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Server, Wrench, Ban, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -60,16 +61,22 @@ export default function AdminServidores() {
   };
 
   const statusOrder: Record<string, number> = { ativo: 0, manutencao: 1, inativo: 2 };
-  const sorted = [...servidores].sort((a, b) => (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3));
-  const buscados = busca ? sorted.filter(s => s.nome.toLowerCase().includes(busca.toLowerCase())) : sorted;
-  const filtrados = filtro === "todos" ? buscados : buscados.filter(s => s.status === filtro);
-  const contagem = { todos: servidores.length, ativo: servidores.filter(s => s.status === "ativo").length, manutencao: servidores.filter(s => s.status === "manutencao").length, inativo: servidores.filter(s => s.status === "inativo").length };
+
+  const filtrados = useMemo(() => {
+    let list = [...servidores].sort((a, b) => (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3));
+    if (busca.trim()) {
+      const q = busca.toLowerCase();
+      list = list.filter(s => s.nome.toLowerCase().includes(q));
+    }
+    if (filtro !== "todos") list = list.filter(s => s.status === filtro);
+    return list;
+  }, [servidores, busca, filtro]);
 
   if (loading) return <div className="text-center py-8 text-muted-foreground">Carregando...</div>;
 
   return (
-    <div>
-      <header className="rounded-lg border mb-3 overflow-hidden shadow-sm">
+    <div className="space-y-3">
+      <header className="rounded-lg border overflow-hidden shadow-sm">
         <div className="px-4 py-3 bg-card border-b border-border">
           <div className="flex items-center gap-2">
             <Server className="h-5 w-5 text-foreground/70" />
@@ -79,28 +86,37 @@ export default function AdminServidores() {
         </div>
       </header>
 
-      <main className="space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="flex flex-wrap gap-2">
-            {([["todos", "Todos"], ["ativo", "Ativos"], ["manutencao", "Manutenção"], ["inativo", "Inativos"]] as const).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setFiltro(key)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${filtro === key ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:text-foreground"}`}
-              >
-                {label} ({contagem[key]})
-              </button>
-            ))}
+      <Card className="shadow-sm">
+        <CardHeader className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Server className="h-4 w-4 text-foreground/70" />
+              <CardTitle className="text-sm">Servidores ({filtrados.length})</CardTitle>
+            </div>
+            <Tabs value={filtro} onValueChange={(v) => setFiltro(v)}>
+              <TabsList className="h-8">
+                <TabsTrigger value="todos" className="text-xs px-3 h-7">Todos</TabsTrigger>
+                <TabsTrigger value="ativo" className="text-xs px-3 h-7">Ativos</TabsTrigger>
+                <TabsTrigger value="manutencao" className="text-xs px-3 h-7">Manutenção</TabsTrigger>
+                <TabsTrigger value="inativo" className="text-xs px-3 h-7">Inativos</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
-          <div className="relative sm:ml-auto sm:w-56">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input placeholder="Buscar servidor..." value={busca} onChange={e => setBusca(e.target.value)} className="h-8 text-xs pl-8" />
+          <CardDescription>Controle quais servidores são exibidos para os usuários.</CardDescription>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome do servidor..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-9 h-9"
+            />
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtrados.map((srv) => (
-            <Card key={srv.id} className="shadow-sm">
-              <CardContent className="p-4">
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filtrados.map((srv) => (
+              <div key={srv.id} className="rounded-lg border border-border p-4 bg-card">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -128,11 +144,16 @@ export default function AdminServidores() {
                     </SelectContent>
                   </Select>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </main>
+              </div>
+            ))}
+            {filtrados.length === 0 && (
+              <div className="col-span-full text-center py-8 text-muted-foreground text-sm">
+                Nenhum servidor encontrado.
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
