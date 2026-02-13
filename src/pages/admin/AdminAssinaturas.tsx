@@ -269,14 +269,7 @@ export default function AdminAssinaturas() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Data de Expiração</label>
-              <Input 
-                type="date" 
-                value={editExpiraEm} 
-                onChange={(e) => setEditExpiraEm(e.target.value)}
-              />
-            </div>
+            <Button onClick={handleUpdate} className="w-full">Salvar Alterações</Button>
             <Button onClick={handleUpdate} className="w-full">Salvar Alterações</Button>
           </div>
         </DialogContent>
