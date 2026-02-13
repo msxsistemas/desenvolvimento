@@ -1,7 +1,8 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { Outlet, useNavigate } from "react-router-dom";
+import { ChevronsLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -24,6 +25,24 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+function SidebarToggleButton() {
+  const { toggleSidebar, state } = useSidebar();
+  const isExpanded = state === "expanded";
+
+  return (
+    <button
+      onClick={toggleSidebar}
+      className="hidden md:flex absolute top-1/2 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-110 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+      style={{ left: isExpanded ? 'calc(var(--sidebar-width) - 20px)' : 'calc(var(--sidebar-width-icon, 3rem) - 20px)' }}
+      aria-label="Toggle Sidebar"
+    >
+      <ChevronsLeft
+        className={`h-5 w-5 transition-transform duration-300 ${!isExpanded ? 'rotate-180' : ''}`}
+      />
+    </button>
+  );
+}
 
 export default function AppLayout() {
   const { user, signOut } = useAuth();
@@ -81,20 +100,16 @@ export default function AppLayout() {
   const expirationDate = getExpirationDate();
   const isExpiredOrClose = daysLeft !== null && daysLeft <= 3;
 
-  return (
+   return (
     <SidebarProvider>
-      <div className="h-screen flex w-full bg-[radial-gradient(1200px_600px_at_-20%_-10%,hsl(var(--brand)/.15)_0%,transparent_60%)] overflow-hidden">
+      <div className="h-screen flex w-full bg-[radial-gradient(1200px_600px_at_-20%_-10%,hsl(var(--brand)/.15)_0%,transparent_60%)] overflow-hidden relative">
         <AppSidebar />
+        <SidebarToggleButton />
         <div className="flex-1 flex flex-col h-full min-w-0">
           {/* Header */}
           <header className="h-16 sm:h-20 border-b border-border flex items-center px-4 sm:px-6 bg-sidebar-background z-10 flex-shrink-0">
-            {/* Left spacer */}
+            {/* Spacer */}
             <div className="flex-1" />
-
-            {/* Center: Sidebar toggle */}
-            <div className="absolute left-1/2 -translate-x-1/2">
-              <SidebarTrigger className="h-10 w-10 rounded-xl border border-border bg-card hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-300 shadow-sm hover:shadow-md" />
-            </div>
 
             {/* Center/Right: Action icons + Expiration + Notifications + Profile */}
             <div className="flex items-center gap-2 sm:gap-3">
