@@ -299,70 +299,70 @@ export default function AtivarPlano() {
                 </p>
               </div>
 
-              <CardContent className="p-6 space-y-6" style={{ minHeight: '520px' }}>
-                <div className="flex flex-col items-center py-4">
-                  <div className="w-[228px] h-[228px] flex items-center justify-center">
-                    {loadingPix && !paymentData.pix_copia_cola ? (
-                      <div className="w-48 h-48 rounded-2xl bg-muted/30 border border-border/50 flex flex-col items-center justify-center gap-3">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-xs text-muted-foreground font-medium">Gerando QR Code PIX...</p>
-                      </div>
-                    ) : paymentData.pix_qr_code ? (
-                      <div className="bg-white p-5 rounded-2xl shadow-lg ring-1 ring-black/5 animate-fade-in">
-                        <img
-                          src={`data:image/png;base64,${paymentData.pix_qr_code}`}
-                          alt="QR Code PIX"
-                          className="w-[188px] h-[188px]"
-                        />
-                      </div>
-                    ) : paymentData.pix_copia_cola ? (
-                      <div className="bg-white p-5 rounded-2xl shadow-lg ring-1 ring-black/5 animate-fade-in">
-                        <QRCodeSVG value={paymentData.pix_copia_cola} size={188} />
-                      </div>
-                    ) : (
-                      <div className="w-48 h-48 rounded-2xl bg-muted/30 border border-border/50 flex flex-col items-center justify-center gap-3">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-xs text-muted-foreground font-medium">Aguardando dados do PIX...</p>
-                      </div>
-                    )}
+              <CardContent className="p-6 space-y-6">
+                {loadingPix && !paymentData.pix_copia_cola ? (
+                  <div className="flex flex-col items-center gap-4 py-8">
+                    <div className="relative">
+                      <div className="w-48 h-48 rounded-2xl bg-muted/50 animate-pulse" />
+                      <Loader2 className="h-10 w-10 animate-spin text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    </div>
+                    <p className="text-sm text-muted-foreground font-medium">Gerando QR Code PIX...</p>
                   </div>
-                </div>
+                ) : paymentData.pix_qr_code ? (
+                  <div className="flex justify-center py-4">
+                    <div className="bg-white p-5 rounded-2xl shadow-lg ring-1 ring-black/5">
+                      <img
+                        src={`data:image/png;base64,${paymentData.pix_qr_code}`}
+                        alt="QR Code PIX"
+                        className="w-52 h-52"
+                      />
+                    </div>
+                  </div>
+                ) : paymentData.pix_copia_cola ? (
+                  <div className="flex justify-center py-4">
+                    <div className="bg-white p-5 rounded-2xl shadow-lg ring-1 ring-black/5">
+                      <QRCodeSVG value={paymentData.pix_copia_cola} size={208} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-4 py-8">
+                    <div className="relative">
+                      <div className="w-48 h-48 rounded-2xl bg-muted/50 animate-pulse" />
+                      <Loader2 className="h-10 w-10 animate-spin text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    </div>
+                    <p className="text-sm text-muted-foreground font-medium">Aguardando dados do PIX...</p>
+                  </div>
+                )}
 
-                <div style={{ minHeight: '100px' }}>
-                  {paymentData.pix_copia_cola ? (
-                    <div className="space-y-3 animate-fade-in">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-foreground">PIX Copia e Cola</p>
-                        {copied && (
-                          <span className="text-xs text-green-500 font-medium flex items-center gap-1 animate-in fade-in slide-in-from-right-2">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Copiado!
-                          </span>
-                        )}
-                      </div>
-                      <div
-                        className="group relative bg-muted/60 hover:bg-muted rounded-xl p-4 cursor-pointer transition-colors border border-border/50 hover:border-primary/30"
-                        onClick={copyPixCode}
+                {paymentData.pix_copia_cola && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-foreground">PIX Copia e Cola</p>
+                      {copied && (
+                        <span className="text-xs text-green-500 font-medium flex items-center gap-1 animate-in fade-in slide-in-from-right-2">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Copiado!
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className="group relative bg-muted/60 hover:bg-muted rounded-xl p-4 cursor-pointer transition-colors border border-border/50 hover:border-primary/30"
+                      onClick={copyPixCode}
+                    >
+                      <code className="text-xs break-all text-muted-foreground leading-relaxed block pr-10">
+                        {paymentData.pix_copia_cola}
+                      </code>
+                      <Button
+                        variant={copied ? "default" : "secondary"}
+                        size="icon"
+                        className={`absolute top-3 right-3 h-8 w-8 transition-all ${copied ? 'bg-green-500 hover:bg-green-600 text-white' : 'group-hover:bg-primary group-hover:text-primary-foreground'}`}
+                        onClick={(e) => { e.stopPropagation(); copyPixCode(); }}
                       >
-                        <code className="text-xs break-all text-muted-foreground leading-relaxed block pr-10">
-                          {paymentData.pix_copia_cola}
-                        </code>
-                        <Button
-                          variant={copied ? "default" : "secondary"}
-                          size="icon"
-                          className={`absolute top-3 right-3 h-8 w-8 transition-all ${copied ? 'bg-green-500 hover:bg-green-600 text-white' : 'group-hover:bg-primary group-hover:text-primary-foreground'}`}
-                          onClick={(e) => { e.stopPropagation(); copyPixCode(); }}
-                        >
-                          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="h-[100px] rounded-xl bg-muted/20 border border-border/30 flex items-center justify-center">
-                      <p className="text-xs text-muted-foreground">Código PIX será exibido aqui...</p>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-center gap-2.5 text-sm text-amber-500 bg-amber-500/5 border border-amber-500/10 rounded-xl p-4">
                   <Loader2 className="h-4 w-4 animate-spin" />
