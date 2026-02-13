@@ -33,11 +33,8 @@ export default function AdminPlanoNovo() {
 
   const removeRecurso = (i: number) => setForm(f => ({ ...f, recursos: f.recursos.filter((_, idx) => idx !== i) }));
 
-  const handleSave = async () => {
-    if (!form.nome.trim()) {
-      toast({ title: "Nome é obrigatório", variant: "destructive" });
-      return;
-    }
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
     setSaving(true);
     try {
       const { error } = await supabase.from("system_plans").insert({ ...form });
@@ -72,9 +69,10 @@ export default function AdminPlanoNovo() {
 
       <Card className="shadow-sm">
         <CardHeader><CardTitle className="text-sm">Dados do Plano</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
+          <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div><Label>Nome</Label><Input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Ex: Básico, Profissional" /></div>
+            <div><Label>Nome</Label><Input required value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Ex: Básico, Profissional" /></div>
             <div><Label>Valor</Label><CurrencyInput value={form.valor} onValueChange={v => setForm(f => ({ ...f, valor: v }))} /></div>
           </div>
           <div><Label>Descrição</Label><Input value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))} placeholder="Descreva os benefícios do plano" /></div>
@@ -109,9 +107,10 @@ export default function AdminPlanoNovo() {
             <div className="flex items-center gap-2"><Switch checked={form.ativo} onCheckedChange={v => setForm(f => ({ ...f, ativo: v }))} /><Label>Ativo</Label></div>
             <div className="flex items-center gap-2"><Switch checked={form.destaque} onCheckedChange={v => setForm(f => ({ ...f, destaque: v }))} /><Label>Destaque</Label></div>
           </div>
-          <Button onClick={handleSave} disabled={saving} className="w-full">
+          <Button type="submit" disabled={saving} className="w-full">
             {saving ? "Criando..." : "Criar Plano"}
           </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
