@@ -459,11 +459,55 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
       return { error: chargeData.message || chargeData.error || `Erro Ciabra (${chargeResp.status}): ${chargeText}` };
     }
 
+    const chargeId = String(chargeData.id || "");
+    const paymentUrl = chargeData.url || null;
+
+    // Get installment ID to fetch PIX details
+    const installmentId = chargeData.installments?.[0]?.id;
+    let pix_qr_code: string | null = null;
+    let pix_copia_cola: string | null = null;
+
+    if (installmentId) {
+      // Try up to 4 times with delay to wait for PIX generation
+      for (let attempt = 0; attempt < 4; attempt++) {
+        if (attempt > 0) {
+          console.log(`⏳ Waiting 3s for PIX generation (attempt ${attempt + 1})...`);
+          await new Promise(r => setTimeout(r, 3000));
+        }
+        console.log(`🔍 Fetching payment details for installment ${installmentId} (attempt ${attempt + 1})...`);
+        const payResp = await fetch(`${CIABRA_BASE_URL}/payments/applications/installments/${installmentId}`, {
+          method: "GET",
+          headers,
+        });
+        const payText = await payResp.text();
+        console.log(`Ciabra payment response: ${payResp.status}, body: ${payText.substring(0, 800)}`);
+        let payData: any = {};
+        try { payData = JSON.parse(payText); } catch { /* */ }
+
+        const payment = Array.isArray(payData) ? payData[0] : payData;
+        const pixObj = payment?.pix || payment;
+        const emv = pixObj?.emv || pixObj?.brCode || pixObj?.pixCode || null;
+        const qr = pixObj?.qrCode || null;
+
+        if (emv) {
+          pix_copia_cola = emv;
+          pix_qr_code = qr;
+          console.log(`✅ PIX EMV obtained on attempt ${attempt + 1}`);
+          break;
+        }
+
+        if (pixObj?.status === "GENERATING") {
+          console.log(`⏳ PIX still generating...`);
+          continue;
+        }
+      }
+    }
+
     return {
-      charge_id: String(chargeData.id || ""),
-      pix_qr_code: chargeData.payment?.pix?.qrCode || null,
-      pix_copia_cola: chargeData.payment?.pix?.brCode || null,
-      payment_url: chargeData.url || null,
+      charge_id: chargeId,
+      pix_qr_code,
+      pix_copia_cola,
+      payment_url: paymentUrl,
     };
   } catch (err: any) {
     console.error("Ciabra payment error:", err);
