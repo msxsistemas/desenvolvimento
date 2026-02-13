@@ -443,9 +443,33 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 
   try {
-    // Criar fatura SEM customerId (igual ao ciabra-integration que funciona)
+    // 1. Criar customer primeiro (obrigatório pela API Ciabra)
+    const customerName = (user.user_metadata?.full_name || user.email?.split("@")[0] || "Cliente").trim();
+    const safeName = customerName.length >= 3 ? customerName : customerName.padEnd(3, "_");
+
+    let customerId = "";
+    try {
+      const customerResp = await fetch(`${CIABRA_BASE_URL}/invoices/applications/customers`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          fullName: safeName,
+          phone: user.user_metadata?.whatsapp || user.phone || "+5500000000000",
+        }),
+      });
+      const customerText = await customerResp.text();
+      console.log("Ciabra customer response:", customerResp.status, customerText.substring(0, 300));
+      try {
+        const customerData = JSON.parse(customerText);
+        customerId = String(customerData.id || customerData.customer?.id || customerData.data?.id || "");
+      } catch { /* */ }
+    } catch (e: any) {
+      console.error("Ciabra customer error:", e.message);
+    }
+
+    // 2. Criar fatura com customerId
     const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    const invoiceBody = {
+    const invoiceBody: any = {
       description: `Plano ${plan.nome} - Msx Gestor`,
       dueDate,
       installmentCount: 1,
@@ -458,6 +482,10 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
       ],
       notifications: [],
     };
+
+    if (customerId) {
+      invoiceBody.customerId = customerId;
+    }
 
     console.log("Ciabra invoice body:", JSON.stringify(invoiceBody));
     const chargeResp = await fetch(`${CIABRA_BASE_URL}/invoices/applications/invoices`, {
