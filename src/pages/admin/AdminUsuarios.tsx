@@ -5,8 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Ban, CheckCircle, Shield, Filter } from "lucide-react";
+import { Users, Ban, CheckCircle, Shield, Search } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 
 interface AdminUser {
   id: string;
@@ -23,9 +24,13 @@ export default function AdminUsuarios() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"todos" | "ativos" | "inativos">("todos");
+  const [search, setSearch] = useState("");
   const { toast } = useToast();
 
   const filteredUsers = users.filter((u) => {
+    const term = search.toLowerCase();
+    const matchesSearch = !term || u.email.toLowerCase().includes(term) || (u.full_name || "").toLowerCase().includes(term);
+    if (!matchesSearch) return false;
     if (filter === "todos") return true;
     const isBanned = u.banned_until && new Date(u.banned_until) > new Date();
     return filter === "ativos" ? !isBanned : isBanned;
@@ -129,6 +134,15 @@ export default function AdminUsuarios() {
             </Tabs>
           </div>
           <CardDescription>Lista de todos os usuários registrados na plataforma.</CardDescription>
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por e-mail ou nome..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
