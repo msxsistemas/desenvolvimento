@@ -24,6 +24,7 @@ interface SystemPlan {
 interface PaymentData {
   pix_qr_code?: string;
   pix_copia_cola?: string;
+  payment_url?: string;
   gateway_charge_id?: string;
   gateway?: string;
   status?: string;
@@ -269,6 +270,20 @@ export default function AtivarPlano() {
                         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                       </Button>
                     </div>
+                  </div>
+                )}
+                {!paymentData.pix_qr_code && !paymentData.pix_copia_cola && paymentData.payment_url && (
+                  <div className="space-y-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Clique no botão abaixo para abrir a página de pagamento PIX
+                    </p>
+                    <Button
+                      className="w-full h-12 text-base"
+                      onClick={() => window.open(paymentData.payment_url, '_blank')}
+                    >
+                      <QrCode className="mr-2 h-4 w-4" />
+                      Abrir página de pagamento
+                    </Button>
                   </div>
                 )}
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">

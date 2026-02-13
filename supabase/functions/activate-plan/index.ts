@@ -116,6 +116,7 @@ Deno.serve(async (req) => {
           payment: {
             pix_qr_code: paymentResult.pix_qr_code,
             pix_copia_cola: paymentResult.pix_copia_cola,
+            payment_url: paymentResult.payment_url,
             gateway_charge_id: paymentResult.charge_id,
             gateway: gateway.provedor,
             status: "pending",
@@ -462,6 +463,7 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
       charge_id: String(chargeData.id || ""),
       pix_qr_code: chargeData.payment?.pix?.qrCode || null,
       pix_copia_cola: chargeData.payment?.pix?.brCode || null,
+      payment_url: chargeData.url || null,
     };
   } catch (err: any) {
     console.error("Ciabra payment error:", err);
