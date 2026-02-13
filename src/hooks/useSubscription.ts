@@ -15,6 +15,7 @@ export function useSubscription(userId: string | null) {
   const [loading, setLoading] = useState(true);
   const [isTrialExpired, setIsTrialExpired] = useState(false);
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const checkSubscription = useCallback(async () => {
     if (!userId) {
@@ -23,6 +24,31 @@ export function useSubscription(userId: string | null) {
     }
 
     try {
+      // Check if user is admin — admins are always active
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (adminRole) {
+        setIsAdmin(true);
+        setIsTrialExpired(false);
+        setDaysLeft(null);
+        // Still fetch subscription for display but never block
+        const { data } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (data) setSubscription(data);
+        setLoading(false);
+        return;
+      }
+
       // Fetch existing subscription
       const { data, error } = await supabase
         .from('user_subscriptions')
@@ -128,7 +154,8 @@ export function useSubscription(userId: string | null) {
     isTrialExpired,
     daysLeft,
     isTrial: subscription?.status === 'trial',
-    isActive: subscription?.status === 'ativa',
+    isActive: isAdmin || subscription?.status === 'ativa',
+    isAdmin,
     refresh: checkSubscription,
   };
 }
