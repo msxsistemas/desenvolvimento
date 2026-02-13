@@ -87,7 +87,7 @@ export default function AppLayout() {
         <AppSidebar />
         <div className="flex-1 flex flex-col h-full min-w-0">
           {/* Header */}
-          <header className="h-14 sm:h-16 border-b border-border flex items-center px-3 sm:px-5 bg-sidebar-background z-10 flex-shrink-0">
+          <header className="h-20 sm:h-24 border-b border-border flex items-center px-4 sm:px-6 bg-sidebar-background z-10 flex-shrink-0">
             <SidebarTrigger className="hover-scale mr-2" />
 
             {/* Spacer */}
