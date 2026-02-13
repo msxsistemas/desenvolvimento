@@ -26,12 +26,12 @@ export function CurrencyInput({ value, onValueChange, className, ...props }: Cur
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, "");
     internalChange.current = true;
-    if (raw === "" || raw === "0") {
+    const cents = raw === "" ? 0 : parseInt(raw, 10);
+    if (cents === 0) {
       setDisplay("");
       onValueChange(0);
       return;
     }
-    const cents = parseInt(raw, 10);
     const newValue = cents / 100;
     setDisplay(formatCurrency(newValue));
     onValueChange(newValue);
