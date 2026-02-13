@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Users, UserCheck, AlertTriangle, UserX, TrendingUp, DollarSign, 
+  Users, UserCheck, TrendingUp, DollarSign,
   Receipt, CreditCard, Eye, EyeOff, Crown, Clock, UserPlus,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -23,6 +23,9 @@ interface AdminStats {
   subsAtivas: number;
   subsPendentes: number;
   subsExpiradas: number;
+  receitaMensal: number;
+  receitaAnual: number;
+  receitaRecorrente: number;
   novosUsersHoje: number;
   novosUsersSemana: number;
   novosUsersMes: number;
@@ -76,18 +79,8 @@ export default function AdminDashboard() {
       <div className="space-y-6 animate-pulse">
         <div className="h-8 bg-muted rounded w-64" />
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-28 rounded-xl bg-muted" />
-          ))}
-        </div>
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-24 rounded-lg bg-muted" />
-          ))}
-        </div>
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-72 rounded-lg bg-muted" />
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-24 rounded-xl bg-muted" />
           ))}
         </div>
       </div>
@@ -108,7 +101,6 @@ export default function AdminDashboard() {
     color: "hsl(210, 40%, 98%)",
   };
 
-  // Chart data
   const growthData = stats.usersGrowth.map((u, i) => ({
     day: u.day,
     "Novos Usuários": u.total,
@@ -121,40 +113,120 @@ export default function AdminDashboard() {
         {saudacao}, Admin!
       </h1>
 
-      {/* 1ª linha — Cards principais da plataforma */}
+      {/* 1ª linha — Cards principais */}
       <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-xl bg-primary p-5 text-white transition-transform duration-200 hover:scale-[1.02] shadow-lg">
-          <div className="flex items-center gap-4">
-            <Users className="h-6 w-6 text-white/80" />
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center justify-between p-5">
             <div>
-              <p className="text-base font-medium text-white">Usuários do Sistema</p>
-              <p className="text-2xl font-bold ml-1">{stats.totalUsers}</p>
+              <p className="text-sm text-muted-foreground">Usuários do Sistema</p>
+              <p className="text-2xl font-bold text-foreground">{stats.totalUsers}</p>
             </div>
-          </div>
-        </div>
-        <div className="rounded-xl bg-success p-5 text-white transition-transform duration-200 hover:scale-[1.02] shadow-lg">
-          <div className="flex items-center gap-4">
-            <UserCheck className="h-6 w-6 text-white/80" />
+            <Users className="h-6 w-6 text-primary" />
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center justify-between p-5">
             <div>
-              <p className="text-base font-medium text-white">Clientes Ativos</p>
-              <p className="text-2xl font-bold ml-1">{stats.clientesAtivos}</p>
+              <p className="text-sm text-muted-foreground">Clientes Total</p>
+              <p className="text-2xl font-bold text-foreground">{stats.totalClientes}</p>
             </div>
-          </div>
-        </div>
-        <div className="rounded-xl bg-destructive p-5 text-white transition-transform duration-200 hover:scale-[1.02] shadow-lg">
-          <div className="flex items-center gap-4">
-            <AlertTriangle className="h-6 w-6 text-white/80" />
+            <Users className="h-6 w-6 text-primary" />
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center justify-between p-5">
             <div>
-              <p className="text-base font-medium text-white">Clientes Vencidos</p>
-              <p className="text-2xl font-bold ml-1">{stats.clientesVencidos}</p>
+              <p className="text-sm text-muted-foreground">Clientes Ativos</p>
+              <p className="text-2xl font-bold text-foreground">{stats.clientesAtivos}</p>
             </div>
-          </div>
-        </div>
+            <TrendingUp className="h-6 w-6 text-primary" />
+          </CardContent>
+        </Card>
       </section>
 
-      {/* 2ª linha — Cards de crescimento e alertas */}
+      {/* 2ª linha — Receita & Cobranças */}
+      <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center justify-between p-5">
+            <div>
+              <p className="text-sm text-muted-foreground">Receita Total</p>
+              <p className="text-2xl font-bold text-foreground">{fmt(stats.totalEntradas)}</p>
+            </div>
+            <DollarSign className="h-6 w-6 text-primary" />
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center justify-between p-5">
+            <div>
+              <p className="text-sm text-muted-foreground">Cobranças Geradas</p>
+              <p className="text-2xl font-bold text-foreground">{stats.totalCobrancas}</p>
+            </div>
+            <Receipt className="h-6 w-6 text-primary" />
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center justify-between p-5">
+            <div>
+              <p className="text-sm text-muted-foreground">Cobranças Pagas</p>
+              <p className="text-2xl font-bold text-foreground">{stats.cobrancasPagas}</p>
+            </div>
+            <CreditCard className="h-6 w-6 text-primary" />
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* 3ª linha — Lucro Assinaturas (mensal/anual) */}
+      <section className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center justify-between p-5">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-sm text-muted-foreground">Receita Mensal (Assinaturas)</p>
+                <Badge className="bg-primary/20 text-primary text-xs px-2 py-0.5">
+                  {currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1)}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <p className="text-2xl font-bold text-foreground">
+                  {showLucro ? fmt(stats.receitaMensal) : "R$ •••••"}
+                </p>
+                <button
+                  onClick={() => setShowLucro(!showLucro)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showLucro ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
+            <Crown className="h-6 w-6 text-primary" />
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center justify-between p-5">
+            <div>
+              <p className="text-sm text-muted-foreground">Receita Anual (Assinaturas)</p>
+              <p className="text-2xl font-bold text-foreground">
+                {showLucro ? fmt(stats.receitaAnual) : "R$ •••••"}
+              </p>
+            </div>
+            <DollarSign className="h-6 w-6 text-primary" />
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="flex items-center justify-between p-5">
+            <div>
+              <p className="text-sm text-muted-foreground">MRR (Recorrente)</p>
+              <p className="text-2xl font-bold text-foreground">
+                {showLucro ? fmt(stats.receitaRecorrente) : "R$ •••••"}
+              </p>
+            </div>
+            <TrendingUp className="h-6 w-6 text-primary" />
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* 4ª linha — Assinaturas + Crescimento */}
       <section className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {/* Novos Usuários */}
         <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 flex items-center gap-4">
           <div className="rounded-full bg-primary/20 p-2">
             <UserPlus className="h-6 w-6 text-primary" />
@@ -175,7 +247,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Novos Clientes (global) */}
         <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 flex items-center gap-4">
           <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
             <Users className="h-6 w-6 text-[hsl(142,70%,45%)]" />
@@ -196,7 +267,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Assinaturas & Alertas */}
         <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="rounded-full bg-primary/20 p-1">
@@ -221,63 +291,8 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* 3ª linha — Cards financeiros globais */}
-      <section className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <Card className="bg-card border-border">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-full bg-primary/20 p-3">
-              <DollarSign className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <p className="text-sm text-muted-foreground">Lucro Líquido Global</p>
-                <Badge className="bg-success text-success-foreground text-xs px-2 py-0.5">
-                  {currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1)}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-2">
-                <p className="text-2xl font-bold text-foreground">
-                  {showLucro ? fmt(stats.lucro) : "R$ •••••"}
-                </p>
-                <button
-                  onClick={() => setShowLucro(!showLucro)}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showLucro ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-full bg-primary/20 p-3">
-              <Receipt className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Cobranças</p>
-              <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Total</p>
-                  <p className="text-xl font-bold text-foreground">{stats.totalCobrancas}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Pagas</p>
-                  <p className="text-xl font-bold text-[hsl(142,70%,45%)]">{stats.cobrancasPagas}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Pendentes</p>
-                  <p className="text-xl font-bold text-destructive">{stats.totalCobrancas - stats.cobrancasPagas}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* 4ª linha — Gráficos */}
-      <section className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+      {/* 5ª linha — Gráfico */}
+      <section>
         <Card className="bg-card border-border">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold text-foreground">
@@ -310,49 +325,9 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Resumo Financeiro */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-foreground">
-              Resumo Financeiro Global
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-lg bg-[hsl(142,70%,45%)]/10 p-4">
-                <p className="text-xs text-muted-foreground mb-1">Total Entradas</p>
-                <p className="text-lg font-bold text-[hsl(142,70%,45%)]">{fmt(stats.totalEntradas)}</p>
-              </div>
-              <div className="rounded-lg bg-destructive/10 p-4">
-                <p className="text-xs text-muted-foreground mb-1">Total Saídas</p>
-                <p className="text-lg font-bold text-destructive">{fmt(stats.totalSaidas)}</p>
-              </div>
-            </div>
-            <div className="rounded-lg bg-primary/10 p-4">
-              <p className="text-xs text-muted-foreground mb-1">Lucro Líquido</p>
-              <p className="text-2xl font-bold text-primary">{fmt(stats.lucro)}</p>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Total Clientes</span>
-                <span className="font-semibold text-foreground">{stats.totalClientes}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Vencendo Hoje</span>
-                <span className="font-semibold text-destructive">{stats.clientesVencendoHoje}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Vencendo em 3 Dias</span>
-                <span className="font-semibold text-foreground">{stats.clientesVencendo3Dias}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </section>
 
-      {/* 5ª linha — Últimos Usuários */}
+      {/* 6ª linha — Últimos Usuários */}
       <section>
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="bg-primary p-4">

@@ -134,10 +134,36 @@ serve(async (req) => {
         const { count: cobrancasPagas } = await supabase.from('cobrancas').select('*', { count: 'exact', head: true }).eq('status', 'pago');
 
         // Subscriptions
-        const { data: subs } = await supabase.from('user_subscriptions').select('status, expira_em');
+        const { data: subs } = await supabase.from('user_subscriptions').select('status, expira_em, plan_id, created_at');
         const subsAtivas = (subs || []).filter(s => s.status === 'active' || s.status === 'ativa').length;
         const subsPendentes = (subs || []).filter(s => s.status === 'pending' || s.status === 'pendente').length;
         const subsExpiradas = (subs || []).filter(s => s.status === 'expired' || s.status === 'expirada').length;
+
+        // Subscription revenue (from system_plans)
+        const { data: plans } = await supabase.from('system_plans').select('id, valor');
+        const planValorMap: Record<string, number> = {};
+        (plans || []).forEach(p => { planValorMap[p.id] = Number(p.valor); });
+
+        const nowDate = new Date();
+        const inicioMesAtual = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1);
+        const inicioAno = new Date(nowDate.getFullYear(), 0, 1);
+
+        let receitaMensal = 0;
+        let receitaAnual = 0;
+        (subs || []).forEach(s => {
+          if (s.status !== 'active' && s.status !== 'ativa') return;
+          const valor = s.plan_id ? (planValorMap[s.plan_id] || 0) : 0;
+          const createdAt = new Date(s.created_at);
+          if (createdAt >= inicioMesAtual) receitaMensal += valor;
+          if (createdAt >= inicioAno) receitaAnual += valor;
+        });
+
+        // Also count active subs as monthly recurring
+        let receitaRecorrente = 0;
+        (subs || []).forEach(s => {
+          if (s.status !== 'active' && s.status !== 'ativa') return;
+          receitaRecorrente += s.plan_id ? (planValorMap[s.plan_id] || 0) : 0;
+        });
 
         // New users this month/week/today
         const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
@@ -208,6 +234,7 @@ serve(async (req) => {
             totalEntradas, totalSaidas, lucro: totalEntradas - totalSaidas,
             totalCobrancas: totalCobrancas || 0, cobrancasPagas: cobrancasPagas || 0,
             subsAtivas, subsPendentes, subsExpiradas,
+            receitaMensal, receitaAnual, receitaRecorrente,
             novosUsersHoje, novosUsersSemana, novosUsersMes,
             novosClientesHoje, novosClientesSemana, novosClientesMes,
             clientesVencendoHoje, clientesVencendo3Dias,
