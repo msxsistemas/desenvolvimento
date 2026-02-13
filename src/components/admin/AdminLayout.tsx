@@ -37,17 +37,7 @@ interface NavItem {
 
 const adminNavItems: NavItem[] = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  {
-    title: "Usuários",
-    url: "/admin/usuarios",
-    icon: Users,
-    submenuKey: "usuarios",
-    subItems: [
-      { to: "/admin/usuarios", label: "Gerenciar" },
-      { to: "/admin/usuarios?filter=ativos", label: "Ativos" },
-      { to: "/admin/usuarios?filter=inativos", label: "Inativos" },
-    ],
-  },
+  { title: "Usuários", url: "/admin/usuarios", icon: Users },
   {
     title: "Planos SaaS",
     url: "/admin/planos",
