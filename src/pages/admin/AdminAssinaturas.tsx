@@ -271,18 +271,11 @@ export default function AdminAssinaturas() {
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Data de Expiração</label>
-              <div className="flex gap-2">
-                <Input 
-                  type="date" 
-                  value={editExpiraEm} 
-                  onChange={(e) => setEditExpiraEm(e.target.value)}
-                  className="flex-1"
-                />
-                <Button variant="outline" size="sm" onClick={() => setEditExpiraEm("")} className="whitespace-nowrap">
-                  Sem validade
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Deixe vazio para acesso sem expiração.</p>
+              <Input 
+                type="date" 
+                value={editExpiraEm} 
+                onChange={(e) => setEditExpiraEm(e.target.value)}
+              />
             </div>
             <Button onClick={handleUpdate} className="w-full">Salvar Alterações</Button>
           </div>
