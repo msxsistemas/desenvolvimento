@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Check, Loader2, ArrowLeft, CreditCard, QrCode, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import QRCodeSVG from 'react-qr-code';
 import logoPlay from '@/assets/logo-play.png';
 
 interface SystemPlan {
@@ -249,7 +250,7 @@ export default function AtivarPlano() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {paymentData.pix_qr_code && (
+                {paymentData.pix_qr_code ? (
                   <div className="flex justify-center">
                     <div className="bg-white p-4 rounded-xl">
                       <img
@@ -259,7 +260,13 @@ export default function AtivarPlano() {
                       />
                     </div>
                   </div>
-                )}
+                ) : paymentData.pix_copia_cola ? (
+                  <div className="flex justify-center">
+                    <div className="bg-white p-4 rounded-xl">
+                      <QRCodeSVG value={paymentData.pix_copia_cola} size={192} />
+                    </div>
+                  </div>
+                ) : null}
                 {paymentData.pix_copia_cola && (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground text-center">PIX Copia e Cola</p>
