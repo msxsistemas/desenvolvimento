@@ -384,34 +384,70 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
     "Content-Type": "application/json",
   };
 
-  const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 
   try {
-    const chargeResp = await fetch(`${CIABRA_BASE_URL}/invoices/applications/invoices`, {
+    // 1. Registrar cliente na Ciabra (obrigatório antes de criar fatura)
+    const customerResp = await fetch(`${CIABRA_BASE_URL}/invoices/applications/customers`, {
       method: "POST",
       headers,
       body: JSON.stringify({
-        description: `Plano ${plan.nome} - Msx Gestor`,
-        dueDate,
-        installmentCount: 1,
-        invoiceType: "SINGLE",
-        items: [],
-        price: plan.valor,
-        paymentTypes: ["PIX"],
-        webhooks: [
-          { hookType: "PAYMENT_CONFIRMED", url: `${supabaseUrl}/functions/v1/ciabra-integration` },
-        ],
-        notifications: [],
+        name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Cliente",
+        email: user.email || "",
+        phone: user.user_metadata?.whatsapp || user.phone || "",
+        document: user.user_metadata?.cpf || "00000000000",
       }),
+    });
+
+    let customerId: string | null = null;
+    const customerText = await customerResp.text();
+    try {
+      const customerData = JSON.parse(customerText);
+      customerId = customerData.id ? String(customerData.id) : null;
+      // Se o cliente já existe, a API pode retornar o ID existente
+      if (!customerId && customerData.customer?.id) {
+        customerId = String(customerData.customer.id);
+      }
+    } catch { /* */ }
+
+    console.log("Ciabra customer response:", customerResp.status, customerText);
+
+    // 2. Criar fatura com customer_id
+    const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const invoiceBody: any = {
+      description: `Plano ${plan.nome} - Msx Gestor`,
+      dueDate,
+      installmentCount: 1,
+      invoiceType: "SINGLE",
+      items: [],
+      price: plan.valor,
+      paymentTypes: ["PIX"],
+      webhooks: [
+        { hookType: "PAYMENT_CONFIRMED", url: `${supabaseUrl}/functions/v1/ciabra-integration` },
+      ],
+      notifications: [],
+    };
+
+    if (customerId) {
+      invoiceBody.customerId = customerId;
+    }
+
+    console.log("Ciabra invoice body:", JSON.stringify(invoiceBody));
+
+    const chargeResp = await fetch(`${CIABRA_BASE_URL}/invoices/applications/invoices`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(invoiceBody),
     });
 
     const chargeText = await chargeResp.text();
     let chargeData: any = {};
     try { chargeData = JSON.parse(chargeText); } catch { /* */ }
 
+    console.log("Ciabra invoice response:", chargeResp.status, chargeText);
+
     if (!chargeResp.ok) {
-      return { error: chargeData.message || chargeData.error || `Erro Ciabra (${chargeResp.status})` };
+      return { error: chargeData.message || chargeData.error || `Erro Ciabra (${chargeResp.status}): ${chargeText}` };
     }
 
     return {
@@ -420,6 +456,7 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
       pix_copia_cola: chargeData.payment?.pix?.brCode || null,
     };
   } catch (err: any) {
+    console.error("Ciabra payment error:", err);
     return { error: err.message || "Erro ao criar pagamento Ciabra" };
   }
 }
