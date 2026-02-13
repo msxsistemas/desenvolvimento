@@ -96,33 +96,49 @@ export default function AdminAssinaturas() {
     let finalStatus = editStatus;
     let newExpiraEm: string | null = editSub.expira_em || null;
     let newInicio = editSub.inicio;
+    let finalPlanId: string | null = editPlan || null;
 
-    // Se o usuário está em trial, qualquer atualização do admin ativa a assinatura
-    if (editSub.status === "trial") {
-      finalStatus = "ativa";
-    }
-
-    // Recalcular datas quando ativando (de trial/expirada para ativa) ou mudando plano
-    const needsDateRecalc = finalStatus === "ativa" && (editSub.status !== "ativa" || (editPlan && editPlan !== editSub.plan_id));
-    if (needsDateRecalc && editPlan) {
+    if (finalStatus === "trial") {
+      // Ao definir como trial, limpar plano e calcular dias de teste
+      finalPlanId = null;
       newInicio = new Date().toISOString();
-      const selectedPlan = plans.find(p => p.id === editPlan);
+      let trialDays = 7;
+      try {
+        const { data: config } = await supabase
+          .from('system_config')
+          .select('trial_dias')
+          .limit(1)
+          .maybeSingle();
+        if (config?.trial_dias) trialDays = config.trial_dias;
+      } catch {}
       const expDate = new Date();
-      if (selectedPlan?.intervalo === "anual") {
-        expDate.setFullYear(expDate.getFullYear() + 1);
-      } else if (selectedPlan?.intervalo === "trimestral") {
-        expDate.setMonth(expDate.getMonth() + 3);
-      } else if (selectedPlan?.intervalo === "semestral") {
-        expDate.setMonth(expDate.getMonth() + 6);
-      } else {
-        expDate.setMonth(expDate.getMonth() + 1);
-      }
+      expDate.setDate(expDate.getDate() + trialDays);
       newExpiraEm = expDate.toISOString();
+    } else if (finalStatus === "ativa") {
+      // Recalcular datas quando ativando ou mudando plano
+      const needsDateRecalc = editSub.status !== "ativa" || (finalPlanId && finalPlanId !== editSub.plan_id);
+      if (needsDateRecalc && finalPlanId) {
+        newInicio = new Date().toISOString();
+        const selectedPlan = plans.find(p => p.id === finalPlanId);
+        const expDate = new Date();
+        if (selectedPlan?.intervalo === "anual") {
+          expDate.setFullYear(expDate.getFullYear() + 1);
+        } else if (selectedPlan?.intervalo === "trimestral") {
+          expDate.setMonth(expDate.getMonth() + 3);
+        } else if (selectedPlan?.intervalo === "semestral") {
+          expDate.setMonth(expDate.getMonth() + 6);
+        } else {
+          expDate.setMonth(expDate.getMonth() + 1);
+        }
+        newExpiraEm = expDate.toISOString();
+      }
+    } else if (finalStatus === "expirada") {
+      newExpiraEm = new Date().toISOString();
     }
 
     await supabase.from("user_subscriptions").update({ 
       status: finalStatus, 
-      plan_id: editPlan || null,
+      plan_id: finalPlanId,
       expira_em: newExpiraEm,
       inicio: newInicio,
     }).eq("id", editSub.id);
@@ -279,17 +295,8 @@ export default function AdminAssinaturas() {
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Plano</label>
-              <Select value={editPlan} onValueChange={setEditPlan}>
-                <SelectTrigger><SelectValue placeholder="Selecionar plano" /></SelectTrigger>
-                <SelectContent>
-                  {plans.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
               <label className="text-sm font-medium mb-1 block">Status</label>
-              <Select value={editStatus} onValueChange={setEditStatus}>
+              <Select value={editStatus} onValueChange={(v) => { setEditStatus(v); if (v === "trial") setEditPlan(""); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ativa">Ativa</SelectItem>
@@ -298,6 +305,21 @@ export default function AdminAssinaturas() {
                 </SelectContent>
               </Select>
             </div>
+            {editStatus === "trial" ? (
+              <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
+                <p className="text-sm text-muted-foreground">Os dias de teste serão definidos automaticamente conforme a configuração do sistema.</p>
+              </div>
+            ) : (
+              <div>
+                <label className="text-sm font-medium mb-1 block">Plano</label>
+                <Select value={editPlan} onValueChange={setEditPlan}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar plano" /></SelectTrigger>
+                  <SelectContent>
+                    {plans.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Button onClick={handleUpdate} className="w-full">Salvar Alterações</Button>
           </div>
         </DialogContent>
