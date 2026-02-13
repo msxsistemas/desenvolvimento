@@ -37,14 +37,6 @@ const emptyMensagens: MensagensPadroes = {
   confirmacao_pagamento: "",
 };
 
-const defaultMensagens: MensagensPadroes = {
-  bem_vindo: "{saudacao} *{nome_cliente}*{br}{br}🎉 Seja bem-vindo(a) à *Tech Play!*{br}{br}Aqui você tem acesso ao melhor do entretenimento: filmes, séries, canais e muito mais, tudo em alta qualidade.{br}{br}📋 Abaixo seus dados de acesso:{br}👤 Usuário: {usuario}{br}🔑 Senha: {senha}",
-  fatura_criada: "{saudacao}. *{nome_cliente}*{br}{br}📄 *Sua fatura foi gerada com sucesso!*{br}{br}*DADOS DA FATURA*{br}-------------------------------{br}◆ *Vencimento:* *{vencimento}*{br}◆ {nome_plano}{br}◆ Desconto: {desconto}{br}{br}💰 Chave PIX: {pix}",
-  proximo_vencer: "{saudacao}. *{nome_cliente}*{br}{br}⚠ *Passando só pra avisar que seu Plano vence amanhã!*{br}{br}*DADOS DA FATURA*{br}-------------------------------{br}◆ *Vencimento:* *{vencimento}*{br}◆ {nome_plano}{br}{br}💰 Chave PIX: {pix}",
-  vence_hoje: "{saudacao}. *{nome_cliente}*{br}{br}⚠ *SEU VENCIMENTO É HOJE!*{br}Pra continuar aproveitando seus canais, realize o pagamento o quanto antes.{br}{br}*DADOS DA FATURA*{br}-------------------------------{br}◆ *Vencimento:* *{vencimento}*{br}◆ {nome_plano}{br}{br}💰 Chave PIX: {pix}",
-  vencido: "{saudacao}. *{nome_cliente}*{br}{br}🚨 *Seu plano está vencido!*{br}Regularize o quanto antes para não perder o acesso.{br}{br}*DADOS DA FATURA*{br}-------------------------------{br}◆ *Vencimento:* *{vencimento}*{br}◆ {nome_plano}{br}{br}💰 Chave PIX: {pix}",
-  confirmacao_pagamento: "{saudacao}. *{nome_cliente}*{br}{br}✅ *Pagamento confirmado!*{br}{br}Obrigado por manter sua assinatura em dia. Seu acesso está garantido!{br}{br}◆ Plano: {nome_plano}{br}◆ Próximo vencimento: {vencimento}",
-};
 
 export default function GerenciarMensagens() {
   const [mensagens, setMensagens] = useState<MensagensPadroes>(emptyMensagens);
