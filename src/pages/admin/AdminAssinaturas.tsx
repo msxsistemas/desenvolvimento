@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { UserCheck, Pencil, Receipt, Search } from "lucide-react";
+import { UserCheck, Pencil, Receipt, Search, ChevronLeft, ChevronRight, UserX } from "lucide-react";
 
 interface Subscription {
   id: string;
@@ -24,6 +25,8 @@ interface Subscription {
 
 interface Plan { id: string; nome: string; }
 
+const PER_PAGE = 10;
+
 export default function AdminAssinaturas() {
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -32,6 +35,7 @@ export default function AdminAssinaturas() {
   const [editStatus, setEditStatus] = useState("");
   const [editPlan, setEditPlan] = useState("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFilter = searchParams.get("status") || "todas";
   const { toast } = useToast();
@@ -78,6 +82,8 @@ export default function AdminAssinaturas() {
     fetch_();
   }, []);
 
+  useEffect(() => { setPage(1); }, [search, statusFilter]);
+
   const openEdit = (s: Subscription) => { setEditSub(s); setEditStatus(s.status); setEditPlan(s.plan_id || ""); };
 
   const handleUpdate = async () => {
@@ -104,18 +110,13 @@ export default function AdminAssinaturas() {
     return list;
   }, [subs, statusFilter, search]);
 
-  const STATUS_TABS = [
-    { value: "todas", label: "Todas" },
-    { value: "ativa", label: "Ativas" },
-    { value: "trial", label: "Trial" },
-    { value: "pendente", label: "Pendentes" },
-    { value: "expirada", label: "Expiradas" },
-    { value: "cancelada", label: "Canceladas" },
-  ];
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
   return (
-    <div>
-      <header className="rounded-lg border mb-3 overflow-hidden shadow-sm">
+    <div className="space-y-3">
+      <header className="rounded-lg border overflow-hidden shadow-sm">
         <div className="px-4 py-3 bg-card border-b border-border">
           <div className="flex items-center gap-2">
             <Receipt className="h-5 w-5 text-foreground/70" />
@@ -126,69 +127,101 @@ export default function AdminAssinaturas() {
       </header>
 
       <Card className="shadow-sm">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <UserCheck className="h-4 w-4 text-foreground/70" />
-                <CardTitle className="text-sm">Assinaturas ({filtered.length})</CardTitle>
-              </div>
-              <CardDescription>Altere planos e status das assinaturas.</CardDescription>
+        <CardHeader className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-foreground/70" />
+              <CardTitle className="text-sm">Assinaturas ({filtered.length})</CardTitle>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Buscar por e-mail ou plano..." className="pl-9 h-9" value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
+            <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+              <TabsList className="h-8">
+                <TabsTrigger value="todas" className="text-xs px-3 h-7">Todas</TabsTrigger>
+                <TabsTrigger value="ativa" className="text-xs px-3 h-7">Ativas</TabsTrigger>
+                <TabsTrigger value="trial" className="text-xs px-3 h-7">Trial</TabsTrigger>
+                <TabsTrigger value="pendente" className="text-xs px-3 h-7">Pendentes</TabsTrigger>
+                <TabsTrigger value="expirada" className="text-xs px-3 h-7">Expiradas</TabsTrigger>
+                <TabsTrigger value="cancelada" className="text-xs px-3 h-7">Canceladas</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
-          <div className="flex gap-1 mt-2 flex-wrap">
-            {STATUS_TABS.map(tab => (
-              <Button key={tab.value} variant={statusFilter === tab.value ? "default" : "outline"} size="sm" className="h-7 text-xs" onClick={() => setStatusFilter(tab.value)}>
-                {tab.label}
-              </Button>
-            ))}
+          <CardDescription>Altere planos e status das assinaturas.</CardDescription>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por e-mail ou plano..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+            <div className="text-center py-8 text-muted-foreground text-sm">Carregando...</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhuma assinatura encontrada
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
+              <UserX className="h-10 w-10 opacity-40" />
+              <p className="text-sm">Nenhuma assinatura encontrada.</p>
               {(search || statusFilter !== "todas") && (
-                <div className="mt-2">
-                  <Button variant="link" size="sm" onClick={() => { setSearch(""); setStatusFilter("todas"); }}>Limpar filtros</Button>
-                </div>
+                <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setSearch(""); setStatusFilter("todas"); }}>
+                  Limpar filtros
+                </Button>
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Usuário</TableHead>
-                    <TableHead>Plano</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Início</TableHead>
-                    <TableHead>Expira</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map(s => (
-                    <TableRow key={s.id}>
-                      <TableCell className="text-sm">{s.user_email}</TableCell>
-                      <TableCell className="font-medium">{s.plan_name}</TableCell>
-                      <TableCell><Badge variant={statusColor(s.status)}>{s.status}</Badge></TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{new Date(s.inicio).toLocaleDateString("pt-BR")}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{s.expira_em ? new Date(s.expira_em).toLocaleDateString("pt-BR") : "—"}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <>
+              <div className="overflow-x-auto -mx-6">
+                <div className="min-w-[700px] px-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Usuário</TableHead>
+                        <TableHead>Plano</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Início</TableHead>
+                        <TableHead>Expira</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginated.map(s => (
+                        <TableRow key={s.id}>
+                          <TableCell className="font-medium text-sm max-w-[200px] truncate">{s.user_email}</TableCell>
+                          <TableCell className="text-sm">{s.plan_name}</TableCell>
+                          <TableCell><Badge variant={statusColor(s.status)}>{s.status}</Badge></TableCell>
+                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{new Date(s.inicio).toLocaleDateString("pt-BR")}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{s.expira_em ? new Date(s.expira_em).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm" className="h-8" onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-border mt-4">
+                  <p className="text-xs text-muted-foreground">
+                    Mostrando {((currentPage - 1) * PER_PAGE) + 1}–{Math.min(currentPage * PER_PAGE, filtered.length)} de {filtered.length}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={currentPage <= 1} onClick={() => setPage(p => p - 1)}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                      <Button key={p} variant={p === currentPage ? "default" : "outline"} size="sm" className="h-8 w-8 p-0 text-xs" onClick={() => setPage(p)}>
+                        {p}
+                      </Button>
+                    ))}
+                    <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={currentPage >= totalPages} onClick={() => setPage(p => p + 1)}>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
