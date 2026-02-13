@@ -67,12 +67,8 @@ export default function TemplatesCobranca() {
     setDialogOpen(true);
   };
 
-  const handleSalvar = async () => {
-    if (!formData.nome || !formData.mensagem) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-
+  const handleSalvar = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     try {
       if (editingTemplate?.id) {
@@ -145,11 +141,12 @@ export default function TemplatesCobranca() {
               </DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-4 py-4">
+            <form onSubmit={handleSalvar} className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="nome">Nome do Template *</Label>
                 <Input
                   id="nome"
+                  required
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                   placeholder="Ex: Confirmação de Pagamento"
@@ -160,6 +157,7 @@ export default function TemplatesCobranca() {
                 <Label htmlFor="mensagem">Mensagem *</Label>
                 <Textarea
                   id="mensagem"
+                  required
                   value={formData.mensagem}
                   onChange={(e) => setFormData({ ...formData, mensagem: e.target.value })}
                   className="min-h-[200px]"
@@ -211,18 +209,18 @@ export default function TemplatesCobranca() {
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancelar
                 </Button>
                 <Button 
-                  onClick={handleSalvar}
+                  type="submit"
                   disabled={loading}
                   className="bg-primary hover:bg-primary/90"
                 >
                   {loading ? "Salvando..." : "Salvar"}
                 </Button>
               </div>
-            </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>

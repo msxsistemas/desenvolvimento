@@ -107,13 +107,10 @@ export default function ConfiguracaoEnvio() {
         ? "O valor máximo é 120 segundos."
         : null;
 
-  const handleSave = () => {
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
     if (config.configuracoesAtivas && (tempoMinimoWarn || tempoMaximoWarn || limiteLoteWarn || pausaWarn)) {
       toast.error("Corrija os erros de validação antes de salvar");
-      return;
-    }
-    if (config.configuracoesAtivas && (config.tempoMinimo === "" || config.tempoMaximo === "" || config.limiteLote === "" || config.pausaProlongada === "")) {
-      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
@@ -174,7 +171,7 @@ export default function ConfiguracaoEnvio() {
         </div>
       </div>
 
-      <div className={!config.configuracoesAtivas ? "opacity-50 pointer-events-none space-y-4" : "space-y-4"}>
+      <form id="config-envio-form" onSubmit={handleSave} className={!config.configuracoesAtivas ? "opacity-50 pointer-events-none space-y-4" : "space-y-4"}>
         {/* Intervalos de Envio */}
         <div className="rounded-lg border border-border bg-card p-4 space-y-6">
           <h2 className="text-lg font-semibold text-foreground">Intervalos de Envio</h2>
@@ -187,6 +184,7 @@ export default function ConfiguracaoEnvio() {
                 Tempo Mínimo (segundos) <span className="text-destructive">*</span>
               </Label>
               <Input
+                required
                 type="number"
                 min={MIN_TEMPO}
                 max={120}
@@ -205,6 +203,7 @@ export default function ConfiguracaoEnvio() {
                 Tempo Máximo (segundos) <span className="text-destructive">*</span>
               </Label>
               <Input
+                required
                 type="number"
                 min={MIN_TEMPO_MAX}
                 max={120}
@@ -226,6 +225,7 @@ export default function ConfiguracaoEnvio() {
                 Limite de Mensagens por Lote <span className="text-destructive">*</span>
               </Label>
               <Input
+                required
                 type="number"
                 min={1}
                 value={config.limiteLote}
@@ -243,6 +243,7 @@ export default function ConfiguracaoEnvio() {
                 Pausa Prolongada (segundos) <span className="text-destructive">*</span>
               </Label>
               <Input
+                required
                 type="number"
                 min={1}
                 max={120}
@@ -315,15 +316,15 @@ export default function ConfiguracaoEnvio() {
             <span className="text-primary font-semibold">{calcEstimatedTime()}</span>
           </p>
         </div>
-      </div>
+      </form>
 
       {/* Botões */}
       <div className="flex justify-center gap-4">
-        <Button onClick={handleSave} className="gap-2">
+        <Button type="submit" form="config-envio-form" className="gap-2">
           <Save className="h-4 w-4" />
           Salvar Configurações
         </Button>
-        <Button variant="outline" onClick={handleReset} className="gap-2">
+        <Button type="button" variant="outline" onClick={handleReset} className="gap-2">
           <RotateCcw className="h-4 w-4" />
           Restaurar Padrão
         </Button>

@@ -83,11 +83,7 @@ export default function Auth() {
     const confirmPassword = formData.get('confirm-password') as string;
     const refCode = formData.get('referral-code') as string;
 
-    if (!name.trim()) {
-      toast.error('Por favor, informe seu nome');
-      setLoading(false);
-      return;
-    }
+    // name is validated by required attribute
 
     if (password !== confirmPassword) {
       toast.error('As senhas não coincidem');
@@ -165,11 +161,7 @@ export default function Auth() {
     e.preventDefault();
     setResetLoading(true);
 
-    if (!resetEmail.trim()) {
-      toast.error('Por favor, informe seu email');
-      setResetLoading(false);
-      return;
-    }
+    // resetEmail is validated by required attribute
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
@@ -194,11 +186,7 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
 
-    if (!newPassword.trim()) {
-      toast.error('Por favor, informe a nova senha');
-      setLoading(false);
-      return;
-    }
+    // newPassword is validated by required attribute
 
     if (newPassword.length < 6) {
       toast.error('A senha deve ter pelo menos 6 caracteres');
