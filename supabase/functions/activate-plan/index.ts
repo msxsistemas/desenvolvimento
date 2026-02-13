@@ -497,7 +497,7 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
     // Step 2: Create invoice with same structure as generate-fatura (including webhooks, notifications, externalId)
     const webhookUrl = `${supabaseUrl}/functions/v1/ciabra-integration`;
     const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    const priceVal = parseFloat(String(plan.valor));
+    const priceVal = Math.max(5, parseFloat(String(plan.valor))); // Ciabra minimum is R$5
     const externalId = `plan-${plan.id.substring(0, 8)}-${Date.now()}`;
 
     const invoicePayload: any = {
