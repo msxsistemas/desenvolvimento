@@ -130,6 +130,19 @@ export default function AdminGatewayConfig() {
 
   const handleActivate = async () => {
     if (!gateway) return;
+
+    if (isCiabra) {
+      if (!gateway.api_key_hash?.trim() || !gateway.public_key_hash?.trim()) {
+        toast({ title: "Preencha a Chave Pública e a Chave Secreta para ativar.", variant: "destructive" });
+        return;
+      }
+    } else {
+      if (!gateway.api_key_hash?.trim()) {
+        toast({ title: "Preencha o token/chave da API para ativar.", variant: "destructive" });
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const { id, ...payload } = gateway;
