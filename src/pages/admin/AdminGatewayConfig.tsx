@@ -14,7 +14,6 @@ import { toast as sonnerToast } from "sonner";
 const provedorLabels: Record<string, string> = {
   asaas: "Asaas",
   mercadopago: "Mercado Pago",
-  stripe: "Stripe",
   v3pay: "V3Pay",
   ciabra: "Ciabra",
 };
@@ -22,7 +21,6 @@ const provedorLabels: Record<string, string> = {
 const provedorDescriptions: Record<string, string> = {
   asaas: "Configure o gateway Asaas para processar pagamentos de assinaturas.",
   mercadopago: "Configure o gateway Mercado Pago para processar pagamentos de assinaturas.",
-  stripe: "Configure o gateway Stripe para processar pagamentos de assinaturas.",
   v3pay: "Configure o gateway V3Pay para processar pagamentos PIX, cartão e boleto.",
   ciabra: "Configure o gateway Ciabra Invoice para processar pagamentos de assinaturas.",
 };
@@ -30,7 +28,6 @@ const provedorDescriptions: Record<string, string> = {
 const provedorWebhookDescriptions: Record<string, string> = {
   asaas: "Copie esta URL e adicione no painel do Asaas em: Configurações → Integrações → Webhooks.",
   mercadopago: "Copie esta URL e adicione no painel do Mercado Pago em: Sua Aplicação → Webhooks → Notificações IPN.",
-  stripe: "Copie esta URL e adicione no painel do Stripe em: Developers → Webhooks.",
   v3pay: "Copie esta URL e adicione no painel V3Pay para receber notificações de pagamento.",
   ciabra: "Copie esta URL e adicione na plataforma Ciabra em: Integração → Webhooks.",
 };
@@ -38,7 +35,6 @@ const provedorWebhookDescriptions: Record<string, string> = {
 const provedorDocsDescriptions: Record<string, string> = {
   asaas: "Acesse o painel Asaas → Configurações → Integrações → API para obter sua chave.",
   mercadopago: "Acesse o painel Mercado Pago → Seu Negócio → Configurações → Credenciais para obter seu Access Token.",
-  stripe: "Acesse o painel Stripe → Developers → API Keys para obter sua chave secreta.",
   v3pay: "Acesse o painel V3Pay para obter seu token de API.",
   ciabra: "Acesse a plataforma Ciabra → Integração → API Keys para obter sua chave de API.",
 };
@@ -46,7 +42,6 @@ const provedorDocsDescriptions: Record<string, string> = {
 const provedorDocsUrls: Record<string, string> = {
   asaas: "https://www.asaas.com/config/index",
   mercadopago: "https://www.mercadopago.com.br/developers/panel/app",
-  stripe: "https://dashboard.stripe.com/apikeys",
   v3pay: "https://app.v3pay.com.br",
   ciabra: "https://plataforma.ciabra.com.br",
 };
@@ -54,7 +49,6 @@ const provedorDocsUrls: Record<string, string> = {
 const provedorDocsButtonLabels: Record<string, string> = {
   asaas: "Abrir Configurações do Asaas",
   mercadopago: "Abrir Painel do Mercado Pago",
-  stripe: "Abrir Dashboard Stripe",
   v3pay: "Abrir Painel V3Pay",
   ciabra: "Abrir Plataforma Ciabra",
 };
@@ -62,7 +56,6 @@ const provedorDocsButtonLabels: Record<string, string> = {
 const provedorTokenLabels: Record<string, string> = {
   asaas: "Token API Asaas",
   mercadopago: "Access Token Mercado Pago",
-  stripe: "Secret Key Stripe",
   v3pay: "Token API V3Pay",
   ciabra: "Chaves de API Ciabra",
 };
@@ -70,7 +63,6 @@ const provedorTokenLabels: Record<string, string> = {
 const provedorTokenDescriptions: Record<string, string> = {
   asaas: "Cole o token da API do Asaas abaixo para ativar a integração com o gateway de pagamentos.",
   mercadopago: "Cole o Access Token de produção do Mercado Pago abaixo para ativar a integração.",
-  stripe: "Cole a Secret Key do Stripe abaixo para ativar a integração.",
   v3pay: "Cole o token da API do V3Pay abaixo para ativar a integração.",
   ciabra: "Acesse a plataforma Ciabra → Integração → Chave da API para obter sua Chave Pública e Chave Secreta.",
 };
@@ -78,7 +70,6 @@ const provedorTokenDescriptions: Record<string, string> = {
 const provedorTokenPlaceholders: Record<string, string> = {
   asaas: "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmZjY...",
   mercadopago: "APP_USR-0000000000000000-000000-00000000000000000000000000000000-000000000",
-  stripe: "sk_live_...",
   v3pay: "Seu token Bearer da API V3Pay...",
   ciabra: "sk_live_...",
 };
@@ -88,7 +79,6 @@ const SUPABASE_PROJECT_ID = "dxxfablfqigoewcfmjzl";
 const provedorWebhookEndpoints: Record<string, string> = {
   asaas: "asaas-integration",
   mercadopago: "mercadopago-integration",
-  stripe: "stripe-webhook",
   v3pay: "v3pay-integration",
   ciabra: "ciabra-integration",
 };

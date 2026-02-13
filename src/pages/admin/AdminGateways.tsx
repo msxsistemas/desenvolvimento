@@ -21,12 +21,11 @@ interface SystemGateway {
 const provedorLabels: Record<string, string> = {
   asaas: "Asaas",
   mercadopago: "Mercado Pago",
-  stripe: "Stripe",
   v3pay: "V3Pay",
   ciabra: "Ciabra",
 };
 
-const allGateways = ["asaas", "mercadopago", "stripe", "v3pay", "ciabra"];
+const allGateways = ["asaas", "mercadopago", "v3pay", "ciabra"];
 
 export default function AdminGateways() {
   const [gateways, setGateways] = useState<SystemGateway[]>([]);
