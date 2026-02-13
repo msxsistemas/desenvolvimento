@@ -97,25 +97,14 @@ export default function AdminAssinaturas() {
     let newExpiraEm: string | null = editSub.expira_em || null;
     let newInicio = editSub.inicio;
 
-    // Se mudou o plano, automaticamente ativa e recalcula datas
-    const planChanged = editPlan && editPlan !== editSub.plan_id;
-    if (planChanged) {
+    // Se o usuário está em trial, qualquer atualização do admin ativa a assinatura
+    if (editSub.status === "trial") {
       finalStatus = "ativa";
-      newInicio = new Date().toISOString();
-      const selectedPlan = plans.find(p => p.id === editPlan);
-      const expDate = new Date();
-      if (selectedPlan?.intervalo === "anual") {
-        expDate.setFullYear(expDate.getFullYear() + 1);
-      } else if (selectedPlan?.intervalo === "trimestral") {
-        expDate.setMonth(expDate.getMonth() + 3);
-      } else if (selectedPlan?.intervalo === "semestral") {
-        expDate.setMonth(expDate.getMonth() + 6);
-      } else {
-        expDate.setMonth(expDate.getMonth() + 1);
-      }
-      newExpiraEm = expDate.toISOString();
-    } else if (finalStatus === "ativa" && editSub.status !== "ativa") {
-      // Ativando manualmente sem mudar plano
+    }
+
+    // Recalcular datas quando ativando (de trial/expirada para ativa) ou mudando plano
+    const needsDateRecalc = finalStatus === "ativa" && (editSub.status !== "ativa" || (editPlan && editPlan !== editSub.plan_id));
+    if (needsDateRecalc && editPlan) {
       newInicio = new Date().toISOString();
       const selectedPlan = plans.find(p => p.id === editPlan);
       const expDate = new Date();
