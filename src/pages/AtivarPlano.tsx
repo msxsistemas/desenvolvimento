@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,7 @@ export default function AtivarPlano() {
   const [userId, setUserId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [loadingPix, setLoadingPix] = useState(false);
+  const pixReceivedRef = useRef(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const planId = searchParams.get('plan');
@@ -189,7 +190,8 @@ export default function AtivarPlano() {
         );
 
         const result = await resp.json();
-        if (result.pix_copia_cola) {
+        if (result.pix_copia_cola && !pixReceivedRef.current) {
+          pixReceivedRef.current = true;
           setPaymentData(prev => prev ? {
             ...prev,
             pix_copia_cola: result.pix_copia_cola,
@@ -301,8 +303,8 @@ export default function AtivarPlano() {
 
               <CardContent className="p-6 space-y-6">
                 {!paymentData.pix_copia_cola && !paymentData.pix_qr_code ? (
-                  <div className="flex flex-col items-center gap-4 py-8">
-                    <div className="relative w-48 h-48 rounded-2xl bg-muted/50 flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-4 py-8 min-h-[280px] justify-center">
+                    <div className="w-48 h-48 rounded-2xl bg-muted/50 flex items-center justify-center flex-shrink-0">
                       <Loader2 className="h-10 w-10 animate-spin text-primary" />
                     </div>
                     <p className="text-sm text-muted-foreground font-medium">
