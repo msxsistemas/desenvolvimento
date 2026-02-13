@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Wallet, Settings, Building2, QrCode, CreditCard } from "lucide-react";
+import { Wallet, Settings, Building2, QrCode, CreditCard, Banknote } from "lucide-react";
 
 interface SystemGateway {
   id: string;
@@ -33,6 +34,8 @@ export default function AdminGateways() {
   const [gatewayAtivo, setGatewayAtivo] = useState("");
   const [pixEnabled, setPixEnabled] = useState(true);
   const [creditCardEnabled, setCreditCardEnabled] = useState(false);
+  const [pixManualEnabled, setPixManualEnabled] = useState(false);
+  const [pixManualKey, setPixManualKey] = useState("");
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
@@ -51,15 +54,13 @@ export default function AdminGateways() {
     fetch_();
   }, []);
 
-  // configuredGateways derived from gateways list
+  const gatewayList = allGateways.map(id => ({
+    id,
+    label: provedorLabels[id],
+    configured: gateways.some(g => g.provedor === id),
+  }));
 
-  const handleActivateGateway = async (provedor: string) => {
-    setGatewayAtivo(provedor);
-    // Deactivate all, activate selected
-    for (const g of gateways) {
-      await supabase.from("system_gateways").update({ ativo: g.provedor === provedor }).eq("id", g.id);
-    }
-  };
+  const configuredList = gatewayList.filter(g => g.configured);
 
   const handleSave = async () => {
     setSaving(true);
@@ -75,23 +76,15 @@ export default function AdminGateways() {
     }
   };
 
-  const gatewayList = allGateways.map(id => ({
-    id,
-    label: provedorLabels[id],
-    configured: gateways.some(g => g.provedor === id),
-  }));
-
-  const configuredList = gatewayList.filter(g => g.configured);
-
   return (
     <div>
-      <header className="rounded-lg border mb-6 overflow-hidden shadow">
+      <header className="rounded-lg border mb-6 overflow-hidden shadow" aria-label="Configuração do Checkout">
         <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
           <div className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            <h1 className="text-base font-semibold tracking-tight">Configuração dos Gateways</h1>
+            <Settings className="h-5 w-5" aria-hidden="true" />
+            <h1 className="text-base font-semibold tracking-tight">Configuração do Checkout</h1>
           </div>
-          <p className="text-xs/6 opacity-90">Configure os gateways de pagamento disponíveis para cobranças de planos.</p>
+          <p className="text-xs/6 opacity-90">Configure os métodos de pagamento disponíveis para cobranças de planos.</p>
         </div>
       </header>
 
@@ -173,7 +166,30 @@ export default function AdminGateways() {
                   onCheckedChange={setCreditCardEnabled}
                 />
               </div>
+
+              <div className="rounded-md border px-3 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Banknote className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm">PIX Manual</span>
+                </div>
+                <Switch
+                  checked={pixManualEnabled}
+                  onCheckedChange={setPixManualEnabled}
+                />
+              </div>
             </div>
+
+            {pixManualEnabled && (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Chave PIX Manual</label>
+                <Input
+                  value={pixManualKey}
+                  onChange={(e) => setPixManualKey(e.target.value)}
+                  placeholder="Digite a chave PIX (CPF, e-mail, telefone ou aleatória)"
+                  className="font-mono text-sm"
+                />
+              </div>
+            )}
 
             {pixEnabled && configuredList.length > 0 && (
               <p className="text-xs text-muted-foreground">
