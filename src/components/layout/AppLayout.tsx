@@ -197,14 +197,14 @@ export default function AppLayout() {
               {/* Expiration date badge */}
               {expirationDate && (
                 <div
-                  className={`hidden lg:flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium border cursor-pointer hover:opacity-80 transition-opacity ${
+                  className={`hidden lg:flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border cursor-pointer hover:opacity-80 transition-opacity ${
                     isExpiredOrClose
                       ? 'border-destructive/50 bg-destructive/10 text-destructive'
                       : 'border-success/50 bg-success/10 text-success'
                   }`}
                   onClick={() => navigate('/renovar-acesso')}
                 >
-                  <span className="text-muted-foreground text-[11px]">Vencimento do Acesso</span>
+                  <span className="text-muted-foreground text-xs">Vencimento do Acesso</span>
                   <span className="font-bold">{expirationDate}</span>
                 </div>
               )}
