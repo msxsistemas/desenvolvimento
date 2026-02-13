@@ -118,8 +118,8 @@ export default function AtivarPlano() {
         setPaymentData(result.payment);
         setPaymentStatus('pending');
         startPaymentPolling(result.payment.gateway_charge_id);
-        // If Ciabra with installment_id, start polling for PIX data
-        if (result.payment.installment_id && !result.payment.pix_copia_cola) {
+        // If Ciabra, always start polling for PIX data
+        if (result.payment.installment_id) {
           setLoadingPix(true);
           startPixPolling(result.payment.installment_id);
         }
@@ -201,11 +201,11 @@ export default function AtivarPlano() {
       } catch {}
     }, 4000);
 
-    // Stop polling after 2 minutes
+    // Stop polling after 5 minutes
     setTimeout(() => {
       clearInterval(interval);
       setLoadingPix(false);
-    }, 2 * 60 * 1000);
+    }, 5 * 60 * 1000);
   };
 
   const copyPixCode = () => {
@@ -328,18 +328,10 @@ export default function AtivarPlano() {
                     </div>
                   </div>
                 )}
-                {!paymentData.pix_qr_code && !paymentData.pix_copia_cola && paymentData.payment_url && (
-                  <div className="space-y-4 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Clique no botão abaixo para abrir a página de pagamento PIX
-                    </p>
-                    <Button
-                      className="w-full h-12 text-base"
-                      onClick={() => window.open(paymentData.payment_url, '_blank')}
-                    >
-                      <QrCode className="mr-2 h-4 w-4" />
-                      Abrir página de pagamento
-                    </Button>
+                {!paymentData.pix_qr_code && !paymentData.pix_copia_cola && !loadingPix && (
+                  <div className="flex flex-col items-center gap-3 py-4">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Aguardando dados do PIX...</p>
                   </div>
                 )}
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
