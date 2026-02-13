@@ -228,8 +228,8 @@ export default function AdminDashboard() {
       {/* 4ª linha — Assinaturas + Crescimento */}
       <section className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 flex items-center gap-4">
-          <div className="rounded-full bg-primary/20 p-2">
-            <UserPlus className="h-6 w-6 text-primary" />
+          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
+            <UserPlus className="h-6 w-6 text-[hsl(142,70%,45%)]" />
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -248,8 +248,8 @@ export default function AdminDashboard() {
         </div>
 
         <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 flex items-center gap-4">
-          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
-            <Users className="h-6 w-6 text-[hsl(142,70%,45%)]" />
+          <div className="rounded-full bg-primary/20 p-2">
+            <Users className="h-6 w-6 text-primary" />
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -305,12 +305,12 @@ export default function AdminDashboard() {
                 <AreaChart data={growthData}>
                   <defs>
                     <linearGradient id="gUsers" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.6} />
-                      <stop offset="95%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.1} />
-                    </linearGradient>
-                    <linearGradient id="gClients" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.6} />
                       <stop offset="95%" stopColor="hsl(142, 70%, 45%)" stopOpacity={0.1} />
+                    </linearGradient>
+                    <linearGradient id="gClients" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.6} />
+                      <stop offset="95%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.1} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" opacity={0.3} />
@@ -318,8 +318,8 @@ export default function AdminDashboard() {
                   <YAxis stroke="hsl(215, 20%, 65%)" fontSize={11} tickLine={false} axisLine={false} />
                   <Tooltip contentStyle={tooltipStyle} />
                   <Legend wrapperStyle={{ fontSize: "11px", color: "hsl(215, 20%, 65%)" }} iconType="circle" />
-                  <Area type="monotone" dataKey="Novos Usuários" stroke="hsl(199, 89%, 48%)" fill="url(#gUsers)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="Novos Clientes" stroke="hsl(142, 70%, 45%)" fill="url(#gClients)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="Novos Usuários" stroke="hsl(142, 70%, 45%)" fill="url(#gUsers)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="Novos Clientes" stroke="hsl(199, 89%, 48%)" fill="url(#gClients)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
