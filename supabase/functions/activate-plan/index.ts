@@ -388,11 +388,15 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
 
   try {
     // 1. Registrar cliente na Ciabra (obrigatório antes de criar fatura)
+    // Garantir nome válido com mínimo 3 caracteres
+    const customerName = (user.user_metadata?.full_name || user.email?.split("@")[0] || "Cliente").trim();
+    const safeName = customerName.length >= 3 ? customerName : customerName.padEnd(3, "_");
+
     const customerResp = await fetch(`${CIABRA_BASE_URL}/invoices/applications/customers`, {
       method: "POST",
       headers,
       body: JSON.stringify({
-        name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Cliente",
+        fullName: safeName,
         email: user.email || "",
         phone: user.user_metadata?.whatsapp || user.phone || "",
         document: user.user_metadata?.cpf || "00000000000",
@@ -404,13 +408,20 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
     try {
       const customerData = JSON.parse(customerText);
       customerId = customerData.id ? String(customerData.id) : null;
-      // Se o cliente já existe, a API pode retornar o ID existente
       if (!customerId && customerData.customer?.id) {
         customerId = String(customerData.customer.id);
+      }
+      // Tentar também data.id caso venha em wrapper
+      if (!customerId && customerData.data?.id) {
+        customerId = String(customerData.data.id);
       }
     } catch { /* */ }
 
     console.log("Ciabra customer response:", customerResp.status, customerText);
+
+    if (!customerId) {
+      return { error: `Erro ao registrar cliente na Ciabra: ${customerText}` };
+    }
 
     // 2. Criar fatura com customer_id
     const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -428,10 +439,7 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
       notifications: [],
     };
 
-    if (customerId) {
-      invoiceBody.customerId = customerId;
-    }
-
+    invoiceBody.customerId = customerId;
     console.log("Ciabra invoice body:", JSON.stringify(invoiceBody));
 
     const chargeResp = await fetch(`${CIABRA_BASE_URL}/invoices/applications/invoices`, {
