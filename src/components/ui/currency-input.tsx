@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -13,13 +13,19 @@ export function CurrencyInput({ value, onValueChange, className, ...props }: Cur
   };
 
   const [display, setDisplay] = useState(formatCurrency(value));
+  const internalChange = useRef(false);
 
   useEffect(() => {
+    if (internalChange.current) {
+      internalChange.current = false;
+      return;
+    }
     setDisplay(formatCurrency(value));
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, "");
+    internalChange.current = true;
     if (raw === "" || raw === "0") {
       setDisplay("");
       onValueChange(0);
