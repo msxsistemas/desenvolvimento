@@ -88,10 +88,13 @@ export default function AppLayout() {
         <div className="flex-1 flex flex-col h-full min-w-0">
           {/* Header */}
           <header className="h-16 sm:h-20 border-b border-border flex items-center px-4 sm:px-6 bg-sidebar-background z-10 flex-shrink-0">
-            <SidebarTrigger className="hover-scale mr-2" />
-
-            {/* Spacer */}
+            {/* Left spacer */}
             <div className="flex-1" />
+
+            {/* Center: Sidebar toggle */}
+            <div className="absolute left-1/2 -translate-x-1/2">
+              <SidebarTrigger className="h-10 w-10 rounded-xl border border-border bg-card hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-300 shadow-sm hover:shadow-md" />
+            </div>
 
             {/* Center/Right: Action icons + Expiration + Notifications + Profile */}
             <div className="flex items-center gap-2 sm:gap-3">
