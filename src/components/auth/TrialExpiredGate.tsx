@@ -38,7 +38,7 @@ export default function TrialExpiredGate({ daysLeft, isTrial }: TrialExpiredGate
           <div className="space-y-3">
             <Button
               className="w-full h-12 text-base bg-primary hover:bg-primary/90"
-              onClick={() => navigate('/planos')}
+              onClick={() => navigate('/planos-disponiveis')}
             >
               Ver planos disponíveis
               <ArrowRight className="ml-2 h-4 w-4" />

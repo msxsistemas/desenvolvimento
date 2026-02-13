@@ -55,7 +55,7 @@ export default function AtivarPlano() {
 
   useEffect(() => {
     if (!planId) {
-      navigate('/planos');
+      navigate('/planos-disponiveis');
       return;
     }
     fetchPlan();
@@ -73,7 +73,7 @@ export default function AtivarPlano() {
       if (error) throw error;
       if (!data) {
         toast.error('Plano não encontrado');
-        navigate('/planos');
+        navigate('/planos-disponiveis');
         return;
       }
       setPlan(data);
@@ -208,13 +208,13 @@ export default function AtivarPlano() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/planos')}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/planos-disponiveis')}>
             <div className="w-9 h-9 rounded-full overflow-hidden shadow-md">
               <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-lg font-bold text-foreground">Msx Gestor</span>
           </div>
-          <Button variant="ghost" onClick={() => navigate('/planos')}>
+          <Button variant="ghost" onClick={() => navigate('/planos-disponiveis')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar aos planos
           </Button>
@@ -342,7 +342,7 @@ export default function AtivarPlano() {
                     </>
                   )}
                 </Button>
-                <Button variant="ghost" className="w-full" onClick={() => navigate('/planos')}>
+                <Button variant="ghost" className="w-full" onClick={() => navigate('/planos-disponiveis')}>
                   Escolher outro plano
                 </Button>
               </CardFooter>

@@ -60,7 +60,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             Período de teste: <strong>{daysLeft} dia{daysLeft !== 1 ? 's' : ''}</strong> restante{daysLeft !== 1 ? 's' : ''}
           </span>
           <Badge variant="outline" className="ml-2 text-xs border-primary/30 text-primary cursor-pointer hover:bg-primary/10"
-            onClick={() => window.location.href = '/planos'}
+            onClick={() => window.location.href = '/planos-disponiveis'}
           >
             Ativar plano
           </Badge>

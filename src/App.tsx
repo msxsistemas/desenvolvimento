@@ -87,6 +87,7 @@ import Auth from "./pages/auth/Auth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import FaturaPublica from "./pages/FaturaPublica";
 import AtivarPlano from "./pages/AtivarPlano";
+import PlanosDisponiveis from "./pages/PlanosDisponiveis";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -100,6 +101,7 @@ const App = () => (
           <Route path="/fatura/:id" element={<FaturaPublica />} />
           
           <Route path="/ativar-plano" element={<AtivarPlano />} />
+          <Route path="/planos-disponiveis" element={<PlanosDisponiveis />} />
 
           {/* Protected layout wrapper for main routes */}
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
