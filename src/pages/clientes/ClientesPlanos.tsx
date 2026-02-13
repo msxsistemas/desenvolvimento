@@ -17,7 +17,7 @@ import type { Plano } from "@/types/database";
 const formatCurrencyBRL = (value: string) => {
   const digits = (value ?? "").toString().replace(/\D/g, "");
   const number = Number(digits) / 100;
-  if (isNaN(number)) return "R$ 0,00";
+  if (!digits || number === 0) return "";
   return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 };
 
