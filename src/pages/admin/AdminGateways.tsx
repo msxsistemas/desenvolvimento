@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Wallet, Settings, Building2, QrCode, CreditCard, Banknote } from "lucide-react";
+import { Wallet, Settings, Building2, QrCode, CreditCard } from "lucide-react";
 
 interface SystemGateway {
   id: string;
@@ -34,8 +34,6 @@ export default function AdminGateways() {
   const [gatewayAtivo, setGatewayAtivo] = useState("");
   const [pixEnabled, setPixEnabled] = useState(true);
   const [creditCardEnabled, setCreditCardEnabled] = useState(false);
-  const [pixManualEnabled, setPixManualEnabled] = useState(false);
-  const [pixManualKey, setPixManualKey] = useState("");
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
@@ -167,29 +165,7 @@ export default function AdminGateways() {
                 />
               </div>
 
-              <div className="rounded-md border px-3 py-2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Banknote className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-sm">PIX Manual</span>
-                </div>
-                <Switch
-                  checked={pixManualEnabled}
-                  onCheckedChange={setPixManualEnabled}
-                />
-              </div>
             </div>
-
-            {pixManualEnabled && (
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground">Chave PIX Manual</label>
-                <Input
-                  value={pixManualKey}
-                  onChange={(e) => setPixManualKey(e.target.value)}
-                  placeholder="Digite a chave PIX (CPF, e-mail, telefone ou aleatória)"
-                  className="font-mono text-sm"
-                />
-              </div>
-            )}
 
             {pixEnabled && configuredList.length > 0 && (
               <p className="text-xs text-muted-foreground">

@@ -67,7 +67,7 @@ const adminNavItems: NavItem[] = [
       { to: "/admin/gateways/stripe", label: "Stripe" },
       { to: "/admin/gateways/v3pay", label: "V3Pay" },
       { to: "/admin/gateways/ciabra", label: "Ciabra" },
-      { to: "/admin/gateways/pix-manual", label: "PIX Manual" },
+      
     ],
   },
   {
