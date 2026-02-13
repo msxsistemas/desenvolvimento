@@ -33,7 +33,7 @@ function SidebarToggleButton() {
   return (
     <button
       onClick={toggleSidebar}
-      className="hidden md:flex absolute top-1/2 -translate-y-1/2 z-30 h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-110 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+      className="hidden md:flex absolute top-6 z-30 h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-110 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
       style={{ left: isExpanded ? 'calc(var(--sidebar-width) - 20px)' : 'calc(var(--sidebar-width-icon, 3rem) - 20px)' }}
       aria-label="Toggle Sidebar"
     >
