@@ -232,11 +232,11 @@ export function AppSidebar() {
     <Sidebar className="border-r border-border" collapsible="icon">
       <SidebarContent className="bg-background">
         {/* Logo Header */}
-        <div className={`flex justify-center items-center transition-all duration-300 ${isCollapsed ? 'py-3 px-1' : 'py-4 px-2'}`}>
+        <div className={`flex justify-center items-center transition-all duration-300 ${isCollapsed ? 'py-3' : 'py-4'}`}>
           {isCollapsed ? (
             <img src={logoMsx} alt="Gestor MSX" className="w-10 object-contain" />
           ) : (
-            <img src={logoMsx} alt="Gestor MSX" className="w-full h-12 object-contain" />
+            <img src={logoMsx} alt="Gestor MSX" className="w-full px-1 h-14 object-fill" />
           )}
         </div>
 
