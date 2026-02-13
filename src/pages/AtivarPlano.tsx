@@ -27,6 +27,7 @@ interface PaymentData {
   pix_copia_cola?: string;
   payment_url?: string;
   gateway_charge_id?: string;
+  installment_id?: string;
   gateway?: string;
   status?: string;
 }
@@ -39,6 +40,7 @@ export default function AtivarPlano() {
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'pending' | 'paid' | 'error'>('idle');
   const [userId, setUserId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [loadingPix, setLoadingPix] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const planId = searchParams.get('plan');
@@ -112,12 +114,15 @@ export default function AtivarPlano() {
       if (!resp.ok) throw new Error(result.error || 'Erro ao ativar plano');
 
       if (result.payment) {
-        // Payment required - show payment info
         console.log('Payment data received:', JSON.stringify(result.payment));
         setPaymentData(result.payment);
         setPaymentStatus('pending');
-        // Start polling for payment confirmation
         startPaymentPolling(result.payment.gateway_charge_id);
+        // If Ciabra with installment_id, start polling for PIX data
+        if (result.payment.installment_id && !result.payment.pix_copia_cola) {
+          setLoadingPix(true);
+          startPixPolling(result.payment.installment_id);
+        }
       } else if (result.activated) {
         // Direct activation (free plan or no gateway)
         setPaymentStatus('paid');
@@ -163,6 +168,44 @@ export default function AtivarPlano() {
 
     // Stop polling after 15 minutes
     setTimeout(() => clearInterval(interval), 15 * 60 * 1000);
+  };
+
+  const startPixPolling = (installmentId: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) return;
+
+        const resp = await fetch(
+          `https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/activate-plan`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ action: 'get-pix', installment_id: installmentId }),
+          }
+        );
+
+        const result = await resp.json();
+        if (result.pix_copia_cola) {
+          setPaymentData(prev => prev ? {
+            ...prev,
+            pix_copia_cola: result.pix_copia_cola,
+            pix_qr_code: result.pix_qr_code,
+          } : prev);
+          setLoadingPix(false);
+          clearInterval(interval);
+        }
+      } catch {}
+    }, 4000);
+
+    // Stop polling after 2 minutes
+    setTimeout(() => {
+      clearInterval(interval);
+      setLoadingPix(false);
+    }, 2 * 60 * 1000);
   };
 
   const copyPixCode = () => {
@@ -250,7 +293,12 @@ export default function AtivarPlano() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {paymentData.pix_qr_code ? (
+                {loadingPix && !paymentData.pix_copia_cola ? (
+                  <div className="flex flex-col items-center gap-3 py-4">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Gerando QR Code PIX...</p>
+                  </div>
+                ) : paymentData.pix_qr_code ? (
                   <div className="flex justify-center">
                     <div className="bg-white p-4 rounded-xl">
                       <img

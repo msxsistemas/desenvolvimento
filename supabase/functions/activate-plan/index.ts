@@ -41,7 +41,8 @@ Deno.serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
-    const { action, plan_id, charge_id } = await req.json();
+    const body = await req.json();
+    const { action, plan_id, charge_id, installment_id } = body;
 
     if (action === "activate") {
       // Get plan details
@@ -118,12 +119,66 @@ Deno.serve(async (req) => {
             pix_copia_cola: paymentResult.pix_copia_cola,
             payment_url: paymentResult.payment_url,
             gateway_charge_id: paymentResult.charge_id,
+            installment_id: paymentResult.installment_id,
             gateway: gateway.provedor,
             status: "pending",
           },
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    if (action === "get-pix") {
+      if (!installment_id) {
+        return new Response(JSON.stringify({ error: "installment_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: gateway } = await adminClient
+        .from("system_gateways")
+        .select("*")
+        .eq("ativo", true)
+        .limit(1)
+        .maybeSingle();
+
+      if (!gateway || gateway.provedor?.toLowerCase() !== "ciabra") {
+        return new Response(JSON.stringify({ pix_copia_cola: null, pix_qr_code: null }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const secretKey = gateway.api_key_hash;
+      const publicKey = gateway.public_key_hash || "";
+      const basicToken = btoa(`${publicKey}:${secretKey}`);
+      const pixHeaders = {
+        Authorization: `Basic ${basicToken}`,
+        "Content-Type": "application/json",
+      };
+
+      const payResp = await fetch(`https://api.az.center/payments/applications/installments/${installment_id}`, {
+        method: "GET",
+        headers: pixHeaders,
+      });
+      const payText = await payResp.text();
+      console.log(`PIX fetch for ${installment_id}: ${payText.substring(0, 500)}`);
+      let payData: any = {};
+      try { payData = JSON.parse(payText); } catch { /* */ }
+
+      const payment = Array.isArray(payData) ? payData[0] : payData;
+      const pixObj = payment?.pix || payment;
+      const emv = pixObj?.emv || pixObj?.brCode || pixObj?.pixCode || null;
+      const qr = pixObj?.qrCode || null;
+      const generating = pixObj?.status === "GENERATING";
+
+      return new Response(JSON.stringify({
+        pix_copia_cola: emv,
+        pix_qr_code: qr,
+        generating,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (action === "check-payment") {
@@ -461,53 +516,14 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
 
     const chargeId = String(chargeData.id || "");
     const paymentUrl = chargeData.url || null;
-
-    // Get installment ID to fetch PIX details
-    const installmentId = chargeData.installments?.[0]?.id;
-    let pix_qr_code: string | null = null;
-    let pix_copia_cola: string | null = null;
-
-    if (installmentId) {
-      // Try up to 4 times with delay to wait for PIX generation
-      for (let attempt = 0; attempt < 4; attempt++) {
-        if (attempt > 0) {
-          console.log(`⏳ Waiting 3s for PIX generation (attempt ${attempt + 1})...`);
-          await new Promise(r => setTimeout(r, 3000));
-        }
-        console.log(`🔍 Fetching payment details for installment ${installmentId} (attempt ${attempt + 1})...`);
-        const payResp = await fetch(`${CIABRA_BASE_URL}/payments/applications/installments/${installmentId}`, {
-          method: "GET",
-          headers,
-        });
-        const payText = await payResp.text();
-        console.log(`Ciabra payment response: ${payResp.status}, body: ${payText.substring(0, 800)}`);
-        let payData: any = {};
-        try { payData = JSON.parse(payText); } catch { /* */ }
-
-        const payment = Array.isArray(payData) ? payData[0] : payData;
-        const pixObj = payment?.pix || payment;
-        const emv = pixObj?.emv || pixObj?.brCode || pixObj?.pixCode || null;
-        const qr = pixObj?.qrCode || null;
-
-        if (emv) {
-          pix_copia_cola = emv;
-          pix_qr_code = qr;
-          console.log(`✅ PIX EMV obtained on attempt ${attempt + 1}`);
-          break;
-        }
-
-        if (pixObj?.status === "GENERATING") {
-          console.log(`⏳ PIX still generating...`);
-          continue;
-        }
-      }
-    }
+    const installmentId = chargeData.installments?.[0]?.id || null;
 
     return {
       charge_id: chargeId,
-      pix_qr_code,
-      pix_copia_cola,
+      pix_qr_code: null,
+      pix_copia_cola: null,
       payment_url: paymentUrl,
+      installment_id: installmentId,
     };
   } catch (err: any) {
     console.error("Ciabra payment error:", err);
