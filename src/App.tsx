@@ -89,6 +89,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import FaturaPublica from "./pages/FaturaPublica";
 import AtivarPlano from "./pages/AtivarPlano";
 import PlanosDisponiveis from "./pages/PlanosDisponiveis";
+import RenovarAcesso from "./pages/RenovarAcesso";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -107,6 +108,7 @@ const App = () => (
           {/* Protected layout wrapper for main routes */}
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
             <Route path="/" element={<Index />} />
+            <Route path="/renovar-acesso" element={<RenovarAcesso />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/financeiro" element={<Financeiro />} />
             <Route path="/financeiro/nova-transacao" element={<FinanceiroNovaTransacao />} />
