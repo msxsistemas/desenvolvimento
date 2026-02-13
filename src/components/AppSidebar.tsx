@@ -31,6 +31,7 @@ import {
   ChevronDown,
   Phone,
   Ticket,
+  Crown,
 } from "lucide-react";
 import { useState } from "react";
 import type { LucideProps } from "lucide-react";
@@ -249,7 +250,8 @@ export function AppSidebar() {
           )}
         </div>
         {!isCollapsed && (
-          <div className="flex justify-center -mt-4 mb-1">
+          <div className="flex justify-center -mt-4 mb-1 gap-1">
+            <Crown size={14} className="text-success" />
             <NavLink to="/renovar-acesso" className="text-xs text-success hover:text-success/80 font-medium transition-colors">
               Renovar Acesso
             </NavLink>
