@@ -10,6 +10,13 @@ import { DollarSign } from "lucide-react";
 import { useFinanceiro } from "@/hooks/useFinanceiro";
 import { toast } from "sonner";
 
+const formatCurrencyBRL = (value: string) => {
+  const digits = (value ?? "").toString().replace(/\D/g, "");
+  const number = Number(digits) / 100;
+  if (isNaN(number)) return "R$ 0,00";
+  return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+};
+
 export default function FinanceiroNovaTransacao() {
   const navigate = useNavigate();
   const { salvarTransacao } = useFinanceiro();
@@ -85,10 +92,12 @@ export default function FinanceiroNovaTransacao() {
               <div className="space-y-2" data-field="valor">
                 <Label className="text-sm font-medium">Valor <span className="text-destructive">*</span></Label>
                 <Input
+                  type="text"
+                  inputMode="numeric"
                   placeholder="R$ 0,00"
                   className={`bg-background border-border ${fieldErrors.valor ? 'border-destructive' : ''}`}
                   value={formData.valor}
-                  onChange={(e) => { setFormData(prev => ({ ...prev, valor: e.target.value })); setFieldErrors(prev => ({ ...prev, valor: '' })); }}
+                  onChange={(e) => { setFormData(prev => ({ ...prev, valor: formatCurrencyBRL(e.target.value) })); setFieldErrors(prev => ({ ...prev, valor: '' })); }}
                 />
                 {fieldErrors.valor && <span className="text-xs text-destructive">{fieldErrors.valor}</span>}
               </div>
