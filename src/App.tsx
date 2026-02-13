@@ -102,13 +102,13 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/fatura/:id" element={<FaturaPublica />} />
           
-          <Route path="/ativar-plano" element={<AtivarPlano />} />
           <Route path="/planos-disponiveis" element={<PlanosDisponiveis />} />
 
           {/* Protected layout wrapper for main routes */}
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
             <Route path="/" element={<Index />} />
             <Route path="/renovar-acesso" element={<RenovarAcesso />} />
+            <Route path="/ativar-plano" element={<AtivarPlano />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/financeiro" element={<Financeiro />} />
             <Route path="/financeiro/nova-transacao" element={<FinanceiroNovaTransacao />} />
