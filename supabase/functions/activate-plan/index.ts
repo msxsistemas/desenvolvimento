@@ -443,57 +443,20 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 
   try {
-    // 1. Criar customer primeiro (obrigatório para esta aplicação Ciabra)
-    const customerName = (user.user_metadata?.full_name || user.email?.split("@")[0] || "Cliente").trim();
-    const safeName = customerName.length >= 3 ? customerName : customerName.padEnd(3, "_");
-    const userPhone = user.user_metadata?.whatsapp || user.phone || "+5500000000000";
-
-    let customerId = "";
-    try {
-      const customerResp = await fetch(`${CIABRA_BASE_URL}/invoices/applications/customers`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ fullName: safeName, phone: userPhone }),
-      });
-      const customerText = await customerResp.text();
-      console.log("Ciabra customer response:", customerResp.status, customerText.substring(0, 300));
-      try {
-        const customerData = JSON.parse(customerText);
-        customerId = String(customerData.id || "");
-      } catch { /* */ }
-    } catch (e: any) {
-      console.error("Ciabra customer error:", e.message);
-    }
-
-    if (!customerId) {
-      return { error: "Erro ao criar cliente na Ciabra" };
-    }
-
-    // 2. Criar fatura com customerId e payload completo
+    // Criar fatura SEM customerId — payload idêntico ao create-pix que funciona
     const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const invoiceBody: any = {
       description: `Plano ${plan.nome} - Msx Gestor`,
       dueDate,
       installmentCount: 1,
       invoiceType: "SINGLE",
-      items: [
-        {
-          description: `Plano ${plan.nome}`,
-          quantity: 1,
-          price: parseFloat(String(plan.valor)),
-        },
-      ],
+      items: [],
       price: parseFloat(String(plan.valor)),
-      externalId: `plan-${plan.id}-${Date.now()}`,
       paymentTypes: ["PIX"],
-      customerId,
       webhooks: [
         { hookType: "PAYMENT_CONFIRMED", url: `${supabaseUrl}/functions/v1/ciabra-integration` },
       ],
-      notifications: [
-        { type: "INVOICE_GENERATED", channel: "Email" },
-        { type: "SEND_FIRST_INVOICE_BY", channel: "Email" },
-      ],
+      notifications: [],
     };
 
     console.log("Ciabra invoice body:", JSON.stringify(invoiceBody));
