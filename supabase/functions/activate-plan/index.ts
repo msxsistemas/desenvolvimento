@@ -110,8 +110,6 @@ Deno.serve(async (req) => {
         await adminClient.from("user_subscriptions").update({
           plan_id: plan.id,
           status: "pendente",
-          inicio: new Date().toISOString(),
-          expira_em: calculateExpiration(plan.intervalo),
           gateway_subscription_id: paymentResult.charge_id,
           updated_at: new Date().toISOString(),
         }).eq("id", existingSub.id);
@@ -120,8 +118,6 @@ Deno.serve(async (req) => {
           user_id: user.id,
           plan_id: plan.id,
           status: "pendente",
-          inicio: new Date().toISOString(),
-          expira_em: calculateExpiration(plan.intervalo),
           gateway_subscription_id: paymentResult.charge_id,
         });
       }
