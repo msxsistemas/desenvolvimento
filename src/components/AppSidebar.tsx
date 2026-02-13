@@ -2,6 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
+  SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
@@ -230,8 +231,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r border-border" collapsible="icon">
-      <SidebarContent className="bg-background">
-        {/* Logo Header */}
+      <SidebarHeader className="bg-background p-0">
+        {/* Logo Header - Fixed */}
         <div className={`flex items-center justify-center gap-2 transition-all duration-300 ${isCollapsed ? 'py-5' : 'py-6 px-4'}`}>
           <svg viewBox="0 0 100 110" className={`flex-shrink-0 ${isCollapsed ? 'w-9 h-9' : 'w-9 h-9'}`}>
             <defs>
@@ -254,8 +255,10 @@ export function AppSidebar() {
             </NavLink>
           </div>
         )}
+        <div className="mx-4 border-t border-border/50" />
+      </SidebarHeader>
 
-        <div className="mx-4 border-t border-border/50 mb-2" />
+      <SidebarContent className="bg-background">
 
         <SidebarGroup className="px-0">
           <SidebarGroupContent>
