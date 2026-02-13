@@ -24,7 +24,7 @@ interface Subscription {
   user_role?: string;
 }
 
-interface Plan { id: string; nome: string; }
+interface Plan { id: string; nome: string; intervalo?: string; }
 
 const PER_PAGE = 10;
 
@@ -50,7 +50,7 @@ export default function AdminAssinaturas() {
   const fetch_ = async () => {
     const [subsRes, plansRes] = await Promise.all([
       supabase.from("user_subscriptions").select("*").order("created_at", { ascending: false }),
-      supabase.from("system_plans").select("id, nome"),
+      supabase.from("system_plans").select("id, nome, intervalo"),
     ]);
 
     const planMap: Record<string, string> = {};
@@ -92,10 +92,31 @@ export default function AdminAssinaturas() {
 
   const handleUpdate = async () => {
     if (!editSub) return;
+
+    let newExpiraEm: string | null = editSub.expira_em || null;
+
+    // Se ativando, calcular nova data de expiração baseada no intervalo do plano
+    if (editStatus === "ativa" && editPlan) {
+      const selectedPlan = plans.find(p => p.id === editPlan);
+      const now = new Date();
+      if (selectedPlan?.intervalo === "anual") {
+        now.setFullYear(now.getFullYear() + 1);
+      } else if (selectedPlan?.intervalo === "trimestral") {
+        now.setMonth(now.getMonth() + 3);
+      } else if (selectedPlan?.intervalo === "semestral") {
+        now.setMonth(now.getMonth() + 6);
+      } else {
+        // mensal por padrão
+        now.setMonth(now.getMonth() + 1);
+      }
+      newExpiraEm = now.toISOString();
+    }
+
     await supabase.from("user_subscriptions").update({ 
       status: editStatus, 
       plan_id: editPlan || null,
-      expira_em: editExpiraEm ? new Date(editExpiraEm).toISOString() : null,
+      expira_em: newExpiraEm,
+      inicio: editStatus === "ativa" ? new Date().toISOString() : editSub.inicio,
     }).eq("id", editSub.id);
     toast({ title: "Assinatura atualizada!" });
     setEditSub(null);
@@ -269,7 +290,6 @@ export default function AdminAssinaturas() {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={handleUpdate} className="w-full">Salvar Alterações</Button>
             <Button onClick={handleUpdate} className="w-full">Salvar Alterações</Button>
           </div>
         </DialogContent>
