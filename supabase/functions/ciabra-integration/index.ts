@@ -46,14 +46,19 @@ serve(async (req) => {
     );
 
     // Check if this is a webhook from Ciabra
-    if (body.event || body.type === 'payment') {
-      console.log('📩 Ciabra Webhook received:', body.event || body.type);
+    if (body.event || body.type === 'payment' || body.hookType || body.installmentId) {
+      console.log('📩 Ciabra Webhook received:', JSON.stringify(body).substring(0, 500));
       
-      const isPaid = body.event === 'payment.confirmed' || body.event === 'payment.approved' || body.status === 'paid';
+      const isPaid = body.event === 'payment.confirmed' || body.event === 'payment.approved' 
+        || body.status === 'paid' || body.hookType === 'PAYMENT_CONFIRMED'
+        || (body._status || '').toUpperCase() === 'PAID';
+      
       if (isPaid) {
-        const chargeId = String(body.id || body.payment_id || body.charge_id || '');
+        const chargeId = String(body.id || body.payment_id || body.charge_id || body.invoiceId || '');
+        const installmentId = String(body.installmentId || '');
         
         if (chargeId) {
+          // Check cobrancas (user invoices)
           const { data: cobranca } = await supabaseAdmin
             .from('cobrancas')
             .select('*')
@@ -65,6 +70,29 @@ serve(async (req) => {
           if (cobranca) {
             console.log(`📋 Cobrança Ciabra encontrada para: ${cobranca.cliente_whatsapp}`);
             await triggerAutoRenewal(cobranca.user_id, cobranca.cliente_whatsapp, 'ciabra', chargeId);
+          }
+        }
+
+        // Check user_subscriptions (plan payments) by charge_id or installment's invoiceId
+        const searchId = chargeId || '';
+        if (searchId) {
+          const { data: sub } = await supabaseAdmin
+            .from('user_subscriptions')
+            .select('*, system_plans(*)')
+            .eq('gateway_subscription_id', searchId)
+            .eq('status', 'pendente')
+            .maybeSingle();
+
+          if (sub) {
+            console.log(`✅ Ativando plano via webhook para user: ${sub.user_id}`);
+            await supabaseAdmin
+              .from('user_subscriptions')
+              .update({
+                status: 'ativa',
+                inicio: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', sub.id);
           }
         }
       }

@@ -600,12 +600,14 @@ async function checkPaymentStatus(gateway: any, chargeId: string): Promise<boole
         headers: { Authorization: `Basic ${basicToken}` },
       });
       const data = await resp.json();
-      const status = (data.status || "").toUpperCase();
-      if (["PAID", "CONFIRMED", "RECEIVED"].includes(status)) return true;
-      // Check installments
+      console.log("Ciabra check-payment response:", JSON.stringify(data).substring(0, 500));
+      const status = (data.status || data._status || "").toUpperCase();
+      if (["PAID", "CONFIRMED", "RECEIVED", "PAYMENT_CONFIRMED"].includes(status)) return true;
+      // Check installments - Ciabra uses _status field
       const installments = data.installments || [];
       for (const inst of installments) {
-        if ((inst.status || "").toUpperCase() === "PAID") return true;
+        const instStatus = (inst._status || inst.status || "").toUpperCase();
+        if (["PAID", "CONFIRMED", "PAYMENT_CONFIRMED"].includes(instStatus)) return true;
       }
       return false;
     }
