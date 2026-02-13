@@ -33,12 +33,12 @@ function SidebarToggleButton() {
   return (
     <button
       onClick={toggleSidebar}
-      className="hidden md:flex fixed top-5 z-50 h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-110 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-      style={{ left: isExpanded ? 'calc(var(--sidebar-width) - 20px)' : 'calc(var(--sidebar-width-icon, 3rem) - 20px)' }}
+      className="hidden md:flex fixed top-4 z-50 h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md shadow-primary/25 hover:shadow-primary/40 hover:scale-110 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+      style={{ left: isExpanded ? 'calc(var(--sidebar-width) - 14px)' : 'calc(var(--sidebar-width-icon, 4.5rem) - 14px)' }}
       aria-label="Toggle Sidebar"
     >
       <ChevronsLeft
-        className={`h-5 w-5 transition-transform duration-300 ${!isExpanded ? 'rotate-180' : ''}`}
+        className={`h-4 w-4 transition-transform duration-300 ${!isExpanded ? 'rotate-180' : ''}`}
       />
     </button>
   );
