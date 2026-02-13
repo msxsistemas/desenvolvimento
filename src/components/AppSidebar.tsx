@@ -233,7 +233,16 @@ export function AppSidebar() {
       <SidebarContent className="bg-background">
         {/* Logo Header */}
         <div className={`flex items-center justify-center gap-2 transition-all duration-300 ${isCollapsed ? 'py-3' : 'py-4 px-3'}`}>
-          <img src={iconMsx} alt="MSX" className={`object-contain ${isCollapsed ? 'w-7 h-7' : 'w-7 h-7'}`} />
+          <svg viewBox="0 0 100 110" className={`flex-shrink-0 ${isCollapsed ? 'w-7 h-7' : 'w-7 h-7'}`}>
+            <defs>
+              <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.7" />
+                <stop offset="100%" stopColor="hsl(var(--primary))" />
+              </linearGradient>
+            </defs>
+            <path d="M10 5 H90 V70 Q90 95 50 108 Q10 95 10 70 Z" fill="url(#shieldGrad)" rx="8" />
+            <text x="50" y="72" textAnchor="middle" fill="white" fontSize="52" fontWeight="bold" fontFamily="sans-serif">M</text>
+          </svg>
           {!isCollapsed && (
             <span className="text-base font-bold tracking-wide text-foreground">GESTOR <span className="text-primary">MSX</span></span>
           )}
