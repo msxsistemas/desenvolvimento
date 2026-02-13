@@ -60,7 +60,7 @@ export default function AtivarPlano() {
 
   useEffect(() => {
     if (!planId) {
-      navigate('/planos-disponiveis');
+      navigate('/renovar-acesso');
       return;
     }
     fetchPlan();
@@ -84,8 +84,8 @@ export default function AtivarPlano() {
       setPlan(data);
     } catch (error) {
       console.error('Erro ao carregar plano:', error);
-      toast.error('Erro ao carregar plano');
-      navigate('/planos');
+        toast.error('Erro ao carregar plano');
+      navigate('/renovar-acesso');
     } finally {
       setLoading(false);
     }
@@ -256,13 +256,13 @@ export default function AtivarPlano() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/planos-disponiveis')}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/renovar-acesso')}>
             <div className="w-9 h-9 rounded-full overflow-hidden shadow-md">
               <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-lg font-bold text-foreground">Msx Gestor</span>
           </div>
-          <Button variant="ghost" onClick={() => navigate('/planos-disponiveis')}>
+          <Button variant="ghost" onClick={() => navigate('/renovar-acesso')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar aos planos
           </Button>
@@ -430,7 +430,7 @@ export default function AtivarPlano() {
                     </>
                   )}
                 </Button>
-                <Button variant="ghost" className="w-full" onClick={() => navigate('/planos-disponiveis')}>
+                <Button variant="ghost" className="w-full" onClick={() => navigate('/renovar-acesso')}>
                   Escolher outro plano
                 </Button>
               </CardFooter>

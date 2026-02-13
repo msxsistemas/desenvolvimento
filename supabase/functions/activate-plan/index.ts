@@ -366,17 +366,22 @@ async function generateAsaasPayment(gateway: any, plan: any, user: any) {
   if (customerData.data?.length > 0) {
     customerId = customerData.data[0].id;
   } else {
+    const createBody = {
+      name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Cliente",
+      email: user.email,
+      phone: user.user_metadata?.whatsapp || user.phone || null,
+      cpfCnpj: user.user_metadata?.cpf || null,
+      notificationDisabled: true,
+    };
+    console.log("Creating Asaas customer:", JSON.stringify(createBody));
     const createResp = await fetch(`${baseUrl}/customers`, {
       method: "POST",
       headers: { "Content-Type": "application/json", access_token: apiKey },
-      body: JSON.stringify({
-        name: user.user_metadata?.full_name || user.email,
-        email: user.email,
-        phone: user.user_metadata?.whatsapp || null,
-      }),
+      body: JSON.stringify(createBody),
     });
     const created = await createResp.json();
-    if (!created.id) return { error: "Erro ao criar cliente no Asaas" };
+    console.log("Asaas customer response:", JSON.stringify(created));
+    if (!created.id) return { error: created.errors?.[0]?.description || "Erro ao criar cliente no Asaas: " + JSON.stringify(created) };
     customerId = created.id;
   }
 
