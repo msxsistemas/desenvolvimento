@@ -175,7 +175,7 @@ export function AppSidebar() {
 
   // Helper to render submenu items
   const renderSubItems = (items: { to: string; label: string }[]) => (
-    <SidebarMenuSub className="ml-8 mt-2 space-y-1">
+    <SidebarMenuSub className="ml-8 mt-2 space-y-1 animate-fade-in">
       {items.map((subItem) => (
         <SidebarMenuSubItem key={subItem.to}>
           <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
@@ -206,18 +206,18 @@ export function AppSidebar() {
         onClick={() => toggleSubmenu(menuKey)}
         className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none"
       >
-        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
+        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
           isMenuHighlighted(menuKey, sectionActive)
             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium" 
             : "text-muted-foreground hover:text-muted-foreground/80"
         }`}>
           <div className="flex items-center gap-3">
-            <item.icon className="h-5 w-5" />
-            {!isCollapsed && <span className="text-[14px] font-medium">{item.label}</span>}
+            <item.icon className="h-5 w-5 flex-shrink-0 transition-transform duration-300" />
+            {!isCollapsed && <span className="text-[14px] font-medium whitespace-nowrap transition-opacity duration-300">{item.label}</span>}
           </div>
           {!isCollapsed && (
             <ChevronDown
-              className={`h-4 w-4 transition-transform ${openSubmenu === menuKey ? "rotate-180" : ""}`}
+              className={`h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${openSubmenu === menuKey ? "rotate-180" : ""}`}
             />
           )}
         </div>
@@ -261,18 +261,18 @@ export function AppSidebar() {
                         onClick={() => toggleSubmenu("whatsapp")}
                         className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none"
                       >
-                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
+                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                           isMenuHighlighted("whatsapp", whatsappActive)
                             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium" 
                             : "text-muted-foreground hover:text-muted-foreground/80"
                         }`}>
                           <div className="flex items-center gap-3">
-                            <Phone className="h-5 w-5" />
-                            {!isCollapsed && <span className="text-[14px] font-medium">{item.label}</span>}
+                            <Phone className="h-5 w-5 flex-shrink-0 transition-transform duration-300" />
+                            {!isCollapsed && <span className="text-[14px] font-medium whitespace-nowrap transition-opacity duration-300">{item.label}</span>}
                           </div>
                           {!isCollapsed && (
                             <ChevronDown
-                              className={`h-4 w-4 transition-transform ${openSubmenu === "whatsapp" ? "rotate-180" : ""}`}
+                              className={`h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${openSubmenu === "whatsapp" ? "rotate-180" : ""}`}
                             />
                           )}
                         </div>
@@ -287,14 +287,14 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none">
                       <NavLink to={item.to} end onClick={() => setOpenSubmenu(null)}>
-                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
+                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                           isActive(item.to) && openSubmenu === null
                             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium"
                             : "text-muted-foreground hover:text-muted-foreground/80"
                         }`}>
                           <div className="flex items-center gap-3">
-                            <item.icon className="h-5 w-5" />
-                            {!isCollapsed && <span className="text-[14px] font-medium">{item.label}</span>}
+                            <item.icon className="h-5 w-5 flex-shrink-0 transition-transform duration-300" />
+                            {!isCollapsed && <span className="text-[14px] font-medium whitespace-nowrap transition-opacity duration-300">{item.label}</span>}
                           </div>
                           {!isCollapsed && <ChevronDown className="h-4 w-4 opacity-50" />}
                         </div>
