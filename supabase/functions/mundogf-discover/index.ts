@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// Edge function for MundoGF discovery
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -147,7 +147,7 @@ async function loginMundoGF(baseUrl: string, username: string, password: string)
   return { success: true, cookies: allCookies };
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
