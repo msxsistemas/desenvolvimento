@@ -264,6 +264,14 @@ async function generatePayment(
       return await generateMercadoPagoPayment(gateway, plan, user);
     }
 
+    if (provedor === "ciabra") {
+      return await generateCiabraPayment(gateway, plan, user);
+    }
+
+    if (provedor === "v3pay") {
+      return await generateV3PayPayment(gateway, plan, user);
+    }
+
     // Fallback: no specific gateway handler
     return { error: `Gateway "${gateway.provedor}" não suportado para pagamentos de plano` };
   } catch (err: any) {
@@ -364,6 +372,90 @@ async function generateMercadoPagoPayment(gateway: any, plan: any, user: any) {
   };
 }
 
+async function generateCiabraPayment(gateway: any, plan: any, user: any) {
+  const secretKey = gateway.api_key_hash;
+  const publicKey = gateway.public_key_hash || "";
+  if (!secretKey) return { error: "Gateway Ciabra sem chave secreta configurada" };
+
+  const CIABRA_BASE_URL = "https://api.az.center";
+  const basicToken = btoa(`${publicKey}:${secretKey}`);
+  const headers = {
+    Authorization: `Basic ${basicToken}`,
+    "Content-Type": "application/json",
+  };
+
+  const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+
+  try {
+    const chargeResp = await fetch(`${CIABRA_BASE_URL}/invoices/applications/invoices`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        description: `Plano ${plan.nome} - Msx Gestor`,
+        dueDate,
+        installmentCount: 1,
+        invoiceType: "SINGLE",
+        items: [],
+        price: plan.valor,
+        paymentTypes: ["PIX"],
+        webhooks: [
+          { hookType: "PAYMENT_CONFIRMED", url: `${supabaseUrl}/functions/v1/ciabra-integration` },
+        ],
+        notifications: [],
+      }),
+    });
+
+    const chargeText = await chargeResp.text();
+    let chargeData: any = {};
+    try { chargeData = JSON.parse(chargeText); } catch { /* */ }
+
+    if (!chargeResp.ok) {
+      return { error: chargeData.message || chargeData.error || `Erro Ciabra (${chargeResp.status})` };
+    }
+
+    return {
+      charge_id: String(chargeData.id || ""),
+      pix_qr_code: chargeData.payment?.pix?.qrCode || null,
+      pix_copia_cola: chargeData.payment?.pix?.brCode || null,
+    };
+  } catch (err: any) {
+    return { error: err.message || "Erro ao criar pagamento Ciabra" };
+  }
+}
+
+async function generateV3PayPayment(gateway: any, plan: any, user: any) {
+  const apiToken = gateway.api_key_hash;
+  if (!apiToken) return { error: "Gateway V3Pay sem token configurado" };
+
+  try {
+    const resp = await fetch("https://api.v3pay.com.br/v1/payments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiToken}`,
+      },
+      body: JSON.stringify({
+        amount: Math.round(plan.valor * 100),
+        description: `Plano ${plan.nome} - Msx Gestor`,
+        payment_method: "pix",
+        payer: { email: user.email },
+      }),
+    });
+
+    const data = await resp.json();
+    if (!data.id) return { error: data.message || "Erro ao criar pagamento V3Pay" };
+
+    return {
+      charge_id: String(data.id),
+      pix_qr_code: data.pix?.qr_code_base64 || data.qr_code_base64 || null,
+      pix_copia_cola: data.pix?.qr_code || data.pix_copia_cola || null,
+    };
+  } catch (err: any) {
+    return { error: err.message || "Erro ao criar pagamento V3Pay" };
+  }
+}
+
 async function checkPaymentStatus(gateway: any, chargeId: string): Promise<boolean> {
   try {
     const provedor = gateway.provedor?.toLowerCase();
@@ -386,6 +478,33 @@ async function checkPaymentStatus(gateway: any, chargeId: string): Promise<boole
       });
       const data = await resp.json();
       return data.status === "approved";
+    }
+
+    if (provedor === "ciabra") {
+      const secretKey = gateway.api_key_hash;
+      const publicKey = gateway.public_key_hash || "";
+      const basicToken = btoa(`${publicKey}:${secretKey}`);
+
+      const resp = await fetch(`https://api.az.center/invoices/applications/invoices/${chargeId}`, {
+        headers: { Authorization: `Basic ${basicToken}` },
+      });
+      const data = await resp.json();
+      const status = (data.status || "").toUpperCase();
+      if (["PAID", "CONFIRMED", "RECEIVED"].includes(status)) return true;
+      // Check installments
+      const installments = data.installments || [];
+      for (const inst of installments) {
+        if ((inst.status || "").toUpperCase() === "PAID") return true;
+      }
+      return false;
+    }
+
+    if (provedor === "v3pay") {
+      const resp = await fetch(`https://api.v3pay.com.br/v1/payments/${chargeId}`, {
+        headers: { Authorization: `Bearer ${gateway.api_key_hash}` },
+      });
+      const data = await resp.json();
+      return data.status === "approved" || data.status === "paid";
     }
 
     return false;
