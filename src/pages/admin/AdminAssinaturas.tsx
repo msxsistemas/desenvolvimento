@@ -21,6 +21,7 @@ interface Subscription {
   expira_em: string | null;
   plan_name?: string;
   user_email?: string;
+  user_role?: string;
 }
 
 interface Plan { id: string; nome: string; }
@@ -34,6 +35,7 @@ export default function AdminAssinaturas() {
   const [editSub, setEditSub] = useState<Subscription | null>(null);
   const [editStatus, setEditStatus] = useState("");
   const [editPlan, setEditPlan] = useState("");
+  const [editExpiraEm, setEditExpiraEm] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -64,12 +66,14 @@ export default function AdminAssinaturas() {
       });
       const result = await resp.json();
       const emailMap: Record<string, string> = {};
-      result.users?.forEach((u: any) => { emailMap[u.id] = u.email; });
+      const roleMap: Record<string, string> = {};
+      result.users?.forEach((u: any) => { emailMap[u.id] = u.email; roleMap[u.id] = u.role; });
 
       setSubs((subsRes.data || []).map(s => ({
         ...s,
         plan_name: planMap[s.plan_id] || "Sem plano",
         user_email: emailMap[s.user_id] || s.user_id,
+        user_role: roleMap[s.user_id] || "user",
       })) as Subscription[]);
     } catch {
       setSubs((subsRes.data || []).map(s => ({ ...s, plan_name: planMap[s.plan_id] || "—" })) as Subscription[]);
@@ -84,11 +88,15 @@ export default function AdminAssinaturas() {
 
   useEffect(() => { setPage(1); }, [search, statusFilter]);
 
-  const openEdit = (s: Subscription) => { setEditSub(s); setEditStatus(s.status); setEditPlan(s.plan_id || ""); };
+  const openEdit = (s: Subscription) => { setEditSub(s); setEditStatus(s.status); setEditPlan(s.plan_id || ""); setEditExpiraEm(s.expira_em ? s.expira_em.slice(0, 10) : ""); };
 
   const handleUpdate = async () => {
     if (!editSub) return;
-    await supabase.from("user_subscriptions").update({ status: editStatus, plan_id: editPlan || null }).eq("id", editSub.id);
+    await supabase.from("user_subscriptions").update({ 
+      status: editStatus, 
+      plan_id: editPlan || null,
+      expira_em: editExpiraEm ? new Date(editExpiraEm).toISOString() : null,
+    }).eq("id", editSub.id);
     toast({ title: "Assinatura atualizada!" });
     setEditSub(null);
     fetch_();
@@ -184,7 +192,10 @@ export default function AdminAssinaturas() {
                     <TableBody>
                       {paginated.map(s => (
                         <TableRow key={s.id}>
-                          <TableCell className="font-medium text-sm max-w-[200px] truncate">{s.user_email}</TableCell>
+                          <TableCell className="font-medium text-sm max-w-[200px] truncate">
+                            {s.user_email}
+                            {s.user_role === "admin" && <Badge variant="outline" className="ml-2 text-[10px]">Admin</Badge>}
+                          </TableCell>
                           <TableCell className="text-sm">{s.plan_name}</TableCell>
                           <TableCell><Badge variant={statusColor(s.status)}>{s.status}</Badge></TableCell>
                           <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{new Date(s.inicio).toLocaleDateString("pt-BR")}</TableCell>
@@ -229,9 +240,12 @@ export default function AdminAssinaturas() {
           <DialogHeader><DialogTitle>Editar Assinatura</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="rounded-md border px-3 py-2">
-              <p className="text-sm text-muted-foreground">Usuário: <span className="font-medium text-foreground">{editSub?.user_email}</span></p>
+              <p className="text-sm text-muted-foreground">Usuário: <span className="font-medium text-foreground">{editSub?.user_email}</span>
+                {editSub?.user_role === "admin" && <Badge variant="outline" className="ml-2 text-[10px]">Admin</Badge>}
+              </p>
             </div>
             <div>
+              <label className="text-sm font-medium mb-1 block">Plano</label>
               <Select value={editPlan} onValueChange={setEditPlan}>
                 <SelectTrigger><SelectValue placeholder="Selecionar plano" /></SelectTrigger>
                 <SelectContent>
@@ -240,16 +254,30 @@ export default function AdminAssinaturas() {
               </Select>
             </div>
             <div>
+              <label className="text-sm font-medium mb-1 block">Status</label>
               <Select value={editStatus} onValueChange={setEditStatus}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ativa">Ativa</SelectItem>
                   <SelectItem value="trial">Trial</SelectItem>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="cancelada">Cancelada</SelectItem>
                   <SelectItem value="expirada">Expirada</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Data de Expiração</label>
+              <div className="flex gap-2">
+                <Input 
+                  type="date" 
+                  value={editExpiraEm} 
+                  onChange={(e) => setEditExpiraEm(e.target.value)}
+                  className="flex-1"
+                />
+                <Button variant="outline" size="sm" onClick={() => setEditExpiraEm("")} className="whitespace-nowrap">
+                  Sem validade
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Deixe vazio para acesso sem expiração.</p>
             </div>
             <Button onClick={handleUpdate} className="w-full">Salvar Alterações</Button>
           </div>
