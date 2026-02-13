@@ -113,12 +113,7 @@ export default function AdminAssinaturas() {
     if (statusFilter !== "todas") list = list.filter(s => s.status === statusFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(s => 
-        s.user_email?.toLowerCase().includes(q) || 
-        s.plan_name?.toLowerCase().includes(q) ||
-        s.status?.toLowerCase().includes(q) ||
-        s.user_id?.toLowerCase().includes(q)
-      );
+      list = list.filter(s => s.user_email?.toLowerCase().includes(q) || s.plan_name?.toLowerCase().includes(q));
     }
     return list;
   }, [subs, statusFilter, search]);
