@@ -79,19 +79,20 @@ export function AppSidebar() {
 
   // Estilo base dos itens - com destaque de cor quando ativo
   const menuItemClass = (active: boolean) =>
-    `flex items-center justify-between w-full px-4 py-2.5 transition-all border-0 rounded-none text-[13px] ${
+    `flex items-center justify-between w-full px-5 py-3 transition-all border-0 rounded-none ${
       active 
         ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium" 
-        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+        : "text-muted-foreground hover:text-muted-foreground/80"
     }`;
 
+  // Estilo para subitens ativos
   const subItemClass = (active: boolean) =>
-    `flex items-center gap-2 py-1 text-[12px] transition-colors ${
+    `flex items-center gap-2 py-1 text-[13px] transition-colors ${
       active ? "text-primary font-medium" : "text-muted-foreground hover:text-primary"
     }`;
 
   const subItemDotClass = (active: boolean) =>
-    `w-1.5 h-1.5 rounded-full border ${
+    `w-2 h-2 rounded-full border ${
       active 
         ? "border-primary bg-primary" 
         : "border-muted-foreground bg-transparent"
@@ -174,7 +175,7 @@ export function AppSidebar() {
 
   // Helper to render submenu items
   const renderSubItems = (items: { to: string; label: string }[]) => (
-    <SidebarMenuSub className="ml-7 mt-1 space-y-0.5">
+    <SidebarMenuSub className="ml-8 mt-2 space-y-1">
       {items.map((subItem) => (
         <SidebarMenuSubItem key={subItem.to}>
           <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
@@ -205,18 +206,18 @@ export function AppSidebar() {
         onClick={() => toggleSubmenu(menuKey)}
         className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none"
       >
-        <div className={`flex items-center justify-between w-full px-4 py-2.5 transition-all text-[13px] ${
+        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
           isMenuHighlighted(menuKey, sectionActive)
             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium" 
-            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            : "text-muted-foreground hover:text-muted-foreground/80"
         }`}>
-          <div className="flex items-center gap-2.5">
-            <item.icon className="h-4 w-4" />
-            {!isCollapsed && <span className="font-medium">{item.label}</span>}
+          <div className="flex items-center gap-3">
+            <item.icon className="h-5 w-5" />
+            {!isCollapsed && <span className="text-[14px] font-medium">{item.label}</span>}
           </div>
           {!isCollapsed && (
             <ChevronDown
-              className={`h-3.5 w-3.5 transition-transform duration-200 ${openSubmenu === menuKey ? "rotate-180" : ""}`}
+              className={`h-4 w-4 transition-transform ${openSubmenu === menuKey ? "rotate-180" : ""}`}
             />
           )}
         </div>
@@ -226,16 +227,16 @@ export function AppSidebar() {
   );
 
   return (
-    <Sidebar className="border-r border-border/50 transition-all duration-300 ease-in-out" collapsible="icon">
-      <SidebarContent className="bg-sidebar-background">
+    <Sidebar className="border-r border-border" collapsible="icon">
+      <SidebarContent className="bg-background">
         {/* Logo Header */}
-        <div className="flex justify-center py-5">
-          <div className="w-14 h-14 rounded-full overflow-hidden shadow-lg shadow-destructive/20">
+        <div className="flex justify-center py-6">
+          <div className="w-16 h-16 rounded-full overflow-hidden shadow-lg shadow-destructive/30">
             <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
           </div>
         </div>
 
-        <div className="mx-3 border-t border-border/30 mb-1" />
+        <div className="mx-4 border-t border-border/50 mb-2" />
 
         <SidebarGroup className="px-0">
           <SidebarGroupContent>
@@ -260,18 +261,18 @@ export function AppSidebar() {
                         onClick={() => toggleSubmenu("whatsapp")}
                         className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none"
                       >
-                        <div className={`flex items-center justify-between w-full px-4 py-2.5 transition-all text-[13px] ${
+                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
                           isMenuHighlighted("whatsapp", whatsappActive)
                             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium" 
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            : "text-muted-foreground hover:text-muted-foreground/80"
                         }`}>
-                          <div className="flex items-center gap-2.5">
-                            <Phone className="h-4 w-4" />
-                            {!isCollapsed && <span className="font-medium">{item.label}</span>}
+                          <div className="flex items-center gap-3">
+                            <Phone className="h-5 w-5" />
+                            {!isCollapsed && <span className="text-[14px] font-medium">{item.label}</span>}
                           </div>
                           {!isCollapsed && (
                             <ChevronDown
-                              className={`h-3.5 w-3.5 transition-transform duration-200 ${openSubmenu === "whatsapp" ? "rotate-180" : ""}`}
+                              className={`h-4 w-4 transition-transform ${openSubmenu === "whatsapp" ? "rotate-180" : ""}`}
                             />
                           )}
                         </div>
@@ -286,16 +287,16 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none">
                       <NavLink to={item.to} end onClick={() => setOpenSubmenu(null)}>
-                        <div className={`flex items-center justify-between w-full px-4 py-2.5 transition-all text-[13px] ${
+                        <div className={`flex items-center justify-between w-full px-5 py-3 transition-all ${
                           isActive(item.to) && openSubmenu === null
                             ? "bg-primary/15 text-primary border-l-[3px] border-l-primary font-medium"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            : "text-muted-foreground hover:text-muted-foreground/80"
                         }`}>
-                          <div className="flex items-center gap-2.5">
-                            <item.icon className="h-4 w-4" />
-                            {!isCollapsed && <span className="font-medium">{item.label}</span>}
+                          <div className="flex items-center gap-3">
+                            <item.icon className="h-5 w-5" />
+                            {!isCollapsed && <span className="text-[14px] font-medium">{item.label}</span>}
                           </div>
-                          {!isCollapsed && <ChevronDown className="h-3.5 w-3.5 opacity-40" />}
+                          {!isCollapsed && <ChevronDown className="h-4 w-4 opacity-50" />}
                         </div>
                       </NavLink>
                     </SidebarMenuButton>
