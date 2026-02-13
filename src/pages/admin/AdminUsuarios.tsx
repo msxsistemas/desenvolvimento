@@ -141,15 +141,22 @@ export default function AdminUsuarios() {
                         <Badge variant="secondary">{u.clientes_count}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Select value={u.role} onValueChange={(val) => handleRoleChange(u.id, val)}>
-                          <SelectTrigger className="w-28 h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="user">Usuário</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {u.role === "admin" ? (
+                          <Badge variant="default" className="bg-primary/20 text-primary border-primary/30">
+                            <Shield className="h-3 w-3 mr-1" />
+                            Admin
+                          </Badge>
+                        ) : (
+                          <Select value={u.role} onValueChange={(val) => handleRoleChange(u.id, val)}>
+                            <SelectTrigger className="w-28 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">Usuário</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {new Date(u.created_at).toLocaleDateString("pt-BR")}
@@ -158,9 +165,13 @@ export default function AdminUsuarios() {
                         {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("pt-BR") : "Nunca"}
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => handleToggleBan(u.id, true)} className="text-destructive hover:text-destructive h-8">
-                          <Ban className="h-4 w-4" />
-                        </Button>
+                        {u.role === "admin" ? (
+                          <span className="text-xs text-muted-foreground italic">Protegido</span>
+                        ) : (
+                          <Button variant="ghost" size="sm" onClick={() => handleToggleBan(u.id, true)} className="text-destructive hover:text-destructive h-8">
+                            <Ban className="h-4 w-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
