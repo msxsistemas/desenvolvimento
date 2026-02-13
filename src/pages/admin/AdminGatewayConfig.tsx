@@ -310,12 +310,6 @@ export default function AdminGatewayConfig() {
                     />
                   )}
                 </div>
-                <div className="space-y-3 mt-3">
-                  <div className="space-y-1.5">
-                    <Label>Nome</Label>
-                    <Input value={gateway.nome} onChange={(e) => set("nome", e.target.value)} placeholder={`Ex: ${label} Produção`} />
-                  </div>
-                </div>
                 <div className="flex justify-center gap-3 border-t pt-4 mt-4">
                   <Button variant="outline" onClick={handleSave} disabled={saving}>
                     {saving ? "Salvando..." : "Salvar"}
