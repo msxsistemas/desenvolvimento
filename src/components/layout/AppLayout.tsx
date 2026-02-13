@@ -19,8 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { LogOut, User, Bell, RefreshCw, MessageSquare, Check, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { LogOut, User, Bell, MessageSquare, Check, Trash2, Users, Send } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
@@ -29,7 +28,7 @@ import { ptBR } from "date-fns/locale";
 export default function AppLayout() {
   const { user, signOut } = useAuth();
   const { userId } = useCurrentUser();
-  const { subscription, daysLeft, isTrial } = useSubscription(userId);
+  const { subscription, daysLeft, isTrial, isActive } = useSubscription(userId);
   const { profile } = useProfile(userId);
   const { notificacoes, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotificacoes(userId);
   const navigate = useNavigate();
@@ -63,19 +62,11 @@ export default function AppLayout() {
     return profile?.nome_empresa || user?.user_metadata?.company_name || 'Minha Empresa';
   };
 
-  const getExpirationLabel = () => {
-    if (!subscription) return null;
-    if (daysLeft === null) return null;
-    if (daysLeft <= 0) return 'Expirado';
-    if (daysLeft === 1) return '1 dia restante';
-    return `${daysLeft} dias restantes`;
-  };
-
-  const getExpirationVariant = (): "default" | "destructive" | "secondary" | "outline" => {
-    if (daysLeft === null) return "secondary";
-    if (daysLeft <= 3) return "destructive";
-    if (daysLeft <= 7) return "outline";
-    return "secondary";
+  const getExpirationDate = () => {
+    if (!subscription?.expira_em) return null;
+    const d = new Date(subscription.expira_em);
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+      ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
 
   const getNotifIcon = (tipo: string) => {
@@ -87,66 +78,98 @@ export default function AppLayout() {
     }
   };
 
+  const expirationDate = getExpirationDate();
+  const isExpiredOrClose = daysLeft !== null && daysLeft <= 3;
+
   return (
     <SidebarProvider>
       <div className="h-screen flex w-full bg-[radial-gradient(1200px_600px_at_-20%_-10%,hsl(var(--brand)/.15)_0%,transparent_60%)] overflow-hidden">
         <AppSidebar />
         <div className="flex-1 flex flex-col h-full min-w-0">
-          <header className="h-14 sm:h-16 border-b flex items-center px-2 sm:px-4 gap-1.5 sm:gap-2 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 flex-shrink-0">
-            <SidebarTrigger className="hover-scale touch-friendly" />
+          {/* Header */}
+          <header className="h-12 sm:h-14 border-b border-border flex items-center px-2 sm:px-4 bg-sidebar-background z-10 flex-shrink-0">
+            <SidebarTrigger className="hover-scale mr-2" />
 
-            {/* Expiration badge */}
-            {getExpirationLabel() && (
-              <Badge variant={getExpirationVariant()} className="hidden sm:flex text-[11px] px-2 py-0.5">
-                {isTrial ? '⏳ Trial: ' : ''}{getExpirationLabel()}
-              </Badge>
-            )}
+            {/* Spacer */}
+            <div className="flex-1" />
 
-            {/* Right side actions */}
-            <div className="ml-auto flex items-center gap-1 sm:gap-2">
-              {/* Renew button */}
-              <TooltipProvider delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-9 gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10"
-                      onClick={() => navigate('/planos-disponiveis')}
-                    >
-                      <RefreshCw className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Renovar</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Renovar acesso</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            {/* Center/Right: Action icons + Expiration + Notifications + Profile */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
 
-              {/* WhatsApp shortcut */}
-              <TooltipProvider delayDuration={300}>
+              {/* Expiration alert badge */}
+              {isTrial && daysLeft !== null && daysLeft <= 3 && (
+                <button
+                  onClick={() => navigate('/planos-disponiveis')}
+                  className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium transition-colors border-destructive/50 bg-destructive/10 text-destructive hover:bg-destructive/20"
+                >
+                  <span>⏳</span>
+                  Plano Vencido: Você ainda tem {daysLeft} dia{daysLeft !== 1 ? 's' : ''} para renovação
+                </button>
+              )}
+
+              {/* Clients shortcut */}
+              <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-9 w-9 text-muted-foreground hover:text-primary"
+                      className="h-8 w-8 rounded-md bg-success/15 text-success hover:bg-success/25"
+                      onClick={() => navigate('/clientes')}
+                    >
+                      <Users className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Clientes</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              {/* WhatsApp shortcut */}
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-md bg-[hsl(142_71%_45%/0.15)] text-[hsl(142,71%,45%)]  hover:bg-[hsl(142_71%_45%/0.25)]"
                       onClick={() => navigate('/whatsapp/parear')}
                     >
                       <MessageSquare className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Parear WhatsApp</TooltipContent>
+                  <TooltipContent>WhatsApp</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 
-              {/* Notifications popover */}
+              {/* Telegram shortcut */}
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-md bg-primary/15 text-primary hover:bg-primary/25"
+                      onClick={() => navigate('/whatsapp/envios-em-massa')}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Envios em Massa</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              {/* Notifications */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-md bg-warning/15 text-warning hover:bg-warning/25 relative"
+                  >
                     <Bell className="h-4 w-4" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
-                        {unreadCount > 9 ? '9+' : unreadCount}
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
+                        {unreadCount > 99 ? '99+' : unreadCount}
                       </span>
                     )}
                   </Button>
@@ -167,7 +190,7 @@ export default function AppLayout() {
                         Nenhuma notificação
                       </div>
                     ) : (
-                      <div className="divide-y">
+                      <div className="divide-y divide-border">
                         {notificacoes.map((n) => (
                           <div
                             key={n.id}
@@ -203,21 +226,39 @@ export default function AppLayout() {
                 </PopoverContent>
               </Popover>
 
-              {/* Company name dropdown with profile */}
+              {/* Expiration date badge */}
+              {expirationDate && (
+                <div
+                  className={`hidden lg:flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium border cursor-pointer ${
+                    isExpiredOrClose
+                      ? 'border-destructive/50 bg-destructive/10 text-destructive'
+                      : 'border-success/50 bg-success/10 text-success'
+                  }`}
+                  onClick={() => navigate('/planos-disponiveis')}
+                >
+                  <span className="text-muted-foreground text-[11px]">Vencimento do Acesso</span>
+                  <span className="font-bold">{expirationDate}</span>
+                </div>
+              )}
+
+              {/* Separator */}
+              <div className="hidden sm:block w-px h-6 bg-border mx-1" />
+
+              {/* Profile section */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-1.5 sm:gap-2 h-auto p-1.5 sm:p-2 hover:bg-accent touch-friendly">
-                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                      <span className="text-primary-foreground text-xs sm:text-sm font-medium">
+                  <Button variant="ghost" className="flex items-center gap-2 h-auto p-1.5 hover:bg-accent">
+                    <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
+                      <span className="text-muted-foreground text-xs font-bold">
                         {getUserInitials(user?.user_metadata?.full_name, user?.email)}
                       </span>
                     </div>
                     <div className="hidden sm:flex flex-col text-left">
-                      <span className="text-sm font-semibold leading-tight">
-                        {getCompanyName()}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground truncate max-w-[140px]">
+                      <span className="text-xs font-semibold leading-tight text-foreground truncate max-w-[160px]">
                         {getDisplayName()}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground truncate max-w-[160px]">
+                        {user?.email}
                       </span>
                     </div>
                   </Button>
@@ -226,7 +267,7 @@ export default function AppLayout() {
                   <DropdownMenuItem disabled>
                     <User className="mr-2 h-4 w-4" />
                     <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-medium truncate">{getDisplayName()}</span>
+                      <span className="text-sm font-medium truncate">{getCompanyName()}</span>
                       <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
                     </div>
                   </DropdownMenuItem>
@@ -244,6 +285,7 @@ export default function AppLayout() {
               </DropdownMenu>
             </div>
           </header>
+
           <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 animate-enter min-w-0">
             <Outlet />
           </main>
