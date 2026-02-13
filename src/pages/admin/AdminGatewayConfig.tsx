@@ -136,6 +136,7 @@ export default function AdminGatewayConfig() {
     try {
       const { id, ...payload } = gateway;
       payload.ativo = true;
+      payload.webhook_url = webhookUrl;
       if (id) {
         await supabase.from("system_gateways").update(payload).eq("id", id);
       } else {
