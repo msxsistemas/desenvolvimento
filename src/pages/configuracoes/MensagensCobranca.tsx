@@ -237,9 +237,8 @@ export default function MensagensCobranca() {
     setMensagem("");
   };
 
-  const handleSalvar = async () => {
-    if (!nomeTemplate.trim()) { toast.error('Informe o nome do template'); return; }
-    
+  const handleSalvar = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     try {
       if (editando && templateEditando) {
@@ -324,11 +323,12 @@ export default function MensagensCobranca() {
             <DialogHeader>
               <DialogTitle>{editando ? "Editar template" : "Novo template"}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <form onSubmit={handleSalvar} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="nome">Nome do template</Label>
                 <Input
                   id="nome"
+                  required
                   value={nomeTemplate}
                   onChange={(e) => setNomeTemplate(e.target.value)}
                   placeholder="Digite o nome do template"
@@ -349,7 +349,7 @@ export default function MensagensCobranca() {
               <div className="space-y-2">
                 <Label>Escolha uma foto, vídeo, áudio ou PDF (opcional)</Label>
                 <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
-                  <Button variant="outline" size="sm">
+                  <Button type="button" variant="outline" size="sm">
                     Escolher ficheiro
                   </Button>
                   <p className="text-sm text-muted-foreground mt-2">Nenhum ficheiro selecionado</p>
@@ -372,18 +372,18 @@ export default function MensagensCobranca() {
               </div>
 
               <div className="flex gap-2 pt-4">
-                <Button variant="outline" onClick={fecharModal} className="flex-1">
+                <Button type="button" variant="outline" onClick={fecharModal} className="flex-1">
                   Cancelar
                 </Button>
                 <Button 
-                  onClick={handleSalvar} 
+                  type="submit"
                   disabled={loading}
                   className="flex-1 bg-cyan-500 hover:bg-cyan-600"
                 >
                   {loading ? "Processando..." : (editando ? "Atualizar" : "Salvar")}
                 </Button>
               </div>
-            </div>
+            </form>
           </DialogContent>
         </Dialog>
         </div>

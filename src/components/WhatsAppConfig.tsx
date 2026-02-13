@@ -137,65 +137,69 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
           Configure sua API de WhatsApp (Evolution API, Baileys, etc.)
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="api-url">URL da API *</Label>
-            <Input
-              id="api-url"
-              value={apiUrl}
-              onChange={(e) => setApiUrl(e.target.value)}
-              placeholder="http://localhost:8080 ou https://suaapi.com"
-            />
-            <p className="text-xs text-muted-foreground">
-              URL base da sua API de WhatsApp
-            </p>
+      <CardContent>
+        <form onSubmit={handleSave} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="api-url">URL da API *</Label>
+              <Input
+                id="api-url"
+                required
+                value={apiUrl}
+                onChange={(e) => setApiUrl(e.target.value)}
+                placeholder="http://localhost:8080 ou https://suaapi.com"
+              />
+              <p className="text-xs text-muted-foreground">
+                URL base da sua API de WhatsApp
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="api-key">API Key (opcional)</Label>
+              <Input
+                id="api-key"
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Sua chave de API"
+              />
+              <p className="text-xs text-muted-foreground">
+                Token de autenticação se necessário
+              </p>
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="api-key">API Key (opcional)</Label>
+            <Label htmlFor="instance-name">Nome da Instância</Label>
             <Input
-              id="api-key"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Sua chave de API"
+              id="instance-name"
+              value={instanceName}
+              onChange={(e) => setInstanceName(e.target.value)}
+              placeholder="default"
             />
             <p className="text-xs text-muted-foreground">
-              Token de autenticação se necessário
+              Nome da instância WhatsApp na sua API
             </p>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="instance-name">Nome da Instância</Label>
-          <Input
-            id="instance-name"
-            value={instanceName}
-            onChange={(e) => setInstanceName(e.target.value)}
-            placeholder="default"
-          />
-          <p className="text-xs text-muted-foreground">
-            Nome da instância WhatsApp na sua API
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <Button onClick={handleSave} className="flex items-center gap-2">
-            <Save className="h-4 w-4" />
-            Salvar Configuração
-          </Button>
-          
-          <Button 
-            onClick={testConnection} 
-            variant="outline" 
-            disabled={testing || !apiUrl}
-            className="flex items-center gap-2"
-          >
-            <TestTube className="h-4 w-4" />
-            {testing ? 'Testando...' : 'Testar Conexão'}
-          </Button>
-        </div>
+          <div className="flex gap-2">
+            <Button type="submit" className="flex items-center gap-2">
+              <Save className="h-4 w-4" />
+              Salvar Configuração
+            </Button>
+            
+            <Button 
+              type="button"
+              onClick={testConnection} 
+              variant="outline" 
+              disabled={testing || !apiUrl}
+              className="flex items-center gap-2"
+            >
+              <TestTube className="h-4 w-4" />
+              {testing ? 'Testando...' : 'Testar Conexão'}
+            </Button>
+          </div>
+        </form>
 
         <div className="bg-blue-50 p-3 rounded-lg">
           <p className="text-xs text-blue-700">

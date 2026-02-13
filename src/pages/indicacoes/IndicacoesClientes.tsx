@@ -133,11 +133,8 @@ export default function Indicacoes() {
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!formData.nome_indicador.trim()) {
-      toast.error('Informe o nome do indicador');
-      return;
-    }
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     setSaving(true);
     try {
@@ -316,10 +313,11 @@ export default function Indicacoes() {
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
+          <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-2">
               <Label>Nome do Indicador</Label>
               <Input
+                required
                 value={formData.nome_indicador}
                 onChange={(e) => setFormData({ ...formData, nome_indicador: e.target.value })}
                 placeholder="Digite o nome do indicador"
@@ -339,11 +337,11 @@ export default function Indicacoes() {
             </p>
             
             <div className="flex gap-2 justify-end pt-2">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Fechar
               </Button>
             </div>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
     </main>

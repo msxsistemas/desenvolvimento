@@ -69,11 +69,8 @@ export default function GerenciarCampanhas() {
     ]);
   }, []);
 
-  const handleCriarCampanha = () => {
-    if (!novaCampanha.nome || !novaCampanha.mensagem) {
-      toast.error("Preencha todos os campos");
-      return;
-    }
+  const handleCriarCampanha = (e: React.FormEvent) => {
+    e.preventDefault();
 
     const campanha: Campanha = {
       id: Date.now().toString(),
@@ -139,10 +136,11 @@ export default function GerenciarCampanhas() {
             <DialogHeader>
               <DialogTitle>Criar Nova Campanha</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <form onSubmit={handleCriarCampanha} className="space-y-4">
               <div className="space-y-2">
                 <Label>Nome da Campanha</Label>
                 <Input
+                  required
                   value={novaCampanha.nome}
                   onChange={(e) => setNovaCampanha({ ...novaCampanha, nome: e.target.value })}
                   placeholder="Ex: Promoção de Verão"
@@ -151,16 +149,17 @@ export default function GerenciarCampanhas() {
               <div className="space-y-2">
                 <Label>Mensagem</Label>
                 <Textarea
+                  required
                   value={novaCampanha.mensagem}
                   onChange={(e) => setNovaCampanha({ ...novaCampanha, mensagem: e.target.value })}
                   className="min-h-[100px]"
                   placeholder="Digite a mensagem da campanha..."
                 />
               </div>
-              <Button onClick={handleCriarCampanha} className="w-full">
+              <Button type="submit" className="w-full">
                 Criar Campanha
               </Button>
-            </div>
+            </form>
           </DialogContent>
         </Dialog>
       </header>
