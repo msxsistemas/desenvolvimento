@@ -174,8 +174,8 @@ const App = () => (
             <Route path="/admin/planos/novo" element={<AdminPlanoNovo />} />
             <Route path="/admin/planos/editar/:id" element={<AdminPlanoEditar />} />
             <Route path="/admin/assinaturas" element={<AdminAssinaturas />} />
-            <Route path="/admin/gateways" element={<AdminGateways />} />
-            <Route path="/admin/gateways/:provider" element={<AdminGatewayConfig />} />
+            <Route path="/gateways" element={<AdminGateways />} />
+            <Route path="/gateways/:provider" element={<AdminGatewayConfig />} />
             <Route path="/admin/templates" element={<AdminTemplates />} />
             <Route path="/admin/templates/novo" element={<AdminTemplateNovo />} />
             <Route path="/admin/templates/editar/:id" element={<AdminTemplateEditar />} />
