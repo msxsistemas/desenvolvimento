@@ -2,7 +2,7 @@ import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { Outlet, useNavigate } from "react-router-dom";
-import { ChevronsLeft } from "lucide-react";
+import { ChevronsLeft, Menu } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -40,6 +40,20 @@ function SidebarToggleButton() {
       <ChevronsLeft
         className={`h-5 w-5 transition-transform duration-300 ${!isExpanded ? 'rotate-180' : ''}`}
       />
+    </button>
+  );
+}
+
+function MobileMenuButton() {
+  const { toggleSidebar } = useSidebar();
+
+  return (
+    <button
+      onClick={toggleSidebar}
+      className="md:hidden flex items-center justify-center h-10 w-10 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-all duration-300 mr-2"
+      aria-label="Menu"
+    >
+      <Menu className="h-6 w-6" />
     </button>
   );
 }
@@ -108,6 +122,7 @@ export default function AppLayout() {
         <div className="flex-1 flex flex-col h-full min-w-0">
           {/* Header */}
           <header className="h-16 sm:h-20 border-b border-border flex items-center px-4 sm:px-6 bg-sidebar-background z-10 flex-shrink-0">
+            <MobileMenuButton />
             {/* Spacer */}
             <div className="flex-1" />
 
