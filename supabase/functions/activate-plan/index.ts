@@ -618,12 +618,14 @@ async function checkPaymentStatus(gateway: any, chargeId: string): Promise<boole
       const data = await resp.json();
       console.log("Ciabra check-payment full response:", JSON.stringify(data).substring(0, 2000));
       const status = (data.status || data._status || "").toUpperCase();
-      if (["PAID", "CONFIRMED", "RECEIVED", "PAYMENT_CONFIRMED"].includes(status)) return true;
-      // Check installments - Ciabra uses _status field
+      if (["PAID", "CONFIRMED", "RECEIVED", "PAYMENT_CONFIRMED", "COMPLETED"].includes(status)) return true;
+      // Check installments - Ciabra uses _status field and also paidAt
       const installments = data.installments || [];
       for (const inst of installments) {
         const instStatus = (inst._status || inst.status || "").toUpperCase();
-        if (["PAID", "CONFIRMED", "PAYMENT_CONFIRMED"].includes(instStatus)) return true;
+        if (["PAID", "CONFIRMED", "PAYMENT_CONFIRMED", "COMPLETED"].includes(instStatus)) return true;
+        // Also check if paidAt or paymentReceivedAt is set
+        if (inst.paidAt || inst.paymentReceivedAt) return true;
       }
       return false;
     }

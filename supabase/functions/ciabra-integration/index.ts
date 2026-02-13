@@ -45,14 +45,19 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Check if this is a webhook from Ciabra
-    if (body.event || body.type === 'payment' || body.hookType || body.installmentId) {
-      console.log('📩 Ciabra Webhook received:', JSON.stringify(body).substring(0, 500));
+    // Check if this is a webhook from Ciabra (has type, event, hookType, or installmentId)
+    const webhookType = (body.type || body.event || body.hookType || '').toUpperCase();
+    if (body.event || body.type || body.hookType || body.installmentId) {
+      console.log('📩 Ciabra Webhook received:', JSON.stringify(body).substring(0, 800));
+      console.log('📩 Webhook type detected:', webhookType);
       
-      const isPaid = body.event === 'payment.confirmed' || body.event === 'payment.approved' 
-        || body.status === 'paid' || body.hookType === 'PAYMENT_CONFIRMED'
-        || body.type === 'INVOICE_PAYMENT_CONFIRMED'
+      const isPaid = webhookType.includes('CONFIRMED') || webhookType.includes('PAID')
+        || webhookType.includes('APPROVED') || webhookType.includes('RECEIVED')
+        || body.event === 'payment.confirmed' || body.event === 'payment.approved' 
+        || (body.status || '').toUpperCase() === 'PAID'
         || (body._status || '').toUpperCase() === 'PAID';
+      
+      console.log('📩 isPaid:', isPaid);
       
       if (isPaid) {
         const chargeId = String(body.id || body.payment_id || body.charge_id || body.invoiceId || '');
