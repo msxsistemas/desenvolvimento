@@ -128,20 +128,9 @@ export default function AdminGatewayConfig() {
     fetch_();
   }, [provider]);
 
-  const handleActivate = async () => {
+  const handleActivate = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!gateway) return;
-
-    if (isCiabra) {
-      if (!gateway.api_key_hash?.trim() || !gateway.public_key_hash?.trim()) {
-        toast({ title: "Preencha a Chave Pública e a Chave Secreta para ativar.", variant: "destructive" });
-        return;
-      }
-    } else {
-      if (!gateway.api_key_hash?.trim()) {
-        toast({ title: "Preencha o token/chave da API para ativar.", variant: "destructive" });
-        return;
-      }
-    }
 
     setSaving(true);
     try {
@@ -268,12 +257,13 @@ export default function AdminGatewayConfig() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <form onSubmit={handleActivate} className="space-y-3">
                   {isCiabra ? (
                     <div className="grid gap-3 md:grid-cols-2">
                       <div className="space-y-1.5">
                         <label className="text-sm font-medium">Chave Pública</label>
                         <Input
+                          required
                           value={gateway.public_key_hash || ""}
                           onChange={(e) => set("public_key_hash", e.target.value)}
                           placeholder="pk_live_..."
@@ -283,6 +273,7 @@ export default function AdminGatewayConfig() {
                       <div className="space-y-1.5">
                         <label className="text-sm font-medium">Chave Secreta</label>
                         <Input
+                          required
                           type="password"
                           value={gateway.api_key_hash || ""}
                           onChange={(e) => set("api_key_hash", e.target.value)}
@@ -293,18 +284,19 @@ export default function AdminGatewayConfig() {
                     </div>
                   ) : (
                     <Input
+                      required
                       value={gateway.api_key_hash || ""}
                       onChange={(e) => set("api_key_hash", e.target.value)}
                       placeholder={provedorTokenPlaceholders[provider || ""] || "Cole a chave da API aqui"}
                       className="font-mono text-sm"
                     />
                   )}
-                </div>
-                <div className="flex justify-center border-t pt-4 mt-2">
-                  <Button onClick={handleActivate} disabled={saving}>
-                    {saving ? "Verificando..." : `Ativar ${label}`}
-                  </Button>
-                </div>
+                  <div className="flex justify-center border-t pt-4 mt-2">
+                    <Button type="submit" disabled={saving}>
+                      {saving ? "Verificando..." : `Ativar ${label}`}
+                    </Button>
+                  </div>
+                </form>
               </CardContent>
             </Card>
           </section>
