@@ -116,7 +116,7 @@ export default function AdminGateways() {
                     Nenhum gateway configurado. Use o submenu para configurar:{" "}
                     {allGateways.map((id, i) => (
                       <span key={id}>
-                        <a href={`/admin/gateways/${id}`} className="text-primary underline">{provedorLabels[id]}</a>
+                        <a href={`/gateways/${id}`} className="text-primary underline">{provedorLabels[id]}</a>
                         {i < allGateways.length - 1 && " · "}
                       </span>
                     ))}

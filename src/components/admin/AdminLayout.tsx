@@ -57,16 +57,16 @@ const adminNavItems: NavItem[] = [
   },
   {
     title: "Gateways",
-    url: "/admin/gateways",
+    url: "/gateways",
     icon: Wallet,
     submenuKey: "gateways",
     subItems: [
-      { to: "/admin/gateways", label: "Gerenciar" },
-      { to: "/admin/gateways/asaas", label: "Asaas" },
-      { to: "/admin/gateways/mercadopago", label: "Mercado Pago" },
-      { to: "/admin/gateways/stripe", label: "Stripe" },
-      { to: "/admin/gateways/v3pay", label: "V3Pay" },
-      { to: "/admin/gateways/ciabra", label: "Ciabra" },
+      { to: "/gateways", label: "Gerenciar" },
+      { to: "/gateways/asaas", label: "Asaas" },
+      { to: "/gateways/mercadopago", label: "Mercado Pago" },
+      { to: "/gateways/stripe", label: "Stripe" },
+      { to: "/gateways/v3pay", label: "V3Pay" },
+      { to: "/gateways/ciabra", label: "Ciabra" },
     ],
   },
   {
