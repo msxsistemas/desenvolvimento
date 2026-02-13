@@ -64,9 +64,9 @@ const adminNavItems: NavItem[] = [
       { to: "/admin/gateways", label: "Checkout" },
       { to: "/admin/gateways/asaas", label: "Asaas" },
       { to: "/admin/gateways/mercadopago", label: "Mercado Pago" },
-      { to: "/admin/gateways/v3pay", label: "V3Pay" },
       { to: "/admin/gateways/ciabra", label: "Ciabra" },
-      
+      { to: "/admin/gateways/pix-manual", label: "PIX Manual" },
+      { to: "/admin/gateways/v3pay", label: "V3Pay" },
     ],
   },
   {

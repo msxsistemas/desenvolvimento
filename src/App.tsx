@@ -80,6 +80,7 @@ import AdminAssinaturas from "./pages/admin/AdminAssinaturas";
 import AdminServidores from "./pages/admin/AdminServidores";
 import AdminIndicacoes from "./pages/admin/AdminIndicacoes";
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminPixManual from "./pages/admin/AdminPixManual";
 
 const queryClient = new QueryClient();
 import Auth from "./pages/auth/Auth";
@@ -175,6 +176,7 @@ const App = () => (
             <Route path="/admin/planos/editar/:id" element={<AdminPlanoEditar />} />
             <Route path="/admin/assinaturas" element={<AdminAssinaturas />} />
             <Route path="/admin/gateways" element={<AdminGateways />} />
+            <Route path="/admin/gateways/pix-manual" element={<AdminPixManual />} />
             <Route path="/admin/gateways/:provider" element={<AdminGatewayConfig />} />
             <Route path="/admin/templates" element={<AdminTemplates />} />
             <Route path="/admin/templates/novo" element={<AdminTemplateNovo />} />

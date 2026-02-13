@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Key, Copy, Webhook, ExternalLink, Settings } from "lucide-react";
@@ -104,7 +103,7 @@ export default function AdminGatewayConfig() {
   const label = provedorLabels[provider || ""] || provider || "";
   const isCiabra = provider === "ciabra";
 
-  const generatedWebhookUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/${provedorWebhookEndpoints[provider || ""] || provider}`;
+  const webhookUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/${provedorWebhookEndpoints[provider || ""] || provider}`;
 
   useEffect(() => {
     document.title = `${label} | Admin Gateways`;
@@ -117,50 +116,38 @@ export default function AdminGatewayConfig() {
       if (data) {
         setGateway(data as GatewayData);
       } else {
-        // Auto-create gateway config
-        const newGateway: GatewayData = {
-          id: "",
-          nome: label,
-          provedor: provider || "",
-          ativo: false,
-          ambiente: "sandbox",
-          api_key_hash: "",
-          public_key_hash: "",
-          webhook_url: "",
-        };
         const { data: created } = await supabase
           .from("system_gateways")
           .insert({ nome: label, provedor: provider!, ativo: false, ambiente: "sandbox" })
           .select()
           .single();
         if (created) setGateway(created as GatewayData);
-        else setGateway(newGateway);
       }
       setLoading(false);
     };
     fetch_();
   }, [provider]);
 
-  const handleSave = async () => {
+  const handleActivate = async () => {
     if (!gateway) return;
     setSaving(true);
     try {
       const { id, ...payload } = gateway;
+      payload.ativo = true;
       if (id) {
         await supabase.from("system_gateways").update(payload).eq("id", id);
-        toast({ title: "Gateway atualizado!" });
       } else {
         const { data } = await supabase.from("system_gateways").insert({ ...payload, provedor: provider! }).select().single();
         if (data) setGateway(data as GatewayData);
-        toast({ title: "Gateway criado!" });
       }
+      setGateway(g => g ? { ...g, ativo: true } : g);
+      toast({ title: `${label} ativado com sucesso!` });
     } catch {
-      toast({ title: "Erro ao salvar", variant: "destructive" });
+      toast({ title: "Erro ao ativar", variant: "destructive" });
     } finally {
       setSaving(false);
     }
   };
-
 
   const copyToClipboard = (text: string, copyLabel: string) => {
     navigator.clipboard.writeText(text);
@@ -188,7 +175,7 @@ export default function AdminGatewayConfig() {
         <div className="text-center py-8 text-muted-foreground">Carregando configurações...</div>
       ) : (
         <main className="space-y-4">
-          {/* Top row: Webhook + Status/Docs */}
+          {/* Top row: Webhook + Docs */}
           <section className="grid gap-4 md:grid-cols-2">
             <Card className="shadow-sm">
               <CardHeader>
@@ -201,30 +188,21 @@ export default function AdminGatewayConfig() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">URL gerada automaticamente</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={generatedWebhookUrl}
-                        readOnly
-                        className="font-mono text-xs bg-muted"
-                      />
-                      <Button variant="default" size="sm" onClick={() => copyToClipboard(generatedWebhookUrl, "Webhook URL")} className="shrink-0">
-                        <Copy className="h-3 w-3 mr-1" />
-                        Copiar
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">URL personalizada (opcional)</Label>
-                    <Input
-                      value={gateway.webhook_url || ""}
-                      onChange={(e) => set("webhook_url", e.target.value)}
-                      placeholder="https://sua-url-customizada.com/webhook"
-                      className="font-mono text-xs"
-                    />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    readOnly
+                    value={webhookUrl}
+                    className="font-mono text-xs bg-muted/50"
+                  />
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => copyToClipboard(webhookUrl, "URL do Webhook")}
+                    className="shrink-0"
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copiar
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -243,7 +221,7 @@ export default function AdminGatewayConfig() {
                 <div className="rounded-md border px-3 py-2 flex items-center justify-between">
                   <span className="text-sm font-semibold text-foreground">Status Gateway</span>
                   <div className="flex items-center gap-2">
-                    <Switch checked={gateway.ativo} onCheckedChange={(v) => set("ativo", v)} />
+                    <Switch checked={gateway.ativo} disabled />
                     <Badge variant={gateway.ativo ? "default" : "destructive"}>
                       {gateway.ativo ? "Ativado" : "Desativado"}
                     </Badge>
@@ -302,7 +280,6 @@ export default function AdminGatewayConfig() {
                     </div>
                   ) : (
                     <Input
-                      type="password"
                       value={gateway.api_key_hash || ""}
                       onChange={(e) => set("api_key_hash", e.target.value)}
                       placeholder={provedorTokenPlaceholders[provider || ""] || "Cole a chave da API aqui"}
@@ -310,29 +287,9 @@ export default function AdminGatewayConfig() {
                     />
                   )}
                 </div>
-                <div className="flex justify-center gap-3 border-t pt-4 mt-4">
-                  <Button variant="outline" onClick={handleSave} disabled={saving}>
-                    {saving ? "Salvando..." : "Salvar"}
-                  </Button>
-                  <Button 
-                    onClick={async () => {
-                      if (!gateway) return;
-                      const newAtivo = !gateway.ativo;
-                      set("ativo", newAtivo);
-                      setSaving(true);
-                      try {
-                        await supabase.from("system_gateways").update({ ativo: newAtivo }).eq("id", gateway.id);
-                        toast({ title: newAtivo ? `${label} ativado!` : `${label} desativado!` });
-                      } catch {
-                        toast({ title: "Erro ao atualizar status", variant: "destructive" });
-                      } finally {
-                        setSaving(false);
-                      }
-                    }} 
-                    disabled={saving}
-                    variant={gateway.ativo ? "destructive" : "default"}
-                  >
-                    {gateway.ativo ? "Desativar" : "Ativar"}
+                <div className="flex justify-center border-t pt-4 mt-2">
+                  <Button onClick={handleActivate} disabled={saving}>
+                    {saving ? "Verificando..." : `Ativar ${label}`}
                   </Button>
                 </div>
               </CardContent>
