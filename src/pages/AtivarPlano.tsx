@@ -112,6 +112,7 @@ export default function AtivarPlano() {
 
       if (result.payment) {
         // Payment required - show payment info
+        console.log('Payment data received:', JSON.stringify(result.payment));
         setPaymentData(result.payment);
         setPaymentStatus('pending');
         // Start polling for payment confirmation
