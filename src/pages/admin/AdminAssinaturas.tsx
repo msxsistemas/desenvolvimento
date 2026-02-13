@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { UserCheck, Pencil, Receipt } from "lucide-react";
+import { UserCheck, Pencil, Receipt, Search } from "lucide-react";
 
 interface Subscription {
   id: string;
@@ -29,7 +31,15 @@ export default function AdminAssinaturas() {
   const [editSub, setEditSub] = useState<Subscription | null>(null);
   const [editStatus, setEditStatus] = useState("");
   const [editPlan, setEditPlan] = useState("");
+  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get("status") || "todas";
   const { toast } = useToast();
+
+  const setStatusFilter = (v: string) => {
+    if (v === "todas") { searchParams.delete("status"); } else { searchParams.set("status", v); }
+    setSearchParams(searchParams);
+  };
 
   const fetch_ = async () => {
     const [subsRes, plansRes] = await Promise.all([
@@ -84,6 +94,25 @@ export default function AdminAssinaturas() {
     return "destructive" as const;
   };
 
+  const filtered = useMemo(() => {
+    let list = subs;
+    if (statusFilter !== "todas") list = list.filter(s => s.status === statusFilter);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(s => s.user_email?.toLowerCase().includes(q) || s.plan_name?.toLowerCase().includes(q));
+    }
+    return list;
+  }, [subs, statusFilter, search]);
+
+  const STATUS_TABS = [
+    { value: "todas", label: "Todas" },
+    { value: "ativa", label: "Ativas" },
+    { value: "trial", label: "Trial" },
+    { value: "pendente", label: "Pendentes" },
+    { value: "expirada", label: "Expiradas" },
+    { value: "cancelada", label: "Canceladas" },
+  ];
+
   return (
     <div>
       <header className="rounded-lg border mb-3 overflow-hidden shadow-sm">
@@ -98,17 +127,39 @@ export default function AdminAssinaturas() {
 
       <Card className="shadow-sm">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <UserCheck className="h-4 w-4 text-foreground/70" />
-            <CardTitle className="text-sm">Assinaturas ({subs.length})</CardTitle>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <UserCheck className="h-4 w-4 text-foreground/70" />
+                <CardTitle className="text-sm">Assinaturas ({filtered.length})</CardTitle>
+              </div>
+              <CardDescription>Altere planos e status das assinaturas.</CardDescription>
+            </div>
+            <div className="relative w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar por e-mail ou plano..." className="pl-9 h-9" value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
           </div>
-          <CardDescription>Altere planos e status das assinaturas.</CardDescription>
+          <div className="flex gap-1 mt-2 flex-wrap">
+            {STATUS_TABS.map(tab => (
+              <Button key={tab.value} variant={statusFilter === tab.value ? "default" : "outline"} size="sm" className="h-7 text-xs" onClick={() => setStatusFilter(tab.value)}>
+                {tab.label}
+              </Button>
+            ))}
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Carregando...</div>
-          ) : subs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhuma assinatura encontrada</div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhuma assinatura encontrada
+              {(search || statusFilter !== "todas") && (
+                <div className="mt-2">
+                  <Button variant="link" size="sm" onClick={() => { setSearch(""); setStatusFilter("todas"); }}>Limpar filtros</Button>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -123,7 +174,7 @@ export default function AdminAssinaturas() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {subs.map(s => (
+                  {filtered.map(s => (
                     <TableRow key={s.id}>
                       <TableCell className="text-sm">{s.user_email}</TableCell>
                       <TableCell className="font-medium">{s.plan_name}</TableCell>
