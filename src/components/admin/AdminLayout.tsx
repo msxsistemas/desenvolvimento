@@ -52,13 +52,6 @@ const adminNavItems: NavItem[] = [
     title: "Assinaturas",
     url: "/admin/assinaturas",
     icon: UserCheck,
-    submenuKey: "assinaturas",
-    subItems: [
-      { to: "/admin/assinaturas", label: "Todas" },
-      { to: "/admin/assinaturas?filter=ativas", label: "Ativas" },
-      { to: "/admin/assinaturas?filter=pendentes", label: "Pendentes" },
-      { to: "/admin/assinaturas?filter=expiradas", label: "Expiradas" },
-    ],
   },
   {
     title: "Gateways",
