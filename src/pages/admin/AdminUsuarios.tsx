@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Ban, CheckCircle, Shield, Search } from "lucide-react";
+import { Users, Ban, CheckCircle, Shield, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 
+// ... keep existing code (AdminUser interface)
 interface AdminUser {
   id: string;
   email: string;
@@ -20,22 +21,33 @@ interface AdminUser {
   banned_until: string | null;
 }
 
+const PER_PAGE = 10;
+
 export default function AdminUsuarios() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"todos" | "ativos" | "inativos">("todos");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const { toast } = useToast();
 
-  const filteredUsers = users.filter((u) => {
+  const filteredUsers = useMemo(() => users.filter((u) => {
     const term = search.toLowerCase();
     const matchesSearch = !term || u.email.toLowerCase().includes(term) || (u.full_name || "").toLowerCase().includes(term);
     if (!matchesSearch) return false;
     if (filter === "todos") return true;
     const isBanned = u.banned_until && new Date(u.banned_until) > new Date();
     return filter === "ativos" ? !isBanned : isBanned;
-  });
+  }), [users, search, filter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, filter]);
+
+  // ... keep existing code (fetchUsers, useEffect, handleRoleChange, handleToggleBan)
   const fetchUsers = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -148,75 +160,117 @@ export default function AdminUsuarios() {
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Carregando...</div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                   <TableRow>
-                     <TableHead>E-mail</TableHead>
-                     <TableHead>Nome</TableHead>
-                     <TableHead>Clientes</TableHead>
-                     <TableHead>Status</TableHead>
-                     
-                     <TableHead>Cadastro</TableHead>
-                     <TableHead>Último Login</TableHead>
-                     <TableHead>Ações</TableHead>
-                   </TableRow>
-                 </TableHeader>
-                 <TableBody>
-                   {filteredUsers.map((u) => {
-                     const isBanned = u.banned_until && new Date(u.banned_until) > new Date();
-                     const isAdmin = u.role === "admin";
-                     return (
-                     <TableRow key={u.id}>
-                       <TableCell className="font-medium text-sm">{u.email}</TableCell>
-                       <TableCell className="text-sm">{u.full_name || "—"}</TableCell>
-                       <TableCell>
-                         <Badge variant="secondary">{u.clientes_count}</Badge>
-                       </TableCell>
-                       <TableCell>
-                         {isAdmin ? (
-                           <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30">
-                             <CheckCircle className="h-3 w-3 mr-1" />
-                             Ativo
-                           </Badge>
-                         ) : isBanned ? (
-                           <Badge variant="destructive" className="bg-destructive/20 text-destructive border-destructive/30">
-                             <Ban className="h-3 w-3 mr-1" />
-                             Bloqueado
-                           </Badge>
-                         ) : (
-                           <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30">
-                             <CheckCircle className="h-3 w-3 mr-1" />
-                             Ativo
-                           </Badge>
-                         )}
-                       </TableCell>
-                       <TableCell className="text-xs text-muted-foreground">
-                         {new Date(u.created_at).toLocaleDateString("pt-BR")}
-                       </TableCell>
-                       <TableCell className="text-xs text-muted-foreground">
-                         {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("pt-BR") : "Nunca"}
-                       </TableCell>
-                       <TableCell>
-                         {isAdmin ? (
-                           <span className="text-xs text-muted-foreground italic">Protegido</span>
-                         ) : isBanned ? (
-                           <Button variant="ghost" size="sm" onClick={() => handleToggleBan(u.id, false)} className="text-green-400 hover:text-green-300 h-8">
-                             <CheckCircle className="h-4 w-4 mr-1" />
-                             <span className="text-xs">Desbloquear</span>
-                           </Button>
-                         ) : (
-                           <Button variant="ghost" size="sm" onClick={() => handleToggleBan(u.id, true)} className="text-destructive hover:text-destructive h-8">
-                             <Ban className="h-4 w-4 mr-1" />
-                             <span className="text-xs">Bloquear</span>
-                           </Button>
-                         )}
-                       </TableCell>
-                     </TableRow>
-                   )})}
-                 </TableBody>
-              </Table>
-            </div>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>E-mail</TableHead>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Clientes</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Cadastro</TableHead>
+                      <TableHead>Último Login</TableHead>
+                      <TableHead>Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedUsers.map((u) => {
+                      const isBanned = u.banned_until && new Date(u.banned_until) > new Date();
+                      const isAdmin = u.role === "admin";
+                      return (
+                        <TableRow key={u.id}>
+                          <TableCell className="font-medium text-sm">{u.email}</TableCell>
+                          <TableCell className="text-sm">{u.full_name || "—"}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{u.clientes_count}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {isAdmin ? (
+                              <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Ativo
+                              </Badge>
+                            ) : isBanned ? (
+                              <Badge variant="destructive" className="bg-destructive/20 text-destructive border-destructive/30">
+                                <Ban className="h-3 w-3 mr-1" />
+                                Bloqueado
+                              </Badge>
+                            ) : (
+                              <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Ativo
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {new Date(u.created_at).toLocaleDateString("pt-BR")}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("pt-BR") : "Nunca"}
+                          </TableCell>
+                          <TableCell>
+                            {isAdmin ? (
+                              <span className="text-xs text-muted-foreground italic">Protegido</span>
+                            ) : isBanned ? (
+                              <Button variant="ghost" size="sm" onClick={() => handleToggleBan(u.id, false)} className="text-green-400 hover:text-green-300 h-8">
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                <span className="text-xs">Desbloquear</span>
+                              </Button>
+                            ) : (
+                              <Button variant="ghost" size="sm" onClick={() => handleToggleBan(u.id, true)} className="text-destructive hover:text-destructive h-8">
+                                <Ban className="h-4 w-4 mr-1" />
+                                <span className="text-xs">Bloquear</span>
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4">
+                  <p className="text-xs text-muted-foreground">
+                    Mostrando {((currentPage - 1) * PER_PAGE) + 1}–{Math.min(currentPage * PER_PAGE, filteredUsers.length)} de {filteredUsers.length}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      disabled={currentPage <= 1}
+                      onClick={() => setPage((p) => p - 1)}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                      <Button
+                        key={p}
+                        variant={p === currentPage ? "default" : "outline"}
+                        size="sm"
+                        className="h-8 w-8 p-0 text-xs"
+                        onClick={() => setPage(p)}
+                      >
+                        {p}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
