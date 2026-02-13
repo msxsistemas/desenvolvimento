@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Ban, CheckCircle, Shield } from "lucide-react";
+import { Users, Ban, CheckCircle, Shield, Filter } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AdminUser {
   id: string;
@@ -21,7 +22,14 @@ interface AdminUser {
 export default function AdminUsuarios() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"todos" | "ativos" | "inativos">("todos");
   const { toast } = useToast();
+
+  const filteredUsers = users.filter((u) => {
+    if (filter === "todos") return true;
+    const isBanned = u.banned_until && new Date(u.banned_until) > new Date();
+    return filter === "ativos" ? !isBanned : isBanned;
+  });
 
   const fetchUsers = async () => {
     try {
@@ -110,8 +118,15 @@ export default function AdminUsuarios() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-foreground/70" />
-              <CardTitle className="text-sm">Usuários ({users.length})</CardTitle>
+              <CardTitle className="text-sm">Usuários ({filteredUsers.length})</CardTitle>
             </div>
+            <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+              <TabsList className="h-8">
+                <TabsTrigger value="todos" className="text-xs px-3 h-7">Todos</TabsTrigger>
+                <TabsTrigger value="ativos" className="text-xs px-3 h-7">Ativos</TabsTrigger>
+                <TabsTrigger value="inativos" className="text-xs px-3 h-7">Inativos</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
           <CardDescription>Lista de todos os usuários registrados na plataforma.</CardDescription>
         </CardHeader>
@@ -134,7 +149,7 @@ export default function AdminUsuarios() {
                    </TableRow>
                  </TableHeader>
                  <TableBody>
-                   {users.map((u) => {
+                   {filteredUsers.map((u) => {
                      const isBanned = u.banned_until && new Date(u.banned_until) > new Date();
                      const isAdmin = u.role === "admin";
                      return (
