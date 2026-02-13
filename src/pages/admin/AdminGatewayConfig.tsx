@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Key, Copy, Webhook, ExternalLink, Settings } from "lucide-react";
@@ -299,21 +298,9 @@ export default function AdminGatewayConfig() {
                   )}
                 </div>
                 <div className="space-y-3 mt-3">
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label>Nome</Label>
-                      <Input value={gateway.nome} onChange={(e) => set("nome", e.target.value)} placeholder={`Ex: ${label} Produção`} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Ambiente</Label>
-                      <Select value={gateway.ambiente} onValueChange={(v) => set("ambiente", v)}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sandbox">Sandbox</SelectItem>
-                          <SelectItem value="producao">Produção</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label>Nome</Label>
+                    <Input value={gateway.nome} onChange={(e) => set("nome", e.target.value)} placeholder={`Ex: ${label} Produção`} />
                   </div>
                 </div>
                 <div className="flex justify-center border-t pt-4 mt-4">
