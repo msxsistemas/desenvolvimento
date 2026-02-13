@@ -113,7 +113,28 @@ export default function AdminGatewayConfig() {
         .select("*")
         .eq("provedor", provider)
         .maybeSingle();
-      if (data) setGateway(data as GatewayData);
+      if (data) {
+        setGateway(data as GatewayData);
+      } else {
+        // Auto-create gateway config
+        const newGateway: GatewayData = {
+          id: "",
+          nome: label,
+          provedor: provider || "",
+          ativo: false,
+          ambiente: "sandbox",
+          api_key_hash: "",
+          public_key_hash: "",
+          webhook_url: "",
+        };
+        const { data: created } = await supabase
+          .from("system_gateways")
+          .insert({ nome: label, provedor: provider!, ativo: false, ambiente: "sandbox" })
+          .select()
+          .single();
+        if (created) setGateway(created as GatewayData);
+        else setGateway(newGateway);
+      }
       setLoading(false);
     };
     fetch_();
@@ -139,18 +160,6 @@ export default function AdminGatewayConfig() {
     }
   };
 
-  const handleCreate = () => {
-    setGateway({
-      id: "",
-      nome: label,
-      provedor: provider || "",
-      ativo: false,
-      ambiente: "sandbox",
-      api_key_hash: "",
-      public_key_hash: "",
-      webhook_url: "",
-    });
-  };
 
   const copyToClipboard = (text: string, copyLabel: string) => {
     navigator.clipboard.writeText(text);
@@ -175,12 +184,7 @@ export default function AdminGatewayConfig() {
       </header>
 
       {!gateway ? (
-        <Card className="shadow-sm">
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground mb-4">Nenhuma configuração encontrada para {label}.</p>
-            <Button onClick={handleCreate}>Configurar {label}</Button>
-          </CardContent>
-        </Card>
+        <div className="text-center py-8 text-muted-foreground">Carregando configurações...</div>
       ) : (
         <main className="space-y-4">
           {/* Top row: Webhook + Status/Docs */}
