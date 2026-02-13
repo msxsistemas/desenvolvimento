@@ -20,8 +20,8 @@ export function CurrencyInput({ value, onValueChange, className, ...props }: Cur
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, "");
-    if (raw === "") {
-      setDisplay("0,00");
+    if (raw === "" || raw === "0") {
+      setDisplay("");
       onValueChange(0);
       return;
     }
@@ -29,6 +29,12 @@ export function CurrencyInput({ value, onValueChange, className, ...props }: Cur
     const newValue = cents / 100;
     setDisplay(formatCurrency(newValue));
     onValueChange(newValue);
+  };
+
+  const handleBlur = () => {
+    if (!display) {
+      setDisplay(formatCurrency(0));
+    }
   };
 
   return (
@@ -40,6 +46,7 @@ export function CurrencyInput({ value, onValueChange, className, ...props }: Cur
         inputMode="numeric"
         value={display}
         onChange={handleChange}
+        onBlur={handleBlur}
         className={cn("pl-10", className)}
       />
     </div>

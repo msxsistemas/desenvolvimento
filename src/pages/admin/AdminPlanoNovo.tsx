@@ -119,9 +119,12 @@ export default function AdminPlanoNovo() {
             <div className="flex items-center gap-2"><Switch checked={form.ativo} onCheckedChange={v => setForm(f => ({ ...f, ativo: v }))} /><Label>Ativo</Label></div>
             <div className="flex items-center gap-2"><Switch checked={form.destaque} onCheckedChange={v => setForm(f => ({ ...f, destaque: v }))} /><Label>Destaque</Label></div>
           </div>
-          <Button type="submit" disabled={saving} className="w-full">
-            {saving ? "Criando..." : "Criar Plano"}
-          </Button>
+          <div className="flex gap-3">
+            <Button type="button" variant="outline" className="flex-1" onClick={() => navigate("/admin/planos")}>Cancelar</Button>
+            <Button type="submit" disabled={saving} className="flex-1">
+              {saving ? "Criando..." : "Criar Plano"}
+            </Button>
+          </div>
           </form>
         </CardContent>
       </Card>
