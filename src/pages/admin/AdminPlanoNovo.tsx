@@ -12,6 +12,13 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Package } from "lucide-react";
 
+const RECURSOS_SUGERIDOS = [
+  "Suporte prioritário", "Envios ilimitados", "WhatsApp conectado",
+  "Painéis ilimitados", "Relatórios avançados", "Renovação automática",
+  "Cobranças automáticas", "Templates personalizados", "Cupons de desconto",
+  "Múltiplas sessões WhatsApp", "API de integração", "Backup diário",
+];
+
 const emptyPlan = {
   nome: "", descricao: "", valor: 0, intervalo: "mensal",
   recursos: [] as string[], ativo: true, destaque: false, ordem: 0,
@@ -100,6 +107,11 @@ export default function AdminPlanoNovo() {
             <div className="flex flex-wrap gap-1 mt-2">
               {form.recursos.map((r, i) => (
                 <Badge key={i} variant="secondary" className="gap-1 cursor-pointer" onClick={() => removeRecurso(i)}>{r} ×</Badge>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1 mt-2">
+              {RECURSOS_SUGERIDOS.filter(r => !form.recursos.includes(r)).map(r => (
+                <Badge key={r} variant="outline" className="cursor-pointer text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setForm(f => ({ ...f, recursos: [...f.recursos, r] }))}>+ {r}</Badge>
               ))}
             </div>
           </div>
