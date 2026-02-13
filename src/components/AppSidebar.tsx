@@ -247,6 +247,13 @@ export function AppSidebar() {
             <span className="text-xl font-bold tracking-wide text-foreground">GESTOR <span className="text-primary">MSX</span></span>
           )}
         </div>
+        {!isCollapsed && (
+          <div className="flex justify-center -mt-4 mb-1">
+            <NavLink to="/renovar-acesso" className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">
+              Renovar Acesso
+            </NavLink>
+          </div>
+        )}
 
         <div className="mx-4 border-t border-border/50 mb-2" />
 
