@@ -115,6 +115,8 @@ export default function Auth() {
       if (error) {
         if (error.message.includes('already registered')) {
           toast.error('Este email já está cadastrado. Tente fazer login.');
+        } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+          toast.error('Muitas tentativas seguidas. Aguarde alguns minutos e tente novamente.');
         } else {
           toast.error(error.message);
         }
