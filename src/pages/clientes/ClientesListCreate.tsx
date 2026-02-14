@@ -1283,11 +1283,25 @@ export default function ClientesListCreate() {
           </TableHeader>
           <TableBody>
             {loadingClientes ? (
-              <TableRow>
-               <TableCell colSpan={8} className="text-center py-8">
-                  <span className="text-muted-foreground">Carregando clientes...</span>
-                </TableCell>
-              </TableRow>
+              <>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={`skeleton-${i}`}>
+                    <TableCell><div className="h-4 w-8 bg-muted animate-pulse rounded" /></TableCell>
+                    <TableCell>
+                      <div className="space-y-1.5">
+                        <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                        <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                      </div>
+                    </TableCell>
+                    <TableCell><div className="h-4 w-20 bg-muted animate-pulse rounded" /></TableCell>
+                    <TableCell><div className="h-4 w-24 bg-muted animate-pulse rounded" /></TableCell>
+                    <TableCell><div className="h-5 w-16 bg-muted animate-pulse rounded-full" /></TableCell>
+                    <TableCell><div className="h-4 w-20 bg-muted animate-pulse rounded" /></TableCell>
+                    <TableCell><div className="h-4 w-20 bg-muted animate-pulse rounded" /></TableCell>
+                    <TableCell><div className="h-4 w-24 bg-muted animate-pulse rounded ml-auto" /></TableCell>
+                  </TableRow>
+                ))}
+              </>
             ) : clientesPaginados.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
