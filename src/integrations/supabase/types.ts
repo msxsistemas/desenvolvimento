@@ -481,6 +481,7 @@ export type Database = {
           confirmacao_cliente: string | null
           confirmacao_pagamento: string | null
           dados_cliente: string | null
+          enviar_bem_vindo: boolean
           expiracao_app: string | null
           fatura_criada: string | null
           id: number
@@ -497,6 +498,7 @@ export type Database = {
           confirmacao_cliente?: string | null
           confirmacao_pagamento?: string | null
           dados_cliente?: string | null
+          enviar_bem_vindo?: boolean
           expiracao_app?: string | null
           fatura_criada?: string | null
           id?: number
@@ -513,6 +515,7 @@ export type Database = {
           confirmacao_cliente?: string | null
           confirmacao_pagamento?: string | null
           dados_cliente?: string | null
+          enviar_bem_vindo?: boolean
           expiracao_app?: string | null
           fatura_criada?: string | null
           id?: number
