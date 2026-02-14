@@ -115,7 +115,7 @@ export function AppSidebar() {
     { to: "/financeiro", icon: DollarSign, label: "Financeiro", hasFinanceiroSubmenu: true },
     { to: "/relatorios", icon: Filter, label: "Relatórios" },
     { to: "/configuracoes", icon: Globe, label: "Gateways", hasGatewaysSubmenu: true },
-    { to: "/configurar", icon: Settings, label: "Configurar", hasConfigurarSubmenu: true },
+    { to: "/configurar", icon: Settings, label: "Configurações", hasConfigurarSubmenu: true },
     { to: "/whatsapp", icon: WhatsAppIcon, label: "WhatsApp", hasWhatsappSubmenu: true },
     { to: "/indicacoes", icon: Share2, label: "Indicações", hasIndicacoesSubmenu: true },
     { to: "/outros", icon: MoreHorizontal, label: "Outros", hasOutrosSubmenu: true },
