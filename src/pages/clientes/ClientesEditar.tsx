@@ -402,7 +402,7 @@ export default function ClientesEditar() {
                   <SelectContent>
                     {planos.map((p) => (
                       <SelectItem key={p.id} value={String(p.id)}>
-                        {p.nome}
+                        {p.nome} – {typeof p.valor === "string" && p.valor.trim().startsWith("R$") ? p.valor.replace("R$", "").trim() : p.valor}
                       </SelectItem>
                     ))}
                   </SelectContent>
