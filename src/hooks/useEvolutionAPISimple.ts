@@ -284,11 +284,13 @@ export const useEvolutionAPISimple = () => {
         toast.success('Mensagem enviada com sucesso!');
         return data.data;
       } else {
+        if (data.connectionLost) {
+          setSession(null);
+        }
         throw new Error(data.error || 'Erro ao enviar mensagem');
       }
     } catch (error: any) {
       console.error('Error sending message:', error);
-      toast.error(error.message || 'Erro ao enviar mensagem');
       throw error;
     } finally {
       setLoading(false);
