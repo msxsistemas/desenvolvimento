@@ -26,7 +26,9 @@ function replaceTemplateVariables(
     }
   }
 
-  const hour = new Date().getHours();
+  // Use Brazil timezone for greeting
+  const brTime = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const hour = brTime.getHours();
   const saudacao = hour >= 5 && hour < 12 ? 'Bom dia' : hour >= 12 && hour < 18 ? 'Boa tarde' : 'Boa noite';
 
   const replacements: Record<string, string> = {
@@ -51,6 +53,9 @@ function replaceTemplateVariables(
     '{dispositivo}': clientData.dispositivo || '',
     '{telas}': clientData.telas || '',
     '{mac}': clientData.mac || '',
+    '{pix}': clientData.pix || '',
+    '{link_fatura}': clientData.link_fatura || '',
+    '{fatura_pdf}': clientData.fatura_pdf || '',
   };
 
   let result = template;
@@ -72,7 +77,6 @@ async function sendNotification(
   tipoNotificacao: string,
   planosMap: Map<string, any>,
 ): Promise<'sent' | 'error' | 'skipped'> {
-  // Check if we already sent this notification today
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayEnd = new Date();
@@ -91,7 +95,7 @@ async function sendNotification(
   if (existing && existing.length > 0) return 'skipped';
 
   const plano = cliente.plano ? planosMap.get(cliente.plano) : null;
-  const planoNome = (plano as any)?.nome || '';
+  const planoNome = (plano as any)?.nome || cliente.plano || '';
   const valorPlano = (plano as any)?.valor || '';
 
   const message = replaceTemplateVariables(templateMsg, {
@@ -109,14 +113,19 @@ async function sendNotification(
     dispositivo: cliente.dispositivo || '',
     telas: cliente.telas?.toString() || '',
     mac: cliente.mac || '',
+    pix: '',
+    link_fatura: '',
+    fatura_pdf: '',
   });
 
   try {
     const phone = cliente.whatsapp.replace(/\D/g, '');
+    const normalizedPhone = !phone.startsWith('55') && phone.length >= 10 ? '55' + phone : phone;
+
     const sendResp = await fetch(`${evolutionUrl}/message/sendText/${sessionId}`, {
       method: 'POST',
       headers: { 'apikey': evolutionKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ number: phone, text: message }),
+      body: JSON.stringify({ number: normalizedPhone, text: message }),
     });
 
     const status = sendResp.ok ? 'sent' : 'failed';
@@ -131,14 +140,26 @@ async function sendNotification(
     });
 
     if (sendResp.ok) {
-      console.log(`✅ [${tipoNotificacao}] Sent to ${cliente.nome} (${phone})`);
+      console.log(`✅ [${tipoNotificacao}] Sent to ${cliente.nome} (${normalizedPhone})`);
       return 'sent';
     } else {
-      console.error(`❌ [${tipoNotificacao}] Failed for ${cliente.nome}: ${sendResp.statusText}`);
+      const errText = await sendResp.text().catch(() => 'unknown');
+      console.error(`❌ [${tipoNotificacao}] Failed for ${cliente.nome}: ${sendResp.status} - ${errText}`);
       return 'error';
     }
   } catch (sendErr: any) {
     console.error(`❌ Send error for ${cliente.nome}:`, sendErr.message);
+
+    await supabase.from('whatsapp_messages').insert({
+      user_id: userId,
+      phone: cliente.whatsapp,
+      message,
+      session_id: `auto_${tipoNotificacao}`,
+      status: 'failed',
+      error_message: sendErr.message,
+      sent_at: new Date().toISOString(),
+    });
+
     return 'error';
   }
 }
@@ -166,7 +187,7 @@ Deno.serve(async (req: Request) => {
     // Get all users who have mensagens_padroes configured
     const { data: allMensagens, error: msgErr } = await supabase
       .from('mensagens_padroes')
-      .select('user_id, vencido, vence_hoje, proximo_vencer, aniversario_cliente');
+      .select('user_id, vencido, vence_hoje, proximo_vencer, fatura_criada, aniversario_cliente, confirmacao_pagamento');
 
     if (msgErr) throw msgErr;
     if (!allMensagens || allMensagens.length === 0) {
@@ -179,15 +200,24 @@ Deno.serve(async (req: Request) => {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    const tresDias = new Date(hoje);
-    tresDias.setDate(tresDias.getDate() + 3);
-
     let totalSent = 0;
     let totalErrors = 0;
+    let totalSkipped = 0;
 
     for (const msg of allMensagens) {
       if (!msg.user_id) continue;
       const userId = msg.user_id;
+
+      // Load user's notification config
+      const { data: notifConfig } = await supabase
+        .from('notificacoes_config')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const diasProximoVencer = notifConfig?.dias_proximo_vencer ?? 3;
+      const diasAposVencimento = notifConfig?.dias_apos_vencimento ?? 2;
+      const notifVencendoHoje = notifConfig?.notif_vencendo_hoje ?? true;
 
       // Check if user has connected WhatsApp session
       const { data: sessions } = await supabase
@@ -204,7 +234,7 @@ Deno.serve(async (req: Request) => {
 
       const sessionId = sessions[0].session_id;
 
-      // Get user's clients with lembretes enabled for expiration notifications
+      // Get user's clients with lembretes enabled
       const { data: clientes, error: clientErr } = await supabase
         .from('clientes')
         .select('*')
@@ -216,22 +246,30 @@ Deno.serve(async (req: Request) => {
         console.error(`Error fetching clientes for ${userId}:`, clientErr.message);
       }
 
-      // Get ALL clients for birthday check (not just those with lembretes)
+      // Get ALL clients for birthday check
       const { data: allClientes } = await supabase
         .from('clientes')
         .select('*')
         .eq('user_id', userId);
 
-      // Get user's planos for variable replacement
+      // Get user's planos
       const { data: planos } = await supabase
         .from('planos')
         .select('id, nome, valor')
         .eq('user_id', userId);
 
       const planosMap = new Map((planos || []).map((p: any) => [p.id, p]));
+      // Also map by name for fallback
+      (planos || []).forEach((p: any) => planosMap.set(p.nome, p));
 
       // --- Expiration notifications ---
       if (clientes && clientes.length > 0) {
+        const limiteProximoVencer = new Date(hoje);
+        limiteProximoVencer.setDate(limiteProximoVencer.getDate() + diasProximoVencer);
+
+        const limiteVencido = new Date(hoje);
+        limiteVencido.setDate(limiteVencido.getDate() - diasAposVencimento);
+
         for (const cliente of clientes) {
           if (!cliente.whatsapp || !cliente.data_vencimento) continue;
 
@@ -241,33 +279,40 @@ Deno.serve(async (req: Request) => {
           let templateMsg: string | null = null;
           let tipoNotificacao: string | null = null;
 
-          if (dataVenc < hoje) {
+          // Vencido (within configured days after expiration)
+          if (dataVenc < hoje && dataVenc >= limiteVencido && msg.vencido) {
             templateMsg = msg.vencido;
             tipoNotificacao = 'vencido';
-          } else if (dataVenc.getTime() === hoje.getTime()) {
+          }
+          // Vence hoje
+          else if (dataVenc.getTime() === hoje.getTime() && notifVencendoHoje && msg.vence_hoje) {
             templateMsg = msg.vence_hoje;
             tipoNotificacao = 'vence_hoje';
-          } else if (dataVenc > hoje && dataVenc <= tresDias) {
+          }
+          // Próximo de vencer (within configured days before expiration, skip 0 = disabled)
+          else if (diasProximoVencer > 0 && dataVenc > hoje && dataVenc <= limiteProximoVencer && msg.proximo_vencer) {
             templateMsg = msg.proximo_vencer;
             tipoNotificacao = 'proximo_vencer';
           }
 
           if (!templateMsg || !tipoNotificacao) continue;
 
-          const sent = await sendNotification(supabase, evolutionUrl, evolutionKey, sessionId, userId, cliente, templateMsg, tipoNotificacao, planosMap);
-          if (sent === 'sent') totalSent++;
-          else if (sent === 'error') totalErrors++;
+          const result = await sendNotification(supabase, evolutionUrl, evolutionKey, sessionId, userId, cliente, templateMsg, tipoNotificacao, planosMap);
+          if (result === 'sent') totalSent++;
+          else if (result === 'error') totalErrors++;
+          else totalSkipped++;
         }
       }
 
       // --- Birthday notifications ---
-      if (msg.aniversario_cliente && allClientes && allClientes.length > 0) {
-        const hojeStr = `${String(hoje.getMonth() + 1).padStart(2, '0')}/${String(hoje.getDate()).padStart(2, '0')}`;
+      const notifAniversario = notifConfig?.notif_aniversario ?? true;
+      if (notifAniversario && msg.aniversario_cliente && allClientes && allClientes.length > 0) {
+        const hojeMonth = hoje.getMonth() + 1;
+        const hojeDay = hoje.getDate();
 
         for (const cliente of allClientes) {
           if (!cliente.whatsapp || !cliente.aniversario) continue;
 
-          // Parse birthday - support formats: DD/MM, DD/MM/YYYY, YYYY-MM-DD
           let bDay: number | null = null;
           let bMonth: number | null = null;
           const aniv = cliente.aniversario.trim();
@@ -279,29 +324,26 @@ Deno.serve(async (req: Request) => {
           } else if (aniv.includes('-')) {
             const parts = aniv.split('-');
             if (parts[0].length === 4) {
-              // YYYY-MM-DD
               bMonth = parseInt(parts[1], 10);
               bDay = parseInt(parts[2], 10);
             } else {
-              // DD-MM-YYYY
               bDay = parseInt(parts[0], 10);
               bMonth = parseInt(parts[1], 10);
             }
           }
 
           if (!bDay || !bMonth) continue;
+          if (bMonth !== hojeMonth || bDay !== hojeDay) continue;
 
-          const clienteAnivStr = `${String(bMonth).padStart(2, '0')}/${String(bDay).padStart(2, '0')}`;
-          if (clienteAnivStr !== hojeStr) continue;
-
-          const sent = await sendNotification(supabase, evolutionUrl, evolutionKey, sessionId, userId, cliente, msg.aniversario_cliente, 'aniversario', planosMap);
-          if (sent === 'sent') totalSent++;
-          else if (sent === 'error') totalErrors++;
+          const result = await sendNotification(supabase, evolutionUrl, evolutionKey, sessionId, userId, cliente, msg.aniversario_cliente, 'aniversario', planosMap);
+          if (result === 'sent') totalSent++;
+          else if (result === 'error') totalErrors++;
+          else totalSkipped++;
         }
       }
     }
 
-    const summary = { totalSent, totalErrors, timestamp: new Date().toISOString() };
+    const summary = { totalSent, totalErrors, totalSkipped, timestamp: new Date().toISOString() };
     console.log('📊 Auto-notify summary:', JSON.stringify(summary));
 
     return new Response(JSON.stringify(summary), {
