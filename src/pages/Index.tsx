@@ -5,6 +5,8 @@ import {
   useMetricasRenovacoes,
 } from "@/hooks/useMetricas";
 import { useMetricasExtras } from "@/hooks/useMetricasExtras";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useProfile } from "@/hooks/useProfile";
 import DashboardClientCards from "@/components/dashboard/DashboardClientCards";
 import DashboardFinanceCards from "@/components/dashboard/DashboardFinanceCards";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
@@ -12,6 +14,8 @@ import DashboardNewCards from "@/components/dashboard/DashboardNewCards";
 import DashboardClientTables from "@/components/dashboard/DashboardClientTables";
 
 export default function Index() {
+  const { userId } = useCurrentUser();
+  const { profile } = useProfile(userId);
   const { entradas, saidas, lucros, loading: loadingFinanceiro } = useFinanceiro();
   const {
     totalClientes,
@@ -65,11 +69,13 @@ export default function Index() {
   const saudacao =
     hora < 12 ? "Bom Dia" : hora < 18 ? "Boa Tarde" : "Boa Noite";
 
+  const primeiroNome = profile?.nome_completo?.split(" ")[0] || profile?.nome_empresa?.split(" ")[0] || "";
+
   return (
     <div className="space-y-6">
       
       <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-        {saudacao}, Tech Play!
+        {saudacao}, {primeiroNome || "Tech Play"}!
       </h1>
 
       {/* 1ª linha — Cards de clientes (3 cards) */}
