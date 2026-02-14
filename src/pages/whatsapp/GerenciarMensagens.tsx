@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +41,7 @@ const emptyMensagens: MensagensPadroes = {
 
 export default function GerenciarMensagens() {
   const [mensagens, setMensagens] = useState<MensagensPadroes>(emptyMensagens);
+  const [enviarBemVindo, setEnviarBemVindo] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<keyof MensagensPadroes>("vence_hoje");
   const { user } = useCurrentUser();
@@ -72,6 +74,9 @@ export default function GerenciarMensagens() {
           ...(data.confirmacao_pagamento && { confirmacao_pagamento: data.confirmacao_pagamento }),
           ...(data.dados_cliente && { dados_cliente: data.dados_cliente }),
         }));
+        if (typeof data.enviar_bem_vindo === "boolean") {
+          setEnviarBemVindo(data.enviar_bem_vindo);
+        }
       }
     } catch (error) {
       console.error("Erro ao carregar mensagens:", error);
@@ -96,7 +101,7 @@ export default function GerenciarMensagens() {
           vence_hoje: mensagens.vence_hoje,
           vencido: mensagens.vencido,
           confirmacao_pagamento: mensagens.confirmacao_pagamento,
-          
+          enviar_bem_vindo: enviarBemVindo,
           updated_at: new Date().toISOString(),
         }, {
           onConflict: 'user_id'
@@ -227,7 +232,19 @@ export default function GerenciarMensagens() {
         <div className="space-y-4">
           <div className="rounded-lg border border-border bg-card p-4 space-y-4">
             <div className="space-y-2">
-              <Label className="text-foreground font-medium">Bem Vindo:</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-foreground font-medium">Bem Vindo:</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="enviar-bem-vindo" className="text-sm text-muted-foreground cursor-pointer">
+                    Enviar ao cadastrar cliente
+                  </Label>
+                  <Switch
+                    id="enviar-bem-vindo"
+                    checked={enviarBemVindo}
+                    onCheckedChange={setEnviarBemVindo}
+                  />
+                </div>
+              </div>
               <Textarea
                 value={mensagens.bem_vindo}
                 onChange={(e) => setMensagens(prev => ({ ...prev, bem_vindo: e.target.value }))}
