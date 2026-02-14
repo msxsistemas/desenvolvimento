@@ -161,8 +161,8 @@ export const useEvolutionAPISimple = () => {
         }
         if (showToast) toast.success('WhatsApp conectado!');
       } else if (data.status === 'connecting') {
-        setSession({ status: 'connecting' });
-        // Don't show toast during polling to avoid loop
+        // Preserve existing qrCode during polling - don't overwrite it
+        setSession(prev => prev?.qrCode ? prev : { status: 'connecting' });
       } else {
         setSession(null);
         if (showToast) toast.info('WhatsApp desconectado');
