@@ -314,6 +314,48 @@ export type Database = {
         }
         Relationships: []
       }
+      envio_config: {
+        Row: {
+          configuracoes_ativas: boolean
+          created_at: string
+          id: string
+          limite_diario: number | null
+          limite_lote: number
+          pausa_prolongada: number
+          tempo_maximo: number
+          tempo_minimo: number
+          updated_at: string
+          user_id: string
+          variar_intervalo: boolean
+        }
+        Insert: {
+          configuracoes_ativas?: boolean
+          created_at?: string
+          id?: string
+          limite_diario?: number | null
+          limite_lote?: number
+          pausa_prolongada?: number
+          tempo_maximo?: number
+          tempo_minimo?: number
+          updated_at?: string
+          user_id: string
+          variar_intervalo?: boolean
+        }
+        Update: {
+          configuracoes_ativas?: boolean
+          created_at?: string
+          id?: string
+          limite_diario?: number | null
+          limite_lote?: number
+          pausa_prolongada?: number
+          tempo_maximo?: number
+          tempo_minimo?: number
+          updated_at?: string
+          user_id?: string
+          variar_intervalo?: boolean
+        }
+        Relationships: []
+      }
       faturas: {
         Row: {
           cliente_id: string | null
