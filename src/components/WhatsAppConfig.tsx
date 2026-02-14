@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Settings, Save, TestTube } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 interface WhatsAppConfigProps {
   onConfigSave: (config: { apiUrl: string; apiKey?: string; instanceName?: string }) => void;
@@ -13,27 +15,31 @@ interface WhatsAppConfigProps {
 }
 
 export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsAppConfigProps) {
-  const [apiUrl, setApiUrl] = useState(currentConfig?.apiUrl || 'https://89ec2d19a7c2.ngrok-free.app');
+  const { userId } = useCurrentUser();
+  const [apiUrl, setApiUrl] = useState(currentConfig?.apiUrl || '');
   const [apiKey, setApiKey] = useState(currentConfig?.apiKey || '');
   const [instanceName, setInstanceName] = useState(currentConfig?.instanceName || 'default');
   const [testing, setTesting] = useState(false);
 
   useEffect(() => {
-    // Carregar configuração salva do localStorage
-    const savedConfig = localStorage.getItem('whatsapp-api-config');
-    if (savedConfig) {
-      try {
-        const config = JSON.parse(savedConfig);
-        setApiUrl(config.apiUrl || '');
-        setApiKey(config.apiKey || '');
-        setInstanceName(config.instanceName || 'default');
-      } catch (error) {
-        console.error('Erro ao carregar configuração:', error);
+    if (!userId) return;
+    (async () => {
+      const { data } = await supabase
+        .from('whatsapp_sessions')
+        .select('session_data')
+        .eq('user_id', userId)
+        .eq('session_id', 'api_config')
+        .maybeSingle();
+      if (data?.session_data) {
+        const cfg = data.session_data as Record<string, unknown>;
+        setApiUrl(String(cfg.apiUrl || ''));
+        setApiKey(String(cfg.apiKey || ''));
+        setInstanceName(String(cfg.instanceName || 'default'));
       }
-    }
-  }, []);
+    })();
+  }, [userId]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!apiUrl) {
       toast.error('URL da API é obrigatória');
       return;
@@ -45,12 +51,37 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
       instanceName: instanceName || 'default'
     };
 
-    // Salvar no localStorage
-    localStorage.setItem('whatsapp-api-config', JSON.stringify(config));
-    
-    // Notificar componente pai
+    if (userId) {
+      try {
+        const { data: existing } = await supabase
+          .from('whatsapp_sessions')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('session_id', 'api_config')
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from('whatsapp_sessions')
+            .update({ session_data: config, updated_at: new Date().toISOString() })
+            .eq('user_id', userId)
+            .eq('session_id', 'api_config');
+        } else {
+          await supabase
+            .from('whatsapp_sessions')
+            .insert([{
+              user_id: userId,
+              session_id: 'api_config',
+              status: 'config',
+              session_data: config,
+            }]);
+        }
+      } catch (err) {
+        console.error('Erro ao salvar config WhatsApp no Supabase:', err);
+      }
+    }
+
     onConfigSave(config);
-    
     toast.success('Configuração salva com sucesso!');
   };
 
@@ -64,7 +95,7 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
     try {
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true', // Para contornar warning do ngrok
+        'ngrok-skip-browser-warning': 'true',
       };
 
       if (apiKey) {
@@ -73,22 +104,20 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
 
       const testUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
       
-      // Primeiro, vamos testar endpoints que sabemos que existem
       const testEndpoints = [
-        '/instances', // Este sabemos que funciona
+        '/instances',
         '/instance', 
         '/health',
         '/status',
         '/api/status',
-        '/docs', // Pode ter documentação
-        '/swagger', // Pode ter documentação da API
-        '/', // Root pode ter informações
+        '/docs',
+        '/swagger',
+        '/',
       ];
 
       let connected = false;
-      let availableEndpoints = [];
+      const availableEndpoints = [];
       
-      // Testar endpoints conhecidos
       for (const endpoint of testEndpoints) {
         try {
           const response = await fetch(`${testUrl}${endpoint}`, {
@@ -100,13 +129,12 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
             connected = true;
             availableEndpoints.push(endpoint);
             
-            // Se é o endpoint /instances, vamos ver o que retorna
             if (endpoint === '/instances') {
               const data = await response.json();
               console.log('Resposta do /instances:', data);
             }
           }
-        } catch (error) {
+        } catch {
           // Continuar tentando outros endpoints
         }
       }
@@ -118,7 +146,7 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
       } else {
         toast.error('❌ Não foi possível conectar com a API. Verifique a URL e credenciais.');
       }
-    } catch (error) {
+    } catch (error: any) {
       toast.error('Erro ao testar conexão: ' + error.message);
     } finally {
       setTesting(false);
@@ -138,7 +166,7 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
         </p>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="api-url">URL da API *</Label>
@@ -201,8 +229,8 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
           </div>
         </form>
 
-        <div className="bg-blue-50 p-3 rounded-lg">
-          <p className="text-xs text-blue-700">
+        <div className="bg-muted/50 p-3 rounded-lg mt-4">
+          <p className="text-xs text-muted-foreground">
             <strong>📋 APIs Suportadas:</strong><br />
             • Evolution API<br />
             • Baileys<br />

@@ -210,12 +210,28 @@ export const useWhatsApp = () => {
       throw new Error('WhatsApp não está conectado');
     }
 
-    // Carregar configurações de envio do localStorage
+    // Carregar configurações de envio do Supabase
     const defaultCfg = { tempoMinimo: 10, tempoMaximo: 10, limiteLote: 10, pausaProlongada: 15, limiteDiario: '', variarIntervalo: true };
     let cfg = defaultCfg;
     try {
-      const saved = localStorage.getItem('whatsapp_envio_config');
-      if (saved) cfg = { ...defaultCfg, ...JSON.parse(saved) };
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user?.id) {
+        const { data: envioData } = await supabase
+          .from('envio_config')
+          .select('*')
+          .eq('user_id', userData.user.id)
+          .maybeSingle();
+        if (envioData) {
+          cfg = {
+            tempoMinimo: envioData.tempo_minimo,
+            tempoMaximo: envioData.tempo_maximo,
+            limiteLote: envioData.limite_lote,
+            pausaProlongada: envioData.pausa_prolongada,
+            limiteDiario: envioData.limite_diario != null ? String(envioData.limite_diario) : '',
+            variarIntervalo: envioData.variar_intervalo,
+          };
+        }
+      }
     } catch { /* use defaults */ }
 
     // Checar limite diário
