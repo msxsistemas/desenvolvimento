@@ -20,6 +20,14 @@ export default function ParearWhatsappNew() {
     document.title = "Parear WhatsApp | Tech Play";
   }, []);
 
+  // Verificar status real com a Evolution API ao abrir a página
+  useEffect(() => {
+    if (hydrated && isConnected) {
+      checkStatus(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+
   return (
     <main className="space-y-4">
       {/* Header */}
