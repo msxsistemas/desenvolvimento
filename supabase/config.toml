@@ -2,3 +2,6 @@ project_id = "dxxfablfqigoewcfmjzl"
 
 [functions.activate-plan]
 verify_jwt = false
+
+[functions.auto-notify-clients]
+verify_jwt = false
