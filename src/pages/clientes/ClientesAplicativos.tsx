@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,15 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, Trash2, Power } from "lucide-react";
+import { Pencil, Trash2, Power, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Aplicativo } from "@/types/database";
 import { useAplicativos } from "@/hooks/useDatabase";
+
+const PER_PAGE = 10;
 
 export default function ClientesAplicativos() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [page, setPage] = useState(1);
   const [apps, setApps] = useState<Aplicativo[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -73,13 +76,21 @@ export default function ClientesAplicativos() {
     setDesativarTarget(null);
   };
 
-  const filteredApps = apps.filter((a) => {
-    const matchesSearch = a.nome?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "todos" || 
-      (statusFilter === "ativo" && (a as any).ativo !== false) || 
-      (statusFilter === "inativo" && (a as any).ativo === false);
-    return matchesSearch && matchesStatus;
-  });
+  const filteredApps = useMemo(() => {
+    return apps.filter((a) => {
+      const matchesSearch = a.nome?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "todos" || 
+        (statusFilter === "ativo" && (a as any).ativo !== false) || 
+        (statusFilter === "inativo" && (a as any).ativo === false);
+      return matchesSearch && matchesStatus;
+    });
+  }, [apps, searchTerm, statusFilter]);
+
+  useEffect(() => { setPage(1); }, [searchTerm, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredApps.length / PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedApps = filteredApps.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
   return (
     <main className="space-y-4">
@@ -134,7 +145,7 @@ export default function ClientesAplicativos() {
 
       {/* Record count */}
       <div className="text-right text-sm text-muted-foreground">
-        Mostrando {filteredApps.length} de {apps.length} registros.
+        Mostrando {((currentPage - 1) * PER_PAGE) + 1}–{Math.min(currentPage * PER_PAGE, filteredApps.length)} de {filteredApps.length} registros.
       </div>
 
       {/* Table */}
@@ -150,11 +161,11 @@ export default function ClientesAplicativos() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredApps.length ? (
-              filteredApps.map((a, index) => (
+            {paginatedApps.length ? (
+              paginatedApps.map((a, index) => (
                 <TableRow key={a.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {filteredApps.length - index}
+                    {filteredApps.length - ((currentPage - 1) * PER_PAGE + index)}
                   </TableCell>
                   <TableCell className="font-medium">{a.nome}</TableCell>
                   <TableCell className="text-muted-foreground">{a.descricao || "-"}</TableCell>
@@ -230,6 +241,28 @@ export default function ClientesAplicativos() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+          <p className="text-xs text-muted-foreground">
+            Mostrando {((currentPage - 1) * PER_PAGE) + 1}–{Math.min(currentPage * PER_PAGE, filteredApps.length)} de {filteredApps.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={currentPage <= 1} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+              <Button key={p} variant={p === currentPage ? "default" : "outline"} size="sm" className="h-8 w-8 p-0 text-xs" onClick={() => setPage(p)}>
+                {p}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={currentPage >= totalPages} onClick={() => setPage(p => p + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Success Dialog */}
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProdutos } from "@/hooks/useDatabase";
 import { Button } from "@/components/ui/button";
@@ -8,14 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, Trash2, Power } from "lucide-react";
+import { Pencil, Trash2, Power, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Produto } from "@/types/database";
+
+const PER_PAGE = 10;
 
 export default function ClientesProdutos() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -80,13 +83,21 @@ export default function ClientesProdutos() {
     setDesativarTarget(null);
   };
 
-  const filteredProdutos = produtos.filter((p) => {
-    const matchesSearch = p.nome?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "todos" || 
-      (statusFilter === "ativo" && (p as any).ativo !== false) || 
-      (statusFilter === "inativo" && (p as any).ativo === false);
-    return matchesSearch && matchesStatus;
-  });
+  const filteredProdutos = useMemo(() => {
+    return produtos.filter((p) => {
+      const matchesSearch = p.nome?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "todos" || 
+        (statusFilter === "ativo" && (p as any).ativo !== false) || 
+        (statusFilter === "inativo" && (p as any).ativo === false);
+      return matchesSearch && matchesStatus;
+    });
+  }, [produtos, searchTerm, statusFilter]);
+
+  useEffect(() => { setPage(1); }, [searchTerm, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProdutos.length / PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedProdutos = filteredProdutos.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
   return (
     <main className="space-y-4">
@@ -141,7 +152,7 @@ export default function ClientesProdutos() {
 
       {/* Record count */}
       <div className="text-right text-sm text-muted-foreground">
-        Mostrando {filteredProdutos.length} de {produtos.length} registros.
+        Mostrando {((currentPage - 1) * PER_PAGE) + 1}–{Math.min(currentPage * PER_PAGE, filteredProdutos.length)} de {filteredProdutos.length} registros.
       </div>
 
       {/* Table */}
@@ -158,11 +169,11 @@ export default function ClientesProdutos() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProdutos.length ? (
-              filteredProdutos.map((p, index) => (
+            {paginatedProdutos.length ? (
+              paginatedProdutos.map((p, index) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {filteredProdutos.length - index}
+                    {filteredProdutos.length - ((currentPage - 1) * PER_PAGE + index)}
                   </TableCell>
                   <TableCell className="font-medium">{p.nome}</TableCell>
                   <TableCell>
@@ -223,6 +234,28 @@ export default function ClientesProdutos() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+          <p className="text-xs text-muted-foreground">
+            Mostrando {((currentPage - 1) * PER_PAGE) + 1}–{Math.min(currentPage * PER_PAGE, filteredProdutos.length)} de {filteredProdutos.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={currentPage <= 1} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+              <Button key={p} variant={p === currentPage ? "default" : "outline"} size="sm" className="h-8 w-8 p-0 text-xs" onClick={() => setPage(p)}>
+                {p}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={currentPage >= totalPages} onClick={() => setPage(p => p + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Delete Dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
