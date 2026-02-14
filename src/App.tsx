@@ -57,6 +57,7 @@ import Templates from "./pages/whatsapp/Templates";
 import TemplateCadastro from "./pages/whatsapp/TemplateCadastro";
 import TemplateEditar from "./pages/whatsapp/TemplateEditar";
 import ConfiguracaoEnvio from "./pages/whatsapp/ConfiguracaoEnvio";
+import ConfiguracoesNotificacoes from "./pages/configuracoes/ConfiguracoesNotificacoes";
 import Relatorios from "./pages/Relatorios";
 import LogsPainel from "./pages/LogsPainel";
 import LogsSistema from "./pages/LogsSistema";
@@ -160,6 +161,8 @@ const App = () => (
             <Route path="/whatsapp/templates/cadastro" element={<TemplateCadastro />} />
             <Route path="/whatsapp/templates/editar/:id" element={<TemplateEditar />} />
             <Route path="/whatsapp/configuracao-envio" element={<ConfiguracaoEnvio />} />
+            <Route path="/configurar/configuracao-envio" element={<ConfiguracaoEnvio />} />
+            <Route path="/configurar/notificacoes" element={<ConfiguracoesNotificacoes />} />
             <Route path="/whatsapp/parear" element={<ParearWhatsapp />} />
             {/* Logs routes */}
             <Route path="/logs/painel" element={<LogsPainel />} />

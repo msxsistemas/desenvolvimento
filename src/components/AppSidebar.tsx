@@ -32,6 +32,7 @@ import {
   Phone,
   Ticket,
   Crown,
+  Settings,
 } from "lucide-react";
 import { useState } from "react";
 import type { LucideProps } from "lucide-react";
@@ -67,12 +68,13 @@ export function AppSidebar() {
   const produtosActive = currentPath === "/produtos" || currentPath.startsWith("/produtos/");
   const financeiroActive = currentPath.startsWith("/financeiro");
   const whatsappActive = currentPath.startsWith("/whatsapp") || currentPath === "/parear-whatsapp";
+  const configurarActive = currentPath.startsWith("/configurar");
   const logsActive = currentPath.startsWith("/logs");
   const indicacoesActive = currentPath.startsWith("/indicacoes");
   const outrosActive = currentPath.startsWith("/outros") || currentPath === "/configuracoes/mensagens-padroes";
   const gatewaysActive = currentPath === "/configuracoes" || currentPath.startsWith("/configuracoes/asaas") || currentPath.startsWith("/configuracoes/mercado-pago") || currentPath.startsWith("/configuracoes/ciabra") || currentPath.startsWith("/configuracoes/pix-manual") || currentPath.startsWith("/configuracoes/v3pay") || currentPath.startsWith("/gateways/");
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(
-    clientesActive ? "clientes" : planosActive ? "planos" : aplicativosActive ? "aplicativos" : produtosActive ? "produtos" : currentPath.startsWith("/servidores") ? "servidores" : financeiroActive ? "financeiro" : whatsappActive ? "whatsapp" : logsActive ? "logs" : indicacoesActive ? "indicacoes" : outrosActive ? "outros" : gatewaysActive ? "gateways" : null
+    clientesActive ? "clientes" : planosActive ? "planos" : aplicativosActive ? "aplicativos" : produtosActive ? "produtos" : currentPath.startsWith("/servidores") ? "servidores" : financeiroActive ? "financeiro" : configurarActive ? "configurar" : whatsappActive ? "whatsapp" : logsActive ? "logs" : indicacoesActive ? "indicacoes" : outrosActive ? "outros" : gatewaysActive ? "gateways" : null
   );
 
   const toggleSubmenu = (menu: string) => {
@@ -113,6 +115,7 @@ export function AppSidebar() {
     { to: "/financeiro", icon: DollarSign, label: "Financeiro", hasFinanceiroSubmenu: true },
     { to: "/relatorios", icon: Filter, label: "Relatórios" },
     { to: "/configuracoes", icon: Globe, label: "Gateways", hasGatewaysSubmenu: true },
+    { to: "/configurar", icon: Settings, label: "Configurar", hasConfigurarSubmenu: true },
     { to: "/whatsapp", icon: WhatsAppIcon, label: "WhatsApp", hasWhatsappSubmenu: true },
     { to: "/indicacoes", icon: Share2, label: "Indicações", hasIndicacoesSubmenu: true },
     { to: "/outros", icon: MoreHorizontal, label: "Outros", hasOutrosSubmenu: true },
@@ -141,11 +144,14 @@ export function AppSidebar() {
   ];
   const whatsappSubItems = [
     { to: "/whatsapp/parear", label: "Parear Whatsapp" },
-    { to: "/whatsapp/configuracao-envio", label: "Configuração de Envio" },
     { to: "/whatsapp/gerenciar-mensagens", label: "Gerenciar Mensagens" },
     { to: "/whatsapp/fila-mensagens", label: "Fila de Mensagens" },
     { to: "/whatsapp/envios-em-massa", label: "Envios em Massa" },
     { to: "/whatsapp/templates", label: "Templates" },
+  ];
+  const configurarSubItems = [
+    { to: "/configurar/configuracao-envio", label: "Configuração de Envio" },
+    { to: "/configurar/notificacoes", label: "Configurações de Notificações" },
   ];
   const logsSubItems = [
     { to: "/logs/painel", label: "Logs do Painel" },
@@ -276,6 +282,7 @@ export function AppSidebar() {
                 if (item.hasIndicacoesSubmenu) return renderSubmenuParent(item, "indicacoes", indicacoesActive, indicacoesSubItems);
                 if (item.hasOutrosSubmenu) return renderSubmenuParent(item, "outros", outrosActive, outrosSubItems);
                 if (item.hasGatewaysSubmenu) return renderSubmenuParent(item, "gateways", gatewaysActive, gatewaysSubItems);
+                if (item.hasConfigurarSubmenu) return renderSubmenuParent(item, "configurar", configurarActive, configurarSubItems);
 
                 // WhatsApp - special styling
                 if (item.hasWhatsappSubmenu) {

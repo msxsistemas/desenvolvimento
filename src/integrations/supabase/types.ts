@@ -591,6 +591,72 @@ export type Database = {
         }
         Relationships: []
       }
+      notificacoes_config: {
+        Row: {
+          api_chatbot: string | null
+          created_at: string
+          descontar_saldo_fatura: boolean
+          dias_apos_vencimento: number
+          dias_gerar_fatura: number
+          dias_proximo_vencer: number
+          hora_notificacoes: string
+          id: string
+          notif_aniversario: boolean
+          notif_bem_vindo: boolean
+          notif_confirmacao_pagamento: boolean
+          notif_fatura_criada: boolean
+          notif_indicacao: boolean
+          notif_vencendo_hoje: boolean
+          quantidade_mensagens: number
+          updated_at: string
+          user_id: string
+          valor_taxa_pagamento: number
+          whatsapp_pagamentos: string | null
+        }
+        Insert: {
+          api_chatbot?: string | null
+          created_at?: string
+          descontar_saldo_fatura?: boolean
+          dias_apos_vencimento?: number
+          dias_gerar_fatura?: number
+          dias_proximo_vencer?: number
+          hora_notificacoes?: string
+          id?: string
+          notif_aniversario?: boolean
+          notif_bem_vindo?: boolean
+          notif_confirmacao_pagamento?: boolean
+          notif_fatura_criada?: boolean
+          notif_indicacao?: boolean
+          notif_vencendo_hoje?: boolean
+          quantidade_mensagens?: number
+          updated_at?: string
+          user_id: string
+          valor_taxa_pagamento?: number
+          whatsapp_pagamentos?: string | null
+        }
+        Update: {
+          api_chatbot?: string | null
+          created_at?: string
+          descontar_saldo_fatura?: boolean
+          dias_apos_vencimento?: number
+          dias_gerar_fatura?: number
+          dias_proximo_vencer?: number
+          hora_notificacoes?: string
+          id?: string
+          notif_aniversario?: boolean
+          notif_bem_vindo?: boolean
+          notif_confirmacao_pagamento?: boolean
+          notif_fatura_criada?: boolean
+          notif_indicacao?: boolean
+          notif_vencendo_hoje?: boolean
+          quantidade_mensagens?: number
+          updated_at?: string
+          user_id?: string
+          valor_taxa_pagamento?: number
+          whatsapp_pagamentos?: string | null
+        }
+        Relationships: []
+      }
       paineis_integracao: {
         Row: {
           auto_renovacao: boolean
