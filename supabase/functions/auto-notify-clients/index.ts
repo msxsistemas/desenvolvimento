@@ -61,6 +61,88 @@ function replaceTemplateVariables(
   return result;
 }
 
+async function sendNotification(
+  supabase: any,
+  evolutionUrl: string,
+  evolutionKey: string,
+  sessionId: string,
+  userId: string,
+  cliente: any,
+  templateMsg: string,
+  tipoNotificacao: string,
+  planosMap: Map<string, any>,
+): Promise<'sent' | 'error' | 'skipped'> {
+  // Check if we already sent this notification today
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  const { data: existing } = await supabase
+    .from('whatsapp_messages')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('phone', cliente.whatsapp)
+    .eq('session_id', `auto_${tipoNotificacao}`)
+    .gte('created_at', todayStart.toISOString())
+    .lte('created_at', todayEnd.toISOString())
+    .limit(1);
+
+  if (existing && existing.length > 0) return 'skipped';
+
+  const plano = cliente.plano ? planosMap.get(cliente.plano) : null;
+  const planoNome = (plano as any)?.nome || '';
+  const valorPlano = (plano as any)?.valor || '';
+
+  const message = replaceTemplateVariables(templateMsg, {
+    nome: cliente.nome || '',
+    whatsapp: cliente.whatsapp || '',
+    email: cliente.email || '',
+    usuario: cliente.usuario || '',
+    senha: cliente.senha || '',
+    data_vencimento: cliente.data_vencimento || '',
+    plano_nome: planoNome,
+    valor_plano: valorPlano ? `R$ ${valorPlano}` : '',
+    desconto: cliente.desconto || '',
+    observacao: cliente.observacao || '',
+    app: cliente.app || '',
+    dispositivo: cliente.dispositivo || '',
+    telas: cliente.telas?.toString() || '',
+    mac: cliente.mac || '',
+  });
+
+  try {
+    const phone = cliente.whatsapp.replace(/\D/g, '');
+    const sendResp = await fetch(`${evolutionUrl}/message/sendText/${sessionId}`, {
+      method: 'POST',
+      headers: { 'apikey': evolutionKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number: phone, text: message }),
+    });
+
+    const status = sendResp.ok ? 'sent' : 'failed';
+
+    await supabase.from('whatsapp_messages').insert({
+      user_id: userId,
+      phone: cliente.whatsapp,
+      message,
+      session_id: `auto_${tipoNotificacao}`,
+      status,
+      sent_at: new Date().toISOString(),
+    });
+
+    if (sendResp.ok) {
+      console.log(`✅ [${tipoNotificacao}] Sent to ${cliente.nome} (${phone})`);
+      return 'sent';
+    } else {
+      console.error(`❌ [${tipoNotificacao}] Failed for ${cliente.nome}: ${sendResp.statusText}`);
+      return 'error';
+    }
+  } catch (sendErr: any) {
+    console.error(`❌ Send error for ${cliente.nome}:`, sendErr.message);
+    return 'error';
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -84,7 +166,7 @@ Deno.serve(async (req: Request) => {
     // Get all users who have mensagens_padroes configured
     const { data: allMensagens, error: msgErr } = await supabase
       .from('mensagens_padroes')
-      .select('user_id, vencido, vence_hoje, proximo_vencer');
+      .select('user_id, vencido, vence_hoje, proximo_vencer, aniversario_cliente');
 
     if (msgErr) throw msgErr;
     if (!allMensagens || allMensagens.length === 0) {
@@ -122,7 +204,7 @@ Deno.serve(async (req: Request) => {
 
       const sessionId = sessions[0].session_id;
 
-      // Get user's clients with expiration dates and lembretes enabled
+      // Get user's clients with lembretes enabled for expiration notifications
       const { data: clientes, error: clientErr } = await supabase
         .from('clientes')
         .select('*')
@@ -130,7 +212,15 @@ Deno.serve(async (req: Request) => {
         .eq('lembretes', true)
         .not('data_vencimento', 'is', null);
 
-      if (clientErr || !clientes || clientes.length === 0) continue;
+      if (clientErr) {
+        console.error(`Error fetching clientes for ${userId}:`, clientErr.message);
+      }
+
+      // Get ALL clients for birthday check (not just those with lembretes)
+      const { data: allClientes } = await supabase
+        .from('clientes')
+        .select('*')
+        .eq('user_id', userId);
 
       // Get user's planos for variable replacement
       const { data: planos } = await supabase
@@ -140,102 +230,73 @@ Deno.serve(async (req: Request) => {
 
       const planosMap = new Map((planos || []).map((p: any) => [p.id, p]));
 
-      for (const cliente of clientes) {
-        if (!cliente.whatsapp || !cliente.data_vencimento) continue;
+      // --- Expiration notifications ---
+      if (clientes && clientes.length > 0) {
+        for (const cliente of clientes) {
+          if (!cliente.whatsapp || !cliente.data_vencimento) continue;
 
-        const dataVenc = new Date(cliente.data_vencimento);
-        dataVenc.setHours(0, 0, 0, 0);
+          const dataVenc = new Date(cliente.data_vencimento);
+          dataVenc.setHours(0, 0, 0, 0);
 
-        let templateMsg: string | null = null;
-        let tipoNotificacao: string | null = null;
+          let templateMsg: string | null = null;
+          let tipoNotificacao: string | null = null;
 
-        if (dataVenc < hoje) {
-          templateMsg = msg.vencido;
-          tipoNotificacao = 'vencido';
-        } else if (dataVenc.getTime() === hoje.getTime()) {
-          templateMsg = msg.vence_hoje;
-          tipoNotificacao = 'vence_hoje';
-        } else if (dataVenc > hoje && dataVenc <= tresDias) {
-          templateMsg = msg.proximo_vencer;
-          tipoNotificacao = 'proximo_vencer';
-        }
-
-        if (!templateMsg || !tipoNotificacao) continue;
-
-        // Check if we already sent this notification today to avoid duplicates
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
-
-        const { data: existing } = await supabase
-          .from('whatsapp_messages')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('phone', cliente.whatsapp)
-          .eq('session_id', `auto_${tipoNotificacao}`)
-          .gte('created_at', todayStart.toISOString())
-          .lte('created_at', todayEnd.toISOString())
-          .limit(1);
-
-        if (existing && existing.length > 0) {
-          continue; // Already notified today
-        }
-
-        // Build variable data
-        const plano = cliente.plano ? planosMap.get(cliente.plano) : null;
-        const planoNome = (plano as any)?.nome || '';
-        const valorPlano = (plano as any)?.valor || '';
-
-        const message = replaceTemplateVariables(templateMsg, {
-          nome: cliente.nome || '',
-          whatsapp: cliente.whatsapp || '',
-          email: cliente.email || '',
-          usuario: cliente.usuario || '',
-          senha: cliente.senha || '',
-          data_vencimento: cliente.data_vencimento || '',
-          plano_nome: planoNome,
-          valor_plano: valorPlano ? `R$ ${valorPlano}` : '',
-          desconto: cliente.desconto || '',
-          observacao: cliente.observacao || '',
-          app: cliente.app || '',
-          dispositivo: cliente.dispositivo || '',
-          telas: cliente.telas?.toString() || '',
-          mac: cliente.mac || '',
-        });
-
-        try {
-          const phone = cliente.whatsapp.replace(/\D/g, '');
-
-          // Send via Evolution API
-          const sendResp = await fetch(`${evolutionUrl}/message/sendText/${sessionId}`, {
-            method: 'POST',
-            headers: { 'apikey': evolutionKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ number: phone, text: message }),
-          });
-
-          const status = sendResp.ok ? 'sent' : 'failed';
-
-          // Log in whatsapp_messages
-          await supabase.from('whatsapp_messages').insert({
-            user_id: userId,
-            phone: cliente.whatsapp,
-            message: message,
-            session_id: `auto_${tipoNotificacao}`,
-            status,
-            sent_at: new Date().toISOString(),
-          });
-
-          if (sendResp.ok) {
-            totalSent++;
-            console.log(`✅ [${tipoNotificacao}] Sent to ${cliente.nome} (${phone})`);
-          } else {
-            totalErrors++;
-            console.error(`❌ [${tipoNotificacao}] Failed for ${cliente.nome}: ${sendResp.statusText}`);
+          if (dataVenc < hoje) {
+            templateMsg = msg.vencido;
+            tipoNotificacao = 'vencido';
+          } else if (dataVenc.getTime() === hoje.getTime()) {
+            templateMsg = msg.vence_hoje;
+            tipoNotificacao = 'vence_hoje';
+          } else if (dataVenc > hoje && dataVenc <= tresDias) {
+            templateMsg = msg.proximo_vencer;
+            tipoNotificacao = 'proximo_vencer';
           }
-        } catch (sendErr: any) {
-          totalErrors++;
-          console.error(`❌ Send error for ${cliente.nome}:`, sendErr.message);
+
+          if (!templateMsg || !tipoNotificacao) continue;
+
+          const sent = await sendNotification(supabase, evolutionUrl, evolutionKey, sessionId, userId, cliente, templateMsg, tipoNotificacao, planosMap);
+          if (sent === 'sent') totalSent++;
+          else if (sent === 'error') totalErrors++;
+        }
+      }
+
+      // --- Birthday notifications ---
+      if (msg.aniversario_cliente && allClientes && allClientes.length > 0) {
+        const hojeStr = `${String(hoje.getMonth() + 1).padStart(2, '0')}/${String(hoje.getDate()).padStart(2, '0')}`;
+
+        for (const cliente of allClientes) {
+          if (!cliente.whatsapp || !cliente.aniversario) continue;
+
+          // Parse birthday - support formats: DD/MM, DD/MM/YYYY, YYYY-MM-DD
+          let bDay: number | null = null;
+          let bMonth: number | null = null;
+          const aniv = cliente.aniversario.trim();
+
+          if (aniv.includes('/')) {
+            const parts = aniv.split('/');
+            bDay = parseInt(parts[0], 10);
+            bMonth = parseInt(parts[1], 10);
+          } else if (aniv.includes('-')) {
+            const parts = aniv.split('-');
+            if (parts[0].length === 4) {
+              // YYYY-MM-DD
+              bMonth = parseInt(parts[1], 10);
+              bDay = parseInt(parts[2], 10);
+            } else {
+              // DD-MM-YYYY
+              bDay = parseInt(parts[0], 10);
+              bMonth = parseInt(parts[1], 10);
+            }
+          }
+
+          if (!bDay || !bMonth) continue;
+
+          const clienteAnivStr = `${String(bMonth).padStart(2, '0')}/${String(bDay).padStart(2, '0')}`;
+          if (clienteAnivStr !== hojeStr) continue;
+
+          const sent = await sendNotification(supabase, evolutionUrl, evolutionKey, sessionId, userId, cliente, msg.aniversario_cliente, 'aniversario', planosMap);
+          if (sent === 'sent') totalSent++;
+          else if (sent === 'error') totalErrors++;
         }
       }
     }
