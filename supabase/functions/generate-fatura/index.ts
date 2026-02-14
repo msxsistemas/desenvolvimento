@@ -816,7 +816,7 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
       }
 
-      // 4. Send WhatsApp with invoice link
+      // 4. Send WhatsApp with invoice link using template from mensagens_padroes
       const faturaUrl = `${req.headers.get('origin') || 'https://id-preview--bde754a3-9b0e-4fc4-b801-0602657a64ed.lovable.app'}/fatura/${fatura.id}`;
       
       try {
@@ -835,14 +835,55 @@ Deno.serve(async (req) => {
           if (sessions && sessions.length > 0) {
             const sessionId = sessions[0].session_id;
             const phone = cliente_whatsapp.replace(/\D/g, '');
-            const message = `Olá ${cliente_nome}! 🧾\n\nSua fatura de renovação está disponível:\n\n📋 *Plano:* ${plano_nome || 'N/A'}\n💰 *Valor:* R$ ${parsedValor.toFixed(2)}\n\n🔗 Acesse o link para pagar:\n${faturaUrl}\n\nObrigado! 🙏`;
+
+            // Fetch fatura_criada template from mensagens_padroes
+            const { data: mensagensPadroes } = await supabaseAdmin
+              .from('mensagens_padroes')
+              .select('fatura_criada')
+              .eq('user_id', user.id)
+              .maybeSingle();
+
+            let message: string;
+
+            if (mensagensPadroes?.fatura_criada) {
+              // Replace template variables
+              const template = mensagensPadroes.fatura_criada;
+              const hour = new Date().getHours();
+              const saudacao = hour >= 5 && hour < 12 ? 'Bom dia' : hour >= 12 && hour < 18 ? 'Boa tarde' : 'Boa noite';
+              const partes = (cliente_nome || '').trim().split(' ');
+              const primeiroNome = partes[0] || '';
+              const sobrenome = partes.length > 1 ? partes.slice(1).join(' ') : '';
+
+              const replacements: Record<string, string> = {
+                '{saudacao}': saudacao,
+                '{nome_cliente}': cliente_nome || '',
+                '{nome}': primeiroNome,
+                '{cliente}': cliente_nome || '',
+                '{sobrenome}': sobrenome,
+                '{whatsapp}': cliente_whatsapp || '',
+                '{nome_plano}': plano_nome || '',
+                '{plano}': plano_nome || '',
+                '{valor_plano}': `R$ ${parsedValor.toFixed(2)}`,
+                '{valor}': `R$ ${parsedValor.toFixed(2)}`,
+                '{link_fatura}': faturaUrl,
+              };
+
+              message = template;
+              for (const [key, value] of Object.entries(replacements)) {
+                message = message.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+              }
+              message = message.replace(/{br}/g, '\n');
+            } else {
+              // Fallback hardcoded message
+              message = `Olá ${cliente_nome}! 🧾\n\nSua fatura de renovação está disponível:\n\n📋 *Plano:* ${plano_nome || 'N/A'}\n💰 *Valor:* R$ ${parsedValor.toFixed(2)}\n\n🔗 Acesse o link para pagar:\n${faturaUrl}\n\nObrigado! 🙏`;
+            }
             
             await fetch(`${evolutionUrl}/message/sendText/${sessionId}`, {
               method: 'POST',
               headers: { 'apikey': evolutionKey, 'Content-Type': 'application/json' },
               body: JSON.stringify({ number: phone, text: message })
             });
-            console.log('✅ WhatsApp message sent to:', phone);
+            console.log('✅ WhatsApp fatura_criada message sent to:', phone);
           }
         }
       } catch (whatsErr: any) {
