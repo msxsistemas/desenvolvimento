@@ -530,7 +530,20 @@ export default function Auth() {
                         name="signup-whatsapp"
                         type="tel"
                         placeholder="(00) 00000-0000"
+                        maxLength={15}
                         className="pl-10 h-12 bg-secondary border-border"
+                        onChange={(e) => {
+                          let value = e.target.value.replace(/\D/g, '');
+                          if (value.length > 11) value = value.slice(0, 11);
+                          if (value.length > 7) {
+                            value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+                          } else if (value.length > 2) {
+                            value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+                          } else if (value.length > 0) {
+                            value = `(${value}`;
+                          }
+                          e.target.value = value;
+                        }}
                       />
                     </div>
                   </div>

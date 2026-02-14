@@ -15,8 +15,13 @@ export default function AdminProtectedRoute({ children }: { children?: React.Rea
     );
   }
 
-  if (!user || !isAdmin) {
+  if (!user) {
     return <Navigate to="/admin/login" replace />;
+  }
+
+  // Usuário autenticado mas não é admin → redireciona para painel de usuário
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return children ? <>{children}</> : <Outlet />;
