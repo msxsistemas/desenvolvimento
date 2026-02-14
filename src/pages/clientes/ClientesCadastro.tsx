@@ -74,7 +74,6 @@ export default function ClientesCadastro() {
       dataVencApp: "",
       desconto: "0,00",
       descontoRecorrente: false,
-      mensagemBoasVindas: "nao_enviar",
       ativarCobrancas: false,
       comoConheceu: "",
       indicador: "",
