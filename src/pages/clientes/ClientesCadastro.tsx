@@ -341,7 +341,7 @@ export default function ClientesCadastro() {
                   <SelectTrigger className={`bg-background border-border ${fieldErrors.plano ? 'border-destructive' : ''}`}>
                     <SelectValue placeholder="Selecione o plano" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" side="bottom" className="max-h-[300px]">
                     {planos.map((p) => (
                       <SelectItem key={p.id} value={String(p.id)}>
                         {p.nome} – {typeof p.valor === "string" && p.valor.trim().startsWith("R$") ? p.valor.replace("R$", "").trim() : p.valor}
