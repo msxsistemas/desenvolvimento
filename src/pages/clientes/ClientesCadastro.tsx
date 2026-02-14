@@ -174,17 +174,16 @@ export default function ClientesCadastro() {
       const novoCliente = await criar(clienteData);
 
       // Enviar mensagem de boas-vindas se configurado
-      if (novoCliente.whatsapp && data.mensagemBoasVindas !== 'nao_enviar') {
-        try {
-          const { data: user } = await supabase.auth.getUser();
-          if (user?.user?.id) {
-            const { data: mensagensPadroes } = await supabase
-              .from('mensagens_padroes')
-              .select('bem_vindo')
-              .eq('user_id', user.user.id)
-              .maybeSingle();
+      try {
+        const { data: user } = await supabase.auth.getUser();
+        if (user?.user?.id && novoCliente.whatsapp) {
+          const { data: mensagensPadroes } = await supabase
+            .from('mensagens_padroes')
+            .select('bem_vindo, enviar_bem_vindo')
+            .eq('user_id', user.user.id)
+            .maybeSingle();
 
-            if (mensagensPadroes?.bem_vindo) {
+          if (mensagensPadroes?.enviar_bem_vindo && mensagensPadroes?.bem_vindo) {
               const plano = planos.find(p => String(p.id) === novoCliente.plano || p.nome === novoCliente.plano);
               const planoNome = plano?.nome || novoCliente.plano || '';
               const valorPlano = plano?.valor || '0,00';
@@ -223,11 +222,10 @@ export default function ClientesCadastro() {
                 title: "Mensagem de boas-vindas",
                 description: "Mensagem agendada para envio em 30 segundos",
               });
-            }
           }
-        } catch (welcomeError) {
-          console.error("Erro ao enviar mensagem de boas-vindas:", welcomeError);
         }
+      } catch (welcomeError) {
+        console.error("Erro ao enviar mensagem de boas-vindas:", welcomeError);
       }
 
       toast({
