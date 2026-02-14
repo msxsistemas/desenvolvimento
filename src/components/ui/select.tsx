@@ -88,6 +88,10 @@ const SelectContent = React.forwardRef<
           position === "popper" &&
             "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] max-h-[240px] overflow-y-auto"
         )}
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'hsl(var(--border)) transparent',
+        }}
       >
         {children}
       </SelectPrimitive.Viewport>
