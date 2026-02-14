@@ -140,10 +140,10 @@ export const useEvolutionAPISimple = () => {
 
   // Não faz polling automático de status - sessão só muda via ações do usuário
 
-  const checkStatus = useCallback(async (showToast = true) => {
+  const checkStatus = useCallback(async (showToast = true, updateConnecting = true) => {
     if (!userId) return null;
 
-    setConnecting(true);
+    if (updateConnecting) setConnecting(true);
     try {
       const data = await callEvolutionAPI('status');
       
@@ -174,7 +174,7 @@ export const useEvolutionAPISimple = () => {
       if (showToast) toast.error('Erro ao verificar status');
       return null;
     } finally {
-      setConnecting(false);
+      if (updateConnecting) setConnecting(false);
     }
   }, [userId, callEvolutionAPI]);
 
@@ -184,7 +184,7 @@ export const useEvolutionAPISimple = () => {
     }
 
     const interval = setInterval(async () => {
-      const status = await checkStatus(false);
+      const status = await checkStatus(false, false);
       if (status === 'connected') {
         clearInterval(interval);
         statusIntervalRef.current = null;
