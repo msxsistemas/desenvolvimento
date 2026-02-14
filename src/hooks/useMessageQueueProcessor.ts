@@ -1,7 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentUser } from './useCurrentUser';
-import { useEvolutionAPISimple } from './useEvolutionAPISimple';
 
 interface EnvioConfig {
   configuracoes_ativas: boolean;
@@ -30,10 +29,10 @@ function getRandomInterval(min: number, max: number): number {
 /**
  * Global hook that processes scheduled/pending WhatsApp messages in the background,
  * respecting the user's envio_config (intervals, batch limits, pauses).
+ * Does NOT use useEvolutionAPISimple to avoid hook count issues.
  */
 export const useMessageQueueProcessor = () => {
   const { userId } = useCurrentUser();
-  const { sendMessage, isConnected, hydrated } = useEvolutionAPISimple();
   const processingRef = useRef(false);
   const batchCountRef = useRef(0);
   const pausingRef = useRef(false);
@@ -42,7 +41,36 @@ export const useMessageQueueProcessor = () => {
   const dailySentRef = useRef(0);
   const lastDayRef = useRef<string>('');
 
-  // Load config from DB
+  const sendMessageDirect = useCallback(async (phone: string, message: string) => {
+    // Normalize phone
+    const digitsOnly = phone.replace(/\D/g, '');
+    const normalizedPhone = !digitsOnly.startsWith('55') && digitsOnly.length >= 10
+      ? '55' + digitsOnly
+      : digitsOnly;
+
+    const { data, error } = await supabase.functions.invoke('evolution-api', {
+      body: { action: 'sendMessage', phone: normalizedPhone, message },
+    });
+
+    if (error) throw new Error(error.message || 'Erro ao enviar mensagem');
+    if (data?.error) throw new Error(data.error);
+    return data;
+  }, []);
+
+  const checkIsConnected = useCallback(async (): Promise<boolean> => {
+    if (!userId) return false;
+    try {
+      const { data } = await supabase
+        .from('whatsapp_sessions')
+        .select('status')
+        .eq('user_id', userId)
+        .maybeSingle();
+      return data?.status === 'connected';
+    } catch {
+      return false;
+    }
+  }, [userId]);
+
   const loadConfig = useCallback(async () => {
     if (!userId) return;
     try {
@@ -73,19 +101,19 @@ export const useMessageQueueProcessor = () => {
   const processNext = useCallback(async () => {
     if (!userId || processingRef.current || pausingRef.current) return;
 
+    // Check connection status from DB
+    const connected = await checkIsConnected();
+    if (!connected) return;
+
     const config = configRef.current;
 
-    // Reset daily counter if new day
     const today = new Date().toISOString().slice(0, 10);
     if (lastDayRef.current !== today) {
       lastDayRef.current = today;
       dailySentRef.current = 0;
     }
 
-    // Check daily limit
-    if (config.limite_diario && dailySentRef.current >= config.limite_diario) {
-      return;
-    }
+    if (config.limite_diario && dailySentRef.current >= config.limite_diario) return;
 
     try {
       const agora = new Date().toISOString();
@@ -104,24 +132,21 @@ export const useMessageQueueProcessor = () => {
       processingRef.current = true;
 
       try {
-        await sendMessage(msg.phone, msg.message);
+        await sendMessageDirect(msg.phone, msg.message);
         await supabase
           .from('whatsapp_messages')
           .update({ status: 'sent', scheduled_for: null })
           .eq('id', msg.id);
         console.log(`[QueueProcessor] Mensagem enviada para ${msg.phone}`);
-        
+
         batchCountRef.current++;
         dailySentRef.current++;
 
-        // Check if batch limit reached → pause
         if (batchCountRef.current >= config.limite_lote) {
           batchCountRef.current = 0;
           pausingRef.current = true;
           console.log(`[QueueProcessor] Lote atingido, pausando ${config.pausa_prolongada}s`);
-          setTimeout(() => {
-            pausingRef.current = false;
-          }, config.pausa_prolongada * 1000);
+          setTimeout(() => { pausingRef.current = false; }, config.pausa_prolongada * 1000);
         }
       } catch (err) {
         console.error(`[QueueProcessor] Erro ao enviar para ${msg.phone}:`, err);
@@ -136,22 +161,19 @@ export const useMessageQueueProcessor = () => {
       console.error('[QueueProcessor] Erro geral:', e);
       processingRef.current = false;
     }
-  }, [userId, sendMessage]);
+  }, [userId, sendMessageDirect, checkIsConnected]);
 
   useEffect(() => {
-    if (!userId || !hydrated || !isConnected) return;
+    if (!userId) return;
 
-    // Load config initially
     loadConfig();
-
-    // Reload config every 60s to pick up changes
     const configInterval = setInterval(loadConfig, 60000);
 
     const scheduleNext = () => {
       const config = configRef.current;
       const delay = config.configuracoes_ativas
         ? getRandomInterval(config.tempo_minimo, config.tempo_maximo)
-        : 5000; // default 5s when config is off
+        : 5000;
 
       timeoutRef.current = setTimeout(async () => {
         await processNext();
@@ -159,7 +181,6 @@ export const useMessageQueueProcessor = () => {
       }, delay);
     };
 
-    // Start processing
     processNext();
     scheduleNext();
 
@@ -167,5 +188,5 @@ export const useMessageQueueProcessor = () => {
       clearInterval(configInterval);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [userId, hydrated, isConnected, loadConfig, processNext]);
+  }, [userId, loadConfig, processNext]);
 };
