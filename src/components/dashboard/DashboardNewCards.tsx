@@ -33,73 +33,73 @@ export default function DashboardNewCards({
   return (
     <section className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {/* Card 1 - Novos Clientes */}
-      <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white flex items-center gap-4">
-        <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
-          <Users className="h-6 w-6 text-[hsl(142,70%,45%)]" />
+      <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
+            <Users className="h-5 w-5 text-[hsl(142,70%,45%)]" />
+          </div>
+          <span className="text-sm font-medium text-foreground">Novos Clientes</span>
         </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
-            <span className="text-sm text-muted-foreground">Novos Clientes Hoje</span>
-            <span className="text-foreground font-semibold">{novosClientesHoje}</span>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Hoje</span>
+            <span className="text-sm font-semibold text-foreground">{novosClientesHoje}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
-            <span className="text-sm text-muted-foreground">Novos Clientes Esta Semana</span>
-            <span className="text-foreground font-semibold">{novosClientesSemana}</span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Esta Semana</span>
+            <span className="text-sm font-semibold text-foreground">{novosClientesSemana}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-[hsl(142,70%,45%)]" />
-            <span className="text-sm text-muted-foreground">Novos Clientes Este Mês</span>
-            <span className="text-foreground font-semibold">{novosClientesMes}</span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Este Mês</span>
+            <span className="text-sm font-semibold text-foreground">{novosClientesMes}</span>
           </div>
         </div>
       </div>
 
       {/* Card 2 - Clientes Vencendo */}
-      <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white flex items-center gap-4">
-        <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
-          <Users className="h-6 w-6 text-[hsl(142,70%,45%)]" />
+      <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
+            <Users className="h-5 w-5 text-[hsl(142,70%,45%)]" />
+          </div>
+          <span className="text-sm font-medium text-foreground">Clientes Vencendo</span>
         </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Clientes Vencendo Hoje</span>
-            <span className="text-foreground font-semibold">{clientesVencendoHoje}</span>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Vencendo Hoje</span>
+            <span className="text-sm font-semibold text-foreground">{clientesVencendoHoje}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Clientes Vencendo em 3 Dias</span>
-            <span className="text-foreground font-semibold">{clientesVencendo3Dias}</span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Vencendo em 3 Dias</span>
+            <span className="text-sm font-semibold text-foreground">{clientesVencendo3Dias}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Clientes sem Renovar este Mês</span>
-            <span className="text-foreground font-semibold">{clientesSemRenovar}</span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Sem Renovar este Mês</span>
+            <span className="text-sm font-semibold text-foreground">{clientesSemRenovar}</span>
           </div>
         </div>
       </div>
 
-      {/* Card 3 - Projeção */}
-      <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5 text-white">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-1">
-            <TrendingUp className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+      {/* Card 3 - Valores a Receber */}
+      <div className="relative overflow-hidden rounded-xl bg-card border border-border p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="rounded-full bg-[hsl(142,70%,45%)]/20 p-2">
+            <TrendingUp className="h-5 w-5 text-[hsl(142,70%,45%)]" />
           </div>
-          <span className="text-sm text-muted-foreground">Valores a Receber</span>
+          <span className="text-sm font-medium text-foreground">Valores a Receber</span>
         </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[hsl(142,70%,45%)]" />
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Projeção Mensal</span>
-            <span className="text-foreground font-semibold">{fmt(projecaoMensal)}</span>
+            <span className="text-sm font-semibold text-foreground">{fmt(projecaoMensal)}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-[hsl(142,70%,45%)]">$</span>
+          <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Hoje</span>
-            <span className="text-foreground font-semibold">{fmt(valoresHoje)}</span>
+            <span className="text-sm font-semibold text-foreground">{fmt(valoresHoje)}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-[hsl(142,70%,45%)]">$</span>
+          <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Amanhã</span>
-            <span className="text-foreground font-semibold">{fmt(valoresAmanha)}</span>
+            <span className="text-sm font-semibold text-foreground">{fmt(valoresAmanha)}</span>
           </div>
         </div>
       </div>
