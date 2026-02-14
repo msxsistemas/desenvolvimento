@@ -232,7 +232,8 @@ Deno.serve(async (req: Request) => {
         continue;
       }
 
-      const sessionId = sessions[0].session_id;
+      // Convert session_id to Evolution API instance name format (underscores instead of hyphens)
+      const sessionId = `user_${userId.replace(/-/g, '_')}`;
 
       // Get user's clients with lembretes enabled
       const { data: clientes, error: clientErr } = await supabase
