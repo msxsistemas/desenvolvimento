@@ -172,14 +172,6 @@ export default function ConfiguracoesNotificacoes() {
                 <Input id="dias_prox" type="number" min={0} value={config.dias_proximo_vencer} onChange={(e) => update("dias_proximo_vencer", Number(e.target.value))} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="taxa">Valor da taxa para pagamentos online:</Label>
-                <Input id="taxa" type="number" min={0} step={0.01} value={config.valor_taxa_pagamento} onChange={(e) => update("valor_taxa_pagamento", Number(e.target.value))} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="api_chatbot">Api ChatBot Painel KOffice:</Label>
-                <Input id="api_chatbot" type="text" value={config.api_chatbot} onChange={(e) => update("api_chatbot", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
                 <Label htmlFor="qtd_msg">Quantidade de mensagens a serem enviadas por vez:</Label>
                 <Input id="qtd_msg" type="number" min={1} value={config.quantidade_mensagens} onChange={(e) => update("quantidade_mensagens", Number(e.target.value))} />
               </div>
@@ -188,7 +180,7 @@ export default function ConfiguracoesNotificacoes() {
                 <Input id="dias_apos" type="number" min={0} value={config.dias_apos_vencimento} onChange={(e) => update("dias_apos_vencimento", Number(e.target.value))} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="whatsapp_pag">WhatsApp para receber notificação de pagamentos online. Ex: 5585999914860</Label>
+                <Label htmlFor="whatsapp_pag">WhatsApp para receber notificação de pagamentos online. Ex: 5511999999999</Label>
                 <Input id="whatsapp_pag" type="text" value={config.whatsapp_pagamentos} onChange={(e) => update("whatsapp_pagamentos", e.target.value)} />
               </div>
             </div>
