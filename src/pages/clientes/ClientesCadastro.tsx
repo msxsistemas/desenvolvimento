@@ -171,16 +171,21 @@ export default function ClientesCadastro() {
 
       // Modo criação
       const novoCliente = await criar(clienteData);
+      console.log("[ClientesCadastro] Cliente criado:", novoCliente?.id, novoCliente?.whatsapp);
 
       // Enviar mensagem de boas-vindas se configurado
       try {
         const { data: user } = await supabase.auth.getUser();
-        if (user?.user?.id && novoCliente.whatsapp) {
-          const { data: mensagensPadroes } = await supabase
+        console.log("[ClientesCadastro] User ID:", user?.user?.id, "WhatsApp:", novoCliente?.whatsapp);
+        
+        if (user?.user?.id && novoCliente?.whatsapp) {
+          const { data: mensagensPadroes, error: mpError } = await supabase
             .from('mensagens_padroes')
             .select('bem_vindo, enviar_bem_vindo')
             .eq('user_id', user.user.id)
             .maybeSingle();
+
+          console.log("[ClientesCadastro] enviar_bem_vindo:", mensagensPadroes?.enviar_bem_vindo, "has bem_vindo:", !!mensagensPadroes?.bem_vindo, "error:", mpError);
 
           if (mensagensPadroes?.enviar_bem_vindo && mensagensPadroes?.bem_vindo) {
               const plano = planos.find(p => String(p.id) === novoCliente.plano || p.nome === novoCliente.plano);
@@ -205,9 +210,9 @@ export default function ClientesCadastro() {
               );
 
               const scheduledTime = new Date();
-              scheduledTime.setSeconds(scheduledTime.getSeconds() + 30);
+              scheduledTime.setSeconds(scheduledTime.getSeconds() + 10);
 
-              await supabase.from('whatsapp_messages').insert({
+              const { error: insertError } = await supabase.from('whatsapp_messages').insert({
                 user_id: user.user.id,
                 phone: novoCliente.whatsapp,
                 message: mensagemFinal,
@@ -217,10 +222,14 @@ export default function ClientesCadastro() {
                 scheduled_for: scheduledTime.toISOString(),
               } as any);
 
-              toast({
-                title: "Mensagem de boas-vindas",
-                description: "Mensagem agendada para envio em 30 segundos",
-              });
+              console.log("[ClientesCadastro] Insert welcome message result - error:", insertError);
+
+              if (!insertError) {
+                toast({
+                  title: "Mensagem de boas-vindas",
+                  description: "Mensagem agendada para envio em 10 segundos",
+                });
+              }
           }
         }
       } catch (welcomeError) {
