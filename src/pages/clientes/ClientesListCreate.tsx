@@ -1284,8 +1284,11 @@ export default function ClientesListCreate() {
           <TableBody>
             {loadingClientes ? (
               <TableRow>
-               <TableCell colSpan={8} className="text-center py-8">
-                  <span className="text-muted-foreground">Carregando clientes...</span>
+                <TableCell colSpan={8} className="text-center py-16">
+                  <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <span className="text-muted-foreground text-sm">Carregando clientes...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : clientesPaginados.length === 0 ? (
