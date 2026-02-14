@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -145,14 +144,11 @@ export default function ConfiguracaoEnvio() {
   };
 
   return (
-    <main className="space-y-4">
-      {/* Header */}
-      <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Configurações de Envio</h1>
-          <p className="text-sm text-muted-foreground">Configure os intervalos e limites para envio de mensagens pelo WhatsApp</p>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Configurações de Envio</h1>
+        <p className="text-muted-foreground mt-1">Configure os intervalos e limites para envio de mensagens pelo WhatsApp</p>
+      </div>
 
       {/* Toggle Configurações Ativas */}
       <div className="rounded-lg border border-border bg-card p-4 flex items-center gap-4">
@@ -329,6 +325,6 @@ export default function ConfiguracaoEnvio() {
           Restaurar Padrão
         </Button>
       </div>
-    </main>
+    </div>
   );
 }
