@@ -21,6 +21,7 @@ export const useEvolutionAPISimple = () => {
   const statusIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const savingRef = useRef(false);
   const hasLoadedRef = useRef(false);
+  const failCountRef = useRef(0);
 
   // Cleanup interval on unmount
   useEffect(() => {
@@ -153,14 +154,22 @@ export const useEvolutionAPISimple = () => {
     if (statusIntervalRef.current) return;
 
     // Checagem leve em background para detectar desconexão externa
+    failCountRef.current = 0;
     statusIntervalRef.current = setInterval(async () => {
       try {
         const data = await callEvolutionAPI('status');
-        if (data.status !== 'connected') {
-          setSession(null);
+        if (data.status === 'connected') {
+          failCountRef.current = 0;
+        } else {
+          failCountRef.current += 1;
+          console.warn(`[WhatsApp] Status não-conectado (${failCountRef.current}/3)`);
+          if (failCountRef.current >= 3) {
+            setSession(null);
+            failCountRef.current = 0;
+          }
         }
       } catch {
-        // se falhar, não derruba estado (evita piscar)
+        // se falhar por erro de rede, não conta como desconexão
       }
     }, 60000);
 
