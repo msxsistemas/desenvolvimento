@@ -58,6 +58,18 @@ export default function ConfiguracaoEnvio() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const applyData = (data: any) => {
+    setConfig({
+      tempoMinimo: String(data.tempo_minimo),
+      tempoMaximo: String(data.tempo_maximo),
+      limiteLote: String(data.limite_lote),
+      pausaProlongada: String(data.pausa_prolongada),
+      limiteDiario: data.limite_diario != null ? String(data.limite_diario) : "",
+      variarIntervalo: data.variar_intervalo,
+      configuracoesAtivas: data.configuracoes_ativas,
+    });
+  };
+
   useEffect(() => {
     if (!userId) return;
     setLoading(true);
@@ -67,19 +79,33 @@ export default function ConfiguracaoEnvio() {
         .select("*")
         .eq("user_id", userId)
         .maybeSingle();
-      if (data) {
-        setConfig({
-          tempoMinimo: String(data.tempo_minimo),
-          tempoMaximo: String(data.tempo_maximo),
-          limiteLote: String(data.limite_lote),
-          pausaProlongada: String(data.pausa_prolongada),
-          limiteDiario: data.limite_diario != null ? String(data.limite_diario) : "",
-          variarIntervalo: data.variar_intervalo,
-          configuracoesAtivas: data.configuracoes_ativas,
-        });
-      }
+      if (data) applyData(data);
       setLoading(false);
     })();
+
+    // Realtime subscription for cross-tab/device sync
+    const channel = supabase
+      .channel('envio_config_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'envio_config',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.new && typeof payload.new === 'object' && 'tempo_minimo' in payload.new) {
+            applyData(payload.new);
+            toast.info('Configurações atualizadas em outro dispositivo');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   const num = (v: string) => Number(v) || 0;
