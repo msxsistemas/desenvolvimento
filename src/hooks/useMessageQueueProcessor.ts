@@ -71,22 +71,13 @@ export const useMessageQueueProcessor = () => {
   const checkIsConnected = useCallback(async (): Promise<boolean> => {
     if (!userId) return false;
     try {
-      // Check real status from Evolution API instead of just DB
-      const { data, error } = await supabase.functions.invoke('evolution-api', {
-        body: { action: 'status' },
-      });
-      
-      if (error || !data || data.status !== 'connected') {
-        // Update DB if API says disconnected but DB says connected
-        if (data && data.status !== 'connected') {
-          await supabase
-            .from('whatsapp_sessions')
-            .update({ status: data.status === 'connecting' ? 'connecting' : 'disconnected' })
-            .eq('user_id', userId);
-        }
-        return false;
-      }
-      return true;
+      // Check DB status first (fast, no API call)
+      const { data } = await supabase
+        .from('whatsapp_sessions')
+        .select('status')
+        .eq('user_id', userId)
+        .maybeSingle();
+      return data?.status === 'connected';
     } catch {
       return false;
     }
