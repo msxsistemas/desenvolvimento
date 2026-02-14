@@ -21,6 +21,12 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
   const [instanceName, setInstanceName] = useState(currentConfig?.instanceName || 'default');
   const [testing, setTesting] = useState(false);
 
+  const applyData = (sessionData: Record<string, unknown>) => {
+    setApiUrl(String(sessionData.apiUrl || ''));
+    setApiKey(String(sessionData.apiKey || ''));
+    setInstanceName(String(sessionData.instanceName || 'default'));
+  };
+
   useEffect(() => {
     if (!userId) return;
     (async () => {
@@ -31,12 +37,39 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
         .eq('session_id', 'api_config')
         .maybeSingle();
       if (data?.session_data) {
-        const cfg = data.session_data as Record<string, unknown>;
-        setApiUrl(String(cfg.apiUrl || ''));
-        setApiKey(String(cfg.apiKey || ''));
-        setInstanceName(String(cfg.instanceName || 'default'));
+        applyData(data.session_data as Record<string, unknown>);
       }
     })();
+
+    // Realtime subscription for cross-tab/device sync
+    const channel = supabase
+      .channel('whatsapp_config_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'whatsapp_sessions',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (
+            payload.new &&
+            typeof payload.new === 'object' &&
+            'session_id' in payload.new &&
+            payload.new.session_id === 'api_config' &&
+            'session_data' in payload.new
+          ) {
+            applyData(payload.new.session_data as Record<string, unknown>);
+            toast.info('Configuração de WhatsApp atualizada em outro dispositivo');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   const handleSave = async () => {
