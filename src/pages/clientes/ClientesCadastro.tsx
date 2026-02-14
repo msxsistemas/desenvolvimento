@@ -78,7 +78,7 @@ export default function ClientesCadastro() {
       comoConheceu: "",
       indicador: "",
       observacao: "",
-      lembretes: false,
+      lembretes: true,
       mensagem: "",
     },
   });
