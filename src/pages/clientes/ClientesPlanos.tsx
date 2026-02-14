@@ -29,8 +29,6 @@ export default function ClientesPlanos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
     nome: "",
@@ -72,15 +70,13 @@ export default function ClientesPlanos() {
           setPlanos((prev) => 
             prev.map((p) => (p.id === editingPlano.id ? atualizado : p))
           );
-          setSuccessMessage("Plano atualizado");
-          setShowSuccessDialog(true);
+          toast({ title: "Sucesso", description: "Plano atualizado com sucesso!", duration: 3000 });
         }
       } else {
         const novo = await criar(formData);
         if (novo) {
           setPlanos((prev) => [novo, ...prev]);
-          setSuccessMessage("Plano criado");
-          setShowSuccessDialog(true);
+          toast({ title: "Sucesso", description: "Plano cadastrado com sucesso!", duration: 3000 });
         }
       }
       
@@ -452,22 +448,8 @@ export default function ClientesPlanos() {
         </DialogContent>
       </Dialog>
 
-      {/* Success Dialog */}
-      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <DialogContent className="sm:max-w-sm text-center">
-          <div className="flex flex-col items-center space-y-4 py-4">
-            <div className="w-12 h-12 rounded-full border-2 border-success flex items-center justify-center">
-              <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <p className="font-medium">{successMessage}</p>
-            <Button onClick={() => setShowSuccessDialog(false)} size="sm">
-              OK
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+
+
       {/* Desativar Confirmation Dialog */}
       <AlertDialog open={!!desativarTarget} onOpenChange={() => setDesativarTarget(null)}>
         <AlertDialogContent>
