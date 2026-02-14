@@ -147,8 +147,14 @@ export default function Auth() {
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
           toast.error('Email ou senha incorretos');
+        } else if (error.message.includes('Email not confirmed')) {
+          toast.error('Email não confirmado. Verifique sua caixa de entrada.');
+        } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+          toast.error('Muitas tentativas seguidas. Aguarde alguns minutos e tente novamente.');
+        } else if (error.message.includes('User not found')) {
+          toast.error('Usuário não encontrado.');
         } else {
-          toast.error(error.message);
+          toast.error('Erro ao fazer login. Tente novamente.');
         }
       } else {
         toast.success('Login realizado com sucesso!');
