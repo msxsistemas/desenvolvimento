@@ -141,18 +141,12 @@ export default function ConfiguracoesNotificacoes() {
   }
 
   return (
-    <div>
-      <header className="rounded-lg border mb-6 overflow-hidden shadow" aria-label="Configurações de Notificações">
-        <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5" aria-hidden="true" />
-            <h1 className="text-base font-semibold tracking-tight">Configurações de Notificações</h1>
-          </div>
-          <p className="text-xs/6 opacity-90">Gerencie horários, limites e ativação de notificações automáticas.</p>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Configurações de Notificações</h1>
+        <p className="text-muted-foreground mt-1">Gerencie horários, limites e ativação de notificações automáticas.</p>
+      </div>
 
-      <main className="space-y-4">
         {/* Configurações gerais */}
         <Card className="shadow-sm">
           <CardHeader>
@@ -230,7 +224,6 @@ export default function ConfiguracoesNotificacoes() {
             {saving ? "Salvando..." : "Salvar Configurações"}
           </Button>
         </div>
-      </main>
     </div>
   );
 }
