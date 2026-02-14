@@ -129,14 +129,18 @@ export default function AppLayout() {
             {/* Center/Right: Action icons + Expiration + Notifications + Profile */}
             <div className="flex items-center gap-2 sm:gap-3">
 
-              {/* Expiration alert badge */}
-              {isTrial && daysLeft !== null && daysLeft <= 3 && (
+              {/* Trial period badge */}
+              {isTrial && daysLeft !== null && (
                 <button
                   onClick={() => navigate('/planos-disponiveis')}
-                  className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium transition-colors border-destructive/50 bg-destructive/10 text-destructive hover:bg-destructive/20"
+                  className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium transition-colors ${
+                    daysLeft <= 3
+                      ? 'border-destructive/50 bg-destructive/10 text-destructive hover:bg-destructive/20'
+                      : 'border-warning/50 bg-warning/10 text-warning hover:bg-warning/20'
+                  }`}
                 >
                   <span>⏳</span>
-                  Plano Vencido: Você ainda tem {daysLeft} dia{daysLeft !== 1 ? 's' : ''} para renovação
+                  Período de teste: {daysLeft <= 0 ? 'Expirado' : `${daysLeft} dia${daysLeft !== 1 ? 's' : ''} restante${daysLeft !== 1 ? 's' : ''}`}
                 </button>
               )}
 
