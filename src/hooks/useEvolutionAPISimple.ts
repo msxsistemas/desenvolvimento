@@ -143,6 +143,7 @@ export const useEvolutionAPISimple = () => {
   const checkStatus = useCallback(async () => {
     if (!userId) return null;
 
+    setConnecting(true);
     try {
       const data = await callEvolutionAPI('status');
       
@@ -154,21 +155,26 @@ export const useEvolutionAPISimple = () => {
           profilePicture: data.profilePicture,
         });
 
-        // Stop status check if connected
         if (statusIntervalRef.current) {
           clearInterval(statusIntervalRef.current);
           statusIntervalRef.current = null;
         }
+        toast.success('WhatsApp conectado!');
       } else if (data.status === 'connecting') {
-        setSession(prev => prev ? { ...prev, status: 'connecting' } : null);
+        setSession({ status: 'connecting' });
+        toast.info('WhatsApp está conectando...');
       } else {
         setSession(null);
+        toast.info('WhatsApp desconectado');
       }
 
       return data.status;
     } catch (error) {
       console.error('Error checking status:', error);
+      toast.error('Erro ao verificar status');
       return null;
+    } finally {
+      setConnecting(false);
     }
   }, [userId, callEvolutionAPI]);
 
