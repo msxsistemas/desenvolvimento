@@ -217,7 +217,28 @@ Deno.serve(async (req) => {
         if (sendResult.ok) {
           result = { success: true, data: sendResult.data };
         } else {
-          result = { error: sendResult.data.message || 'Erro ao enviar mensagem' };
+          // Check if error is connection related
+          const errorMsg = JSON.stringify(sendResult.data);
+          const isConnectionError = errorMsg.includes('Connection Closed') || 
+            errorMsg.includes('Not Connected') || 
+            errorMsg.includes('Connection Failure');
+          
+          if (isConnectionError) {
+            // Update session status in database
+            const serviceClient = createClient(
+              Deno.env.get('SUPABASE_URL') ?? '',
+              Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+            );
+            await serviceClient
+              .from('whatsapp_sessions')
+              .update({ status: 'disconnected' })
+              .eq('user_id', user.id);
+            
+            console.log(`[Evolution API] Connection lost for ${instanceName}, updated DB status`);
+            result = { error: 'WhatsApp desconectado. Reconecte em "Parear WhatsApp".', connectionLost: true };
+          } else {
+            result = { error: sendResult.data?.response?.message?.[0] || sendResult.data.message || 'Erro ao enviar mensagem' };
+          }
         }
         break;
       }
