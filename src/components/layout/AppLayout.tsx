@@ -8,6 +8,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useProfile } from "@/hooks/useProfile";
 import { useNotificacoes } from "@/hooks/useNotificacoes";
+import { useMessageQueueProcessor } from "@/hooks/useMessageQueueProcessor";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +66,9 @@ export default function AppLayout() {
   const { profile } = useProfile(userId);
   const { notificacoes, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotificacoes(userId);
   const navigate = useNavigate();
+
+  // Global background processor for WhatsApp message queue
+  useMessageQueueProcessor();
 
   const getUserInitials = (name?: string | null, email?: string) => {
     const n = name || profile?.nome_completo;
