@@ -59,6 +59,49 @@ export const useZAPI = () => {
     loadConfig();
   }, [userId]);
 
+  const callZAPI = useCallback(async (action: string, extraData?: any) => {
+    const { data, error } = await supabase.functions.invoke('zapi-integration', {
+      body: { action, ...extraData },
+    });
+
+    if (error) {
+      console.error('Z-API error:', error);
+      throw new Error(error.message || 'Erro ao comunicar com Z-API');
+    }
+
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    return data;
+  }, []);
+
+  const createInstance = useCallback(async () => {
+    if (!userId) {
+      toast.error('Você precisa estar logado');
+      return false;
+    }
+    setConnecting(true);
+    try {
+      const data = await callZAPI('createInstance', { name: `MSX-${userId.substring(0, 8)}` });
+      if (data?.success) {
+        setConfig({
+          instanceId: data.instanceId,
+          token: data.token,
+          clientToken: '',
+        });
+        toast.success('Instância Z-API criada automaticamente!');
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao criar instância Z-API');
+      return false;
+    } finally {
+      setConnecting(false);
+    }
+  }, [userId, callZAPI]);
+
   // Load session from DB
   useEffect(() => {
     if (hasLoadedRef.current) return;
@@ -101,23 +144,6 @@ export const useZAPI = () => {
       });
     }
   }, [userId]);
-
-  const callZAPI = useCallback(async (action: string, extraData?: any) => {
-    const { data, error } = await supabase.functions.invoke('zapi-integration', {
-      body: { action, ...extraData },
-    });
-
-    if (error) {
-      console.error('Z-API error:', error);
-      throw new Error(error.message || 'Erro ao comunicar com Z-API');
-    }
-
-    if (data?.error) {
-      throw new Error(data.error);
-    }
-
-    return data;
-  }, []);
 
   // Save session to DB
   useEffect(() => {
@@ -241,9 +267,13 @@ export const useZAPI = () => {
       return;
     }
 
-    if (!config?.instanceId || !config?.token || !config?.clientToken) {
-      toast.error('Configure o Instance ID, Token e Client Token primeiro');
-      return;
+    // Auto-create instance if not configured
+    if (!config?.instanceId) {
+      const created = await createInstance();
+      if (!created) return;
+      // After creating, proceed to connect via the next call
+      // Config will be updated, so we need to call connect again
+      toast.info('Instância criada! Gerando QR Code...');
     }
 
     setConnecting(true);
@@ -273,7 +303,7 @@ export const useZAPI = () => {
     } finally {
       setConnecting(false);
     }
-  }, [userId, config, callZAPI, startStatusCheck]);
+  }, [userId, config, callZAPI, startStatusCheck, createInstance]);
 
   const disconnect = useCallback(async () => {
     if (statusIntervalRef.current) {
@@ -328,11 +358,12 @@ export const useZAPI = () => {
     connecting,
     hydrated,
     saveConfig,
+    createInstance,
     connect,
     disconnect,
     checkStatus,
     sendMessage,
     isConnected: session?.status === 'connected',
-    isConfigured: !!(config?.instanceId && config?.token && config?.clientToken),
+    isConfigured: !!(config?.instanceId),
   };
 };
