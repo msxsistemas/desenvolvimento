@@ -440,9 +440,53 @@ export default function ClientesListCreate() {
 
       toast({ title: "Fatura gerada!", description: `Fatura criada para ${cliente.nome}` });
       
-      // Abrir fatura em nova aba se tiver ID
-      if (result.fatura?.id) {
-        window.open(`/fatura/${result.fatura.id}`, "_blank");
+      // Enviar mensagem de fatura criada via WhatsApp
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: msgPadroes } = await supabase
+            .from('mensagens_padroes')
+            .select('fatura_criada')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          const templateFatura = msgPadroes?.fatura_criada;
+          if (templateFatura && templateFatura.trim()) {
+            const faturaLink = result.fatura?.id 
+              ? `${window.location.origin}/fatura/${result.fatura.id}` 
+              : "";
+
+            const mensagemFinal = replaceMessageVariables(
+              templateFatura,
+              {
+                nome: cliente.nome,
+                whatsapp: cliente.whatsapp,
+                email: cliente.email || undefined,
+                usuario: cliente.usuario || undefined,
+                senha: cliente.senha || undefined,
+                data_vencimento: cliente.data_vencimento || undefined,
+                plano: planoNome,
+                desconto: cliente.desconto || undefined,
+                observacao: cliente.observacao || undefined,
+                app: (cliente as any).app || undefined,
+                dispositivo: (cliente as any).dispositivo || undefined,
+                telas: (cliente as any).telas || undefined,
+                mac: (cliente as any).mac || undefined,
+              },
+              {
+                valor_plano: Number(valorPlano).toFixed(2),
+                total: Number(valorPlano).toFixed(2),
+                link_fatura: faturaLink,
+              }
+            );
+
+            await sendMessage(cliente.whatsapp, mensagemFinal);
+            toast({ title: "Mensagem enviada!", description: "Fatura enviada via WhatsApp" });
+          }
+        }
+      } catch (whatsErr: any) {
+        console.error("Erro ao enviar mensagem de fatura:", whatsErr);
+        toast({ title: "Aviso", description: "Fatura gerada, mas erro ao enviar WhatsApp: " + (whatsErr.message || ""), variant: "destructive" });
       }
     } catch (error: any) {
       console.error("Erro ao gerar fatura:", error);
