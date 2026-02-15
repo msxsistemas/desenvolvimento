@@ -315,7 +315,7 @@ export default function AtivarPlano() {
                 {paymentData.pix_copia_cola && (
                   <div className="space-y-3">
                     <div className="bg-muted/60 rounded-xl p-4 border border-border/50">
-                      <code className="text-sm break-all text-muted-foreground leading-relaxed block overflow-hidden line-clamp-2">
+                      <code className="text-sm break-all text-muted-foreground leading-relaxed block overflow-hidden max-h-[3.25rem]">
                         {paymentData.pix_copia_cola}
                       </code>
                     </div>
