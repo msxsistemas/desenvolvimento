@@ -212,7 +212,7 @@ export default function ProdutosCadastro() {
                   onChange={(e) => handleInputChange("configuracoesIptv", e.target.checked)}
                   className="rounded"
                 />
-                <Label htmlFor="configIptv" className="cursor-pointer text-sm font-medium">Configurações IPTV</Label>
+                <Label htmlFor="configIptv" className="cursor-pointer text-sm font-medium">Configurações Painel</Label>
               </div>
 
               {formData.configuracoesIptv && (
