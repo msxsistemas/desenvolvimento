@@ -293,6 +293,21 @@ export default function AppLayout() {
             </div>
           </header>
 
+          {/* Trial banner */}
+          {isTrial && daysLeft !== null && daysLeft > 0 && (
+            <div className="bg-primary/10 border-b border-primary/20 px-4 py-2 text-center text-sm flex items-center justify-center gap-2 flex-shrink-0">
+              <span className="text-foreground">
+                Período de teste: <strong>{daysLeft} dia{daysLeft !== 1 ? 's' : ''}</strong> restante{daysLeft !== 1 ? 's' : ''}
+              </span>
+              <button
+                className="ml-2 text-xs border border-primary/30 text-primary px-2 py-0.5 rounded hover:bg-primary/10 transition-colors"
+                onClick={() => navigate('/planos-disponiveis')}
+              >
+                Ativar plano
+              </button>
+            </div>
+          )}
+
           <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 animate-enter min-w-0">
             <Outlet />
           </main>

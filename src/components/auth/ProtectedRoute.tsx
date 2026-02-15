@@ -59,20 +59,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   return (
     <>
-      {/* Trial banner */}
-      {isTrial && daysLeft !== null && daysLeft > 0 && (
-        <div className="bg-primary/10 border-b border-primary/20 px-4 py-2 text-center text-sm flex items-center justify-center gap-2">
-          <Clock className="h-3.5 w-3.5 text-primary" />
-          <span className="text-foreground">
-            Período de teste: <strong>{daysLeft} dia{daysLeft !== 1 ? 's' : ''}</strong> restante{daysLeft !== 1 ? 's' : ''}
-          </span>
-          <Badge variant="outline" className="ml-2 text-xs border-primary/30 text-primary cursor-pointer hover:bg-primary/10"
-            onClick={() => window.location.href = '/planos-disponiveis'}
-          >
-            Ativar plano
-          </Badge>
-        </div>
-      )}
       {children ? <>{children}</> : <Outlet />}
     </>
   );
