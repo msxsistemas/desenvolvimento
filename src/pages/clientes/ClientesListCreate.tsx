@@ -1067,20 +1067,38 @@ export default function ClientesListCreate() {
                   }
                 );
                 
-                // Agendar envio para 30 segundos após a criação
-                const scheduledTime = new Date();
-                scheduledTime.setSeconds(scheduledTime.getSeconds() + 30);
-                
-                // Adicionar à fila de mensagens com agendamento
-                await supabase.from('whatsapp_messages').insert({
-                  user_id: user.user.id,
-                  phone: novoCliente.whatsapp,
-                  message: mensagemFinal,
-                  status: 'scheduled',
-                  session_id: 'welcome_' + Date.now(),
-                  sent_at: new Date().toISOString(),
-                  scheduled_for: scheduledTime.toISOString(),
-                } as any);
+                // Check if welcome message already exists for this phone today
+                const todayStart = new Date();
+                todayStart.setHours(0, 0, 0, 0);
+                const { data: existingWelcome } = await supabase
+                  .from('whatsapp_messages')
+                  .select('id')
+                  .eq('user_id', user.user.id)
+                  .eq('phone', novoCliente.whatsapp)
+                  .like('session_id', 'welcome_%')
+                  .in('status', ['scheduled', 'pending', 'sent'])
+                  .gte('created_at', todayStart.toISOString())
+                  .limit(1);
+
+                if (!existingWelcome || existingWelcome.length === 0) {
+                  const scheduledTime = new Date();
+                  scheduledTime.setSeconds(scheduledTime.getSeconds() + 30);
+                  
+                  await supabase.from('whatsapp_messages').insert({
+                    user_id: user.user.id,
+                    phone: novoCliente.whatsapp,
+                    message: mensagemFinal,
+                    status: 'scheduled',
+                    session_id: 'welcome_' + novoCliente.whatsapp.replace(/\D/g, ''),
+                    sent_at: new Date().toISOString(),
+                    scheduled_for: scheduledTime.toISOString(),
+                  } as any);
+                  
+                  toast({
+                    title: "Mensagem de boas-vindas",
+                    description: "Mensagem agendada para envio em 30 segundos",
+                  });
+                }
                 
                 toast({
                   title: "Mensagem de boas-vindas",

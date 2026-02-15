@@ -209,27 +209,44 @@ export default function ClientesCadastro() {
                 }
               );
 
-              const scheduledTime = new Date();
-              scheduledTime.setSeconds(scheduledTime.getSeconds() + 10);
+              // Check if welcome message already exists for this phone today
+              const todayStart = new Date();
+              todayStart.setHours(0, 0, 0, 0);
+              const { data: existingWelcome } = await supabase
+                .from('whatsapp_messages')
+                .select('id')
+                .eq('user_id', user.user.id)
+                .eq('phone', novoCliente.whatsapp)
+                .like('session_id', 'welcome_%')
+                .in('status', ['scheduled', 'pending', 'sent'])
+                .gte('created_at', todayStart.toISOString())
+                .limit(1);
 
-              const { error: insertError } = await supabase.from('whatsapp_messages').insert({
-                user_id: user.user.id,
-                phone: novoCliente.whatsapp,
-                message: mensagemFinal,
-                status: 'scheduled',
-                session_id: 'welcome_' + Date.now(),
-                sent_at: new Date().toISOString(),
-                scheduled_for: scheduledTime.toISOString(),
-              } as any);
+              if (existingWelcome && existingWelcome.length > 0) {
+                console.log("[ClientesCadastro] Welcome message already exists, skipping");
+              } else {
+                const scheduledTime = new Date();
+                scheduledTime.setSeconds(scheduledTime.getSeconds() + 10);
 
-              console.log("[ClientesCadastro] Insert welcome message result - error:", insertError);
+                const { error: insertError } = await supabase.from('whatsapp_messages').insert({
+                  user_id: user.user.id,
+                  phone: novoCliente.whatsapp,
+                  message: mensagemFinal,
+                  status: 'scheduled',
+                  session_id: 'welcome_' + novoCliente.whatsapp.replace(/\D/g, ''),
+                  sent_at: new Date().toISOString(),
+                  scheduled_for: scheduledTime.toISOString(),
+                } as any);
 
-              if (!insertError) {
-                toast({
-                  title: "Mensagem de boas-vindas",
-                  description: "Mensagem agendada para envio em 10 segundos",
-                });
-              }
+                console.log("[ClientesCadastro] Insert welcome message result - error:", insertError);
+
+                if (!insertError) {
+                  toast({
+                    title: "Mensagem de boas-vindas",
+                    description: "Mensagem agendada para envio em 10 segundos",
+                  });
+                }
+          }
           }
         }
       } catch (welcomeError) {
