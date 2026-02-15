@@ -246,9 +246,9 @@ export function AppSidebar() {
     <Sidebar className="border-r border-border" collapsible="icon">
       <SidebarHeader className="bg-background p-0">
         {isMobile ? (
-          /* Mobile: show expiration date below header */
-          <div className="py-3 px-4">
-            {subscription?.expira_em ? (
+          /* Mobile: show expiration + renew link */
+          <div className="py-3 px-4 space-y-2">
+            {subscription?.expira_em && (
               <div
                 className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium border cursor-pointer hover:opacity-80 transition-opacity ${
                   daysLeft !== null && daysLeft <= 3
@@ -264,14 +264,13 @@ export function AppSidebar() {
                   {new Date(subscription.expira_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-            ) : (
-              <div className="flex items-center justify-center gap-1">
-                <Crown size={14} className="text-success" />
-                <NavLink to="/renovar-acesso" className="text-xs text-success hover:text-success/80 font-medium transition-colors">
-                  Renovar Acesso
-                </NavLink>
-              </div>
             )}
+            <div className="flex items-center justify-center gap-1">
+              <Crown size={14} className="text-success" />
+              <NavLink to="/renovar-acesso" onClick={() => setOpenMobile(false)} className="text-xs text-success hover:text-success/80 font-medium transition-colors">
+                Renovar Acesso
+              </NavLink>
+            </div>
           </div>
         ) : (
           /* Desktop: show logo */
