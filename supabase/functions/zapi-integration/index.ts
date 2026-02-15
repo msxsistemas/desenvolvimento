@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${integratorToken}`,
+          'Client-Token': integratorToken,
         },
         body: JSON.stringify({ name: instanceName }),
       });
