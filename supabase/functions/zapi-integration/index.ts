@@ -88,21 +88,29 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'connect': {
-        // Get QR Code
-        const qrResult = await makeRequest('/qr-code');
+        // First check if already connected
+        const statusCheck = await makeRequest('/status');
+        if (statusCheck.ok && statusCheck.data?.connected === true) {
+          let phoneNumber = null;
+          let profileName = null;
+          try {
+            const phoneResult = await makeRequest('/phone');
+            phoneNumber = phoneResult.data?.phone || null;
+            profileName = phoneResult.data?.name || null;
+          } catch (e) {
+            console.log('[Z-API] Could not get phone details:', e);
+          }
+          result = { status: 'connected', phoneNumber, profileName };
+          break;
+        }
+
+        // Get QR Code as base64 image
+        const qrResult = await makeRequest('/qr-code/image');
 
         if (qrResult.ok && qrResult.data?.value) {
           result = {
             status: 'connecting',
-            qrCode: qrResult.data.value, // base64 QR code
-          };
-        } else if (qrResult.data?.connected === true) {
-          // Already connected, get phone info
-          const phoneResult = await makeRequest('/phone');
-          result = {
-            status: 'connected',
-            phoneNumber: phoneResult.data?.phone || null,
-            profileName: phoneResult.data?.name || null,
+            qrCode: qrResult.data.value, // base64 image
           };
         } else {
           result = { error: qrResult.data?.message || qrResult.data?.error || 'Erro ao gerar QR Code' };
@@ -145,7 +153,7 @@ Deno.serve(async (req) => {
 
       case 'disconnect': {
         try {
-          await makeRequest('/disconnect', 'POST');
+          await makeRequest('/disconnect', 'GET');
         } catch (e) {
           console.log('[Z-API] Disconnect error:', e);
         }
