@@ -1378,6 +1378,39 @@ export type Database = {
         }
         Relationships: []
       }
+      zapi_config: {
+        Row: {
+          client_token: string
+          created_at: string
+          id: string
+          instance_id: string
+          is_configured: boolean
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_token: string
+          created_at?: string
+          id?: string
+          instance_id: string
+          is_configured?: boolean
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_token?: string
+          created_at?: string
+          id?: string
+          instance_id?: string
+          is_configured?: boolean
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

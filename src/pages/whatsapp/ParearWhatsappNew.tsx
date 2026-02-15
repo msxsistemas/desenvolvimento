@@ -1,32 +1,43 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { CheckCircle, RefreshCw, Wifi, WifiOff, Settings } from "lucide-react";
 import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
+import { useZAPI } from "@/hooks/useZAPI";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ZAPIConfig from "@/components/ZAPIConfig";
+
+type WhatsAppProvider = 'evolution' | 'zapi';
 
 export default function ParearWhatsappNew() {
-  const {
-    session,
-    connecting,
-    connect,
-    disconnect,
-    checkStatus,
-    isConnected,
-    hydrated,
-  } = useEvolutionAPISimple();
+  const [provider, setProvider] = useState<WhatsAppProvider>(() => {
+    return (localStorage.getItem('whatsapp_provider') as WhatsAppProvider) || 'evolution';
+  });
+  const [showConfig, setShowConfig] = useState(false);
+
+  const evolution = useEvolutionAPISimple();
+  const zapi = useZAPI();
+
+  // Use the active provider's data
+  const activeHook = provider === 'zapi' ? zapi : evolution;
+  const { session, connecting, connect, disconnect, checkStatus, isConnected, hydrated } = activeHook;
 
   useEffect(() => {
     document.title = "Parear WhatsApp | Tech Play";
   }, []);
 
-  // Verificar status real com a Evolution API ao abrir a página
+  useEffect(() => {
+    localStorage.setItem('whatsapp_provider', provider);
+  }, [provider]);
+
+  // Check real status on page open
   useEffect(() => {
     if (hydrated && isConnected) {
       checkStatus(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated]);
+  }, [hydrated, provider]);
 
   return (
     <main className="space-y-4">
@@ -69,6 +80,55 @@ export default function ParearWhatsappNew() {
         </div>
       </header>
 
+      {/* Provider Selector */}
+      <Card className="border-border">
+        <CardContent className="p-4">
+          <Tabs value={provider} onValueChange={(v) => setProvider(v as WhatsAppProvider)}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-foreground">Provedor WhatsApp</h3>
+              {provider === 'zapi' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowConfig(!showConfig)}
+                >
+                  <Settings className="h-4 w-4 mr-1" />
+                  {showConfig ? 'Ocultar Config' : 'Configurar Z-API'}
+                </Button>
+              )}
+            </div>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="evolution">Evolution API</TabsTrigger>
+              <TabsTrigger value="zapi">Z-API</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="zapi">
+              {showConfig && (
+                <div className="mt-4">
+                  <ZAPIConfig
+                    onSave={zapi.saveConfig}
+                    currentConfig={zapi.config}
+                  />
+                </div>
+              )}
+              {!zapi.isConfigured && !zapi.configLoading && !showConfig && (
+                <div className="mt-4 p-4 bg-warning/10 rounded-lg text-center">
+                  <p className="text-sm text-warning mb-2">Z-API não configurada</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowConfig(true)}
+                  >
+                    <Settings className="h-4 w-4 mr-1" />
+                    Configurar agora
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
       {/* Instructions */}
       <Card className="border-border">
         <CardContent className="p-4">
@@ -99,6 +159,9 @@ export default function ParearWhatsappNew() {
               <>
                 <div className="text-center mb-6">
                   <h2 className="text-lg font-semibold text-foreground mb-2">Sessão Ativa</h2>
+                  <Badge variant="outline" className="mb-2">
+                    {provider === 'zapi' ? 'Z-API' : 'Evolution API'}
+                  </Badge>
                   {session?.phoneNumber && (
                     <p className="text-sm text-muted-foreground">
                       Número: <span className="text-foreground">{session.phoneNumber}</span>
@@ -147,7 +210,11 @@ export default function ParearWhatsappNew() {
                     {connecting ? (
                       <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin" />
                     ) : (
-                      <Button onClick={connect} className="bg-success hover:bg-success/90 text-success-foreground">
+                      <Button
+                        onClick={connect}
+                        className="bg-success hover:bg-success/90 text-success-foreground"
+                        disabled={provider === 'zapi' && !zapi.isConfigured}
+                      >
                         <Wifi className="h-4 w-4 mr-2" />
                         Conectar
                       </Button>
