@@ -255,7 +255,7 @@ export default function AdminConfiguracoes() {
                   type={showZapiToken ? 'text' : 'password'}
                   value={config.zapi_integration_token || ""}
                   onChange={e => set("zapi_integration_token", e.target.value || null)}
-                  placeholder="Cole seu token de integrador Z-API (32 caracteres)"
+                  placeholder="Cole seu token de integrador Z-API"
                   className="pr-10"
                 />
                 <Button
@@ -269,10 +269,10 @@ export default function AdminConfiguracoes() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Token obtido no painel de parceiros Z-API (admin.z-api.io). Deve ter exatamente 32 caracteres.
+                Token obtido no painel Z-API em "Nova Instância web" → "Token de integração".
                 {config.zapi_integration_token && (
-                  <span className={config.zapi_integration_token.length === 32 ? "text-green-600 ml-1" : "text-destructive ml-1"}>
-                    ({config.zapi_integration_token.length}/32 caracteres)
+                  <span className="text-green-600 ml-1">
+                    ({config.zapi_integration_token.length} caracteres)
                   </span>
                 )}
               </p>
