@@ -327,7 +327,7 @@ export default function AtivarPlano() {
                       className="group relative bg-muted/60 hover:bg-muted rounded-xl p-4 cursor-pointer transition-colors border border-border/50 hover:border-primary/30"
                       onClick={copyPixCode}
                     >
-                      <code className="text-xs break-all text-muted-foreground leading-relaxed block pr-10 line-clamp-2">
+                      <code className="text-xs break-all text-muted-foreground leading-relaxed block pr-10 overflow-hidden line-clamp-2">
                         {paymentData.pix_copia_cola}
                       </code>
                       <Button
