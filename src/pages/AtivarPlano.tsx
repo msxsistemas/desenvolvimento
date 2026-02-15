@@ -253,12 +253,6 @@ export default function AtivarPlano() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between mb-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/renovar-acesso')}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar aos planos
-        </Button>
-      </div>
         {paymentStatus === 'paid' ? (
           <Card className="border-green-500/30">
             <CardContent className="text-center py-12">
@@ -333,7 +327,7 @@ export default function AtivarPlano() {
                       className="group relative bg-muted/60 hover:bg-muted rounded-xl p-4 cursor-pointer transition-colors border border-border/50 hover:border-primary/30"
                       onClick={copyPixCode}
                     >
-                      <code className="text-xs break-all text-muted-foreground leading-relaxed block pr-10">
+                      <code className="text-xs break-all text-muted-foreground leading-relaxed block pr-10 line-clamp-2">
                         {paymentData.pix_copia_cola}
                       </code>
                       <Button
@@ -354,6 +348,11 @@ export default function AtivarPlano() {
                 </div>
               </CardContent>
             </Card>
+
+            <Button variant="ghost" className="w-full" onClick={() => navigate('/renovar-acesso')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar aos planos
+            </Button>
           </div>
         ) : paymentStatus === 'error' ? (
           <Card className="border-destructive/30">
