@@ -11,9 +11,17 @@ interface ZAPISession {
   profileName?: string;
 }
 
+interface ZAPIConfig {
+  instanceId: string;
+  token: string;
+  clientToken: string;
+}
+
 export const useZAPI = () => {
   const { userId } = useCurrentUser();
   const [session, setSession] = useState<ZAPISession | null>(null);
+  const [config, setConfig] = useState<ZAPIConfig | null>(null);
+  const [configLoading, setConfigLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -28,6 +36,28 @@ export const useZAPI = () => {
       }
     };
   }, []);
+
+  // Load config from edge function
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadConfig = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('zapi-integration', {
+          body: { action: 'getConfig' },
+        });
+        if (!error && data?.config) {
+          setConfig(data.config);
+        }
+      } catch (e) {
+        console.error('Erro ao carregar config Z-API:', e);
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+
+    loadConfig();
+  }, [userId]);
 
   // Load session from DB
   useEffect(() => {
@@ -127,6 +157,21 @@ export const useZAPI = () => {
     saveSessionToDB();
   }, [userId, session, hydrated]);
 
+  const saveConfig = useCallback(async (newConfig: { instanceId: string; token: string; clientToken: string }) => {
+    try {
+      const data = await callZAPI('saveConfig', newConfig);
+      if (data?.success) {
+        setConfig(newConfig);
+        toast.success('Configuração Z-API salva!');
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao salvar configuração');
+      return false;
+    }
+  }, [callZAPI]);
+
   const checkStatus = useCallback(async (showToast = true, updateConnecting = true) => {
     if (!userId) return null;
 
@@ -196,6 +241,11 @@ export const useZAPI = () => {
       return;
     }
 
+    if (!config?.instanceId || !config?.token || !config?.clientToken) {
+      toast.error('Configure o Instance ID, Token e Client Token primeiro');
+      return;
+    }
+
     setConnecting(true);
     try {
       const data = await callZAPI('connect');
@@ -223,7 +273,7 @@ export const useZAPI = () => {
     } finally {
       setConnecting(false);
     }
-  }, [userId, callZAPI, startStatusCheck]);
+  }, [userId, config, callZAPI, startStatusCheck]);
 
   const disconnect = useCallback(async () => {
     if (statusIntervalRef.current) {
@@ -272,17 +322,17 @@ export const useZAPI = () => {
 
   return {
     session,
-    config: null,
-    configLoading: false,
+    config,
+    configLoading,
     loading,
     connecting,
     hydrated,
-    saveConfig: async () => false,
+    saveConfig,
     connect,
     disconnect,
     checkStatus,
     sendMessage,
     isConnected: session?.status === 'connected',
-    isConfigured: true, // Always true - auto-provisioning handles it
+    isConfigured: !!(config?.instanceId && config?.token && config?.clientToken),
   };
 };
