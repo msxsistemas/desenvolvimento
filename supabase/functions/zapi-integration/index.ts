@@ -86,6 +86,62 @@ Deno.serve(async (req) => {
     let result;
 
     switch (action) {
+      case 'createInstance': {
+        const integrationToken = Deno.env.get('ZAPI_INTEGRATION_TOKEN');
+        if (!integrationToken) {
+          result = { error: 'Token de integrador Z-API não configurado no sistema.' };
+          break;
+        }
+
+        const { name } = body;
+        const instanceName = name || `MSX-${user.id.substring(0, 8)}`;
+
+        const createResp = await fetch('https://api.z-api.io/instances/integrator/on-demand', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Client-Token': integrationToken,
+          },
+          body: JSON.stringify({ name: instanceName }),
+        });
+
+        const createData = await createResp.json();
+        console.log('[Z-API] Create instance response:', JSON.stringify(createData));
+
+        if (!createResp.ok || createData.error) {
+          result = { error: `Falha ao criar instância Z-API: ${JSON.stringify(createData)}` };
+          break;
+        }
+
+        const newInstanceId = createData.id;
+        const newToken = createData.token;
+
+        if (!newInstanceId || !newToken) {
+          result = { error: 'Resposta inválida da Z-API ao criar instância.' };
+          break;
+        }
+
+        // Save config with integrator token as client token
+        await serviceClient
+          .from('zapi_config')
+          .upsert({
+            user_id: user.id,
+            instance_id: newInstanceId,
+            token: newToken,
+            client_token: integrationToken,
+            is_configured: true,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id' });
+
+        result = {
+          success: true,
+          instanceId: newInstanceId,
+          token: newToken,
+          message: 'Instância Z-API criada com sucesso!',
+        };
+        break;
+      }
+
       case 'saveConfig': {
         const { instanceId, token, clientToken } = body;
         

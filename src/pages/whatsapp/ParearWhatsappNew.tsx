@@ -66,9 +66,8 @@ function ConnectionPage({
 }: {
   provider: WhatsAppProvider; activeHook: any; onBack: () => void; switching: boolean;
 }) {
-  const { session, connecting, connect, disconnect, isConnected, hydrated, checkStatus, isConfigured, saveConfig, config, configLoading } = activeHook;
+  const { session, connecting, connect, disconnect, isConnected, hydrated, checkStatus, isConfigured, saveConfig, config, configLoading, createInstance } = activeHook;
   const providerName = provider === 'zapi' ? 'Z-API' : 'Evolution API';
-  const needsConfig = provider === 'zapi' && !isConfigured;
 
   return (
     <div className="space-y-6 max-w-xl mx-auto">
@@ -92,10 +91,6 @@ function ConnectionPage({
             <div className="flex flex-col items-center justify-center py-12">
               <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin mb-4" />
               <p className="text-muted-foreground">Desconectando API anterior...</p>
-            </div>
-          ) : needsConfig ? (
-            <div className="py-4">
-              <ZAPIConfig onSave={saveConfig} currentConfig={config} />
             </div>
           ) : !hydrated ? (
             <div className="flex flex-col items-center justify-center py-12">
