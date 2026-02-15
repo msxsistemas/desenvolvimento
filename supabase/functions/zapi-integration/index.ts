@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
           'Authorization': `Bearer ${INTEGRATION_TOKEN}`,
         },
         body: JSON.stringify({
-          name: `MSX${user.id.replace(/-/g, '').substring(0, 8)}`,
+          name: `msx${user.id.split('-')[0]}`,
         }),
       });
 
