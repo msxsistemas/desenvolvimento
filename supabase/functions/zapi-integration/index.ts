@@ -30,10 +30,17 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const INTEGRATION_TOKEN = Deno.env.get('ZAPI_INTEGRATION_TOKEN');
+    // Read integration token from database (system_config)
+    const { data: sysConfig } = await serviceClient
+      .from('system_config')
+      .select('zapi_integration_token')
+      .eq('id', 1)
+      .maybeSingle();
+
+    const INTEGRATION_TOKEN = sysConfig?.zapi_integration_token || Deno.env.get('ZAPI_INTEGRATION_TOKEN');
     if (!INTEGRATION_TOKEN) {
       return new Response(
-        JSON.stringify({ error: 'Token de integração Z-API não configurado' }),
+        JSON.stringify({ error: 'Token de integração Z-API não configurado. Configure nas configurações do admin.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
