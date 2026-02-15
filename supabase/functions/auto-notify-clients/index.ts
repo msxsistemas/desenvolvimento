@@ -77,10 +77,10 @@ async function sendNotification(
   tipoNotificacao: string,
   planosMap: Map<string, any>,
 ): Promise<'sent' | 'error' | 'skipped'> {
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  // Use Brazil timezone for dedup check
+  const brTodayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const todayStart = new Date(brTodayStr + 'T00:00:00-03:00');
+  const todayEnd = new Date(brTodayStr + 'T23:59:59-03:00');
 
   // Check if already sent successfully today (skip failed ones so they can be retried)
   const { data: existing } = await supabase
@@ -199,8 +199,9 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+    // Use Brazil timezone for date comparisons
+    const hojeStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }); // YYYY-MM-DD
+    const hoje = new Date(hojeStr + 'T00:00:00');
 
     let totalSent = 0;
     let totalErrors = 0;
