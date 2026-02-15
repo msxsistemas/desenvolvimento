@@ -125,7 +125,7 @@ export default function AppLayout() {
         <SidebarToggleButton />
         <div className="flex-1 flex flex-col h-full min-w-0">
           {/* Header */}
-          <header className="h-16 sm:h-20 border-b border-border flex items-center px-4 sm:px-6 bg-sidebar-background z-10 flex-shrink-0 sticky top-0">
+          <header className="h-16 sm:h-20 border-b border-border flex items-center px-4 sm:px-6 bg-sidebar-background z-[60] flex-shrink-0 relative">
            <MobileMenuButton />
             {/* Mobile logo */}
             <div className="md:hidden flex items-center gap-2">
