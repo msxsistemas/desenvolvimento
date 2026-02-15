@@ -61,16 +61,17 @@ Deno.serve(async (req) => {
       }
 
       // Create new instance via Z-API Manager API
-      console.log('[Z-API] Creating new instance for user:', user.id);
+      const instanceName = `msx-${Date.now()}`;
+      console.log('[Z-API] Creating new instance for user:', user.id, 'name:', instanceName, 'token length:', INTEGRATION_TOKEN.length);
+      const requestBody = { name: instanceName };
+      console.log('[Z-API] Request body:', JSON.stringify(requestBody));
       const createResponse = await fetch('https://api.z-api.io/instances/integrator/on-demand', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${INTEGRATION_TOKEN}`,
         },
-        body: JSON.stringify({
-          name: `msx-${Date.now()}`,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!createResponse.ok) {
