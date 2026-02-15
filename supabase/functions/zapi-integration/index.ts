@@ -11,7 +11,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get user from auth
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -20,48 +19,108 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      console.error('Auth error:', userError);
       return new Response(
         JSON.stringify({ error: 'Não autorizado' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get Z-API config from database using service role
     const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: zapiConfig, error: configError } = await serviceClient
-      .from('zapi_config')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (configError || !zapiConfig) {
-      console.error('Z-API config not found:', configError);
+    const INTEGRATION_TOKEN = Deno.env.get('ZAPI_INTEGRATION_TOKEN');
+    if (!INTEGRATION_TOKEN) {
       return new Response(
-        JSON.stringify({ error: 'Z-API não configurada. Configure suas credenciais primeiro.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Token de integração Z-API não configurado' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const { instance_id, token, client_token } = zapiConfig;
-    const baseUrl = `https://api.z-api.io/instances/${instance_id}/token/${token}`;
 
     const body = await req.json();
     const { action } = body;
 
-    console.log(`[Z-API] Action: ${action}, Instance: ${instance_id}`);
+    console.log(`[Z-API] Action: ${action}, User: ${user.id}`);
 
-    const makeRequest = async (endpoint: string, method: string = 'GET', requestBody?: any) => {
-      const url = `${baseUrl}${endpoint}`;
+    // Helper: get or create instance for user
+    const getOrCreateInstance = async () => {
+      // Check if user already has a zapi_config
+      const { data: existing } = await serviceClient
+        .from('zapi_config')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existing && existing.instance_id && existing.token) {
+        return {
+          instanceId: existing.instance_id,
+          token: existing.token,
+          clientToken: existing.client_token,
+        };
+      }
+
+      // Create new instance via Z-API Manager API
+      console.log('[Z-API] Creating new instance for user:', user.id);
+      const createResponse = await fetch('https://api.z-api.io/instances/integrator/on-demand', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${INTEGRATION_TOKEN}`,
+        },
+        body: JSON.stringify({
+          name: `GestorMSX-${user.id.substring(0, 8)}`,
+          sessionName: 'GestorMSX WhatsApp',
+        }),
+      });
+
+      if (!createResponse.ok) {
+        const errText = await createResponse.text();
+        console.error('[Z-API] Failed to create instance:', createResponse.status, errText);
+        throw new Error('Falha ao criar instância Z-API: ' + errText);
+      }
+
+      const instanceData = await createResponse.json();
+      console.log('[Z-API] Instance created:', JSON.stringify(instanceData));
+
+      const newInstanceId = instanceData.id;
+      const newToken = instanceData.token;
+
+      if (!newInstanceId || !newToken) {
+        throw new Error('Resposta inválida da Z-API ao criar instância');
+      }
+
+      // Save to database
+      const { error: saveError } = await serviceClient
+        .from('zapi_config')
+        .upsert({
+          user_id: user.id,
+          instance_id: newInstanceId,
+          token: newToken,
+          client_token: INTEGRATION_TOKEN,
+          is_configured: true,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+
+      if (saveError) {
+        console.error('[Z-API] Error saving instance config:', saveError);
+      }
+
+      return {
+        instanceId: newInstanceId,
+        token: newToken,
+        clientToken: INTEGRATION_TOKEN,
+      };
+    };
+
+    // For actions that need an instance
+    const makeRequest = async (instanceId: string, token: string, clientToken: string, endpoint: string, method: string = 'GET', requestBody?: any) => {
+      const url = `https://api.z-api.io/instances/${instanceId}/token/${token}${endpoint}`;
       console.log(`[Z-API] ${method} ${url}`);
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'Client-Token': client_token,
+        'Client-Token': clientToken,
       };
 
       const response = await fetch(url, {
@@ -87,14 +146,32 @@ Deno.serve(async (req) => {
     let result;
 
     switch (action) {
+      case 'provision': {
+        // Just create/get the instance, return status
+        try {
+          const instance = await getOrCreateInstance();
+          result = { 
+            success: true, 
+            instanceId: instance.instanceId,
+            message: 'Instância Z-API provisionada com sucesso' 
+          };
+        } catch (error: any) {
+          result = { error: error.message };
+        }
+        break;
+      }
+
       case 'connect': {
+        const instance = await getOrCreateInstance();
+        const { instanceId, token, clientToken } = instance;
+
         // First check if already connected
-        const statusCheck = await makeRequest('/status');
+        const statusCheck = await makeRequest(instanceId, token, clientToken, '/status');
         if (statusCheck.ok && statusCheck.data?.connected === true) {
           let phoneNumber = null;
           let profileName = null;
           try {
-            const phoneResult = await makeRequest('/phone');
+            const phoneResult = await makeRequest(instanceId, token, clientToken, '/phone');
             phoneNumber = phoneResult.data?.phone || null;
             profileName = phoneResult.data?.name || null;
           } catch (e) {
@@ -105,12 +182,12 @@ Deno.serve(async (req) => {
         }
 
         // Get QR Code as base64 image
-        const qrResult = await makeRequest('/qr-code/image');
+        const qrResult = await makeRequest(instanceId, token, clientToken, '/qr-code/image');
 
         if (qrResult.ok && qrResult.data?.value) {
           result = {
             status: 'connecting',
-            qrCode: qrResult.data.value, // base64 image
+            qrCode: qrResult.data.value,
           };
         } else {
           result = { error: qrResult.data?.message || qrResult.data?.error || 'Erro ao gerar QR Code' };
@@ -119,18 +196,18 @@ Deno.serve(async (req) => {
       }
 
       case 'status': {
-        const statusResult = await makeRequest('/status');
-        console.log('[Z-API] Status result:', JSON.stringify(statusResult));
+        const instance = await getOrCreateInstance();
+        const { instanceId, token, clientToken } = instance;
 
+        const statusResult = await makeRequest(instanceId, token, clientToken, '/status');
         const connected = statusResult.data?.connected;
         const smartphoneConnected = statusResult.data?.smartphoneConnected;
 
         if (connected === true) {
-          // Get phone details
           let phoneNumber = null;
           let profileName = null;
           try {
-            const phoneResult = await makeRequest('/phone');
+            const phoneResult = await makeRequest(instanceId, token, clientToken, '/phone');
             phoneNumber = phoneResult.data?.phone || null;
             profileName = phoneResult.data?.name || null;
           } catch (e) {
@@ -152,8 +229,11 @@ Deno.serve(async (req) => {
       }
 
       case 'disconnect': {
+        const instance = await getOrCreateInstance();
+        const { instanceId, token, clientToken } = instance;
+
         try {
-          await makeRequest('/disconnect', 'GET');
+          await makeRequest(instanceId, token, clientToken, '/disconnect', 'GET');
         } catch (e) {
           console.log('[Z-API] Disconnect error:', e);
         }
@@ -162,15 +242,16 @@ Deno.serve(async (req) => {
       }
 
       case 'sendMessage': {
+        const instance = await getOrCreateInstance();
+        const { instanceId, token, clientToken } = instance;
         const { phone, message } = body;
         let formattedPhone = phone.replace(/\D/g, '');
 
-        // Ensure country code
         if (!formattedPhone.startsWith('55') && formattedPhone.length >= 10) {
           formattedPhone = '55' + formattedPhone;
         }
 
-        const sendResult = await makeRequest('/send-text', 'POST', {
+        const sendResult = await makeRequest(instanceId, token, clientToken, '/send-text', 'POST', {
           phone: formattedPhone,
           message: message,
         });
@@ -179,8 +260,6 @@ Deno.serve(async (req) => {
           result = { success: true, data: sendResult.data };
         } else {
           const errorMsg = sendResult.data?.message || sendResult.data?.error || 'Erro ao enviar mensagem';
-
-          // Check connection issues
           const isConnectionError = errorMsg.includes('not connected') ||
             errorMsg.includes('desconectado') ||
             sendResult.data?.connected === false;
