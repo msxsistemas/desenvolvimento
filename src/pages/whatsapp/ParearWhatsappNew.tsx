@@ -6,6 +6,7 @@ import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
 import { useZAPI } from "@/hooks/useZAPI";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import ZAPIConfig from "@/components/ZAPIConfig";
 
 type WhatsAppProvider = 'evolution' | 'zapi';
 type PageView = 'select' | 'connect';
@@ -64,8 +65,30 @@ function ConnectionPage({
 }: {
   provider: WhatsAppProvider; activeHook: any; onBack: () => void; switching: boolean;
 }) {
-  const { session, connecting, connect, disconnect, isConnected, hydrated, checkStatus } = activeHook;
+  const { session, connecting, connect, disconnect, isConnected, hydrated, checkStatus, isConfigured, configLoading, saveConfig } = activeHook;
   const providerName = provider === 'zapi' ? 'Z-API' : 'Evolution API';
+
+  // For Z-API: show config form if not configured
+  if (provider === 'zapi' && !configLoading && !isConfigured) {
+    return (
+      <div className="space-y-6 max-w-xl mx-auto">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4 mr-1" /> Trocar API
+          </Button>
+          <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-4 py-2">
+            <span className="text-sm text-muted-foreground">API Ativa:</span>
+            <span className="font-bold text-foreground">{providerName}</span>
+          </div>
+        </div>
+
+        <ZAPIConfig
+          onSave={saveConfig}
+          currentConfig={null}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-xl mx-auto">
@@ -245,7 +268,6 @@ export default function ParearWhatsappNew() {
   }, [disconnectOther]);
 
   const handleBack = useCallback(async () => {
-    // Disconnect current provider before going back
     if (activeHook.isConnected) {
       setSwitching(true);
       try {
@@ -301,7 +323,7 @@ export default function ParearWhatsappNew() {
           iconBg="bg-gradient-to-br from-purple-400 to-purple-600"
           badgeLabel="MEGA"
           badgeColor="bg-gradient-to-r from-purple-500 to-pink-500"
-          features={["Instância automática por usuário", "Performance Máxima", "Código de Pareamento", "Suporte Prioritário"]}
+          features={["Configuração manual de instância", "Performance Máxima", "Código de Pareamento", "Suporte Prioritário"]}
           onSelect={() => handleSelectProvider('zapi')}
           borderColor="border-purple-500/40"
         />

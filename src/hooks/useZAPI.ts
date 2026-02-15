@@ -17,8 +17,8 @@ export const useZAPI = () => {
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
-  const [isConfigured] = useState(true); // Always configured - auto-provisioned
-  const [configLoading] = useState(false);
+  const [isConfigured, setIsConfigured] = useState(false);
+  const [configLoading, setConfigLoading] = useState(true);
   const statusIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const savingRef = useRef(false);
   const hasLoadedRef = useRef(false);
@@ -30,6 +30,28 @@ export const useZAPI = () => {
       }
     };
   }, []);
+
+  // Check if Z-API is configured
+  useEffect(() => {
+    if (!userId) return;
+    
+    const checkConfig = async () => {
+      setConfigLoading(true);
+      try {
+        const { data } = await supabase.functions.invoke('zapi-integration', {
+          body: { action: 'checkConfig' },
+        });
+        setIsConfigured(!!data?.configured);
+      } catch (e) {
+        console.error('Erro ao verificar config Z-API:', e);
+        setIsConfigured(false);
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+
+    checkConfig();
+  }, [userId]);
 
   // Load session from DB
   useEffect(() => {
@@ -198,6 +220,11 @@ export const useZAPI = () => {
       return;
     }
 
+    if (!isConfigured) {
+      toast.error('Configure as credenciais Z-API antes de conectar');
+      return;
+    }
+
     setConnecting(true);
     try {
       const data = await callZAPI('connect');
@@ -225,7 +252,7 @@ export const useZAPI = () => {
     } finally {
       setConnecting(false);
     }
-  }, [userId, callZAPI, startStatusCheck]);
+  }, [userId, isConfigured, callZAPI, startStatusCheck]);
 
   const disconnect = useCallback(async () => {
     if (statusIntervalRef.current) {
@@ -245,21 +272,32 @@ export const useZAPI = () => {
     }
   }, [callZAPI]);
 
-  const normalizePhoneNumber = (phone: string): string => {
-    const digitsOnly = phone.replace(/\D/g, '');
-    if (!digitsOnly.startsWith('55') && digitsOnly.length >= 10) {
-      return '55' + digitsOnly;
+  const saveConfig = useCallback(async (config: { instanceId: string; token: string; clientToken: string }) => {
+    try {
+      const data = await callZAPI('saveConfig', config);
+      if (data?.success) {
+        setIsConfigured(true);
+        toast.success('Configuração Z-API salva com sucesso!');
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao salvar configuração');
+      return false;
     }
-    return digitsOnly;
-  };
+  }, [callZAPI]);
 
   const sendMessage = useCallback(async (phone: string, message: string) => {
     if (!userId) throw new Error('Você precisa estar logado');
 
-    const normalizedPhone = normalizePhoneNumber(phone);
+    const normalizedPhone = phone.replace(/\D/g, '');
+    const formattedPhone = !normalizedPhone.startsWith('55') && normalizedPhone.length >= 10
+      ? '55' + normalizedPhone
+      : normalizedPhone;
+
     setLoading(true);
     try {
-      const data = await callZAPI('sendMessage', { phone: normalizedPhone, message });
+      const data = await callZAPI('sendMessage', { phone: formattedPhone, message });
 
       if (data.success) {
         toast.success('Mensagem enviada com sucesso!');
@@ -275,11 +313,6 @@ export const useZAPI = () => {
       setLoading(false);
     }
   }, [userId, callZAPI]);
-
-  // Keep backward compatibility
-  const saveConfig = useCallback(async () => {
-    return true;
-  }, []);
 
   return {
     session,
