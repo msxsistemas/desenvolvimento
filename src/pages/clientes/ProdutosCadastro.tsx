@@ -47,7 +47,7 @@ export default function ProdutosCadastro() {
     configuracoesIptv: false,
     provedorIptv: "",
     painelId: "",
-    renovacaoAutomatica: false,
+    renovacaoAutomatica: true,
     tipoServico: "iptv" as "iptv" | "p2p",
   });
 
@@ -272,16 +272,6 @@ export default function ProdutosCadastro() {
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-sm font-medium">Renovação Automática</Label>
-                      <p className="text-xs text-muted-foreground">Renova automaticamente no servidor IPTV</p>
-                    </div>
-                    <Switch
-                      checked={formData.renovacaoAutomatica}
-                      onCheckedChange={(checked) => handleInputChange("renovacaoAutomatica", checked)}
-                    />
-                  </div>
 
                   {provedoresDisponiveis.length === 0 ? (
                     <div className="flex items-center gap-2 text-warning text-sm">
