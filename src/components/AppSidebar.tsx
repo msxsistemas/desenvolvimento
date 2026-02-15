@@ -38,6 +38,10 @@ import { useState } from "react";
 import type { LucideProps } from "lucide-react";
 import { useSystemLogo } from "@/hooks/useSystemLogo";
 import iconMsx from "@/assets/icon-msx.png";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useNavigate } from "react-router-dom";
 
 // Custom WhatsApp icon
 const WhatsAppIcon = (props: LucideProps) => (
@@ -60,8 +64,10 @@ export function AppSidebar() {
   const currentPath = location.pathname;
   const isCollapsed = state === "collapsed";
   const logoUrl = useSystemLogo();
-
-  // Estado dos submenus
+  const isMobile = useIsMobile();
+  const { userId } = useCurrentUser();
+  const { subscription, daysLeft } = useSubscription(userId);
+  const navigate = useNavigate();
   const clientesActive = currentPath === "/clientes" || currentPath.startsWith("/clientes/");
   const planosActive = currentPath === "/planos" || currentPath.startsWith("/planos/");
   const aplicativosActive = currentPath === "/aplicativos" || currentPath.startsWith("/aplicativos/");
@@ -239,29 +245,61 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-border" collapsible="icon">
       <SidebarHeader className="bg-background p-0">
-        {/* Logo Header - Fixed */}
-        <div className={`flex items-center justify-center gap-2 transition-all duration-300 ${isCollapsed ? 'py-5' : 'py-6 px-4'}`}>
-          <svg viewBox="0 0 100 110" className={`flex-shrink-0 ${isCollapsed ? 'w-9 h-9' : 'w-9 h-9'}`}>
-            <defs>
-              <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.7" />
-                <stop offset="100%" stopColor="hsl(var(--primary))" />
-              </linearGradient>
-            </defs>
-            <path d="M10 5 H90 V70 Q90 95 50 108 Q10 95 10 70 Z" fill="url(#shieldGrad)" rx="8" />
-            <text x="50" y="72" textAnchor="middle" fill="white" fontSize="52" fontWeight="bold" fontFamily="sans-serif">M</text>
-          </svg>
-          {!isCollapsed && (
-            <span className="text-xl font-bold tracking-wide text-foreground">GESTOR <span className="text-primary">MSX</span></span>
-          )}
-        </div>
-        {!isCollapsed && (
-          <div className="flex justify-center -mt-4 mb-1 gap-1">
-            <Crown size={14} className="text-success" />
-            <NavLink to="/renovar-acesso" className="text-xs text-success hover:text-success/80 font-medium transition-colors">
-              Renovar Acesso
-            </NavLink>
+        {isMobile ? (
+          /* Mobile: show expiration date instead of logo */
+          <div className="py-4 px-4">
+            {subscription?.expira_em ? (
+              <div
+                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium border cursor-pointer hover:opacity-80 transition-opacity ${
+                  daysLeft !== null && daysLeft <= 3
+                    ? 'border-destructive/50 bg-destructive/10 text-destructive'
+                    : 'border-success/50 bg-success/10 text-success'
+                }`}
+                onClick={() => navigate('/renovar-acesso')}
+              >
+                <span className="text-muted-foreground text-xs">Vencimento</span>
+                <span className="font-bold text-xs">
+                  {new Date(subscription.expira_em).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                  {' '}
+                  {new Date(subscription.expira_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-1">
+                <Crown size={14} className="text-success" />
+                <NavLink to="/renovar-acesso" className="text-xs text-success hover:text-success/80 font-medium transition-colors">
+                  Renovar Acesso
+                </NavLink>
+              </div>
+            )}
           </div>
+        ) : (
+          /* Desktop: show logo */
+          <>
+            <div className={`flex items-center justify-center gap-2 transition-all duration-300 ${isCollapsed ? 'py-5' : 'py-6 px-4'}`}>
+              <svg viewBox="0 0 100 110" className={`flex-shrink-0 ${isCollapsed ? 'w-9 h-9' : 'w-9 h-9'}`}>
+                <defs>
+                  <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.7" />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" />
+                  </linearGradient>
+                </defs>
+                <path d="M10 5 H90 V70 Q90 95 50 108 Q10 95 10 70 Z" fill="url(#shieldGrad)" rx="8" />
+                <text x="50" y="72" textAnchor="middle" fill="white" fontSize="52" fontWeight="bold" fontFamily="sans-serif">M</text>
+              </svg>
+              {!isCollapsed && (
+                <span className="text-xl font-bold tracking-wide text-foreground">GESTOR <span className="text-primary">MSX</span></span>
+              )}
+            </div>
+            {!isCollapsed && (
+              <div className="flex justify-center -mt-4 mb-1 gap-1">
+                <Crown size={14} className="text-success" />
+                <NavLink to="/renovar-acesso" className="text-xs text-success hover:text-success/80 font-medium transition-colors">
+                  Renovar Acesso
+                </NavLink>
+              </div>
+            )}
+          </>
         )}
         <div className="mx-4 border-t border-border/50" />
       </SidebarHeader>
