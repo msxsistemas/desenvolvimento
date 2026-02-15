@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, RefreshCw, Wifi, WifiOff, Crown, Rocket, Zap, ArrowLeft, QrCode, LogOut } from "lucide-react";
+import { CheckCircle, RefreshCw, Crown, Rocket, Zap, ArrowLeft, QrCode, LogOut } from "lucide-react";
 import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
 import { useZAPI } from "@/hooks/useZAPI";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 type WhatsAppProvider = 'evolution' | 'zapi';
 type PageView = 'select' | 'connect';
@@ -59,34 +60,37 @@ function ProviderCard({
 }
 
 function ConnectionPage({
-  provider, activeHook, onBack,
+  provider, activeHook, onBack, switching,
 }: {
-  provider: WhatsAppProvider; activeHook: any; onBack: () => void;
+  provider: WhatsAppProvider; activeHook: any; onBack: () => void; switching: boolean;
 }) {
   const { session, connecting, connect, disconnect, isConnected, hydrated, checkStatus } = activeHook;
   const providerName = provider === 'zapi' ? 'Z-API' : 'Evolution API';
 
   return (
     <div className="space-y-6 max-w-xl mx-auto">
-      {/* Header with back */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={onBack}>
+        <Button variant="ghost" size="sm" onClick={onBack} disabled={switching}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Trocar API
         </Button>
         <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-4 py-2">
           <span className="text-sm text-muted-foreground">API Ativa:</span>
           <span className="font-bold text-foreground">{providerName}</span>
         </div>
-        <Button variant="outline" size="sm" onClick={() => checkStatus(true)} disabled={!hydrated}>
+        <Button variant="outline" size="sm" onClick={() => checkStatus(true)} disabled={!hydrated || switching}>
           <RefreshCw className={`h-4 w-4 mr-2 ${connecting ? 'animate-spin' : ''}`} />
           Atualizar
         </Button>
       </div>
 
-      {/* Connection card */}
       <Card className="border-border">
         <CardContent className="p-8">
-          {!hydrated ? (
+          {switching ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin mb-4" />
+              <p className="text-muted-foreground">Desconectando API anterior...</p>
+            </div>
+          ) : !hydrated ? (
             <div className="flex flex-col items-center justify-center py-12">
               <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin mb-4" />
               <p className="text-muted-foreground">Carregando status da sessão...</p>
@@ -165,7 +169,6 @@ function ConnectionPage({
         </CardContent>
       </Card>
 
-      {/* Instructions */}
       <Card className="border-border">
         <CardContent className="p-4">
           <div className="space-y-2 text-sm">
@@ -190,11 +193,27 @@ export default function ParearWhatsappNew() {
     return (localStorage.getItem('whatsapp_provider') as WhatsAppProvider) || null;
   });
   const [view, setView] = useState<PageView>('select');
+  const [switching, setSwitching] = useState(false);
 
   const evolution = useEvolutionAPISimple();
   const zapi = useZAPI();
 
   const activeHook = provider === 'zapi' ? zapi : evolution;
+
+  // Auto-detect connected provider and go directly to connect view
+  useEffect(() => {
+    if (evolution.hydrated && zapi.hydrated) {
+      if (evolution.isConnected) {
+        setProvider('evolution');
+        localStorage.setItem('whatsapp_provider', 'evolution');
+        setView('connect');
+      } else if (zapi.isConnected) {
+        setProvider('zapi');
+        localStorage.setItem('whatsapp_provider', 'zapi');
+        setView('connect');
+      }
+    }
+  }, [evolution.hydrated, zapi.hydrated, evolution.isConnected, zapi.isConnected]);
 
   useEffect(() => {
     document.title = "Parear WhatsApp | Gestor MSX";
@@ -204,10 +223,42 @@ export default function ParearWhatsappNew() {
     if (provider) localStorage.setItem('whatsapp_provider', provider);
   }, [provider]);
 
-  const handleSelectProvider = (p: WhatsAppProvider) => {
+  const disconnectOther = useCallback(async (selectedProvider: WhatsAppProvider) => {
+    const otherHook = selectedProvider === 'zapi' ? evolution : zapi;
+    if (otherHook.isConnected) {
+      setSwitching(true);
+      try {
+        await otherHook.disconnect();
+        toast.success('API anterior desconectada');
+      } catch (e) {
+        console.error('Erro ao desconectar API anterior:', e);
+      } finally {
+        setSwitching(false);
+      }
+    }
+  }, [evolution, zapi]);
+
+  const handleSelectProvider = useCallback(async (p: WhatsAppProvider) => {
+    await disconnectOther(p);
     setProvider(p);
     setView('connect');
-  };
+  }, [disconnectOther]);
+
+  const handleBack = useCallback(async () => {
+    // Disconnect current provider before going back
+    if (activeHook.isConnected) {
+      setSwitching(true);
+      try {
+        await activeHook.disconnect();
+        toast.success('WhatsApp desconectado');
+      } catch (e) {
+        console.error('Erro ao desconectar:', e);
+      } finally {
+        setSwitching(false);
+      }
+    }
+    setView('select');
+  }, [activeHook]);
 
   if (view === 'connect' && provider) {
     return (
@@ -215,7 +266,8 @@ export default function ParearWhatsappNew() {
         <ConnectionPage
           provider={provider}
           activeHook={activeHook}
-          onBack={() => setView('select')}
+          onBack={handleBack}
+          switching={switching}
         />
       </main>
     );
