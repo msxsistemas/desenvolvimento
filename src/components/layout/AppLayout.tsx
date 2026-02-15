@@ -126,7 +126,21 @@ export default function AppLayout() {
         <div className="flex-1 flex flex-col h-full min-w-0">
           {/* Header */}
           <header className="h-16 sm:h-20 border-b border-border flex items-center px-4 sm:px-6 bg-sidebar-background z-10 flex-shrink-0">
-            <MobileMenuButton />
+           <MobileMenuButton />
+            {/* Mobile logo */}
+            <div className="md:hidden flex items-center gap-2">
+              <svg viewBox="0 0 100 110" className="w-7 h-7 flex-shrink-0">
+                <defs>
+                  <linearGradient id="headerShieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.7" />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" />
+                  </linearGradient>
+                </defs>
+                <path d="M10 5 H90 V70 Q90 95 50 108 Q10 95 10 70 Z" fill="url(#headerShieldGrad)" rx="8" />
+                <text x="50" y="72" textAnchor="middle" fill="white" fontSize="52" fontWeight="bold" fontFamily="sans-serif">M</text>
+              </svg>
+              <span className="text-sm font-bold tracking-wide text-foreground">GESTOR <span className="text-primary">MSX</span></span>
+            </div>
             {/* Spacer */}
             <div className="flex-1" />
 
