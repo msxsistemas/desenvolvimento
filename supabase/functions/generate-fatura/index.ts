@@ -655,33 +655,39 @@ Deno.serve(async (req) => {
           try {
             const { data: v3Config } = await supabaseAdmin
               .from('v3pay_config')
-              .select('api_token_hash')
+              .select('is_configured')
               .eq('user_id', fatura.user_id)
               .eq('is_configured', true)
               .maybeSingle();
 
-            if (v3Config?.api_token_hash) {
-              const chargeResp = await fetch('https://api.v3pay.com.br/v1/charges', {
+            if (v3Config) {
+              const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+              const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+              const v3Resp = await fetch(`${supabaseUrl}/functions/v1/v3pay-integration`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${v3Config.api_token_hash}`, 'Content-Type': 'application/json' },
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${supabaseKey}`,
+                  'x-user-id': fatura.user_id,
+                },
                 body: JSON.stringify({
-                  amount: parseFloat(fatura.valor.toString()),
+                  action: 'create-charge',
+                  amount: String(fatura.valor),
                   description: `Renovação - ${fatura.plano_nome || 'Plano'}`,
                   customer_name: fatura.cliente_nome,
                   customer_phone: fatura.cliente_whatsapp,
-                  origin: 'Gestor IPTV',
                 }),
               });
-              const chargeData = await chargeResp.json();
-              console.log('📋 V3Pay generate-pix result:', JSON.stringify(chargeData).substring(0, 500));
+              const v3Data = await v3Resp.json();
+              console.log('📋 V3Pay generate-pix result:', JSON.stringify(v3Data).substring(0, 500));
 
-              if (chargeResp.ok && chargeData.id) {
-                gateway_charge_id = String(chargeData.id);
-                pix_qr_code = chargeData.pix?.qr_code || chargeData.pix_qr_code || null;
-                pix_copia_cola = chargeData.pix?.qr_code_text || chargeData.pix?.pix_code || chargeData.pix_copia_cola || null;
+              if (v3Data.success && v3Data.charge) {
+                gateway_charge_id = String(v3Data.charge.id);
+                pix_qr_code = v3Data.charge.pix?.qr_code || v3Data.charge.pix_qr_code || null;
+                pix_copia_cola = v3Data.charge.pix?.qr_code_text || v3Data.charge.pix?.pix_code || v3Data.charge.pix_copia_cola || null;
 
                 await supabaseAdmin.from('cobrancas').upsert({
-                  user_id: fatura.user_id, gateway: 'v3pay', gateway_charge_id: String(chargeData.id),
+                  user_id: fatura.user_id, gateway: 'v3pay', gateway_charge_id: String(v3Data.charge.id),
                   cliente_whatsapp: fatura.cliente_whatsapp, cliente_nome: fatura.cliente_nome,
                   valor: fatura.valor, status: 'pendente',
                 }, { onConflict: 'gateway_charge_id' });

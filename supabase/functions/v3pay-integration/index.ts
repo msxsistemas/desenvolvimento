@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-user-id',
 }
 
 const V3PAY_BASE_URL = 'https://api.v3pay.com.br/v1';
@@ -342,17 +342,28 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
     }
 
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    // Support service-role calls with x-user-id header
+    const xUserId = req.headers.get('x-user-id');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const token = authHeader.replace('Bearer ', '');
 
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
+    let userId: string;
+
+    if (xUserId && serviceRoleKey && token === serviceRoleKey) {
+      // Service-role call from another edge function
+      userId = xUserId;
+      console.log('✅ Service-role auth for user:', userId);
+    } else {
+      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Invalid token' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
+      }
+      userId = user.id;
+      console.log('✅ User authenticated:', user.id);
     }
 
-    console.log('✅ User authenticated:', user.id);
-    return await handleAuthenticatedAction(action, body, user, supabaseAdmin);
+    return await handleAuthenticatedAction(action, body, { id: userId } as any, supabaseAdmin);
 
   } catch (error: any) {
     console.error('🚨 V3Pay Error:', error);
