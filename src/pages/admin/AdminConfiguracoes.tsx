@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Palette, UserPlus, Wrench, Headphones, Upload, Loader2, X, Eye, EyeOff, MessageSquare } from "lucide-react";
+import { Settings, Palette, UserPlus, Wrench, Headphones, Upload, Loader2, X } from "lucide-react";
 
 interface SystemConfig {
   nome_sistema: string;
@@ -19,7 +19,7 @@ interface SystemConfig {
   termos_url: string | null;
   suporte_whatsapp: string | null;
   suporte_email: string | null;
-  zapi_integration_token: string | null;
+  
 }
 
 export default function AdminConfiguracoes() {
@@ -27,7 +27,7 @@ export default function AdminConfiguracoes() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [showZapiToken, setShowZapiToken] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -239,46 +239,6 @@ export default function AdminConfiguracoes() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-foreground/70" />
-              <CardTitle className="text-sm">Integração Z-API</CardTitle>
-            </div>
-            <CardDescription>Token de integrador Z-API para provisionamento automático de instâncias.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Token de Integrador Z-API</Label>
-              <div className="relative">
-                <Input
-                  type={showZapiToken ? 'text' : 'password'}
-                  value={config.zapi_integration_token || ""}
-                  onChange={e => set("zapi_integration_token", e.target.value || null)}
-                  placeholder="Cole seu token de integrador Z-API"
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => setShowZapiToken(!showZapiToken)}
-                >
-                  {showZapiToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Token obtido no painel Z-API em "Nova Instância web" → "Token de integração".
-                {config.zapi_integration_token && (
-                  <span className="text-green-600 ml-1">
-                    ({config.zapi_integration_token.length} caracteres)
-                  </span>
-                )}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card className="shadow-sm">
           <CardHeader>
