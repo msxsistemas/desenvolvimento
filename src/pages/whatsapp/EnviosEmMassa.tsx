@@ -55,6 +55,11 @@ export default function EnviosEmMassa() {
   const [progress, setProgress] = useState({ total: 0, sent: 0, failed: 0 });
   const [showProgress, setShowProgress] = useState(false);
   const [planos, setPlanos] = useState<{ nome: string }[]>([]);
+  const [servidores, setServidores] = useState<{ id: string; nome: string }[]>([]);
+  const [filtroServidor, setFiltroServidor] = useState("");
+  const [filtroDataInicio, setFiltroDataInicio] = useState("");
+  const [filtroDataFim, setFiltroDataFim] = useState("");
+  const [filtroTag, setFiltroTag] = useState("");
   const [clienteCount, setClienteCount] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useCurrentUser();
@@ -64,11 +69,14 @@ export default function EnviosEmMassa() {
     document.title = "Envios em Massa | Tech Play";
   }, []);
 
-  // Fetch planos for filter
+  // Fetch planos and servidores for filters
   useEffect(() => {
     if (!user?.id) return;
     supabase.from("planos").select("nome").eq("user_id", user.id).then(({ data }) => {
       if (data) setPlanos(data);
+    });
+    supabase.from("paineis_integracao").select("id, nome").eq("user_id", user.id).then(({ data }) => {
+      if (data) setServidores(data);
     });
   }, [user?.id]);
 
@@ -89,15 +97,30 @@ export default function EnviosEmMassa() {
           query = query.eq("ativo", true).gte("data_vencimento", today).not("plano", "is", null);
           if (filtroPlano) query = query.eq("plano", filtroPlano);
           break;
+        case "clientes_ativos_servidor":
+          query = query.eq("ativo", true).gte("data_vencimento", today);
+          if (filtroServidor) query = query.eq("produto", filtroServidor);
+          break;
+        case "clientes_vencidos_servidor":
+          query = query.lt("data_vencimento", today);
+          if (filtroServidor) query = query.eq("produto", filtroServidor);
+          break;
         case "clientes_vencidos":
+          query = query.lt("data_vencimento", today);
+          break;
         case "clientes_vencidos_data":
           query = query.lt("data_vencimento", today);
+          if (filtroDataInicio) query = query.gte("data_vencimento", filtroDataInicio);
+          if (filtroDataFim) query = query.lte("data_vencimento", filtroDataFim);
           break;
         case "clientes_inativos":
           query = query.eq("ativo", false);
           break;
         case "clientes_desativados":
           query = query.eq("ativo", false);
+          break;
+        case "por_tags":
+          if (filtroTag) query = query.ilike("observacao", `%${filtroTag}%`);
           break;
         case "todos":
           break;
@@ -106,7 +129,7 @@ export default function EnviosEmMassa() {
       setClienteCount(count ?? 0);
     };
     fetchCount();
-  }, [user?.id, destinatarios, filtroPlano]);
+  }, [user?.id, destinatarios, filtroPlano, filtroServidor, filtroDataInicio, filtroDataFim, filtroTag]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -209,15 +232,30 @@ export default function EnviosEmMassa() {
           query = query.eq("ativo", true).gte("data_vencimento", today).not("plano", "is", null);
           if (filtroPlano) query = query.eq("plano", filtroPlano);
           break;
+        case "clientes_ativos_servidor":
+          query = query.eq("ativo", true).gte("data_vencimento", today);
+          if (filtroServidor) query = query.eq("produto", filtroServidor);
+          break;
+        case "clientes_vencidos_servidor":
+          query = query.lt("data_vencimento", today);
+          if (filtroServidor) query = query.eq("produto", filtroServidor);
+          break;
         case "clientes_vencidos":
+          query = query.lt("data_vencimento", today);
+          break;
         case "clientes_vencidos_data":
           query = query.lt("data_vencimento", today);
+          if (filtroDataInicio) query = query.gte("data_vencimento", filtroDataInicio);
+          if (filtroDataFim) query = query.lte("data_vencimento", filtroDataFim);
           break;
         case "clientes_inativos":
           query = query.eq("ativo", false);
           break;
         case "clientes_desativados":
           query = query.eq("ativo", false);
+          break;
+        case "por_tags":
+          if (filtroTag) query = query.ilike("observacao", `%${filtroTag}%`);
           break;
         case "todos":
           break;
@@ -342,7 +380,7 @@ export default function EnviosEmMassa() {
   const showMediaUpload = tipoMensagem && tipoMensagem !== 'texto';
   const progressPercent = progress.total > 0 ? Math.round(((progress.sent + progress.failed) / progress.total) * 100) : 0;
 
-  const showFilterPlano = destinatarios === 'clientes_ativos_plano';
+  const showFilter = ['clientes_ativos_plano', 'clientes_ativos_servidor', 'clientes_vencidos_servidor', 'clientes_vencidos_data', 'por_tags'].includes(destinatarios);
 
   return (
     <main className="space-y-4">
@@ -439,6 +477,10 @@ export default function EnviosEmMassa() {
             <Select value={destinatarios} onValueChange={(val) => {
               setDestinatarios(val);
               setFiltroPlano("");
+              setFiltroServidor("");
+              setFiltroDataInicio("");
+              setFiltroDataFim("");
+              setFiltroTag("");
             }}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione os destinatários" />
@@ -463,22 +505,63 @@ export default function EnviosEmMassa() {
           </div>
 
           {/* FILTROS */}
-          {showFilterPlano && (
+          {showFilter && (
             <div className="rounded-lg border border-border bg-card p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-primary" />
                 <Label className="text-xs font-bold uppercase tracking-wider text-foreground">Filtros</Label>
               </div>
-              <Select value={filtroPlano} onValueChange={setFiltroPlano}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o plano" />
-                </SelectTrigger>
-                <SelectContent>
-                  {planos.map((p) => (
-                    <SelectItem key={p.nome} value={p.nome}>{p.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+              {/* Filtro por Plano */}
+              {destinatarios === 'clientes_ativos_plano' && (
+                <Select value={filtroPlano} onValueChange={setFiltroPlano}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o plano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {planos.map((p) => (
+                      <SelectItem key={p.nome} value={p.nome}>{p.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Filtro por Servidor */}
+              {(destinatarios === 'clientes_ativos_servidor' || destinatarios === 'clientes_vencidos_servidor') && (
+                <Select value={filtroServidor} onValueChange={setFiltroServidor}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o servidor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {servidores.map((s) => (
+                      <SelectItem key={s.id} value={s.nome}>{s.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Filtro por Data */}
+              {destinatarios === 'clientes_vencidos_data' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Data Início</Label>
+                    <Input type="date" value={filtroDataInicio} onChange={(e) => setFiltroDataInicio(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Data Fim</Label>
+                    <Input type="date" value={filtroDataFim} onChange={(e) => setFiltroDataFim(e.target.value)} />
+                  </div>
+                </div>
+              )}
+
+              {/* Filtro por Tags */}
+              {destinatarios === 'por_tags' && (
+                <Input
+                  placeholder="Digite a tag para filtrar..."
+                  value={filtroTag}
+                  onChange={(e) => setFiltroTag(e.target.value)}
+                />
+              )}
             </div>
           )}
 
