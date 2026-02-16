@@ -91,11 +91,12 @@ export default function Checkout() {
 
   const configuredGateways = gateways.filter(g => g.configured);
 
+  // Only auto-select a gateway if the current one is not configured (e.g. was removed)
   useEffect(() => {
-    if (configuredGateways.length > 0 && !configuredGateways.find(g => g.id === gatewayAtivo)) {
+    if (!initialLoading && configuredGateways.length > 0 && !configuredGateways.find(g => g.id === gatewayAtivo)) {
       setGatewayAtivo(configuredGateways[0].id);
     }
-  }, [asaasConfigured, v3payConfigured, ciabraConfigured, mercadoPagoConfigured]);
+  }, [initialLoading, configuredGateways.length]);
 
   const handleSave = async () => {
     if (!user?.id) {
