@@ -9,7 +9,6 @@ import {
   AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Trash2, Loader2, Users, Gift, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -170,27 +169,21 @@ export default function Indicacoes() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Quem Indicou</TableHead>
-              <TableHead>Registro</TableHead>
-              <TableHead className="text-center">É Cliente</TableHead>
-              <TableHead>Plano</TableHead>
-              <TableHead className="w-[80px] text-right">Ações</TableHead>
+              <TableHead className="w-[20%]">Nome</TableHead>
+              <TableHead className="w-[20%]">Quem Indicou</TableHead>
+              <TableHead className="w-[15%]">Registro</TableHead>
+              <TableHead className="w-[30%]">Plano</TableHead>
+              <TableHead className="w-[15%] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length ? (
               filtered.map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell className="font-medium">{row.nome}</TableCell>
-                  <TableCell>{row.indicador_nome}</TableCell>
+                  <TableCell className="font-medium text-blue-400">{row.nome}</TableCell>
+                  <TableCell className="text-blue-400">{row.indicador_nome}</TableCell>
                   <TableCell>
                     {row.created_at ? format(new Date(row.created_at), "dd/MM/yyyy") : "-"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant={row.ativo ? "default" : "secondary"} className={row.ativo ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : ""}>
-                      {row.ativo ? "Sim" : "Não"}
-                    </Badge>
                   </TableCell>
                   <TableCell>{row.plano_nome}</TableCell>
                   <TableCell className="text-right">
