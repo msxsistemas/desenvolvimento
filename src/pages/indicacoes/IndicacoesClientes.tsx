@@ -12,7 +12,7 @@ import {
   AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Loader2, Users, Gift, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, Loader2, Users, Gift, TrendingUp, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { toast } from "sonner";
@@ -151,9 +151,14 @@ export default function Indicacoes() {
   return (
     <main className="space-y-4">
       <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Indicações</h1>
-          <p className="text-sm text-muted-foreground">Clientes indicados e seus indicadores</p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Share2 className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">Indicações</h1>
+            <p className="text-sm text-muted-foreground">Clientes indicados e seus indicadores</p>
+          </div>
         </div>
       </header>
 
