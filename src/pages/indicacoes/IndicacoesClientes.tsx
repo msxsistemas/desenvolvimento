@@ -16,13 +16,17 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-interface IndicacaoAgrupada {
-  nome_indicador: string;
-  clientes: { id: string; nome: string; plano: string | null; created_at: string | null; ativo: boolean | null }[];
+interface RowData {
+  id: string;
+  nome: string;
+  indicador_nome: string;
+  plano_nome: string;
+  created_at: string | null;
+  ativo: boolean | null;
 }
 
 export default function Indicacoes() {
-  const [indicacoes, setIndicacoes] = useState<IndicacaoAgrupada[]>([]);
+  const [rows, setRows] = useState<RowData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const { userId } = useCurrentUser();
@@ -37,6 +41,7 @@ export default function Indicacoes() {
     if (!userId) return;
     setLoading(true);
     try {
+      // Get clients with indicador filled
       const { data: clientes, error } = await supabase
         .from("clientes")
         .select("id, nome, indicador, plano, created_at, ativo")
@@ -45,17 +50,42 @@ export default function Indicacoes() {
         .not("indicador", "eq", "");
 
       if (error) throw error;
+      if (!clientes?.length) { setRows([]); setLoading(false); return; }
 
-      const map = new Map<string, IndicacaoAgrupada>();
-      clientes?.forEach((c) => {
-        if (!c.indicador) return;
-        if (!map.has(c.indicador)) map.set(c.indicador, { nome_indicador: c.indicador, clientes: [] });
-        map.get(c.indicador)!.clientes.push({
-          id: c.id, nome: c.nome, plano: c.plano, created_at: c.created_at, ativo: c.ativo,
-        });
-      });
+      // Collect unique indicador IDs and plano IDs to resolve names
+      const indicadorIds = [...new Set(clientes.map(c => c.indicador).filter(Boolean))] as string[];
+      const planoIds = [...new Set(clientes.map(c => c.plano).filter(Boolean))] as string[];
 
-      setIndicacoes(Array.from(map.values()));
+      // Fetch indicador names (they are client IDs)
+      const indicadorMap = new Map<string, string>();
+      if (indicadorIds.length) {
+        const { data: indicadores } = await supabase
+          .from("clientes")
+          .select("id, nome")
+          .in("id", indicadorIds);
+        indicadores?.forEach(i => indicadorMap.set(i.id, i.nome));
+      }
+
+      // Fetch plano names
+      const planoMap = new Map<string, string>();
+      if (planoIds.length) {
+        const { data: planos } = await supabase
+          .from("planos")
+          .select("id, nome")
+          .in("id", planoIds);
+        planos?.forEach(p => planoMap.set(p.id, p.nome));
+      }
+
+      const resolved: RowData[] = clientes.map(c => ({
+        id: c.id,
+        nome: c.nome,
+        indicador_nome: indicadorMap.get(c.indicador!) || c.indicador || "-",
+        plano_nome: planoMap.get(c.plano!) || c.plano || "-",
+        created_at: c.created_at,
+        ativo: c.ativo,
+      }));
+
+      setRows(resolved);
     } catch (error) {
       console.error("Erro ao carregar indicações:", error);
       toast.error("Erro ao carregar indicações");
@@ -64,19 +94,14 @@ export default function Indicacoes() {
     }
   };
 
-  // Flatten for table: one row per client indicated
-  const allRows = indicacoes.flatMap((ind) =>
-    ind.clientes.map((c) => ({ ...c, indicador: ind.nome_indicador }))
-  );
-
-  const filtered = allRows.filter(
+  const filtered = rows.filter(
     (r) =>
       r.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.indicador.toLowerCase().includes(searchTerm.toLowerCase())
+      r.indicador_nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalIndicadores = indicacoes.length;
-  const totalIndicados = allRows.length;
+  const totalIndicadores = new Set(rows.map(r => r.indicador_nome)).size;
+  const totalIndicados = rows.length;
 
   if (loading) {
     return (
@@ -95,7 +120,6 @@ export default function Indicacoes() {
         </div>
       </header>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-3">
@@ -126,7 +150,6 @@ export default function Indicacoes() {
         </div>
       </div>
 
-      {/* Filter */}
       <div className="rounded-lg border border-border bg-card p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-2">
@@ -140,10 +163,9 @@ export default function Indicacoes() {
       </div>
 
       <div className="text-right text-sm text-muted-foreground">
-        Mostrando {filtered.length} de {allRows.length} registros.
+        Mostrando {filtered.length} de {rows.length} registros.
       </div>
 
-      {/* Table */}
       <div className="rounded-lg border border-border bg-card">
         <Table>
           <TableHeader>
@@ -161,7 +183,7 @@ export default function Indicacoes() {
               filtered.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell className="font-medium">{row.nome}</TableCell>
-                  <TableCell>{row.indicador}</TableCell>
+                  <TableCell>{row.indicador_nome}</TableCell>
                   <TableCell>
                     {row.created_at ? format(new Date(row.created_at), "dd/MM/yyyy") : "-"}
                   </TableCell>
@@ -170,7 +192,7 @@ export default function Indicacoes() {
                       {row.ativo ? "Sim" : "Não"}
                     </Badge>
                   </TableCell>
-                  <TableCell>{row.plano || "-"}</TableCell>
+                  <TableCell>{row.plano_nome}</TableCell>
                   <TableCell className="text-right">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
