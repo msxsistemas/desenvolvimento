@@ -678,7 +678,7 @@ Deno.serve(async (req) => {
               if (chargeResp.ok && chargeData.id) {
                 gateway_charge_id = String(chargeData.id);
                 pix_qr_code = chargeData.pix?.qr_code || chargeData.pix_qr_code || null;
-                pix_copia_cola = chargeData.pix?.pix_code || chargeData.pix_copia_cola || null;
+                pix_copia_cola = chargeData.pix?.qr_code_text || chargeData.pix?.pix_code || chargeData.pix_copia_cola || null;
 
                 await supabaseAdmin.from('cobrancas').upsert({
                   user_id: fatura.user_id, gateway: 'v3pay', gateway_charge_id: String(chargeData.id),
