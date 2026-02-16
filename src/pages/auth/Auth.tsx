@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
 import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles } from 'lucide-react';
+import { InlineError } from '@/components/ui/inline-error';
 import { useSystemLogo } from '@/hooks/useSystemLogo';
 
 export default function Auth() {
@@ -23,6 +24,7 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -87,16 +89,17 @@ export default function Auth() {
     // name is validated by required attribute
 
     if (password !== confirmPassword) {
-      toast.error('As senhas não coincidem');
+      setAuthError('As senhas não coincidem');
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres');
+      setAuthError('A senha deve ter pelo menos 6 caracteres');
       setLoading(false);
       return;
     }
+    setAuthError(null);
 
     try {
       const { error } = await supabase.auth.signUp({
@@ -198,16 +201,17 @@ export default function Auth() {
     // newPassword is validated by required attribute
 
     if (newPassword.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres');
+      setAuthError('A senha deve ter pelo menos 6 caracteres');
       setLoading(false);
       return;
     }
 
     if (newPassword !== confirmNewPassword) {
-      toast.error('As senhas não coincidem');
+      setAuthError('As senhas não coincidem');
       setLoading(false);
       return;
     }
+    setAuthError(null);
 
     try {
       const { error } = await supabase.auth.updateUser({
@@ -295,6 +299,7 @@ export default function Auth() {
                   </button>
                 </div>
               </div>
+              <InlineError message={authError} />
               <Button 
                 type="submit" 
                 className="w-full h-12 text-base bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0" 
@@ -614,6 +619,8 @@ export default function Auth() {
                       />
                     </div>
                   </div>
+
+                  <InlineError message={authError} />
 
                   <Button 
                     type="submit" 

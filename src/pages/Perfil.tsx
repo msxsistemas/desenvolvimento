@@ -18,6 +18,7 @@ import {
   User, Building2, Mail, Save, Shield, Calendar, CreditCard,
   LogOut, Lock, KeyRound, Eye, EyeOff, ShieldCheck,
 } from "lucide-react";
+import { InlineError } from "@/components/ui/inline-error";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -46,6 +47,7 @@ export default function Perfil() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -84,13 +86,14 @@ export default function Perfil() {
 
   const handleChangePassword = async () => {
     if (newPassword.length < 6) {
-      toast({ title: 'Senha muito curta', description: 'A nova senha deve ter pelo menos 6 caracteres.', variant: 'destructive' });
+      setPasswordError('A nova senha deve ter pelo menos 6 caracteres.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast({ title: 'Senhas não coincidem', description: 'A confirmação da senha não corresponde.', variant: 'destructive' });
+      setPasswordError('A confirmação da senha não corresponde.');
       return;
     }
+    setPasswordError(null);
     setSavingPassword(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -273,6 +276,7 @@ export default function Perfil() {
               {newPassword && confirmPassword && newPassword !== confirmPassword && (
                 <p className="text-xs text-destructive">As senhas não coincidem.</p>
               )}
+              <InlineError message={passwordError} />
               <Separator />
               <Button onClick={handleChangePassword} disabled={savingPassword || !newPassword || !confirmPassword} className="w-full sm:w-auto">
                 <Lock className="h-4 w-4 mr-2" />{savingPassword ? 'Atualizando...' : 'Atualizar Senha'}

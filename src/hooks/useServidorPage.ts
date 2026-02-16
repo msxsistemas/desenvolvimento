@@ -31,6 +31,7 @@ export function useServidorPage(providerId: string) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<{ id: string; nome: string; url: string }>({ id: "", nome: "", url: "" });
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [editValidationError, setEditValidationError] = useState<string | null>(null);
 
   const { toast, dismiss } = useToast();
 
@@ -489,20 +490,22 @@ export function useServidorPage(providerId: string) {
 
   const startEditPanel = (panel: Panel) => {
     setEditForm({ id: panel.id, nome: panel.nome, url: panel.url });
+    setEditValidationError(null);
     setIsEditModalOpen(true);
   };
 
   const handleSaveEditPanel = async () => {
     dismiss();
     if (!editForm.nome.trim() || !editForm.url.trim()) {
-      toast({ title: 'Campos obrigatórios', description: 'Preencha nome e URL' });
+      setEditValidationError('Preencha nome e URL');
       return;
     }
     const baseUrl = editForm.url.trim().replace(/\/$/, '');
     if (!/^https?:\/\/.+/.test(baseUrl)) {
-      toast({ title: 'URL inválida', description: 'Informe uma URL válida iniciando com http:// ou https://' });
+      setEditValidationError('Informe uma URL válida iniciando com http:// ou https://');
       return;
     }
+    setEditValidationError(null);
 
     try {
       const { error } = await supabase
@@ -581,6 +584,7 @@ export function useServidorPage(providerId: string) {
     isTestingConnection, testingPanelId,
     formData, setFormData,
     validationError, setValidationError,
+    editValidationError, setEditValidationError,
     testResultModal, setTestResultModal,
     createResultModal, setCreateResultModal,
     deleteConfirmModal, setDeleteConfirmModal,

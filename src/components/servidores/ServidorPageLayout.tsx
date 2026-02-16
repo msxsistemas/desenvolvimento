@@ -16,7 +16,7 @@ export default function ServidorPageLayout({ providerId, title }: ServidorPageLa
     showPassword, setShowPassword,
     autoRenewal, setAutoRenewal,
     isTestingConnection, testingPanelId,
-    formData, setFormData, validationError,
+    formData, setFormData, validationError, editValidationError,
     testResultModal, setTestResultModal,
     createResultModal, setCreateResultModal,
     deleteConfirmModal, setDeleteConfirmModal,
@@ -99,6 +99,7 @@ export default function ServidorPageLayout({ providerId, title }: ServidorPageLa
         onOpenChange={setIsEditModalOpen}
         editForm={editForm}
         setEditForm={setEditForm}
+        validationError={editValidationError}
         onSave={handleSaveEditPanel}
       />
 

@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Info, Shield, Eye, CheckCircle, XCircle, Plus, Loader2, Key, AlertTriangle } from "lucide-react";
+import { InlineError } from "@/components/ui/inline-error";
 import { Panel, ProviderConfig } from "@/config/provedores";
 
 interface AddPanelModalProps {
@@ -148,12 +149,7 @@ export function AddPanelModal({
           </div>
         </div>
 
-        {validationError && (
-          <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-lg p-3">
-            <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
-            <p className="text-sm text-destructive">{validationError}</p>
-          </div>
-        )}
+        <InlineError message={validationError} />
 
         <DialogFooter>
           <Button variant="outline" onClick={onTestConnection} disabled={isTestingConnection}>
@@ -175,10 +171,11 @@ interface EditPanelModalProps {
   onOpenChange: (open: boolean) => void;
   editForm: { id: string; nome: string; url: string };
   setEditForm: (form: { id: string; nome: string; url: string }) => void;
+  validationError?: string | null;
   onSave: () => void;
 }
 
-export function EditPanelModal({ isOpen, onOpenChange, editForm, setEditForm, onSave }: EditPanelModalProps) {
+export function EditPanelModal({ isOpen, onOpenChange, editForm, setEditForm, validationError, onSave }: EditPanelModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -202,6 +199,7 @@ export function EditPanelModal({ isOpen, onOpenChange, editForm, setEditForm, on
             />
           </div>
         </div>
+        <InlineError message={validationError} />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={onSave}>Salvar</Button>

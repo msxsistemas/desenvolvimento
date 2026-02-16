@@ -42,6 +42,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/lib/supabase";
 import { Textarea } from "@/components/ui/textarea";
+import { InlineError } from "@/components/ui/inline-error";
 
 
 export default function ClientesListCreate() {
@@ -73,6 +74,7 @@ export default function ClientesListCreate() {
   const { sendMessage, session: whatsappSession, loading: sendingMessage } = useEvolutionAPISimple();
   const { dismiss, toast } = useToast();
   const [successMessage, setSuccessMessage] = useState("");
+  const [clienteFormError, setClienteFormError] = useState<string | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Cliente | null>(null);
   
@@ -1009,12 +1011,10 @@ export default function ClientesListCreate() {
     if (!data.plano) camposFaltantes.push("Plano");
 
     if (camposFaltantes.length > 0) {
-      toast({
-        title: "Preencha os campos obrigatórios",
-        description: camposFaltantes.join(", "),
-      });
+      setClienteFormError(`Preencha os campos: ${camposFaltantes.join(", ")}`);
       return;
     }
+    setClienteFormError(null);
 
     // Formatar o número de WhatsApp com +55
     const whatsappFormatado = formatWhatsAppNumber(data.whatsapp);
@@ -1946,6 +1946,7 @@ export default function ClientesListCreate() {
               </div>
             </div>
 
+            <InlineError message={clienteFormError} />
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline" onClick={resetModal}>Cancelar</Button>

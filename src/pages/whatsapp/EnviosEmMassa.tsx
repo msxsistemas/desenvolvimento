@@ -14,6 +14,7 @@ import {
 
 import { Progress } from "@/components/ui/progress";
 import { Send, Loader2, Upload, X, Image, FileText, MessageSquare, Users, Filter, AlertTriangle } from "lucide-react";
+import { InlineError } from "@/components/ui/inline-error";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -47,6 +48,7 @@ export default function EnviosEmMassa() {
   const [filtroPlano, setFiltroPlano] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [sending, setSending] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -197,24 +199,25 @@ export default function EnviosEmMassa() {
 
   const handleEnviar = async () => {
     if (!tipoMensagem || !destinatarios || !mensagem.trim()) {
-      toast.error("Preencha todos os campos obrigatórios");
+      setFormError("Preencha todos os campos obrigatórios");
       return;
     }
 
     if (tipoMensagem !== 'texto' && !mediaFile) {
-      toast.error("Selecione um arquivo de mídia");
+      setFormError("Selecione um arquivo de mídia");
       return;
     }
 
     if (!user?.id) {
-      toast.error("Você precisa estar logado");
+      setFormError("Você precisa estar logado");
       return;
     }
 
     if (!isConnected) {
-      toast.error("WhatsApp não está conectado. Vá em Parear WhatsApp para conectar.");
+      setFormError("WhatsApp não está conectado. Vá em Parear WhatsApp para conectar.");
       return;
     }
+    setFormError(null);
 
     setSending(true);
     setShowProgress(true);
@@ -593,6 +596,8 @@ export default function EnviosEmMassa() {
               placeholder="Digite sua mensagem aqui..."
             />
           </div>
+
+          <InlineError message={formError} />
 
           {/* Send Button */}
           <Button 

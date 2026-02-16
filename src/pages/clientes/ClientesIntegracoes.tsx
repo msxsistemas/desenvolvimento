@@ -55,6 +55,7 @@ export default function ClientesIntegracoes() {
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<{ id: string; nome: string; url: string }>({ id: "", nome: "", url: "" });
+  const [editValidationError, setEditValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Servidores | Tech Play";
@@ -349,6 +350,7 @@ export default function ClientesIntegracoes() {
 
   const startEditPanel = (panel: Panel) => {
     setEditForm({ id: panel.id, nome: panel.nome, url: panel.url });
+    setEditValidationError(null);
     setIsEditModalOpen(true);
   };
 
@@ -356,15 +358,16 @@ export default function ClientesIntegracoes() {
     dismiss();
 
     if (!editForm.nome.trim() || !editForm.url.trim()) {
-      toast({ title: 'Campos obrigatórios', description: 'Preencha nome e URL' });
+      setEditValidationError('Preencha nome e URL');
       return;
     }
     const baseUrl = editForm.url.trim().replace(/\/$/, '');
     const urlPattern = /^https?:\/\/.+/;
     if (!urlPattern.test(baseUrl)) {
-      toast({ title: 'URL inválida', description: 'Informe uma URL válida iniciando com http:// ou https://' });
+      setEditValidationError('Informe uma URL válida iniciando com http:// ou https://');
       return;
     }
+    setEditValidationError(null);
 
     try {
       const { error } = await supabase
@@ -545,6 +548,7 @@ export default function ClientesIntegracoes() {
         onOpenChange={setIsEditModalOpen}
         editForm={editForm}
         setEditForm={setEditForm}
+        validationError={editValidationError}
         onSave={handleSaveEditPanel}
       />
 

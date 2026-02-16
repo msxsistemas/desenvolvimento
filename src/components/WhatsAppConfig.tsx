@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Settings, Save, TestTube } from 'lucide-react';
 import { toast } from 'sonner';
+import { InlineError } from '@/components/ui/inline-error';
 import { supabase } from '@/lib/supabase';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
@@ -20,6 +21,7 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
   const [apiKey, setApiKey] = useState(currentConfig?.apiKey || '');
   const [instanceName, setInstanceName] = useState(currentConfig?.instanceName || 'default');
   const [testing, setTesting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const applyData = (sessionData: Record<string, unknown>) => {
     setApiUrl(String(sessionData.apiUrl || ''));
@@ -74,9 +76,10 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
 
   const handleSave = async () => {
     if (!apiUrl) {
-      toast.error('URL da API é obrigatória');
+      setFormError('URL da API é obrigatória');
       return;
     }
+    setFormError(null);
 
     const config = {
       apiUrl: apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl,
@@ -242,6 +245,8 @@ export default function WhatsAppConfig({ onConfigSave, currentConfig }: WhatsApp
               Nome da instância WhatsApp na sua API
             </p>
           </div>
+
+          <InlineError message={formError} />
 
           <div className="flex gap-2">
             <Button type="submit" className="flex items-center gap-2">

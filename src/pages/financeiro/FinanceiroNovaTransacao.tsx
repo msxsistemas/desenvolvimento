@@ -57,7 +57,7 @@ export default function FinanceiroNovaTransacao() {
       const valor = parseFloat(valorStr);
 
       if (isNaN(valor) || valor <= 0) {
-        toast.error("Valor inválido");
+        setFieldErrors(prev => ({ ...prev, valor: "Valor inválido" }));
         setLoading(false);
         return;
       }
