@@ -27,6 +27,8 @@ interface DadosFinanceiros {
   entradas: number;
   saidas: number;
   lucros: number;
+  lucrosMes: number;
+  lucrosAno: number;
   transacoes: TransacaoFinanceira[];
   loading: boolean;
   error: string | null;
@@ -41,6 +43,8 @@ export function useFinanceiro(): DadosFinanceiros {
     entradas: 0,
     saidas: 0,
     lucros: 0,
+    lucrosMes: 0,
+    lucrosAno: 0,
     transacoes: [] as TransacaoFinanceira[],
     loading: true,
     error: null as string | null,
@@ -101,18 +105,28 @@ export function useFinanceiro(): DadosFinanceiros {
 
       let totalEntradas = 0;
       let totalSaidas = 0;
+      let entradasMes = 0;
+      let saidasMes = 0;
+      let entradasAno = 0;
+      let saidasAno = 0;
       const transacoes: TransacaoFinanceira[] = [];
+
+      const now = new Date();
+      const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1);
+      const inicioAno = new Date(now.getFullYear(), 0, 1);
 
       // Processar clientes para calcular entradas (planos)
       clientes.forEach(cliente => {
         if (cliente.plano && planosMap.has(cliente.plano)) {
           const plano = planosMap.get(cliente.plano)!;
-          
           const valorStr = plano.valor.replace(/[R$\s]/g, '').replace(',', '.');
           const valorPlano = parseFloat(valorStr);
           
           if (!isNaN(valorPlano)) {
+            const dataCliente = new Date(cliente.created_at || '');
             totalEntradas += valorPlano;
+            if (dataCliente >= inicioMes) entradasMes += valorPlano;
+            if (dataCliente >= inicioAno) entradasAno += valorPlano;
             
             transacoes.push({
               id: `entrada-${cliente.id}`,
@@ -130,12 +144,14 @@ export function useFinanceiro(): DadosFinanceiros {
         // Processar produtos como saídas
         if (cliente.produto && produtosMap.has(cliente.produto)) {
           const produto = produtosMap.get(cliente.produto)!;
-          
           const valorStr = produto.valor.replace(/[R$\s]/g, '').replace(',', '.');
           const valorProduto = parseFloat(valorStr);
           
           if (!isNaN(valorProduto)) {
+            const dataCliente = new Date(cliente.created_at || '');
             totalSaidas += valorProduto;
+            if (dataCliente >= inicioMes) saidasMes += valorProduto;
+            if (dataCliente >= inicioAno) saidasAno += valorProduto;
             
             transacoes.push({
               id: `saida-${cliente.id}`,
@@ -155,13 +171,17 @@ export function useFinanceiro(): DadosFinanceiros {
       transacoesCustomizadas.forEach((transacao: any) => {
         const valor = parseFloat(transacao.valor);
         if (!isNaN(valor)) {
+          const dataTransacao = new Date(transacao.created_at);
           if (transacao.tipo === 'entrada') {
             totalEntradas += valor;
+            if (dataTransacao >= inicioMes) entradasMes += valor;
+            if (dataTransacao >= inicioAno) entradasAno += valor;
           } else {
             totalSaidas += valor;
+            if (dataTransacao >= inicioMes) saidasMes += valor;
+            if (dataTransacao >= inicioAno) saidasAno += valor;
           }
 
-          // Parsear descrição para extrair cliente e detalhes
           const linhas = transacao.descricao.split('\n');
           const cliente = linhas[0] || 'Transação customizada';
           const detalhe = linhas.slice(1).join(' ') || 'Sem detalhes';
@@ -175,7 +195,7 @@ export function useFinanceiro(): DadosFinanceiros {
             detalheTitulo: 'Customizada',
             detalheValor: detalhe,
             isCustom: true,
-            descricao: transacao.descricao, // Manter descrição original para edição
+            descricao: transacao.descricao,
           });
         }
       });
@@ -186,6 +206,8 @@ export function useFinanceiro(): DadosFinanceiros {
         entradas: totalEntradas,
         saidas: totalSaidas,
         lucros,
+        lucrosMes: entradasMes - saidasMes,
+        lucrosAno: entradasAno - saidasAno,
         transacoes: transacoes.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()),
         loading: false,
         error: null,
