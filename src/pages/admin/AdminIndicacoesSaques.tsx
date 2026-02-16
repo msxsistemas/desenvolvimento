@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Wallet, Loader2, CheckCircle, DollarSign, XCircle } from "lucide-react";
+import { Wallet, Loader2, CheckCircle, DollarSign, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -23,12 +23,15 @@ interface SaqueRow {
   user_nome?: string;
 }
 
+const PAGE_SIZE = 10;
+
 export default function AdminIndicacoesSaques() {
   const [saques, setSaques] = useState<SaqueRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectSaqueId, setRejectSaqueId] = useState<string | null>(null);
   const [rejectMotivo, setRejectMotivo] = useState("");
+  const [page, setPage] = useState(1);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -87,58 +90,77 @@ export default function AdminIndicacoesSaques() {
             <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : saques.length === 0 ? (
             <div className="p-6 text-center"><Wallet className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" /><p className="text-sm text-muted-foreground">Nenhuma solicitação de saque.</p></div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Chave PIX</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {saques.map(s => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.user_nome}</TableCell>
-                    <TableCell>R$ {Number(s.valor).toFixed(2).replace(".", ",")}</TableCell>
-                    <TableCell className="font-mono text-xs">{s.chave_pix}</TableCell>
-                    <TableCell>
-                      {s.status === "pago" && <Badge className="bg-green-500/10 text-green-500">Pago</Badge>}
-                      {s.status === "aprovado" && <Badge className="bg-yellow-500/10 text-yellow-500">Aprovado</Badge>}
-                      {s.status === "rejeitado" && <Badge variant="destructive">Rejeitado</Badge>}
-                      {s.status === "pendente" && <Badge variant="secondary">Pendente</Badge>}
-                    </TableCell>
-                    <TableCell>{new Date(s.created_at).toLocaleDateString("pt-BR")}</TableCell>
-                    <TableCell className="text-right">
-                      {(s.status === "pendente" || s.status === "aprovado") && (
-                        <div className="flex items-center justify-end gap-1">
-                          {s.status === "pendente" && (
-                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleApproveSaque(s.id)}>
-                              <CheckCircle className="h-3.5 w-3.5" /> Aprovar
-                            </Button>
+          ) : (() => {
+            const totalPages = Math.max(1, Math.ceil(saques.length / PAGE_SIZE));
+            const paginated = saques.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+            return (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Usuário</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Chave PIX</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginated.map(s => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-medium">{s.user_nome}</TableCell>
+                        <TableCell>R$ {Number(s.valor).toFixed(2).replace(".", ",")}</TableCell>
+                        <TableCell className="font-mono text-xs">{s.chave_pix}</TableCell>
+                        <TableCell>
+                          {s.status === "pago" && <Badge className="bg-green-500/10 text-green-500">Pago</Badge>}
+                          {s.status === "aprovado" && <Badge className="bg-yellow-500/10 text-yellow-500">Aprovado</Badge>}
+                          {s.status === "rejeitado" && <Badge variant="destructive">Rejeitado</Badge>}
+                          {s.status === "pendente" && <Badge variant="secondary">Pendente</Badge>}
+                        </TableCell>
+                        <TableCell>{new Date(s.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                        <TableCell className="text-right">
+                          {(s.status === "pendente" || s.status === "aprovado") && (
+                            <div className="flex items-center justify-end gap-1">
+                              {s.status === "pendente" && (
+                                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleApproveSaque(s.id)}>
+                                  <CheckCircle className="h-3.5 w-3.5" /> Aprovar
+                                </Button>
+                              )}
+                              {s.status === "aprovado" && (
+                                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handlePaySaque(s.id)}>
+                                  <DollarSign className="h-3.5 w-3.5" /> Marcar Pago
+                                </Button>
+                              )}
+                              <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-destructive" onClick={() => { setRejectSaqueId(s.id); setRejectMotivo(""); setRejectDialogOpen(true); }}>
+                                <XCircle className="h-3.5 w-3.5" /> Rejeitar
+                              </Button>
+                            </div>
                           )}
-                          {s.status === "aprovado" && (
-                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handlePaySaque(s.id)}>
-                              <DollarSign className="h-3.5 w-3.5" /> Marcar Pago
-                            </Button>
+                          {s.status === "rejeitado" && s.motivo_rejeicao && (
+                            <span className="text-xs text-muted-foreground">{s.motivo_rejeicao}</span>
                           )}
-                          <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-destructive" onClick={() => { setRejectSaqueId(s.id); setRejectMotivo(""); setRejectDialogOpen(true); }}>
-                            <XCircle className="h-3.5 w-3.5" /> Rejeitar
-                          </Button>
-                        </div>
-                      )}
-                      {s.status === "rejeitado" && s.motivo_rejeicao && (
-                        <span className="text-xs text-muted-foreground">{s.motivo_rejeicao}</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between px-4 py-3 border-t">
+                    <span className="text-xs text-muted-foreground">{saques.length} registro(s) — Página {page} de {totalPages}</span>
+                    <div className="flex items-center gap-1">
+                      <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </CardContent>
       </Card>
 

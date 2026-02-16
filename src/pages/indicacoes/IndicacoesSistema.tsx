@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { 
   Wallet, UserPlus, DollarSign, Gift, FileText, MessageSquare, Users,
-  History, Copy, Check, Link as LinkIcon, Share2, Loader2
+  History, Copy, Check, Link as LinkIcon, Share2, Loader2, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,9 @@ export default function IndicacoesSistema() {
   const { indicacoes, clientesIndicados, stats, isLoading } = useIndicacoes();
   const [tipoBonus, setTipoBonus] = useState<string>("fixo");
   const [valorBonusConfig, setValorBonusConfig] = useState<number>(0);
+  const [indPage, setIndPage] = useState(1);
+  const [saquePage, setSaquePage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   
   // Withdrawal state
   const [saqueDialogOpen, setSaqueDialogOpen] = useState(false);
@@ -496,36 +499,55 @@ export default function IndicacoesSistema() {
                   <Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
                   <p className="text-sm text-muted-foreground">Nenhuma indicação ainda. Compartilhe seu link!</p>
                 </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Código</TableHead>
-                      <TableHead>Bônus</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Data</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {indicacoes.map((ind) => (
-                      <TableRow key={ind.id}>
-                        <TableCell className="font-medium">{ind.cliente?.nome || "-"}</TableCell>
-                        <TableCell className="font-mono text-xs">{ind.codigo_indicacao}</TableCell>
-                        <TableCell>
-                          {tipoBonus === "percentual"
-                            ? `${Number(ind.bonus).toFixed(2).replace(".", ",")}%`
-                            : `R$ ${Number(ind.bonus).toFixed(2).replace(".", ",")}`}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(ind.status)}</TableCell>
-                        <TableCell>
-                          {new Date(ind.created_at).toLocaleDateString("pt-BR")}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+              ) : (() => {
+                const indTotalPages = Math.ceil(indicacoes.length / ITEMS_PER_PAGE);
+                const indPaginated = indicacoes.slice((indPage - 1) * ITEMS_PER_PAGE, indPage * ITEMS_PER_PAGE);
+                return (
+                  <>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Cliente</TableHead>
+                          <TableHead>Código</TableHead>
+                          <TableHead>Bônus</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Data</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {indPaginated.map((ind) => (
+                          <TableRow key={ind.id}>
+                            <TableCell className="font-medium">{ind.cliente?.nome || "-"}</TableCell>
+                            <TableCell className="font-mono text-xs">{ind.codigo_indicacao}</TableCell>
+                            <TableCell>
+                              {tipoBonus === "percentual"
+                                ? `${Number(ind.bonus).toFixed(2).replace(".", ",")}%`
+                                : `R$ ${Number(ind.bonus).toFixed(2).replace(".", ",")}`}
+                            </TableCell>
+                            <TableCell>{getStatusBadge(ind.status)}</TableCell>
+                            <TableCell>
+                              {new Date(ind.created_at).toLocaleDateString("pt-BR")}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {indTotalPages > 1 && (
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                        <span className="text-xs text-muted-foreground">{indicacoes.length} registro(s) — Página {indPage} de {indTotalPages}</span>
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="icon" className="h-7 w-7" disabled={indPage <= 1} onClick={() => setIndPage(p => p - 1)}>
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" className="h-7 w-7" disabled={indPage >= indTotalPages} onClick={() => setIndPage(p => p + 1)}>
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
@@ -543,30 +565,49 @@ export default function IndicacoesSistema() {
                   <Wallet className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
                   <p className="text-sm text-muted-foreground">Nenhum saque solicitado ainda.</p>
                 </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Chave PIX</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Observação</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {saques.map((s) => (
-                      <TableRow key={s.id}>
-                        <TableCell className="font-medium">R$ {Number(s.valor).toFixed(2).replace(".", ",")}</TableCell>
-                        <TableCell className="font-mono text-xs">{s.chave_pix}</TableCell>
-                        <TableCell>{getSaqueStatusBadge(s.status)}</TableCell>
-                        <TableCell>{new Date(s.created_at).toLocaleDateString("pt-BR")}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{s.motivo_rejeicao || "-"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+              ) : (() => {
+                const saqueTotalPages = Math.ceil(saques.length / ITEMS_PER_PAGE);
+                const saquePaginated = saques.slice((saquePage - 1) * ITEMS_PER_PAGE, saquePage * ITEMS_PER_PAGE);
+                return (
+                  <>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Valor</TableHead>
+                          <TableHead>Chave PIX</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Data</TableHead>
+                          <TableHead>Observação</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {saquePaginated.map((s) => (
+                          <TableRow key={s.id}>
+                            <TableCell className="font-medium">R$ {Number(s.valor).toFixed(2).replace(".", ",")}</TableCell>
+                            <TableCell className="font-mono text-xs">{s.chave_pix}</TableCell>
+                            <TableCell>{getSaqueStatusBadge(s.status)}</TableCell>
+                            <TableCell>{new Date(s.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{s.motivo_rejeicao || "-"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {saqueTotalPages > 1 && (
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                        <span className="text-xs text-muted-foreground">{saques.length} registro(s) — Página {saquePage} de {saqueTotalPages}</span>
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="icon" className="h-7 w-7" disabled={saquePage <= 1} onClick={() => setSaquePage(p => p - 1)}>
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" className="h-7 w-7" disabled={saquePage >= saqueTotalPages} onClick={() => setSaquePage(p => p + 1)}>
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>

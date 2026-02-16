@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Loader2, Edit, Search } from "lucide-react";
+import { Users, Loader2, Edit, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -93,7 +93,13 @@ export default function AdminIndicacoesUsuarios() {
     return Array.from(map.values());
   })();
 
+  const PAGE_SIZE = 10;
+  const [page, setPage] = useState(1);
   const filteredUsers = userSummaries.filter(u => u.nome.toLowerCase().includes(searchUsers.toLowerCase()));
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const paginatedUsers = filteredUsers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => { setPage(1); }, [searchUsers]);
 
   const formatBonus = (val: number) =>
     tipoBonus === "percentual" ? `${val.toFixed(2).replace(".", ",")}%` : `R$ ${val.toFixed(2).replace(".", ",")}`;
@@ -129,40 +135,55 @@ export default function AdminIndicacoesUsuarios() {
           ) : filteredUsers.length === 0 ? (
             <div className="p-6 text-center"><Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" /><p className="text-sm text-muted-foreground">Nenhum usuário com indicações.</p></div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Total Indicações</TableHead>
-                  <TableHead>Aprovadas</TableHead>
-                  <TableHead>Bônus Total</TableHead>
-                  <TableHead>Valor/Indicação</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map(user => (
-                  <TableRow key={user.userId}>
-                    <TableCell className="font-medium">{user.nome}</TableCell>
-                    <TableCell>{user.totalIndicacoes}</TableCell>
-                    <TableCell>{user.totalAprovadas}</TableCell>
-                    <TableCell>{formatBonus(user.bonusTotal)}</TableCell>
-                    <TableCell>{formatBonus(user.ultimoBonus)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {tipoBonus === "percentual" ? "%" : "R$"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => { setEditUser({ userId: user.userId, email: user.nome, valor_bonus: user.ultimoBonus, tipo_bonus: tipoBonus }); setEditDialogOpen(true); }}>
-                        <Edit className="h-3.5 w-3.5" /> Editar Valor
-                      </Button>
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Total Indicações</TableHead>
+                    <TableHead>Aprovadas</TableHead>
+                    <TableHead>Bônus Total</TableHead>
+                    <TableHead>Valor/Indicação</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedUsers.map(user => (
+                    <TableRow key={user.userId}>
+                      <TableCell className="font-medium">{user.nome}</TableCell>
+                      <TableCell>{user.totalIndicacoes}</TableCell>
+                      <TableCell>{user.totalAprovadas}</TableCell>
+                      <TableCell>{formatBonus(user.bonusTotal)}</TableCell>
+                      <TableCell>{formatBonus(user.ultimoBonus)}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {tipoBonus === "percentual" ? "%" : "R$"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => { setEditUser({ userId: user.userId, email: user.nome, valor_bonus: user.ultimoBonus, tipo_bonus: tipoBonus }); setEditDialogOpen(true); }}>
+                          <Edit className="h-3.5 w-3.5" /> Editar Valor
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t">
+                  <span className="text-xs text-muted-foreground">{filteredUsers.length} registro(s) — Página {page} de {totalPages}</span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
