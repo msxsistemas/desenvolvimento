@@ -185,10 +185,43 @@ export default function AdminIndicacoesUsuarios() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label>{editUser.tipo_bonus === "percentual" ? "Percentual (%)" : "Valor (R$)"}</Label>
-                <Input type="number" step="0.01" min="0" value={editUser.valor_bonus || 0} onChange={e => setEditUser(prev => prev ? { ...prev, valor_bonus: Number(e.target.value) } : prev)} />
-              </div>
+              {editUser.tipo_bonus === "percentual" ? (
+                <div className="space-y-1.5">
+                  <Label>Percentual (%)</Label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={editUser.valor_bonus?.toString().replace(".", ",") || "0"}
+                      onChange={e => {
+                        const raw = e.target.value.replace(/[^\d,]/g, "").replace(",", ".");
+                        const num = parseFloat(raw);
+                        setEditUser(prev => prev ? { ...prev, valor_bonus: isNaN(num) ? 0 : Math.min(num, 100) } : prev);
+                      }}
+                      className="pr-8"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label>Valor (R$)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={editUser.valor_bonus?.toFixed(2).replace(".", ",") || "0,00"}
+                      onChange={e => {
+                        const raw = e.target.value.replace(/[^\d]/g, "");
+                        const num = parseInt(raw, 10) / 100;
+                        setEditUser(prev => prev ? { ...prev, valor_bonus: isNaN(num) ? 0 : num } : prev);
+                      }}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter>
