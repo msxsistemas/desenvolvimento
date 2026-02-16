@@ -751,10 +751,7 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
 
-      if (fatura.pix_qr_code || fatura.pix_copia_cola || fatura.gateway_charge_id) {
-        return new Response(JSON.stringify({ error: 'Não é possível aplicar cupom após gerar o PIX' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-      }
+      const hadPixGenerated = !!(fatura.pix_qr_code || fatura.pix_copia_cola || fatura.gateway_charge_id);
 
       const { data: cupom } = await supabaseAdmin
         .from('cupons')
@@ -789,9 +786,17 @@ Deno.serve(async (req) => {
       desconto = Math.min(desconto, valorOriginal);
       const valorFinal = Math.max(valorOriginal - desconto, 0);
 
+      const updateData: any = { valor: valorFinal, valor_original: valorOriginal, cupom_codigo: cupom.codigo };
+      if (hadPixGenerated) {
+        // Clear old PIX data so user regenerates with new value
+        updateData.pix_qr_code = null;
+        updateData.pix_copia_cola = null;
+        updateData.gateway_charge_id = null;
+      }
+
       const { error: updateErr } = await supabaseAdmin
         .from('faturas')
-        .update({ valor: valorFinal, valor_original: valorOriginal, cupom_codigo: cupom.codigo })
+        .update(updateData)
         .eq('id', fatura.id);
 
       if (updateErr) {
@@ -876,7 +881,7 @@ Deno.serve(async (req) => {
       const valorOriginal = fatura.valor_original;
       const { error: updateErr } = await supabaseAdmin
         .from('faturas')
-        .update({ valor: valorOriginal, valor_original: null, cupom_codigo: null })
+        .update({ valor: valorOriginal, valor_original: null, cupom_codigo: null, pix_qr_code: null, pix_copia_cola: null, gateway_charge_id: null })
         .eq('id', fatura.id);
 
       if (updateErr) {
