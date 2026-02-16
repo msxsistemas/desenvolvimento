@@ -84,6 +84,7 @@ import AdminIndicacoesConfig from "./pages/admin/AdminIndicacoesConfig";
 import AdminIndicacoesRegistros from "./pages/admin/AdminIndicacoesRegistros";
 import AdminIndicacoesSaques from "./pages/admin/AdminIndicacoesSaques";
 import AdminIndicacoesRanking from "./pages/admin/AdminIndicacoesRanking";
+import AdminIndicacoesUsuarios from "./pages/admin/AdminIndicacoesUsuarios";
 import AdminLogin from "./pages/admin/AdminLogin";
 
 
@@ -194,6 +195,7 @@ const App = () => (
             <Route path="/admin/templates/editar/:id" element={<AdminTemplateEditar />} />
             <Route path="/admin/servidores" element={<AdminServidores />} />
             <Route path="/admin/indicacoes" element={<AdminIndicacoesConfig />} />
+            <Route path="/admin/indicacoes/usuarios" element={<AdminIndicacoesUsuarios />} />
             <Route path="/admin/indicacoes/registros" element={<AdminIndicacoesRegistros />} />
             <Route path="/admin/indicacoes/saques" element={<AdminIndicacoesSaques />} />
             <Route path="/admin/indicacoes/ranking" element={<AdminIndicacoesRanking />} />

@@ -87,6 +87,7 @@ const adminNavItems: NavItem[] = [
     submenuKey: "indicacoes",
     subItems: [
       { to: "/admin/indicacoes", label: "Configurações" },
+      { to: "/admin/indicacoes/usuarios", label: "Usuários" },
       { to: "/admin/indicacoes/registros", label: "Indicações" },
       { to: "/admin/indicacoes/saques", label: "Saques" },
       { to: "/admin/indicacoes/ranking", label: "Top 5" },

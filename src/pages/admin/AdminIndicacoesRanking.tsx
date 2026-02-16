@@ -59,7 +59,7 @@ export default function AdminIndicacoesRanking() {
         }
       });
 
-      const sorted = Array.from(map.values()).sort((a, b) => b.totalIndicacoes - a.totalIndicacoes).slice(0, 5);
+      const sorted = Array.from(map.values()).sort((a, b) => b.totalAprovadas - a.totalAprovadas).slice(0, 5);
       setRanking(sorted);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
@@ -86,7 +86,7 @@ export default function AdminIndicacoesRanking() {
             <Trophy className="h-5 w-5 text-yellow-500" />
             <h1 className="text-base font-semibold tracking-tight text-foreground">Top 5 Indicadores</h1>
           </div>
-          <p className="text-xs/6 text-muted-foreground">Os usuários que mais indicaram o sistema.</p>
+          <p className="text-xs/6 text-muted-foreground">Os usuários que mais indicaram e tiveram indicações aprovadas (indicado assinou plano).</p>
         </div>
       </header>
 
@@ -104,8 +104,8 @@ export default function AdminIndicacoesRanking() {
                   <TableHead>Usuário</TableHead>
                   <TableHead>Total Indicações</TableHead>
                   <TableHead>Aprovadas</TableHead>
-                  <TableHead>Bônus Total</TableHead>
-                  <TableHead>Tipo</TableHead>
+                   <TableHead>Valor Ganho</TableHead>
+                   <TableHead>Tipo</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
