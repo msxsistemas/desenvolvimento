@@ -118,7 +118,10 @@ export default function EnviosEmMassa() {
           query = query.eq("ativo", false);
           break;
         case "por_tags":
-          if (filtroTag) query = query.ilike("observacao", `%${filtroTag}%`);
+          if (filtroTag) {
+            const sanitized = filtroTag.replace(/[%_\\]/g, '\\$&').slice(0, 100);
+            query = query.ilike("observacao", `%${sanitized}%`);
+          }
           break;
         case "todos":
           break;
@@ -253,7 +256,10 @@ export default function EnviosEmMassa() {
           query = query.eq("ativo", false);
           break;
         case "por_tags":
-          if (filtroTag) query = query.ilike("observacao", `%${filtroTag}%`);
+          if (filtroTag) {
+            const sanitized = filtroTag.replace(/[%_\\]/g, '\\$&').slice(0, 100);
+            query = query.ilike("observacao", `%${sanitized}%`);
+          }
           break;
         case "todos":
           break;
