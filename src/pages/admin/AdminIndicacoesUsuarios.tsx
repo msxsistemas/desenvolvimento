@@ -176,9 +176,18 @@ export default function AdminIndicacoesUsuarios() {
           {editUser && (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>{tipoBonus === "percentual" ? "Percentual (%)" : "Valor (R$)"}</Label>
+                <Label>Tipo de Bônus</Label>
+                <Select value={editUser.tipo_bonus || "fixo"} onValueChange={v => setEditUser(prev => prev ? { ...prev, tipo_bonus: v } : prev)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixo">Valor Fixo (R$)</SelectItem>
+                    <SelectItem value="percentual">Percentual (%)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>{editUser.tipo_bonus === "percentual" ? "Percentual (%)" : "Valor (R$)"}</Label>
                 <Input type="number" step="0.01" min="0" value={editUser.valor_bonus || 0} onChange={e => setEditUser(prev => prev ? { ...prev, valor_bonus: Number(e.target.value) } : prev)} />
-                <p className="text-xs text-muted-foreground">Tipo atual do programa: {tipoBonus === "percentual" ? "Percentual (%)" : "Valor Fixo (R$)"}</p>
               </div>
             </div>
           )}
