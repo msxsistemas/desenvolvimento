@@ -163,7 +163,7 @@ const App = () => (
             <Route path="/configurar/configuracao-envio" element={<ConfiguracaoEnvio />} />
             <Route path="/configurar/notificacoes" element={<ConfiguracoesNotificacoes />} />
             <Route path="/whatsapp/parear" element={<ParearWhatsapp />} />
-            {/* Logs routes */}
+            {/* Logs */}
             <Route path="/logs" element={<Logs />} />
             <Route path="/logs/painel" element={<Logs />} />
             <Route path="/logs/sistema" element={<Logs />} />
