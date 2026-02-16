@@ -9,11 +9,14 @@ import {
   AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Loader2, Users, Gift, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Trash2, Loader2, Users, Gift, TrendingUp, ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface RowData {
   id: string;
@@ -31,6 +34,8 @@ export default function Indicacoes() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
   const { userId } = useCurrentUser();
 
   useEffect(() => { document.title = "Indicações | Tech Play"; }, []);
@@ -96,11 +101,30 @@ export default function Indicacoes() {
     }
   };
 
-  const filtered = rows.filter(
-    (r) =>
+  const filtered = rows.filter((r) => {
+    const matchesSearch =
       r.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.indicador_nome.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      r.indicador_nome.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    let matchesDate = true;
+    if (r.created_at) {
+      const rowDate = new Date(r.created_at);
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        from.setHours(0, 0, 0, 0);
+        if (rowDate < from) matchesDate = false;
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        to.setHours(23, 59, 59, 999);
+        if (rowDate > to) matchesDate = false;
+      }
+    } else if (dateFrom || dateTo) {
+      matchesDate = false;
+    }
+
+    return matchesSearch && matchesDate;
+  });
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginatedRows = filtered.slice(
@@ -109,7 +133,7 @@ export default function Indicacoes() {
   );
 
   // Reset page when search changes
-  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, dateFrom, dateTo]);
 
   const totalIndicadores = new Set(rows.map(r => r.indicador_nome)).size;
   const totalIndicados = rows.length;
@@ -167,8 +191,36 @@ export default function Indicacoes() {
             <Label className="text-muted-foreground">Busca</Label>
             <Input placeholder="Nome ou indicador..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Data Início</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Selecionar"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Data Fim</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateTo ? format(dateTo, "dd/MM/yyyy") : "Selecionar"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+          </div>
           <div className="flex items-end">
-            <Button variant="outline" onClick={() => setSearchTerm("")}>Limpar</Button>
+            <Button variant="outline" onClick={() => { setSearchTerm(""); setDateFrom(undefined); setDateTo(undefined); }}>Limpar</Button>
           </div>
         </div>
       </div>
