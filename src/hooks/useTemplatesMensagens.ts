@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentUser } from './useCurrentUser';
 import { toast } from 'sonner';
-import { logPainel, logSistema } from '@/utils/logger';
+import { logPainel } from '@/utils/logger';
 
 export interface TemplateMensagem {
   id: string;

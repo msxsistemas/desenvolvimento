@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import type { Cliente, Aplicativo, Plano, Produto, TemplateCobranca, MensagensPadroes } from '@/types/database';
-import { logPainel, logSistema } from '@/utils/logger';
+import { logPainel } from '@/utils/logger';
 import { useCurrentUser } from './useCurrentUser';
 
 // Hook para Clientes

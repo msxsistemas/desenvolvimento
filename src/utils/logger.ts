@@ -20,27 +20,3 @@ export const logPainel = async (acao: string, tipo: LogTipo = "info") => {
     console.error("Erro ao registrar log do painel:", error);
   }
 };
-
-/**
- * Registra um log do sistema (eventos técnicos)
- * Não lança erros - silencioso em caso de falha
- */
-export const logSistema = async (
-  componente: string,
-  evento: string,
-  nivel: LogTipo = "info"
-) => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    await supabase.from("logs_sistema").insert({
-      user_id: user.id,
-      componente,
-      evento,
-      nivel,
-    });
-  } catch (error) {
-    console.error("Erro ao registrar log do sistema:", error);
-  }
-};

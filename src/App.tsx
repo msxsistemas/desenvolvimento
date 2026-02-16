@@ -165,8 +165,6 @@ const App = () => (
             <Route path="/whatsapp/parear" element={<ParearWhatsapp />} />
             {/* Logs */}
             <Route path="/logs" element={<Logs />} />
-            <Route path="/logs/painel" element={<Logs />} />
-            <Route path="/logs/sistema" element={<Logs />} />
             {/* Indicações routes */}
             <Route path="/indicacoes/clientes" element={<IndicacoesClientes />} />
             <Route path="/indicacoes/sistema" element={<IndicacoesSistema />} />

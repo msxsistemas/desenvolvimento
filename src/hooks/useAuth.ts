@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { logPainel, logSistema } from "@/utils/logger";
+import { logPainel } from "@/utils/logger";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -24,7 +24,6 @@ export function useAuth() {
       setLoading(false);
       if (_event === 'SIGNED_IN') {
         logPainel("Login realizado", "success");
-        logSistema("auth", "Usuário logou no sistema", "success");
       }
     });
 

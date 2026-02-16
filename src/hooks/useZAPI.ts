@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentUser } from './useCurrentUser';
-import { logSistema } from '@/utils/logger';
+import { logPainel } from '@/utils/logger';
 
 interface ZAPISession {
   status: 'connecting' | 'connected' | 'disconnected';
@@ -247,7 +247,7 @@ export const useZAPI = () => {
         clearInterval(interval);
         statusIntervalRef.current = null;
         toast.success('WhatsApp conectado com sucesso via Z-API!');
-        logSistema("whatsapp", "WhatsApp conectado via Z-API", "success");
+        logPainel("WhatsApp conectado via Z-API", "success");
       }
     }, 3000);
 
@@ -315,7 +315,7 @@ export const useZAPI = () => {
       await callZAPI('disconnect');
       setSession(null);
       toast.success('WhatsApp desconectado com sucesso!');
-      logSistema("whatsapp", "WhatsApp desconectado (Z-API)", "warning");
+      logPainel("WhatsApp desconectado (Z-API)", "warning");
     } catch (error: any) {
       console.error('Error disconnecting:', error);
       setSession(null);
