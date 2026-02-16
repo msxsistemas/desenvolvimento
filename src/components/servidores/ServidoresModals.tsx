@@ -146,20 +146,6 @@ export function AddPanelModal({
           </div>
         </div>
 
-        {/* Configurações */}
-        <div className="flex items-center justify-between rounded-lg border border-border p-3">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">🔄</span>
-            </div>
-            <div>
-              <p className="text-foreground font-medium text-sm">Renovação Automática</p>
-              <p className="text-xs text-muted-foreground">Clientes serão renovados automaticamente</p>
-            </div>
-          </div>
-          <Switch checked={autoRenewal} onCheckedChange={setAutoRenewal} />
-        </div>
-
         <DialogFooter>
           <Button variant="outline" onClick={onTestConnection} disabled={isTestingConnection}>
             {isTestingConnection ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
