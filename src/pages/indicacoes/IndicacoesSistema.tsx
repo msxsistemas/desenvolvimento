@@ -34,11 +34,69 @@ export default function IndicacoesSistema() {
   // Withdrawal state
   const [saqueDialogOpen, setSaqueDialogOpen] = useState(false);
   const [saqueValor, setSaqueValor] = useState("");
+  const [saqueValorRaw, setSaqueValorRaw] = useState(0);
   const [chavePix, setChavePix] = useState("");
   const [loadingChavePix, setLoadingChavePix] = useState(false);
   const [savingSaque, setSavingSaque] = useState(false);
   const [saques, setSaques] = useState<SaqueRow[]>([]);
   const [loadingSaques, setLoadingSaques] = useState(true);
+
+  // Currency mask helper
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let raw = e.target.value.replace(/\D/g, "");
+    if (!raw) { setSaqueValor(""); setSaqueValorRaw(0); return; }
+    const numericValue = parseInt(raw, 10) / 100;
+    setSaqueValorRaw(numericValue);
+    setSaqueValor(formatCurrency(numericValue));
+  };
+
+  // PIX mask helper
+  const formatPixKey = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    // CPF: 000.000.000-00
+    if (digits.length <= 11 && /^\d+$/.test(value.replace(/[.\-/]/g, ""))) {
+      if (digits.length <= 11) {
+        return digits
+          .replace(/(\d{3})(\d)/, "$1.$2")
+          .replace(/(\d{3})(\d)/, "$1.$2")
+          .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+      }
+    }
+    // CNPJ: 00.000.000/0000-00
+    if (digits.length > 11 && digits.length <= 14 && /^\d+$/.test(value.replace(/[.\-/]/g, ""))) {
+      return digits
+        .replace(/(\d{2})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1/$2")
+        .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+    }
+    // Phone: (00) 00000-0000
+    if (digits.length >= 10 && digits.length <= 11 && /^\d+$/.test(value.replace(/[() \-]/g, ""))) {
+      if (digits.length === 11) {
+        return digits.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+      }
+      if (digits.length === 10) {
+        return digits.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+      }
+    }
+    // E-mail or random key: no mask
+    return value;
+  };
+
+  const handlePixChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // If it looks like it could be digits-only (CPF/CNPJ/Phone), apply mask
+    const onlyDigits = value.replace(/\D/g, "");
+    if (onlyDigits.length > 0 && !value.includes("@") && onlyDigits.length <= 14) {
+      setChavePix(formatPixKey(value));
+    } else {
+      setChavePix(value);
+    }
+  };
 
   const userCode = useMemo(() => {
     if (!userId) return "CARREGANDO...";
@@ -103,13 +161,14 @@ export default function IndicacoesSistema() {
 
   const handleOpenSaqueDialog = () => {
     setSaqueValor("");
+    setSaqueValorRaw(0);
     setSaqueDialogOpen(true);
   };
 
   const handleSolicitarSaque = async () => {
     if (!userId) return;
     
-    const valor = parseFloat(saqueValor.replace(",", "."));
+    const valor = saqueValorRaw;
     if (!valor || valor <= 0) {
       toast.error("Informe um valor válido");
       return;
@@ -485,27 +544,25 @@ export default function IndicacoesSistema() {
             <div className="space-y-2">
               <Label>Valor do Resgate (R$)</Label>
               <Input
-                type="number"
-                step="0.01"
-                min="0.01"
-                max={Math.max(0, saldoReal - TAXA_SAQUE)}
+                type="text"
+                inputMode="numeric"
                 placeholder="0,00"
                 value={saqueValor}
-                onChange={e => setSaqueValor(e.target.value)}
+                onChange={handleValorChange}
               />
-              {saqueValor && parseFloat(saqueValor.replace(",", ".")) > 0 && (
+              {saqueValorRaw > 0 && (
                 <div className="rounded-md bg-muted p-3 text-xs space-y-1">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Valor solicitado:</span>
-                    <span>R$ {parseFloat(saqueValor.replace(",", ".")).toFixed(2).replace(".", ",")}</span>
+                    <span>R$ {formatCurrency(saqueValorRaw)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Taxa de saque:</span>
-                    <span className="text-destructive">- R$ {TAXA_SAQUE.toFixed(2).replace(".", ",")}</span>
+                    <span className="text-destructive">- R$ {formatCurrency(TAXA_SAQUE)}</span>
                   </div>
                   <div className="border-t border-border pt-1 flex justify-between font-medium">
                     <span>Total debitado do saldo:</span>
-                    <span>R$ {(parseFloat(saqueValor.replace(",", ".")) + TAXA_SAQUE).toFixed(2).replace(".", ",")}</span>
+                    <span>R$ {formatCurrency(saqueValorRaw + TAXA_SAQUE)}</span>
                   </div>
                 </div>
               )}
@@ -515,7 +572,7 @@ export default function IndicacoesSistema() {
               <Input
                 placeholder="CPF, e-mail, telefone ou chave aleatória"
                 value={chavePix}
-                onChange={e => setChavePix(e.target.value)}
+                onChange={handlePixChange}
               />
               <p className="text-[11px] text-muted-foreground">
                 Sua chave PIX será salva para futuros saques. Você pode alterá-la a qualquer momento.
