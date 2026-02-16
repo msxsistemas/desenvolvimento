@@ -180,8 +180,8 @@ export default function Indicacoes() {
             {filtered.length ? (
               filtered.map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell className="font-medium text-blue-400">{row.nome}</TableCell>
-                  <TableCell className="text-blue-400">{row.indicador_nome}</TableCell>
+                  <TableCell className="font-medium text-sky-400">{row.nome}</TableCell>
+                  <TableCell className="text-sky-400">{row.indicador_nome}</TableCell>
                   <TableCell>
                     {row.created_at ? format(new Date(row.created_at), "dd/MM/yyyy") : "-"}
                   </TableCell>
