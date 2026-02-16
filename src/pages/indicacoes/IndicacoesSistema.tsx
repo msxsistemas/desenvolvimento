@@ -30,6 +30,7 @@ export default function IndicacoesSistema() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const { indicacoes, clientesIndicados, stats, isLoading } = useIndicacoes();
+  const [tipoBonus, setTipoBonus] = useState<string>("fixo");
   
   // Withdrawal state
   const [saqueDialogOpen, setSaqueDialogOpen] = useState(false);
@@ -123,6 +124,13 @@ export default function IndicacoesSistema() {
       }
     };
     getUser();
+
+    // Fetch bonus type config
+    const fetchBonusConfig = async () => {
+      const { data } = await supabase.from("system_indicacoes_config").select("tipo_bonus").eq("id", 1).single();
+      if (data?.tipo_bonus) setTipoBonus(data.tipo_bonus);
+    };
+    fetchBonusConfig();
   }, []);
 
   const fetchSavedPixKey = async (uid: string) => {
@@ -486,7 +494,11 @@ export default function IndicacoesSistema() {
                       <TableRow key={ind.id}>
                         <TableCell className="font-medium">{ind.cliente?.nome || "-"}</TableCell>
                         <TableCell className="font-mono text-xs">{ind.codigo_indicacao}</TableCell>
-                        <TableCell>R$ {Number(ind.bonus).toFixed(2).replace(".", ",")}</TableCell>
+                        <TableCell>
+                          {tipoBonus === "percentual"
+                            ? `${Number(ind.bonus).toFixed(2).replace(".", ",")}%`
+                            : `R$ ${Number(ind.bonus).toFixed(2).replace(".", ",")}`}
+                        </TableCell>
                         <TableCell>{getStatusBadge(ind.status)}</TableCell>
                         <TableCell>
                           {new Date(ind.created_at).toLocaleDateString("pt-BR")}

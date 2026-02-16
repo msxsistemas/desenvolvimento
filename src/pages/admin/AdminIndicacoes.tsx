@@ -475,8 +475,16 @@ export default function AdminIndicacoes() {
                         <TableCell className="font-medium">{user.nome}</TableCell>
                         <TableCell>{user.totalIndicacoes}</TableCell>
                         <TableCell>{user.totalAprovadas}</TableCell>
-                        <TableCell>R$ {user.bonusTotal.toFixed(2).replace(".", ",")}</TableCell>
-                        <TableCell>R$ {user.ultimoBonus.toFixed(2).replace(".", ",")}</TableCell>
+                        <TableCell>
+                          {config.tipo_bonus === "percentual"
+                            ? `${user.bonusTotal.toFixed(2).replace(".", ",")}%`
+                            : `R$ ${user.bonusTotal.toFixed(2).replace(".", ",")}`}
+                        </TableCell>
+                        <TableCell>
+                          {config.tipo_bonus === "percentual"
+                            ? `${user.ultimoBonus.toFixed(2).replace(".", ",")}%`
+                            : `R$ ${user.ultimoBonus.toFixed(2).replace(".", ",")}`}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="outline"
@@ -550,7 +558,11 @@ export default function AdminIndicacoes() {
                         <TableCell className="font-medium">{ind.user_email}</TableCell>
                         <TableCell>{ind.cliente_nome}</TableCell>
                         <TableCell className="font-mono text-xs">{ind.codigo_indicacao}</TableCell>
-                        <TableCell>R$ {Number(ind.bonus).toFixed(2).replace(".", ",")}</TableCell>
+                        <TableCell>
+                          {config.tipo_bonus === "percentual"
+                            ? `${Number(ind.bonus).toFixed(2).replace(".", ",")}%`
+                            : `R$ ${Number(ind.bonus).toFixed(2).replace(".", ",")}`}
+                        </TableCell>
                         <TableCell>{getStatusBadge(ind.status)}</TableCell>
                         <TableCell>{new Date(ind.created_at).toLocaleDateString("pt-BR")}</TableCell>
                         <TableCell className="text-right">
