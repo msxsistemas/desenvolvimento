@@ -179,13 +179,13 @@ export default function Indicacoes() {
           <TableBody>
             {filtered.length ? (
               filtered.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="font-medium text-blue-600 dark:text-blue-500 py-4">{row.nome}</TableCell>
-                  <TableCell className="text-blue-600 dark:text-blue-500 py-4">{row.indicador_nome}</TableCell>
-                  <TableCell>
+                <TableRow key={row.id} className="h-14">
+                  <TableCell className="font-medium text-blue-600 dark:text-blue-500 py-5">{row.nome}</TableCell>
+                  <TableCell className="text-blue-600 dark:text-blue-500 py-5">{row.indicador_nome}</TableCell>
+                  <TableCell className="py-5">
                     {row.created_at ? format(new Date(row.created_at), "dd/MM/yyyy") : "-"}
                   </TableCell>
-                  <TableCell>{row.plano_nome}</TableCell>
+                  <TableCell className="py-5">{row.plano_nome}</TableCell>
                   <TableCell className="text-right">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
