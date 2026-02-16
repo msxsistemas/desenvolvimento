@@ -465,7 +465,7 @@ export default function IndicacoesSistema() {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
-              ) : clientesIndicados.length === 0 ? (
+              ) : indicacoes.length === 0 ? (
                 <div className="p-6 text-center">
                   <Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
                   <p className="text-sm text-muted-foreground">Nenhuma indicação ainda. Compartilhe seu link!</p>
@@ -475,19 +475,21 @@ export default function IndicacoesSistema() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Cliente</TableHead>
-                      <TableHead>WhatsApp</TableHead>
-                      <TableHead>Plano</TableHead>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Bônus</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Data</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {clientesIndicados.map((cliente: any) => (
-                      <TableRow key={cliente.id}>
-                        <TableCell className="font-medium">{cliente.nome}</TableCell>
-                        <TableCell>{cliente.whatsapp}</TableCell>
-                        <TableCell>{cliente.plano || "-"}</TableCell>
+                    {indicacoes.map((ind) => (
+                      <TableRow key={ind.id}>
+                        <TableCell className="font-medium">{ind.cliente?.nome || "-"}</TableCell>
+                        <TableCell className="font-mono text-xs">{ind.codigo_indicacao}</TableCell>
+                        <TableCell>R$ {Number(ind.bonus).toFixed(2).replace(".", ",")}</TableCell>
+                        <TableCell>{getStatusBadge(ind.status)}</TableCell>
                         <TableCell>
-                          {new Date(cliente.indicacao_created_at || cliente.created_at).toLocaleDateString("pt-BR")}
+                          {new Date(ind.created_at).toLocaleDateString("pt-BR")}
                         </TableCell>
                       </TableRow>
                     ))}
