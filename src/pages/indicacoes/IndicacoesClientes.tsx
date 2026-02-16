@@ -165,28 +165,28 @@ export default function Indicacoes() {
         Mostrando {filtered.length} de {rows.length} registros.
       </div>
 
-      <div className="rounded-lg border border-border bg-card">
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-[20%]">Nome</TableHead>
-              <TableHead className="w-[20%]">Quem Indicou</TableHead>
-              <TableHead className="w-[15%]">Registro</TableHead>
-              <TableHead className="w-[30%]">Plano</TableHead>
-              <TableHead className="w-[15%] text-right">Ações</TableHead>
+            <TableRow className="border-border">
+              <TableHead className="px-6 py-3">Indicado</TableHead>
+              <TableHead className="px-6 py-3">Quem Indicou</TableHead>
+              <TableHead className="px-6 py-3">Registro</TableHead>
+              <TableHead className="px-6 py-3">Plano</TableHead>
+              <TableHead className="px-6 py-3 text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length ? (
               filtered.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="font-medium text-blue-600 dark:text-blue-500 py-4">{row.nome}</TableCell>
-                  <TableCell className="text-blue-600 dark:text-blue-500 py-4">{row.indicador_nome}</TableCell>
-                  <TableCell>
+                <TableRow key={row.id} className="border-border">
+                  <TableCell className="px-6 py-4 font-medium text-blue-600 dark:text-blue-500">{row.nome}</TableCell>
+                  <TableCell className="px-6 py-4 text-blue-600 dark:text-blue-500">{row.indicador_nome}</TableCell>
+                  <TableCell className="px-6 py-4">
                     {row.created_at ? format(new Date(row.created_at), "dd/MM/yyyy") : "-"}
                   </TableCell>
-                  <TableCell>{row.plano_nome}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="px-6 py-4">{row.plano_nome}</TableCell>
+                  <TableCell className="px-6 py-4 text-right">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive/80">
@@ -210,7 +210,7 @@ export default function Indicacoes() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                   Nenhuma indicação encontrada
                 </TableCell>
               </TableRow>
