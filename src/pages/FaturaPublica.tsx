@@ -474,7 +474,7 @@ export default function FaturaPublica() {
              </p>
 
              {/* Coupon Section */}
-             {!isPaid && !hasPix && !couponApplied && (
+             {!isPaid && !couponApplied && (
                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3 print:hidden">
                  <div className="flex items-center gap-2">
                    <Tag className="h-4 w-4 text-[#3b9ede]" />
