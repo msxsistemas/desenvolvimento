@@ -31,6 +31,7 @@ export default function IndicacoesSistema() {
   const [userId, setUserId] = useState<string | null>(null);
   const { indicacoes, clientesIndicados, stats, isLoading } = useIndicacoes();
   const [tipoBonus, setTipoBonus] = useState<string>("fixo");
+  const [valorBonusConfig, setValorBonusConfig] = useState<number>(0);
   
   // Withdrawal state
   const [saqueDialogOpen, setSaqueDialogOpen] = useState(false);
@@ -127,8 +128,9 @@ export default function IndicacoesSistema() {
 
     // Fetch bonus type config
     const fetchBonusConfig = async () => {
-      const { data } = await supabase.from("system_indicacoes_config").select("tipo_bonus").eq("id", 1).single();
+      const { data } = await supabase.from("system_indicacoes_config").select("tipo_bonus, valor_bonus").eq("id", 1).single();
       if (data?.tipo_bonus) setTipoBonus(data.tipo_bonus);
+      if (data?.valor_bonus != null) setValorBonusConfig(Number(data.valor_bonus));
     };
     fetchBonusConfig();
   }, []);
@@ -302,7 +304,7 @@ export default function IndicacoesSistema() {
       </header>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -311,6 +313,22 @@ export default function IndicacoesSistema() {
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Saldo Disponível</p>
               <p className="text-lg font-bold text-foreground">R$ {saldoReal.toFixed(2).replace('.', ',')}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Gift className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Ganho por Indicação</p>
+              <p className="text-lg font-bold text-foreground">
+                {tipoBonus === "percentual"
+                  ? `${valorBonusConfig.toFixed(2).replace('.', ',')}%`
+                  : `R$ ${valorBonusConfig.toFixed(2).replace('.', ',')}`}
+              </p>
             </div>
           </div>
         </div>
