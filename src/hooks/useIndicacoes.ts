@@ -74,15 +74,33 @@ export function useIndicacoes() {
     },
   });
 
-  // Calculate stats
+  // Fetch paid withdrawals
+  const { data: saquesPagos = [] } = useQuery({
+    queryKey: ["saques-pagos"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("saques_indicacao")
+        .select("valor")
+        .eq("user_id", user.id)
+        .eq("status", "pago");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Calculate stats - saldo = all approved/paid bonuses minus paid withdrawals
+  const totalBonusGanho = indicacoes
+    .filter((i) => i.status === "aprovado" || i.status === "pago")
+    .reduce((acc, i) => acc + Number(i.bonus), 0);
+
+  const totalSaquesPagos = saquesPagos.reduce((acc, s) => acc + Number(s.valor), 0);
+
   const stats = {
     totalIndicacoes: indicacoes.length,
-    saldoDisponivel: indicacoes
-      .filter((i) => i.status === "aprovado")
-      .reduce((acc, i) => acc + Number(i.bonus), 0),
-    resgatesPagos: indicacoes
-      .filter((i) => i.status === "pago")
-      .reduce((acc, i) => acc + Number(i.bonus), 0),
+    saldoDisponivel: totalBonusGanho - totalSaquesPagos,
+    resgatesPagos: totalSaquesPagos,
   };
 
   const updateIndicacao = useMutation({
