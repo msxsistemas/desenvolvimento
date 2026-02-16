@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
     }
 
-    console.log(`🔄 Auto-renovação iniciada - WhatsApp: ${cliente_whatsapp}, Gateway: ${gateway}, User: ${user_id}`);
+    console.log(`🔄 Auto-renovação iniciada - WhatsApp: ***${String(cliente_whatsapp).slice(-4)}, Gateway: ${gateway}`);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
       .eq('ativo', true);
 
     if (clienteError || !clientes || clientes.length === 0) {
-      console.error('❌ Nenhum cliente encontrado para o usuário:', user_id);
+      console.error('❌ Nenhum cliente encontrado');
       return new Response(JSON.stringify({ success: false, error: 'Nenhum cliente encontrado' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
     }
@@ -75,12 +75,12 @@ Deno.serve(async (req) => {
     });
 
     if (!cliente) {
-      console.error(`❌ Cliente com WhatsApp ${cliente_whatsapp} não encontrado`);
+      console.error(`❌ Cliente com WhatsApp ***${String(cliente_whatsapp).slice(-4)} não encontrado`);
       return new Response(JSON.stringify({ success: false, error: `Cliente com WhatsApp ${cliente_whatsapp} não encontrado` }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
     }
 
-    console.log(`✅ Cliente encontrado: ${cliente.nome} (ID: ${cliente.id})`);
+    console.log(`✅ Cliente encontrado (ID: ${cliente.id})`);
 
     // 2. Get the plan to calculate duration
     let renewalMonths = 1; // default: 1 month
@@ -327,7 +327,7 @@ Deno.serve(async (req) => {
           );
           const sendData = await sendResp.json();
           whatsappResult = { success: sendResp.ok, data: sendData };
-          console.log(`📱 WhatsApp enviado para ${formattedPhone}: ${sendResp.ok ? '✅' : '❌'}`);
+          console.log(`📱 WhatsApp enviado para ***${formattedPhone.slice(-4)}: ${sendResp.ok ? '✅' : '❌'}`);
         } else {
           console.warn('⚠️ Evolution API não configurada, mensagem não enviada');
           whatsappResult = { success: false, error: 'Evolution API não configurada' };

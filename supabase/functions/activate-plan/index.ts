@@ -264,7 +264,7 @@ async function activateSubscription(client: any, userId: string, plan: any) {
   const expiration = calculateExpiration(plan.intervalo);
   const now = new Date().toISOString();
   
-  console.log(`🔄 Activating subscription for user ${userId}, plan ${plan.id} (${plan.intervalo}), expira_em: ${expiration}`);
+  console.log(`🔄 Activating subscription, plan ${plan.id} (${plan.intervalo}), expira_em: ${expiration}`);
 
   // Check if user has existing subscription
   const { data: existing, error: fetchErr } = await client
