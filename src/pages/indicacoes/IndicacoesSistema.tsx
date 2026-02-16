@@ -40,6 +40,7 @@ export default function IndicacoesSistema() {
   const [savingSaque, setSavingSaque] = useState(false);
   const [saques, setSaques] = useState<SaqueRow[]>([]);
   const [loadingSaques, setLoadingSaques] = useState(true);
+  const [saqueError, setSaqueError] = useState("");
 
   // Currency mask helper
   const formatCurrency = (value: number) => {
@@ -162,24 +163,31 @@ export default function IndicacoesSistema() {
   const handleOpenSaqueDialog = () => {
     setSaqueValor("");
     setSaqueValorRaw(0);
+    setSaqueError("");
     setSaqueDialogOpen(true);
   };
 
+
   const handleSolicitarSaque = async () => {
     if (!userId) return;
+    setSaqueError("");
     
     const valor = saqueValorRaw;
     if (!valor || valor <= 0) {
-      toast.error("Informe um valor válido");
+      setSaqueError("Informe um valor válido");
+      return;
+    }
+    if (valor < 50) {
+      setSaqueError("O valor mínimo para saque é R$ 50,00");
       return;
     }
     const valorComTaxa = valor + TAXA_SAQUE;
     if (valorComTaxa > saldoReal) {
-      toast.error(`Saldo insuficiente. Valor + taxa: R$ ${valorComTaxa.toFixed(2).replace(".", ",")}`);
+      setSaqueError(`Saldo insuficiente. Valor + taxa: R$ ${valorComTaxa.toFixed(2).replace(".", ",")}`);
       return;
     }
     if (!chavePix.trim()) {
-      toast.error("Informe sua chave PIX");
+      setSaqueError("Informe sua chave PIX");
       return;
     }
 
@@ -253,6 +261,7 @@ export default function IndicacoesSistema() {
   };
 
   const TAXA_SAQUE = 1.50;
+  const VALOR_MINIMO_SAQUE = 50.00;
 
   // Calculate pending withdrawals to show correct available balance
   const saquePendente = saques
@@ -537,9 +546,14 @@ export default function IndicacoesSistema() {
           <DialogHeader>
             <DialogTitle>Solicitar Resgate</DialogTitle>
             <DialogDescription>
-              Saldo disponível: R$ {saldoReal.toFixed(2).replace(".", ",")} | Taxa por saque: R$ {TAXA_SAQUE.toFixed(2).replace(".", ",")}
+              Saldo disponível: R$ {saldoReal.toFixed(2).replace(".", ",")} | Taxa por saque: R$ {TAXA_SAQUE.toFixed(2).replace(".", ",")} | Mínimo: R$ {VALOR_MINIMO_SAQUE.toFixed(2).replace(".", ",")}
             </DialogDescription>
           </DialogHeader>
+          {saqueError && (
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+              {saqueError}
+            </div>
+          )}
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Valor do Resgate (R$)</Label>
