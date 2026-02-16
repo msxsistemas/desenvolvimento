@@ -207,6 +207,11 @@ Deno.serve(async (req: Request) => {
     let totalErrors = 0;
     let totalSkipped = 0;
 
+    // Current time in Brazil
+    const brNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    const brHour = brNow.getHours();
+    const brMinute = brNow.getMinutes();
+
     for (const msg of allMensagens) {
       if (!msg.user_id) continue;
       const userId = msg.user_id;
@@ -217,6 +222,23 @@ Deno.serve(async (req: Request) => {
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
+
+      // Check if current time matches the user's configured notification hour
+      // hora_notificacoes is stored as "HH:MM" (e.g. "08:00")
+      const horaConfig = notifConfig?.hora_notificacoes ?? '08:00';
+      const [configHour, configMinute] = horaConfig.split(':').map(Number);
+      
+      // Allow a 15-minute window (cron runs every 15 min)
+      const configTotalMin = configHour * 60 + (configMinute || 0);
+      const currentTotalMin = brHour * 60 + brMinute;
+      const diffMin = currentTotalMin - configTotalMin;
+      
+      if (diffMin < 0 || diffMin >= 15) {
+        console.log(`User ${userId}: not in notification window (configured ${horaConfig}, current ${brHour}:${brMinute.toString().padStart(2, '0')}), skipping`);
+        continue;
+      }
+
+      console.log(`User ${userId}: within notification window (configured ${horaConfig}), processing...`);
 
       const diasProximoVencer = notifConfig?.dias_proximo_vencer ?? 3;
       const diasAposVencimento = notifConfig?.dias_apos_vencimento ?? 2;
