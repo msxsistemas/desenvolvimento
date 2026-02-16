@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Copy, CheckCircle, XCircle, Wallet, RefreshCw, QrCode, Printer } from "lucide-react";
+import { Copy, CheckCircle, XCircle, Wallet, RefreshCw, QrCode, Printer, Tag, Loader2 } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useToast } from "@/hooks/use-toast";
 
@@ -32,6 +33,10 @@ export default function FaturaPublica() {
   const [copied, setCopied] = useState(false);
   const [showPix, setShowPix] = useState(false);
   const [generatingPix, setGeneratingPix] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState<{ codigo: string; desconto: string } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const previousStatusRef = useRef<string | null>(null);
 
@@ -128,6 +133,34 @@ export default function FaturaPublica() {
     }
   }, [fatura, handleGeneratePix]);
 
+  const handleApplyCoupon = useCallback(async () => {
+    if (!id || !couponCode.trim()) return;
+    setCouponError(null);
+    setApplyingCoupon(true);
+    try {
+      const resp = await fetch(
+        `https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/generate-fatura`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "apply-coupon", fatura_id: id, codigo: couponCode.trim() }),
+        }
+      );
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        setCouponError(data.error || "Cupom inválido");
+        return;
+      }
+      setCouponApplied({ codigo: data.cupom_codigo, desconto: data.desconto });
+      setFatura(data.fatura as Fatura);
+      toast({ title: "✅ Cupom aplicado!", description: `Desconto de R$ ${data.desconto} aplicado à fatura.` });
+    } catch {
+      setCouponError("Erro ao aplicar cupom. Tente novamente.");
+    } finally {
+      setApplyingCoupon(false);
+    }
+  }, [id, couponCode, toast]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#e8edf2]">
@@ -216,7 +249,11 @@ export default function FaturaPublica() {
                   <tr className="border-t border-slate-100">
                     <td className="px-3 py-3 text-slate-700 text-sm">{fatura.plano_nome || "Pagamento"}</td>
                     <td className="px-3 py-3 text-center text-slate-600">R$ {valorFormatted}</td>
-                    <td className="px-3 py-3 text-center text-slate-600">R$ 0,00</td>
+                    <td className="px-3 py-3 text-center text-slate-600">
+                      {couponApplied ? (
+                        <span className="text-emerald-600 font-medium">- R$ {couponApplied.desconto}</span>
+                      ) : "R$ 0,00"}
+                    </td>
                     <td className="px-3 py-3 text-center font-semibold text-slate-800">R$ {valorFormatted}</td>
                   </tr>
                 </tbody>
@@ -379,26 +416,66 @@ export default function FaturaPublica() {
                Obrigado por escolher nossos serviços! Entre em contato conosco se tiver alguma dúvida.
              </p>
 
+             {/* Coupon Section */}
+             {!isPaid && !hasPix && !couponApplied && (
+               <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3 print:hidden">
+                 <div className="flex items-center gap-2">
+                   <Tag className="h-4 w-4 text-[#3b9ede]" />
+                   <span className="text-sm font-semibold text-slate-700">Cupom de Desconto</span>
+                 </div>
+                 <div className="flex gap-2">
+                   <Input
+                     value={couponCode}
+                     onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(null); }}
+                     placeholder="Digite o código do cupom"
+                     className="h-10 text-sm bg-white border-slate-200 text-slate-800 placeholder:text-slate-400 uppercase"
+                   />
+                   <Button
+                     className="h-10 px-5 text-sm bg-[#3b9ede] hover:bg-[#2d8ace] text-white shrink-0"
+                     onClick={handleApplyCoupon}
+                     disabled={applyingCoupon || !couponCode.trim()}
+                   >
+                     {applyingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aplicar"}
+                   </Button>
+                 </div>
+                 {couponError && (
+                   <p className="text-xs text-red-500 flex items-center gap-1">
+                     <XCircle className="h-3 w-3" /> {couponError}
+                   </p>
+                 )}
+               </div>
+             )}
+
+             {/* Coupon Applied Badge */}
+             {couponApplied && (
+               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2 print:hidden">
+                 <CheckCircle className="h-4 w-4 text-emerald-500" />
+                 <span className="text-sm text-emerald-700 font-medium">
+                   Cupom <strong>{couponApplied.codigo}</strong> aplicado — desconto de R$ {couponApplied.desconto}
+                 </span>
+               </div>
+             )}
+
              {/* Action Buttons */}
-             <div className="flex justify-center gap-3 print:hidden pt-2">
-               <Button
-                 variant="outline"
-                 className="h-10 gap-2 text-sm rounded-full px-6"
-                 onClick={() => window.print()}
-               >
-                 <Printer className="h-4 w-4" />
-                 Imprimir
-               </Button>
-               
-               {!isPaid && (
-                 <Button
-                    className="h-10 gap-2 text-sm rounded-full px-6 bg-emerald-500 hover:bg-emerald-600 text-white"
-                    onClick={handleOpenPix}
-                  >
-                    <QrCode className="h-4 w-4" />
-                    Pagar com PIX
-                  </Button>
-                )}
+              <div className="flex justify-center gap-3 print:hidden pt-2">
+                <Button
+                  variant="outline"
+                  className="h-10 gap-2 text-sm rounded-full px-6"
+                  onClick={() => window.print()}
+                >
+                  <Printer className="h-4 w-4" />
+                  Imprimir
+                </Button>
+                
+                {!isPaid && (
+                  <Button
+                     className="h-10 gap-2 text-sm rounded-full px-6 bg-emerald-500 hover:bg-emerald-600 text-white"
+                     onClick={handleOpenPix}
+                   >
+                     <QrCode className="h-4 w-4" />
+                     Pagar com PIX
+                   </Button>
+                 )}
 
                {isPaid && (
                  <Button
