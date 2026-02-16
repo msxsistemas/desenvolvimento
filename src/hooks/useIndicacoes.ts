@@ -41,21 +41,36 @@ export function useIndicacoes() {
     },
   });
 
-  // Fetch clients who were referred (have indicador field set)
+  // Fetch referred users from indicacoes table (system referrals)
   const { data: clientesIndicados = [] } = useQuery({
-    queryKey: ["clientes-indicados"],
+    queryKey: ["indicacoes-clientes"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      const { data, error } = await supabase
-        .from("clientes")
-        .select("id, nome, whatsapp, indicador, created_at, plano")
-        .not("indicador", "is", null)
-        .order("created_at", { ascending: false });
+      // Get indicacoes with linked client details
+      const { data: inds, error: indError } = await supabase
+        .from("indicacoes")
+        .select("cliente_indicado_id, created_at")
+        .eq("user_id", user.id)
+        .not("cliente_indicado_id", "is", null);
 
-      if (error) throw error;
-      return data;
+      if (indError) throw indError;
+      if (!inds?.length) return [];
+
+      const clienteIds = inds.map(i => i.cliente_indicado_id).filter(Boolean) as string[];
+      
+      const { data: clientes, error: cError } = await supabase
+        .from("clientes")
+        .select("id, nome, whatsapp, plano, created_at")
+        .in("id", clienteIds);
+
+      if (cError) throw cError;
+
+      return (clientes || []).map(c => ({
+        ...c,
+        indicacao_created_at: inds.find(i => i.cliente_indicado_id === c.id)?.created_at || c.created_at,
+      }));
     },
   });
 

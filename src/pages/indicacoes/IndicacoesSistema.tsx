@@ -300,13 +300,13 @@ export default function IndicacoesSistema() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {clientesIndicados.map((cliente) => (
+                    {clientesIndicados.map((cliente: any) => (
                       <TableRow key={cliente.id}>
                         <TableCell className="font-medium">{cliente.nome}</TableCell>
                         <TableCell>{cliente.whatsapp}</TableCell>
                         <TableCell>{cliente.plano || "-"}</TableCell>
                         <TableCell>
-                          {new Date(cliente.created_at).toLocaleDateString("pt-BR")}
+                          {new Date(cliente.indicacao_created_at || cliente.created_at).toLocaleDateString("pt-BR")}
                         </TableCell>
                       </TableRow>
                     ))}
