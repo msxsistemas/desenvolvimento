@@ -9,7 +9,7 @@ import {
   AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Loader2, Users, Gift, TrendingUp } from "lucide-react";
+import { Trash2, Loader2, Users, Gift, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { toast } from "sonner";
@@ -24,10 +24,13 @@ interface RowData {
   ativo: boolean | null;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function Indicacoes() {
   const [rows, setRows] = useState<RowData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const { userId } = useCurrentUser();
 
   useEffect(() => { document.title = "Indicações | Tech Play"; }, []);
@@ -99,6 +102,15 @@ export default function Indicacoes() {
       r.indicador_nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedRows = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset page when search changes
+  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+
   const totalIndicadores = new Set(rows.map(r => r.indicador_nome)).size;
   const totalIndicados = rows.length;
 
@@ -162,7 +174,7 @@ export default function Indicacoes() {
       </div>
 
       <div className="text-right text-sm text-muted-foreground">
-        Mostrando {filtered.length} de {rows.length} registros.
+        Mostrando {paginatedRows.length} de {filtered.length} registros.
       </div>
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
@@ -177,8 +189,8 @@ export default function Indicacoes() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length ? (
-              filtered.map((row) => (
+            {paginatedRows.length ? (
+              paginatedRows.map((row) => (
                 <TableRow key={row.id} className="border-border">
                   <TableCell className="px-6 py-4 font-medium text-blue-600 dark:text-blue-500">{row.nome}</TableCell>
                   <TableCell className="px-6 py-4 text-blue-600 dark:text-blue-500">{row.indicador_nome}</TableCell>
@@ -218,6 +230,32 @@ export default function Indicacoes() {
           </TableBody>
         </Table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+          <p className="text-sm text-muted-foreground">
+            Página {currentPage} de {totalPages}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Próximo <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
