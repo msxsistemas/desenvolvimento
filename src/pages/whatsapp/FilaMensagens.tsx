@@ -442,9 +442,9 @@ export default function FilaMensagens() {
           />
           {[
             { value: "todas", label: "Todas", count: counts.todas },
-            { value: "aguardando", label: "Aguardando", count: counts.aguardando },
-            { value: "enviadas", label: "Enviadas", count: counts.enviadas },
-            { value: "erro", label: "Com Erro", count: counts.erro },
+            { value: "aguardando", label: "Aguardando Envio", count: counts.aguardando },
+            { value: "enviadas", label: "Mensagens Enviadas", count: counts.enviadas },
+            { value: "erro", label: "Mensagens com Erro", count: counts.erro },
           ].map((f) => (
             <Button
               key={f.value}
