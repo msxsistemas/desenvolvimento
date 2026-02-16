@@ -434,14 +434,14 @@ export default function FilaMensagens() {
       </header>
 
       {/* Filters */}
-      <div className="rounded-lg border border-border bg-card p-4 space-y-4">
-        <Input
-          placeholder="Buscar por nome ou WhatsApp..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          className="max-w-sm"
-        />
-        <div className="flex flex-wrap gap-2">
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            placeholder="Buscar..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="w-48"
+          />
           {[
             { value: "todas", label: "Todas", count: counts.todas },
             { value: "aguardando", label: "Aguardando", count: counts.aguardando },
