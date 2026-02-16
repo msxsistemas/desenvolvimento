@@ -40,6 +40,19 @@ export function useAuth() {
           variant: "destructive",
         });
       } else {
+        // Clear sensitive data from localStorage on logout
+        localStorage.removeItem('whatsapp_session_data');
+        localStorage.removeItem('whatsapp_session');
+        localStorage.removeItem('whatsapp_messages');
+        localStorage.removeItem('auth_token');
+        // Clear any Evolution API session data
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.startsWith('evolution_session_') || key.startsWith('evolution_config_')) {
+            localStorage.removeItem(key);
+          }
+        });
+
         logPainel("Logout realizado", "info");
         toast({
           title: "Logout realizado",
