@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -136,6 +137,7 @@ export default function AdminIndicacoesUsuarios() {
                   <TableHead>Aprovadas</TableHead>
                   <TableHead>Bônus Total</TableHead>
                   <TableHead>Valor/Indicação</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -147,6 +149,11 @@ export default function AdminIndicacoesUsuarios() {
                     <TableCell>{user.totalAprovadas}</TableCell>
                     <TableCell>{formatBonus(user.bonusTotal)}</TableCell>
                     <TableCell>{formatBonus(user.ultimoBonus)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {tipoBonus === "percentual" ? "%" : "R$"}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => { setEditUser({ userId: user.userId, email: user.nome, valor_bonus: user.ultimoBonus, tipo_bonus: tipoBonus }); setEditDialogOpen(true); }}>
                         <Edit className="h-3.5 w-3.5" /> Editar Valor
