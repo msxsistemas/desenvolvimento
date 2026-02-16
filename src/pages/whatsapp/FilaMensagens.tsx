@@ -181,8 +181,7 @@ export default function FilaMensagens() {
   };
 
   const filteredMensagens = mensagens.filter(m => {
-    if (filtro === "aguardando" && m.status !== "aguardando") return false;
-    if (filtro === "agendada" && m.status !== "agendada") return false;
+    if (filtro === "aguardando" && m.status !== "aguardando" && m.status !== "agendada") return false;
     if (filtro === "enviadas" && m.status !== "enviada") return false;
     if (filtro === "erro" && m.status !== "erro") return false;
     if (busca && !m.cliente.toLowerCase().includes(busca.toLowerCase()) && !m.whatsapp.includes(busca)) return false;
@@ -197,8 +196,7 @@ export default function FilaMensagens() {
 
   const counts = {
     todas: mensagens.length,
-    aguardando: mensagens.filter(m => m.status === "aguardando").length,
-    agendada: mensagens.filter(m => m.status === "agendada").length,
+    aguardando: mensagens.filter(m => m.status === "aguardando" || m.status === "agendada").length,
     enviadas: mensagens.filter(m => m.status === "enviada").length,
     erro: mensagens.filter(m => m.status === "erro").length,
   };
@@ -445,7 +443,6 @@ export default function FilaMensagens() {
           {[
             { value: "todas", label: "Todas", count: counts.todas },
             { value: "aguardando", label: "Aguardando", count: counts.aguardando },
-            { value: "agendada", label: "Agendadas", count: counts.agendada },
             { value: "enviadas", label: "Enviadas", count: counts.enviadas },
             { value: "erro", label: "Com Erro", count: counts.erro },
           ].map((f) => (
