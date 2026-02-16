@@ -18,6 +18,7 @@ interface Fatura {
   pix_manual_key: string | null;
   paid_at: string | null;
   created_at: string;
+  nome_empresa: string | null;
 }
 
 const POLL_INTERVAL = 5000;
@@ -191,8 +192,9 @@ export default function FaturaPublica() {
             {/* Empresa / Fatura Info */}
             <div>
               <p className="text-xs text-slate-400 italic mb-0.5">Empresa</p>
-              <p className="text-base font-bold text-red-500">Fatura: {fatura.id.slice(0, 10).toUpperCase()}</p>
+              <p className="text-base font-bold text-red-500">{fatura.nome_empresa || 'Empresa'}</p>
               <div className="text-sm text-slate-600 mt-1 space-y-0.5">
+                <p>Fatura: {fatura.id.slice(0, 10).toUpperCase()}</p>
                 <p>Data: {new Date(fatura.created_at).toLocaleDateString("pt-BR")}</p>
               </div>
             </div>

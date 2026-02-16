@@ -82,6 +82,17 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
       }
 
+      // Fetch company name from profile
+      let nome_empresa: string | null = null;
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('nome_empresa')
+        .eq('user_id', fatura.user_id)
+        .maybeSingle();
+      if (profile?.nome_empresa) {
+        nome_empresa = profile.nome_empresa;
+      }
+
       // If pending, check payment status in real-time based on gateway
       if (fatura.status === 'pendente' && fatura.gateway_charge_id) {
         if (fatura.gateway === 'asaas') {
@@ -236,7 +247,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      return new Response(JSON.stringify({ success: true, fatura }),
+      return new Response(JSON.stringify({ success: true, fatura: { ...fatura, nome_empresa } }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -576,6 +587,45 @@ Deno.serve(async (req) => {
           } catch (err: any) {
             console.error('Ciabra PIX generate error:', err.message);
           }
+        } else if (gatewayAtivo === 'v3pay') {
+          try {
+            const { data: v3Config } = await supabaseAdmin
+              .from('v3pay_config')
+              .select('api_token_hash')
+              .eq('user_id', fatura.user_id)
+              .eq('is_configured', true)
+              .maybeSingle();
+
+            if (v3Config?.api_token_hash) {
+              const chargeResp = await fetch('https://api.v3pay.com.br/v1/charges', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${v3Config.api_token_hash}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  amount: parseFloat(fatura.valor.toString()),
+                  description: `Renovação - ${fatura.plano_nome || 'Plano'}`,
+                  customer_name: fatura.cliente_nome,
+                  customer_phone: fatura.cliente_whatsapp,
+                  origin: 'Gestor IPTV',
+                }),
+              });
+              const chargeData = await chargeResp.json();
+              console.log('📋 V3Pay generate-pix result:', JSON.stringify(chargeData).substring(0, 500));
+
+              if (chargeResp.ok && chargeData.id) {
+                gateway_charge_id = String(chargeData.id);
+                pix_qr_code = chargeData.pix_qr_code || chargeData.qr_code || null;
+                pix_copia_cola = chargeData.pix_copia_cola || chargeData.pix_code || chargeData.payment_code || null;
+
+                await supabaseAdmin.from('cobrancas').upsert({
+                  user_id: fatura.user_id, gateway: 'v3pay', gateway_charge_id: String(chargeData.id),
+                  cliente_whatsapp: fatura.cliente_whatsapp, cliente_nome: fatura.cliente_nome,
+                  valor: fatura.valor, status: 'pendente',
+                }, { onConflict: 'gateway_charge_id' });
+              }
+            }
+          } catch (err: any) {
+            console.error('V3Pay PIX generate error:', err.message);
+          }
         }
       }
 
@@ -714,24 +764,20 @@ Deno.serve(async (req) => {
                 'Authorization': authHeader,
               },
               body: JSON.stringify({
-                action: 'create-pix',
-                valor: String(valor),
-                descricao: `Renovação - ${plano_nome || 'Plano'}`,
-                cliente_nome,
+                action: 'create-charge',
+                amount: String(parsedValor),
+                description: `Renovação - ${plano_nome || 'Plano'}`,
+                customer_name: cliente_nome,
+                customer_phone: cliente_whatsapp,
               }),
             });
             const v3Data = await v3Resp.json();
             console.log('📋 V3Pay PIX result:', JSON.stringify(v3Data));
 
-            if (v3Data.success && v3Data.charge_id) {
-              gateway_charge_id = v3Data.charge_id;
-              pix_qr_code = v3Data.pix_qr_code || null;
-              pix_copia_cola = v3Data.pix_copia_cola || null;
-
-              await supabaseAdmin.from('cobrancas').insert({
-                user_id: user.id, gateway: 'v3pay', gateway_charge_id: v3Data.charge_id,
-                cliente_whatsapp, cliente_nome, valor: parsedValor, status: 'pendente',
-              });
+            if (v3Data.success && v3Data.charge) {
+              gateway_charge_id = String(v3Data.charge.id);
+              pix_qr_code = v3Data.charge.pix_qr_code || v3Data.charge.qr_code || null;
+              pix_copia_cola = v3Data.charge.pix_copia_cola || v3Data.charge.pix_code || v3Data.charge.payment_code || null;
             }
           } catch (err: any) {
             console.error('V3Pay PIX error:', err.message);
