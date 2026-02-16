@@ -1023,7 +1023,7 @@ Deno.serve(async (req) => {
             if (v3Data.success && v3Data.charge) {
               gateway_charge_id = String(v3Data.charge.id);
               pix_qr_code = v3Data.charge.pix?.qr_code || v3Data.charge.pix_qr_code || null;
-              pix_copia_cola = v3Data.charge.pix?.pix_code || v3Data.charge.pix_copia_cola || null;
+              pix_copia_cola = v3Data.charge.pix?.qr_code_text || v3Data.charge.pix?.pix_code || v3Data.charge.pix_copia_cola || null;
             }
           } catch (err: any) {
             console.error('V3Pay PIX error:', err.message);
