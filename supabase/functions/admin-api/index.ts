@@ -5,6 +5,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// UUID validation
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(val: unknown): val is string {
+  return typeof val === 'string' && UUID_REGEX.test(val);
+}
+
+const VALID_ACTIONS = [
+  'list_users', 'toggle_user_ban', 'set_role', 'global_stats',
+  'list_mensagens_padroes', 'update_mensagem_padrao',
+  'list_planos', 'update_plano', 'delete_plano',
+  'list_gateways', 'list_logs', 'list_whatsapp_sessions', 'list_transacoes',
+];
+
+const VALID_ROLES = ['admin', 'user'];
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -46,17 +61,26 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { action } = body;
+
+    // Validate action
+    if (!action || !VALID_ACTIONS.includes(action)) {
+      return new Response(JSON.stringify({ error: 'Ação inválida' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const json = (data: unknown, status = 200) =>
       new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     switch (action) {
       // ─── USERS ───────────────────────────────────────────
       case 'list_users': {
-        const { data: { users }, error } = await supabase.auth.admin.listUsers({
-          page: body.page || 1,
-          perPage: body.perPage || 50,
-        });
-        if (error) throw error;
+        const page = Math.max(1, Math.min(100, Number(body.page) || 1));
+        const perPage = Math.max(1, Math.min(100, Number(body.perPage) || 50));
+        const { data: { users }, error } = await supabase.auth.admin.listUsers({ page, perPage });
+        if (error) {
+          console.error('list_users error:', error);
+          return json({ error: 'Erro ao listar usuários' }, 500);
+        }
 
         const userIds = users.map(u => u.id);
         const { data: roles } = await supabase.from('user_roles').select('user_id, role').in('user_id', userIds);
@@ -78,9 +102,8 @@ Deno.serve(async (req) => {
 
       case 'toggle_user_ban': {
         const { target_user_id, ban } = body;
-        if (!target_user_id) throw new Error('target_user_id obrigatório');
+        if (!isValidUUID(target_user_id)) return json({ error: 'ID de usuário inválido' }, 400);
 
-        // Protect admin users from being banned
         const { data: targetRole } = await supabase
           .from('user_roles')
           .select('role')
@@ -102,9 +125,9 @@ Deno.serve(async (req) => {
 
       case 'set_role': {
         const { target_user_id, role } = body;
-        if (!target_user_id || !role) throw new Error('target_user_id e role obrigatórios');
+        if (!isValidUUID(target_user_id)) return json({ error: 'ID de usuário inválido' }, 400);
+        if (!role || !VALID_ROLES.includes(role)) return json({ error: 'Papel inválido' }, 400);
 
-        // Protect admin users from having their role changed
         const { data: existingAdminRole } = await supabase
           .from('user_roles')
           .select('role')
@@ -127,12 +150,10 @@ Deno.serve(async (req) => {
         const allUsers = users || [];
         const totalUsers = allUsers.length;
 
-        // All clients
         const { data: allClientes } = await supabase.from('clientes').select('id, nome, data_vencimento, plano, created_at, user_id, ativo');
         const clientes = allClientes || [];
         const totalClientes = clientes.length;
 
-        // Active/expired based on data_vencimento
         const now = new Date();
         now.setHours(0, 0, 0, 0);
         let clientesAtivos = 0;
@@ -145,7 +166,6 @@ Deno.serve(async (req) => {
           else clientesVencidos++;
         });
 
-        // Financial - transacoes
         const { data: transacoes } = await supabase.from('transacoes').select('valor, tipo, created_at');
         let totalEntradas = 0;
         let totalSaidas = 0;
@@ -155,17 +175,14 @@ Deno.serve(async (req) => {
           else totalSaidas += v;
         });
 
-        // Cobranças
         const { count: totalCobrancas } = await supabase.from('cobrancas').select('*', { count: 'exact', head: true });
         const { count: cobrancasPagas } = await supabase.from('cobrancas').select('*', { count: 'exact', head: true }).eq('status', 'pago');
 
-        // Subscriptions
         const { data: subs } = await supabase.from('user_subscriptions').select('status, expira_em, plan_id, created_at');
         const subsAtivas = (subs || []).filter(s => s.status === 'active' || s.status === 'ativa').length;
         const subsPendentes = (subs || []).filter(s => s.status === 'pending' || s.status === 'pendente').length;
         const subsExpiradas = (subs || []).filter(s => s.status === 'expired' || s.status === 'expirada').length;
 
-        // Subscription revenue (from system_plans)
         const { data: plans } = await supabase.from('system_plans').select('id, valor');
         const planValorMap: Record<string, number> = {};
         (plans || []).forEach(p => { planValorMap[p.id] = Number(p.valor); });
@@ -184,14 +201,12 @@ Deno.serve(async (req) => {
           if (createdAt >= inicioAno) receitaAnual += valor;
         });
 
-        // Also count active subs as monthly recurring
         let receitaRecorrente = 0;
         (subs || []).forEach(s => {
           if (s.status !== 'active' && s.status !== 'ativa') return;
           receitaRecorrente += s.plan_id ? (planValorMap[s.plan_id] || 0) : 0;
         });
 
-        // New users this month/week/today
         const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
         const inicioSemana = new Date(hoje); inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
         const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -204,7 +219,6 @@ Deno.serve(async (req) => {
           if (d >= inicioMes) novosUsersMes++;
         });
 
-        // New clients this month/week/today
         let novosClientesHoje = 0, novosClientesSemana = 0, novosClientesMes = 0;
         let clientesVencendoHoje = 0, clientesVencendo3Dias = 0;
         const tresDias = new Date(hoje); tresDias.setDate(tresDias.getDate() + 3);
@@ -222,7 +236,6 @@ Deno.serve(async (req) => {
           }
         });
 
-        // Users growth last 7 days
         const usersGrowth = [];
         for (let i = 6; i >= 0; i--) {
           const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0, 0, 0, 0);
@@ -233,7 +246,6 @@ Deno.serve(async (req) => {
           usersGrowth.push({ day: `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}`, total: count });
         }
 
-        // Clients growth last 7 days
         const clientesGrowth = [];
         for (let i = 6; i >= 0; i--) {
           const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0, 0, 0, 0);
@@ -244,7 +256,6 @@ Deno.serve(async (req) => {
           clientesGrowth.push({ day: `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}`, total: count });
         }
 
-        // Recent users (last 10)
         const recentUsers = allUsers
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
           .slice(0, 10)
@@ -282,9 +293,13 @@ Deno.serve(async (req) => {
 
       case 'update_mensagem_padrao': {
         const { mensagem_id, updates } = body;
-        if (!mensagem_id) throw new Error('mensagem_id obrigatório');
+        if (!mensagem_id) return json({ error: 'mensagem_id obrigatório' }, 400);
+        if (!updates || typeof updates !== 'object') return json({ error: 'Dados de atualização inválidos' }, 400);
         const { error } = await supabase.from('mensagens_padroes').update(updates).eq('id', mensagem_id);
-        if (error) throw error;
+        if (error) {
+          console.error('update_mensagem_padrao error:', error);
+          return json({ error: 'Erro ao atualizar mensagem' }, 500);
+        }
         return json({ success: true });
       }
 
@@ -301,17 +316,24 @@ Deno.serve(async (req) => {
 
       case 'update_plano': {
         const { plano_id, updates } = body;
-        if (!plano_id) throw new Error('plano_id obrigatório');
+        if (!isValidUUID(plano_id)) return json({ error: 'ID de plano inválido' }, 400);
+        if (!updates || typeof updates !== 'object') return json({ error: 'Dados de atualização inválidos' }, 400);
         const { error } = await supabase.from('planos').update(updates).eq('id', plano_id);
-        if (error) throw error;
+        if (error) {
+          console.error('update_plano error:', error);
+          return json({ error: 'Erro ao atualizar plano' }, 500);
+        }
         return json({ success: true });
       }
 
       case 'delete_plano': {
         const { plano_id } = body;
-        if (!plano_id) throw new Error('plano_id obrigatório');
+        if (!isValidUUID(plano_id)) return json({ error: 'ID de plano inválido' }, 400);
         const { error } = await supabase.from('planos').delete().eq('id', plano_id);
-        if (error) throw error;
+        if (error) {
+          console.error('delete_plano error:', error);
+          return json({ error: 'Erro ao deletar plano' }, 500);
+        }
         return json({ success: true });
       }
 
@@ -350,7 +372,7 @@ Deno.serve(async (req) => {
         const emailMap: Record<string, string> = {};
         allUsers?.forEach(u => { emailMap[u.id] = u.email || ''; });
 
-        const tipo = body.tipo || 'painel';
+        const tipo = body.tipo === 'sistema' ? 'sistema' : 'painel';
         const table = tipo === 'sistema' ? 'logs_sistema' : 'logs_painel';
         const { data } = await supabase.from(table).select('*').order('created_at', { ascending: false }).limit(200);
         const logs = (data || []).map(l => ({ ...l, owner_email: emailMap[l.user_id] || '—' }));
@@ -384,7 +406,7 @@ Deno.serve(async (req) => {
     }
   } catch (error: any) {
     console.error('Admin API error:', error);
-    return new Response(JSON.stringify({ error: error.message }),
+    return new Response(JSON.stringify({ error: 'Erro interno do servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

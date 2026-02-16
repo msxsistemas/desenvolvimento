@@ -7,7 +7,32 @@ const corsHeaders = {
 
 const ASAAS_BASE_URL = 'https://www.asaas.com/api/v3';
 
-// Generate a valid CPF for Asaas customer creation
+// UUID validation
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(val: unknown): val is string {
+  return typeof val === 'string' && UUID_REGEX.test(val);
+}
+
+// Simple in-memory rate limiter for public endpoints
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+function checkRateLimit(key: string, maxRequests: number, windowMs: number): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (entry.count >= maxRequests) return false;
+  entry.count++;
+  return true;
+}
+// Clean up stale entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitMap) {
+    if (now > entry.resetAt) rateLimitMap.delete(key);
+  }
+}, 60000);
 function generateValidCpf(): string {
   const rnd = (n: number) => Math.floor(Math.random() * n);
   const digits = Array.from({ length: 9 }, () => rnd(9));
@@ -66,9 +91,15 @@ Deno.serve(async (req) => {
     // Public action: get fatura by ID (no auth needed)
     if (action === 'get-fatura') {
       const { fatura_id } = body;
-      if (!fatura_id) {
-        return new Response(JSON.stringify({ error: 'fatura_id é obrigatório' }),
+      if (!isValidUUID(fatura_id)) {
+        return new Response(JSON.stringify({ error: 'ID de fatura inválido' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      // Rate limit: 20 requests per minute per fatura_id
+      if (!checkRateLimit(`get-fatura:${fatura_id}`, 20, 60000)) {
+        return new Response(JSON.stringify({ error: 'Muitas requisições. Tente novamente em instantes.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
       }
 
       const { data: fatura, error } = await supabaseAdmin
@@ -254,9 +285,15 @@ Deno.serve(async (req) => {
     // Public action: generate PIX for existing fatura (no auth needed)
     if (action === 'generate-pix') {
       const { fatura_id } = body;
-      if (!fatura_id) {
-        return new Response(JSON.stringify({ error: 'fatura_id é obrigatório' }),
+      if (!isValidUUID(fatura_id)) {
+        return new Response(JSON.stringify({ error: 'ID de fatura inválido' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      // Rate limit: 5 PIX generations per fatura per hour
+      if (!checkRateLimit(`generate-pix:${fatura_id}`, 5, 3600000)) {
+        return new Response(JSON.stringify({ error: 'Limite de geração PIX atingido. Tente novamente mais tarde.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
       }
 
       const { data: fatura, error: faturaErr } = await supabaseAdmin
@@ -961,12 +998,12 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    return new Response(JSON.stringify({ error: 'Ação inválida', available: ['create', 'get-fatura'] }),
+    return new Response(JSON.stringify({ error: 'Ação inválida' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
 
   } catch (error: any) {
     console.error('🚨 Generate Fatura Error:', error);
-    return new Response(JSON.stringify({ error: error.message }),
+    return new Response(JSON.stringify({ error: 'Erro interno ao processar fatura' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
   }
 });
