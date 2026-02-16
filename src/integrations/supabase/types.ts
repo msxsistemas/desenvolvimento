@@ -1459,12 +1459,29 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
+      delete_gateway_secret: {
+        Args: { p_gateway: string; p_secret_name: string; p_user_id: string }
+        Returns: undefined
+      }
+      get_gateway_secret: {
+        Args: { p_gateway: string; p_secret_name: string; p_user_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      store_gateway_secret: {
+        Args: {
+          p_gateway: string
+          p_secret_name: string
+          p_secret_value: string
+          p_user_id: string
+        }
+        Returns: string
       }
     }
     Enums: {

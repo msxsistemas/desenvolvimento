@@ -7,6 +7,29 @@ const corsHeaders = {
 
 const MP_BASE_URL = 'https://api.mercadopago.com';
 
+async function getVaultSecret(supabaseAdmin: any, userId: string, gateway: string, secretName: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin.rpc('get_gateway_secret', {
+    p_user_id: userId,
+    p_gateway: gateway,
+    p_secret_name: secretName,
+  });
+  if (error) {
+    console.error('Vault read error:', error.message);
+    return null;
+  }
+  return data;
+}
+
+async function storeVaultSecret(supabaseAdmin: any, userId: string, gateway: string, secretName: string, secretValue: string): Promise<void> {
+  const { error } = await supabaseAdmin.rpc('store_gateway_secret', {
+    p_user_id: userId,
+    p_gateway: gateway,
+    p_secret_name: secretName,
+    p_secret_value: secretValue,
+  });
+  if (error) throw new Error('Vault store error: ' + error.message);
+}
+
 async function triggerAutoRenewal(userId: string, clienteWhatsapp: string, gateway: string, chargeId: string) {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -48,13 +71,12 @@ Deno.serve(async (req) => {
     if (body.type === 'payment' || body.action === 'payment.updated' || body.action === 'payment.created') {
       console.log('📩 MP Webhook received:', body.type || body.action);
 
-      // Verify webhook by fetching the payment from MP API to confirm it's real
       const paymentId = body.data?.id;
       if (paymentId) {
-        // Look up any MP config to get an access token for verification
+        // Look up configured MP users to verify payment via API
         const { data: mpConfigs } = await supabaseAdmin
           .from('mercadopago_config')
-          .select('access_token_hash')
+          .select('user_id')
           .eq('is_configured', true)
           .limit(5);
 
@@ -63,7 +85,8 @@ Deno.serve(async (req) => {
         if (mpConfigs) {
           for (const cfg of mpConfigs) {
             try {
-              const token = atob(cfg.access_token_hash);
+              const token = await getVaultSecret(supabaseAdmin, cfg.user_id, 'mercadopago', 'access_token');
+              if (!token) continue;
               const verifyResp = await fetch(`${MP_BASE_URL}/v1/payments/${paymentId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
               });
@@ -142,7 +165,6 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Validate token with MP API
         try {
           const testResp = await fetch(`${MP_BASE_URL}/v1/payment_methods`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -152,8 +174,8 @@ Deno.serve(async (req) => {
             throw new Error('Access Token inválido');
           }
 
-          // Store full token as base64 for later PIX generation
-          const tokenEncoded = btoa(accessToken);
+          // Store token in Supabase Vault (encrypted at rest)
+          await storeVaultSecret(supabaseAdmin, user.id, 'mercadopago', 'access_token', accessToken);
 
           const { data: existing } = await supabaseAdmin
             .from('mercadopago_config')
@@ -165,7 +187,7 @@ Deno.serve(async (req) => {
             await supabaseAdmin
               .from('mercadopago_config')
               .update({
-                access_token_hash: tokenEncoded,
+                access_token_hash: 'vault',
                 webhook_url: webhookUrl || null,
                 is_configured: true,
                 updated_at: new Date().toISOString()
@@ -176,7 +198,7 @@ Deno.serve(async (req) => {
               .from('mercadopago_config')
               .insert({
                 user_id: user.id,
-                access_token_hash: tokenEncoded,
+                access_token_hash: 'vault',
                 webhook_url: webhookUrl || null,
                 is_configured: true
               });
@@ -205,22 +227,15 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Get stored access token
-        const { data: config } = await supabaseAdmin
-          .from('mercadopago_config')
-          .select('access_token_hash')
-          .eq('user_id', user.id)
-          .eq('is_configured', true)
-          .maybeSingle();
+        // Get access token from Vault
+        const accessToken = await getVaultSecret(supabaseAdmin, user.id, 'mercadopago', 'access_token');
 
-        if (!config?.access_token_hash) {
+        if (!accessToken) {
           return new Response(
             JSON.stringify({ success: false, error: 'Mercado Pago não configurado' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
           );
         }
-
-        const accessToken = atob(config.access_token_hash);
 
         try {
           const paymentResp = await fetch(`${MP_BASE_URL}/v1/payments`, {

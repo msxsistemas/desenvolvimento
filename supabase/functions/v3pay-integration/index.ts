@@ -7,6 +7,29 @@ const corsHeaders = {
 
 const V3PAY_BASE_URL = 'https://api.v3pay.com.br/v1';
 
+async function getVaultSecret(supabaseAdmin: any, userId: string, gateway: string, secretName: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin.rpc('get_gateway_secret', {
+    p_user_id: userId,
+    p_gateway: gateway,
+    p_secret_name: secretName,
+  });
+  if (error) {
+    console.error('Vault read error:', error.message);
+    return null;
+  }
+  return data;
+}
+
+async function storeVaultSecret(supabaseAdmin: any, userId: string, gateway: string, secretName: string, secretValue: string): Promise<void> {
+  const { error } = await supabaseAdmin.rpc('store_gateway_secret', {
+    p_user_id: userId,
+    p_gateway: gateway,
+    p_secret_name: secretName,
+    p_secret_value: secretValue,
+  });
+  if (error) throw new Error('Vault store error: ' + error.message);
+}
+
 async function verifyHmacSignature(data: any, signature: string, secret: string): Promise<boolean> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -73,12 +96,10 @@ async function handleWebhook(body: any, supabaseAdmin: any) {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
   }
 
-  // Process webhook events
   switch (event) {
     case 'order.paid': {
       console.log('💰 Order paid:', JSON.stringify(data));
       
-      // Try to find the cobranca and auto-renew
       const chargeId = data.id || data.order_id || data.charge_id || '';
       if (chargeId) {
         const { data: cobranca } = await supabaseAdmin
@@ -93,7 +114,6 @@ async function handleWebhook(body: any, supabaseAdmin: any) {
           console.log(`📋 Cobrança encontrada para cliente: ${cobranca.cliente_whatsapp}`);
           await triggerAutoRenewal(cobranca.user_id, cobranca.cliente_whatsapp, 'v3pay', String(chargeId));
         } else if (verifiedUserId && data.customer_phone) {
-          // Fallback: use phone from webhook data
           console.log(`📋 Usando telefone do webhook: ${data.customer_phone}`);
           await triggerAutoRenewal(verifiedUserId, data.customer_phone, 'v3pay', String(chargeId));
         } else {
@@ -147,11 +167,14 @@ async function handleAuthenticatedAction(action: string, body: any, user: any, s
         console.warn('⚠️ Could not validate token (network issue):', error.message);
       }
 
+      // Store token in Supabase Vault (encrypted at rest)
+      await storeVaultSecret(supabaseAdmin, user.id, 'v3pay', 'api_token', apiToken);
+
       const { error: upsertError } = await supabaseAdmin
         .from('v3pay_config')
         .upsert({
           user_id: user.id,
-          api_token_hash: apiToken,
+          api_token_hash: 'vault',
           is_configured: true,
         }, { onConflict: 'user_id' });
 
@@ -166,13 +189,10 @@ async function handleAuthenticatedAction(action: string, body: any, user: any, s
     }
 
     case 'create-charge': {
-      const { data: config } = await supabaseAdmin
-        .from('v3pay_config')
-        .select('api_token_hash')
-        .eq('user_id', user.id)
-        .single();
+      // Get token from Vault
+      const apiToken = await getVaultSecret(supabaseAdmin, user.id, 'v3pay', 'api_token');
 
-      if (!config?.api_token_hash) {
+      if (!apiToken) {
         return new Response(JSON.stringify({ success: false, error: 'V3Pay não configurado.' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
@@ -185,7 +205,7 @@ async function handleAuthenticatedAction(action: string, body: any, user: any, s
 
       const chargeResp = await fetch(`${V3PAY_BASE_URL}/charges`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${config.api_token_hash}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: parseFloat(amount),
           description,
@@ -203,7 +223,6 @@ async function handleAuthenticatedAction(action: string, body: any, user: any, s
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: chargeResp.status });
       }
 
-      // Save cobranca for auto-renewal tracking
       if (customer_phone && chargeData.id) {
         await supabaseAdmin.from('cobrancas').insert({
           user_id: user.id,
@@ -221,13 +240,9 @@ async function handleAuthenticatedAction(action: string, body: any, user: any, s
     }
 
     case 'create-order': {
-      const { data: config } = await supabaseAdmin
-        .from('v3pay_config')
-        .select('api_token_hash')
-        .eq('user_id', user.id)
-        .single();
+      const apiToken = await getVaultSecret(supabaseAdmin, user.id, 'v3pay', 'api_token');
 
-      if (!config?.api_token_hash) {
+      if (!apiToken) {
         return new Response(JSON.stringify({ success: false, error: 'V3Pay não configurado.' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
@@ -240,7 +255,7 @@ async function handleAuthenticatedAction(action: string, body: any, user: any, s
 
       const orderResp = await fetch(`${V3PAY_BASE_URL}/orders`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${config.api_token_hash}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           product_id, customer_name, customer_email,
           customer_phone: customer_phone || undefined,
@@ -260,13 +275,9 @@ async function handleAuthenticatedAction(action: string, body: any, user: any, s
     }
 
     case 'get-order': {
-      const { data: config } = await supabaseAdmin
-        .from('v3pay_config')
-        .select('api_token_hash')
-        .eq('user_id', user.id)
-        .single();
+      const apiToken = await getVaultSecret(supabaseAdmin, user.id, 'v3pay', 'api_token');
 
-      if (!config?.api_token_hash) {
+      if (!apiToken) {
         return new Response(JSON.stringify({ success: false, error: 'V3Pay não configurado.' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
@@ -278,7 +289,7 @@ async function handleAuthenticatedAction(action: string, body: any, user: any, s
       }
 
       const resp = await fetch(`${V3PAY_BASE_URL}/orders/${orderId}`, {
-        headers: { 'Authorization': `Bearer ${config.api_token_hash}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
       });
 
       const data = await resp.json();
@@ -318,12 +329,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // If the body has an "event" field, treat as webhook from V3Pay (no auth required)
     if (body.event) {
       return await handleWebhook(body, supabaseAdmin);
     }
 
-    // Otherwise, it's an authenticated user action
     const action = body.action;
     console.log('🎯 Action:', action);
 

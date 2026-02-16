@@ -7,6 +7,29 @@ const corsHeaders = {
 
 const CIABRA_BASE_URL = 'https://api.az.center';
 
+async function getVaultSecret(supabaseAdmin: any, userId: string, gateway: string, secretName: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin.rpc('get_gateway_secret', {
+    p_user_id: userId,
+    p_gateway: gateway,
+    p_secret_name: secretName,
+  });
+  if (error) {
+    console.error('Vault read error:', error.message);
+    return null;
+  }
+  return data;
+}
+
+async function storeVaultSecret(supabaseAdmin: any, userId: string, gateway: string, secretName: string, secretValue: string): Promise<void> {
+  const { error } = await supabaseAdmin.rpc('store_gateway_secret', {
+    p_user_id: userId,
+    p_gateway: gateway,
+    p_secret_name: secretName,
+    p_secret_value: secretValue,
+  });
+  if (error) throw new Error('Vault store error: ' + error.message);
+}
+
 async function triggerAutoRenewal(userId: string, clienteWhatsapp: string, gateway: string, chargeId: string) {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -44,14 +67,12 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Check if this is a webhook from Ciabra (has type, event, hookType, or installmentId)
+    // Check if this is a webhook from Ciabra
     const webhookType = (body.type || body.event || body.hookType || '').toUpperCase();
     if (body.event || body.type || body.hookType || body.installmentId) {
       console.log('📩 Ciabra Webhook received');
       console.log('📩 Webhook type detected:', webhookType);
 
-      // Verify webhook by checking that the charge exists in our database
-      // and cross-referencing with the Ciabra API for authenticity
       const possibleChargeId = String(body.id || body.payment_id || body.charge_id || body.invoiceId || '');
       if (!possibleChargeId) {
         console.warn('⚠️ Ciabra webhook missing charge ID - rejecting');
@@ -59,7 +80,6 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
 
-      // Verify the charge exists in cobrancas OR user_subscriptions before processing
       const { data: existingCharge } = await supabaseAdmin
         .from('cobrancas')
         .select('id')
@@ -90,10 +110,8 @@ Deno.serve(async (req) => {
       
       if (isPaid) {
         const chargeId = String(body.id || body.payment_id || body.charge_id || body.invoiceId || '');
-        const installmentId = String(body.installmentId || '');
         
         if (chargeId) {
-          // Check cobrancas (user invoices)
           const { data: cobranca } = await supabaseAdmin
             .from('cobrancas')
             .select('*')
@@ -108,7 +126,6 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Check user_subscriptions (plan payments) by charge_id or installment's invoiceId
         const searchId = chargeId || '';
         if (searchId) {
           const { data: sub } = await supabaseAdmin
@@ -139,7 +156,6 @@ Deno.serve(async (req) => {
     const action = body.action;
     console.log('🎯 Action:', action);
 
-    // Require authentication for all non-webhook actions
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Não autorizado' }),
@@ -168,9 +184,9 @@ Deno.serve(async (req) => {
         }
 
         try {
-          // Store both keys as base64 for later auth token generation
-          const keyEncoded = btoa(apiKey);
-          const pubKeyEncoded = btoa(publicKey);
+          // Store keys in Supabase Vault (encrypted at rest)
+          await storeVaultSecret(supabaseAdmin, user.id, 'ciabra', 'api_key', apiKey);
+          await storeVaultSecret(supabaseAdmin, user.id, 'ciabra', 'public_key', publicKey);
 
           const { data: existing } = await supabaseAdmin
             .from('ciabra_config')
@@ -182,8 +198,8 @@ Deno.serve(async (req) => {
             await supabaseAdmin
               .from('ciabra_config')
               .update({
-                api_key_hash: keyEncoded,
-                public_key_hash: pubKeyEncoded,
+                api_key_hash: 'vault',
+                public_key_hash: 'vault',
                 webhook_url: webhookUrl || null,
                 is_configured: true,
                 updated_at: new Date().toISOString()
@@ -194,8 +210,8 @@ Deno.serve(async (req) => {
               .from('ciabra_config')
               .insert({
                 user_id: user.id,
-                api_key_hash: keyEncoded,
-                public_key_hash: pubKeyEncoded,
+                api_key_hash: 'vault',
+                public_key_hash: 'vault',
                 webhook_url: webhookUrl || null,
                 is_configured: true
               });
@@ -224,24 +240,18 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Get stored API key
-        const { data: config } = await supabaseAdmin
-          .from('ciabra_config')
-          .select('api_key_hash, public_key_hash')
-          .eq('user_id', user.id)
-          .eq('is_configured', true)
-          .maybeSingle();
+        // Get API keys from Vault
+        const privateKey = await getVaultSecret(supabaseAdmin, user.id, 'ciabra', 'api_key');
+        const publicKey = await getVaultSecret(supabaseAdmin, user.id, 'ciabra', 'public_key');
 
-        if (!config?.api_key_hash) {
+        if (!privateKey) {
           return new Response(
             JSON.stringify({ success: false, error: 'Ciabra não configurado' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
           );
         }
 
-        const privateKey = atob(config.api_key_hash);
-        const publicKey = config.public_key_hash ? atob(config.public_key_hash) : '';
-        const basicToken = btoa(`${publicKey}:${privateKey}`);
+        const basicToken = btoa(`${publicKey || ''}:${privateKey}`);
         const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
         try {
