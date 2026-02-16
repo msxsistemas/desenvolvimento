@@ -435,8 +435,8 @@ export default function FilaMensagens() {
 
       {/* Filters */}
       <div className="rounded-lg border border-border bg-card p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="space-y-2">
+        <div className="flex items-end gap-4 flex-wrap">
+          <div className="space-y-2 flex-1 min-w-[150px]">
             <Label className="text-muted-foreground">Busca</Label>
             <Input
               placeholder=""
@@ -444,7 +444,7 @@ export default function FilaMensagens() {
               onChange={(e) => setBusca(e.target.value)}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-[180px]">
             <Label className="text-muted-foreground">Status</Label>
             <Select value={filtro} onValueChange={setFiltro}>
               <SelectTrigger>
@@ -459,20 +459,18 @@ export default function FilaMensagens() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-end gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => { setBusca(""); setFiltro("todas"); }}
-            >
-              Limpar
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => loadMensagens()}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => { setBusca(""); setFiltro("todas"); }}
+          >
+            Limpar
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => loadMensagens()}
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
