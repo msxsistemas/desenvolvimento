@@ -458,9 +458,46 @@ export default function FilaMensagens() {
         </div>
       </div>
 
-      {/* Record count */}
-      <div className="text-right text-sm text-muted-foreground">
-        Mostrando {paginatedMensagens.length} de {filteredMensagens.length} registros.
+      {/* Record count + Pagination */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>Mostrando {paginatedMensagens.length} de {filteredMensagens.length} registros.</span>
+        <div className="flex items-center gap-2">
+          <span>Página {currentPage} de {totalPages}</span>
+          <div className="flex gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              {"<<"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              {"<"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              {">"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              {">>"}
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Table */}
