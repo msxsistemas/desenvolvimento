@@ -360,12 +360,6 @@ export default function FaturaPublica() {
               </DialogContent>
             </Dialog>
 
-            {!isPaid && isPending && (
-              <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400 py-2">
-                <RefreshCw className="h-3 w-3 animate-spin" />
-                <span>Verificando pagamento automaticamente...</span>
-              </div>
-            )}
 
             {/* Paid banner */}
             {isPaid && (

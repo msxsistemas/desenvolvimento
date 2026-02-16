@@ -613,8 +613,8 @@ Deno.serve(async (req) => {
 
               if (chargeResp.ok && chargeData.id) {
                 gateway_charge_id = String(chargeData.id);
-                pix_qr_code = chargeData.pix_qr_code || chargeData.qr_code || null;
-                pix_copia_cola = chargeData.pix_copia_cola || chargeData.pix_code || chargeData.payment_code || null;
+                pix_qr_code = chargeData.pix?.qr_code || chargeData.pix_qr_code || null;
+                pix_copia_cola = chargeData.pix?.pix_code || chargeData.pix_copia_cola || null;
 
                 await supabaseAdmin.from('cobrancas').upsert({
                   user_id: fatura.user_id, gateway: 'v3pay', gateway_charge_id: String(chargeData.id),
@@ -776,8 +776,8 @@ Deno.serve(async (req) => {
 
             if (v3Data.success && v3Data.charge) {
               gateway_charge_id = String(v3Data.charge.id);
-              pix_qr_code = v3Data.charge.pix_qr_code || v3Data.charge.qr_code || null;
-              pix_copia_cola = v3Data.charge.pix_copia_cola || v3Data.charge.pix_code || v3Data.charge.payment_code || null;
+              pix_qr_code = v3Data.charge.pix?.qr_code || v3Data.charge.pix_qr_code || null;
+              pix_copia_cola = v3Data.charge.pix?.pix_code || v3Data.charge.pix_copia_cola || null;
             }
           } catch (err: any) {
             console.error('V3Pay PIX error:', err.message);
