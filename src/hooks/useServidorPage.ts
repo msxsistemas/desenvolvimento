@@ -30,6 +30,7 @@ export function useServidorPage(providerId: string) {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<{ id: string; nome: string; url: string }>({ id: "", nome: "", url: "" });
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const { toast, dismiss } = useToast();
 
@@ -71,13 +72,14 @@ export function useServidorPage(providerId: string) {
   const handleCreatePanel = async () => {
     const baseUrl = formData.urlPainel.trim().replace(/\/$/, "");
     if (!formData.nomePainel.trim() || !formData.usuario.trim() || !formData.senha.trim() || !baseUrl) {
-      toast({ title: "Campos obrigatórios", description: "Preencha todos os campos marcados com *" });
+      setValidationError("Preencha todos os campos marcados com *");
       return;
     }
     if (!/^https?:\/\/.+/.test(baseUrl)) {
-      toast({ title: "URL inválida", description: "Informe uma URL válida iniciando com http:// ou https://" });
+      setValidationError("Informe uma URL válida iniciando com http:// ou https://");
       return;
     }
+    setValidationError(null);
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -567,6 +569,7 @@ export function useServidorPage(providerId: string) {
     const defaultUrl = providerId === 'playfast' ? PLAYFAST_API_BASE : '';
     setFormData({ nomePainel: "", urlPainel: defaultUrl, usuario: "", senha: "" });
     setAutoRenewal(false);
+    setValidationError(null);
     setIsConfigModalOpen(true);
   };
 
@@ -577,6 +580,7 @@ export function useServidorPage(providerId: string) {
     autoRenewal, setAutoRenewal,
     isTestingConnection, testingPanelId,
     formData, setFormData,
+    validationError, setValidationError,
     testResultModal, setTestResultModal,
     createResultModal, setCreateResultModal,
     deleteConfirmModal, setDeleteConfirmModal,

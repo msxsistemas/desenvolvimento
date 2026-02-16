@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Info, Shield, Eye, CheckCircle, XCircle, Plus, Loader2, Key } from "lucide-react";
+import { Info, Shield, Eye, CheckCircle, XCircle, Plus, Loader2, Key, AlertTriangle } from "lucide-react";
 import { Panel, ProviderConfig } from "@/config/provedores";
 
 interface AddPanelModalProps {
@@ -29,6 +29,7 @@ interface AddPanelModalProps {
   autoRenewal: boolean;
   setAutoRenewal: (auto: boolean) => void;
   isTestingConnection: boolean;
+  validationError?: string | null;
   onCreatePanel: () => void;
   onTestConnection: () => void;
 }
@@ -45,6 +46,7 @@ export function AddPanelModal({
   autoRenewal,
   setAutoRenewal,
   isTestingConnection,
+  validationError,
   onCreatePanel,
   onTestConnection,
 }: AddPanelModalProps) {
@@ -145,6 +147,13 @@ export function AddPanelModal({
             <p className="text-xs text-muted-foreground">{isApiKey ? `Chave da API do painel ${providerName}` : `Senha do painel ${providerName}`}</p>
           </div>
         </div>
+
+        {validationError && (
+          <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+            <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+            <p className="text-sm text-destructive">{validationError}</p>
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={onTestConnection} disabled={isTestingConnection}>

@@ -16,7 +16,7 @@ export default function ServidorPageLayout({ providerId, title }: ServidorPageLa
     showPassword, setShowPassword,
     autoRenewal, setAutoRenewal,
     isTestingConnection, testingPanelId,
-    formData, setFormData,
+    formData, setFormData, validationError,
     testResultModal, setTestResultModal,
     createResultModal, setCreateResultModal,
     deleteConfirmModal, setDeleteConfirmModal,
@@ -89,6 +89,7 @@ export default function ServidorPageLayout({ providerId, title }: ServidorPageLa
         autoRenewal={autoRenewal}
         setAutoRenewal={setAutoRenewal}
         isTestingConnection={isTestingConnection}
+        validationError={validationError}
         onCreatePanel={handleCreatePanel}
         onTestConnection={handleTestConnection}
       />

@@ -13,6 +13,7 @@ export default function ClientesIntegracoes() {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [autoRenewal, setAutoRenewal] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [testingPanelId, setTestingPanelId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,14 +94,15 @@ export default function ClientesIntegracoes() {
   const handleCreatePanel = async () => {
     const baseUrl = formData.urlPainel.trim().replace(/\/$/, "");
     if (!formData.nomePainel.trim() || !formData.usuario.trim() || !formData.senha.trim() || !baseUrl) {
-      toast({ title: "Campos obrigatórios", description: "Preencha todos os campos marcados com *" });
+      setValidationError("Preencha todos os campos marcados com *");
       return;
     }
     const urlPattern = /^https?:\/\/.+/;
     if (!urlPattern.test(baseUrl)) {
-      toast({ title: "URL inválida", description: "Informe uma URL válida iniciando com http:// ou https://" });
+      setValidationError("Informe uma URL válida iniciando com http:// ou https://");
       return;
     }
+    setValidationError(null);
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -533,6 +535,7 @@ export default function ClientesIntegracoes() {
         autoRenewal={autoRenewal}
         setAutoRenewal={setAutoRenewal}
         isTestingConnection={isTestingConnection}
+        validationError={validationError}
         onCreatePanel={handleCreatePanel}
         onTestConnection={handleTestConnection}
       />
