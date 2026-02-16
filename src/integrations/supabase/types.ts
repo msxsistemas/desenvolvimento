@@ -362,6 +362,7 @@ export type Database = {
           cliente_nome: string
           cliente_whatsapp: string
           created_at: string
+          cupom_codigo: string | null
           expires_at: string | null
           gateway: string | null
           gateway_charge_id: string | null
@@ -375,12 +376,14 @@ export type Database = {
           updated_at: string
           user_id: string
           valor: number
+          valor_original: number | null
         }
         Insert: {
           cliente_id?: string | null
           cliente_nome: string
           cliente_whatsapp: string
           created_at?: string
+          cupom_codigo?: string | null
           expires_at?: string | null
           gateway?: string | null
           gateway_charge_id?: string | null
@@ -394,12 +397,14 @@ export type Database = {
           updated_at?: string
           user_id: string
           valor: number
+          valor_original?: number | null
         }
         Update: {
           cliente_id?: string | null
           cliente_nome?: string
           cliente_whatsapp?: string
           created_at?: string
+          cupom_codigo?: string | null
           expires_at?: string | null
           gateway?: string | null
           gateway_charge_id?: string | null
@@ -413,6 +418,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           valor?: number
+          valor_original?: number | null
         }
         Relationships: [
           {
