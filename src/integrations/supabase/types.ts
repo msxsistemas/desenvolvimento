@@ -836,6 +836,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          chave_pix_indicacao: string | null
           created_at: string
           id: string
           nome_completo: string | null
@@ -846,6 +847,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          chave_pix_indicacao?: string | null
           created_at?: string
           id?: string
           nome_completo?: string | null
@@ -856,6 +858,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          chave_pix_indicacao?: string | null
           created_at?: string
           id?: string
           nome_completo?: string | null
@@ -863,6 +866,39 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      saques_indicacao: {
+        Row: {
+          chave_pix: string
+          created_at: string
+          id: string
+          motivo_rejeicao: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          chave_pix: string
+          created_at?: string
+          id?: string
+          motivo_rejeicao?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          chave_pix?: string
+          created_at?: string
+          id?: string
+          motivo_rejeicao?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
         }
         Relationships: []
       }

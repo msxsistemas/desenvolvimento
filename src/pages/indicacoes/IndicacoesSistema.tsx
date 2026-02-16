@@ -4,32 +4,42 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { 
-  Wallet, 
-  UserPlus, 
-  DollarSign, 
-  Trophy,
-  Gift,
-  FileText,
-  MessageSquare,
-  Users,
-  History,
-  Copy,
-  Check,
-  Link as LinkIcon,
-  Share2,
-  Loader2
+  Wallet, UserPlus, DollarSign, Gift, FileText, MessageSquare, Users,
+  History, Copy, Check, Link as LinkIcon, Share2, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useIndicacoes } from "@/hooks/useIndicacoes";
+
+interface SaqueRow {
+  id: string;
+  valor: number;
+  chave_pix: string;
+  status: string;
+  motivo_rejeicao: string | null;
+  created_at: string;
+}
 
 export default function IndicacoesSistema() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const { indicacoes, clientesIndicados, stats, isLoading } = useIndicacoes();
   
-  // Gera código único baseado no ID do usuário
+  // Withdrawal state
+  const [saqueDialogOpen, setSaqueDialogOpen] = useState(false);
+  const [saqueValor, setSaqueValor] = useState("");
+  const [chavePix, setChavePix] = useState("");
+  const [loadingChavePix, setLoadingChavePix] = useState(false);
+  const [savingSaque, setSavingSaque] = useState(false);
+  const [saques, setSaques] = useState<SaqueRow[]>([]);
+  const [loadingSaques, setLoadingSaques] = useState(true);
+
   const userCode = useMemo(() => {
     if (!userId) return "CARREGANDO...";
     return "REF_" + userId.replace(/-/g, "").substring(0, 12).toUpperCase();
@@ -49,23 +59,109 @@ export default function IndicacoesSistema() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
+        fetchSavedPixKey(user.id);
+        fetchSaques(user.id);
       }
     };
     getUser();
   }, []);
+
+  const fetchSavedPixKey = async (uid: string) => {
+    setLoadingChavePix(true);
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("chave_pix_indicacao")
+        .eq("user_id", uid)
+        .single();
+      if (data?.chave_pix_indicacao) {
+        setChavePix(data.chave_pix_indicacao);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar chave PIX:", err);
+    } finally {
+      setLoadingChavePix(false);
+    }
+  };
+
+  const fetchSaques = async (uid: string) => {
+    setLoadingSaques(true);
+    try {
+      const { data, error } = await supabase
+        .from("saques_indicacao")
+        .select("*")
+        .eq("user_id", uid)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setSaques(data || []);
+    } catch (err) {
+      console.error("Erro ao carregar saques:", err);
+    } finally {
+      setLoadingSaques(false);
+    }
+  };
+
+  const handleOpenSaqueDialog = () => {
+    setSaqueValor("");
+    setSaqueDialogOpen(true);
+  };
+
+  const handleSolicitarSaque = async () => {
+    if (!userId) return;
+    
+    const valor = parseFloat(saqueValor.replace(",", "."));
+    if (!valor || valor <= 0) {
+      toast.error("Informe um valor válido");
+      return;
+    }
+    if (valor > stats.saldoDisponivel) {
+      toast.error("Saldo insuficiente");
+      return;
+    }
+    if (!chavePix.trim()) {
+      toast.error("Informe sua chave PIX");
+      return;
+    }
+
+    setSavingSaque(true);
+    try {
+      // Save PIX key to profile
+      await supabase
+        .from("profiles")
+        .update({ chave_pix_indicacao: chavePix.trim() })
+        .eq("user_id", userId);
+
+      // Create withdrawal request
+      const { error } = await supabase.from("saques_indicacao").insert({
+        user_id: userId,
+        valor,
+        chave_pix: chavePix.trim(),
+        status: "pendente",
+      });
+
+      if (error) throw error;
+
+      toast.success("Solicitação de saque enviada! Aguarde aprovação.");
+      setSaqueDialogOpen(false);
+      fetchSaques(userId);
+    } catch (err: any) {
+      toast.error("Erro ao solicitar saque: " + (err.message || ""));
+    } finally {
+      setSavingSaque(false);
+    }
+  };
 
   const handleCopy = async (text: string, type: string) => {
     if (userCode === "CARREGANDO...") {
       toast.error("Aguarde o carregamento do código");
       return;
     }
-    
     try {
       await navigator.clipboard.writeText(text);
       setCopiedLink(type);
       toast.success("Link copiado para a área de transferência!");
       setTimeout(() => setCopiedLink(null), 2000);
-    } catch (error) {
+    } catch {
       toast.error("Erro ao copiar link");
     }
   };
@@ -76,10 +172,32 @@ export default function IndicacoesSistema() {
         return <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">Aprovado</Badge>;
       case "pago":
         return <Badge className="bg-primary/10 text-primary hover:bg-primary/20">Pago</Badge>;
+      case "rejeitado":
+        return <Badge variant="destructive">Rejeitado</Badge>;
       default:
         return <Badge variant="secondary">Pendente</Badge>;
     }
   };
+
+  const getSaqueStatusBadge = (status: string) => {
+    switch (status) {
+      case "aprovado":
+        return <Badge className="bg-yellow-500/10 text-yellow-500">Aprovado</Badge>;
+      case "pago":
+        return <Badge className="bg-green-500/10 text-green-500">Pago</Badge>;
+      case "rejeitado":
+        return <Badge variant="destructive">Rejeitado</Badge>;
+      default:
+        return <Badge variant="secondary">Pendente</Badge>;
+    }
+  };
+
+  // Calculate pending withdrawals to show correct available balance
+  const saquePendente = saques
+    .filter(s => s.status === "pendente" || s.status === "aprovado")
+    .reduce((acc, s) => acc + Number(s.valor), 0);
+
+  const saldoReal = stats.saldoDisponivel - saquePendente;
 
   return (
     <main className="space-y-4">
@@ -94,7 +212,11 @@ export default function IndicacoesSistema() {
             <p className="text-sm text-muted-foreground">Ganhe comissões indicando novos clientes</p>
           </div>
         </div>
-        <Button className="bg-primary hover:bg-primary/90">
+        <Button 
+          className="bg-primary hover:bg-primary/90"
+          onClick={handleOpenSaqueDialog}
+          disabled={saldoReal <= 0}
+        >
           <DollarSign className="h-4 w-4 mr-2" />
           Solicitar Resgate
         </Button>
@@ -109,7 +231,7 @@ export default function IndicacoesSistema() {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Saldo Disponível</p>
-              <p className="text-lg font-bold text-foreground">R$ {stats.saldoDisponivel.toFixed(2).replace('.', ',')}</p>
+              <p className="text-lg font-bold text-foreground">R$ {saldoReal.toFixed(2).replace('.', ',')}</p>
             </div>
           </div>
         </div>
@@ -121,9 +243,7 @@ export default function IndicacoesSistema() {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Total de Indicações</p>
-              <div className="flex items-center gap-2">
-                <p className="text-lg font-bold text-foreground">{stats.totalIndicacoes}</p>
-              </div>
+              <p className="text-lg font-bold text-foreground">{stats.totalIndicacoes}</p>
             </div>
           </div>
         </div>
@@ -161,11 +281,7 @@ export default function IndicacoesSistema() {
               <p className="text-sm text-muted-foreground">Seu código de indicação:</p>
               <p className="text-lg font-mono font-bold text-primary">{userCode}</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleCopy(userCode, 'code')}
-            >
+            <Button variant="outline" size="sm" onClick={() => handleCopy(userCode, 'code')}>
               {copiedLink === 'code' ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
               Copiar Código
             </Button>
@@ -173,7 +289,7 @@ export default function IndicacoesSistema() {
         </CardContent>
       </Card>
 
-      {/* Tabs Content */}
+      {/* Tabs */}
       <Tabs defaultValue="indique" className="w-full">
         <TabsList className="w-full grid grid-cols-2 md:grid-cols-5 h-auto gap-1 bg-muted/50 p-1 rounded-lg">
           <TabsTrigger value="indique" className="gap-1.5 text-xs py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -196,14 +312,14 @@ export default function IndicacoesSistema() {
             <span className="hidden sm:inline">Suas Indicações</span>
             <span className="sm:hidden">Lista</span>
           </TabsTrigger>
-          <TabsTrigger value="historico" className="gap-1.5 text-xs py-2">
+          <TabsTrigger value="saques" className="gap-1.5 text-xs py-2">
             <History className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Histórico</span>
-            <span className="sm:hidden">Hist.</span>
+            <span className="hidden sm:inline">Meus Saques</span>
+            <span className="sm:hidden">Saques</span>
           </TabsTrigger>
         </TabsList>
 
-        {/* Tab: Indique & Ganhe! */}
+        {/* Tab: Indique & Ganhe */}
         <TabsContent value="indique" className="mt-3 space-y-3">
           <Card>
             <CardHeader className="pb-2">
@@ -217,10 +333,7 @@ export default function IndicacoesSistema() {
                 <div className="flex-1 bg-muted rounded-md px-3 py-2 text-xs text-muted-foreground font-mono truncate">
                   {links.vendas}
                 </div>
-                <Button 
-                  size="sm"
-                  onClick={() => handleCopy(links.vendas, 'vendas')}
-                >
+                <Button size="sm" onClick={() => handleCopy(links.vendas, 'vendas')}>
                   {copiedLink === 'vendas' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 </Button>
               </div>
@@ -242,10 +355,7 @@ export default function IndicacoesSistema() {
                 <div className="flex-1 bg-muted rounded-md px-3 py-2 text-xs text-muted-foreground font-mono truncate">
                   {links.cadastro}
                 </div>
-                <Button 
-                  size="sm"
-                  onClick={() => handleCopy(links.cadastro, 'cadastro')}
-                >
+                <Button size="sm" onClick={() => handleCopy(links.cadastro, 'cadastro')}>
                   {copiedLink === 'cadastro' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 </Button>
               </div>
@@ -256,7 +366,7 @@ export default function IndicacoesSistema() {
           </Card>
         </TabsContent>
 
-        {/* Tab: Materiais de Divulgação */}
+        {/* Tab: Materiais */}
         <TabsContent value="materiais" className="mt-3">
           <Card>
             <CardContent className="p-6 text-center">
@@ -266,7 +376,7 @@ export default function IndicacoesSistema() {
           </Card>
         </TabsContent>
 
-        {/* Tab: Modelos de Mensagem */}
+        {/* Tab: Modelos */}
         <TabsContent value="modelos" className="mt-3">
           <Card>
             <CardContent className="p-6 text-center">
@@ -317,38 +427,38 @@ export default function IndicacoesSistema() {
           </Card>
         </TabsContent>
 
-        {/* Tab: Histórico de Resgates */}
-        <TabsContent value="historico" className="mt-3">
+        {/* Tab: Meus Saques */}
+        <TabsContent value="saques" className="mt-3">
           <Card>
             <CardContent className="p-0">
-              {isLoading ? (
+              {loadingSaques ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
-              ) : indicacoes.length === 0 ? (
+              ) : saques.length === 0 ? (
                 <div className="p-6 text-center">
-                  <History className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-sm text-muted-foreground">Nenhum resgate realizado ainda.</p>
+                  <Wallet className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground">Nenhum saque solicitado ainda.</p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Código</TableHead>
-                      <TableHead>Bônus</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Chave PIX</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Data</TableHead>
+                      <TableHead>Observação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {indicacoes.map((ind) => (
-                      <TableRow key={ind.id}>
-                        <TableCell className="font-mono text-sm">{ind.codigo_indicacao}</TableCell>
-                        <TableCell>R$ {Number(ind.bonus).toFixed(2).replace('.', ',')}</TableCell>
-                        <TableCell>{getStatusBadge(ind.status)}</TableCell>
-                        <TableCell>
-                          {new Date(ind.created_at).toLocaleDateString("pt-BR")}
-                        </TableCell>
+                    {saques.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-medium">R$ {Number(s.valor).toFixed(2).replace(".", ",")}</TableCell>
+                        <TableCell className="font-mono text-xs">{s.chave_pix}</TableCell>
+                        <TableCell>{getSaqueStatusBadge(s.status)}</TableCell>
+                        <TableCell>{new Date(s.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{s.motivo_rejeicao || "-"}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -358,6 +468,49 @@ export default function IndicacoesSistema() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog de Solicitar Saque */}
+      <Dialog open={saqueDialogOpen} onOpenChange={setSaqueDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Solicitar Resgate</DialogTitle>
+            <DialogDescription>
+              Saldo disponível: R$ {saldoReal.toFixed(2).replace(".", ",")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Valor do Resgate (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0.01"
+                max={saldoReal}
+                placeholder="0,00"
+                value={saqueValor}
+                onChange={e => setSaqueValor(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Chave PIX</Label>
+              <Input
+                placeholder="CPF, e-mail, telefone ou chave aleatória"
+                value={chavePix}
+                onChange={e => setChavePix(e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Sua chave PIX será salva para futuros saques. Você pode alterá-la a qualquer momento.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaqueDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSolicitarSaque} disabled={savingSaque}>
+              {savingSaque ? "Enviando..." : "Solicitar Resgate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
