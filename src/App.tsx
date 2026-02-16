@@ -80,6 +80,10 @@ import AdminTemplateEditar from "./pages/admin/AdminTemplateEditar";
 import AdminAssinaturas from "./pages/admin/AdminAssinaturas";
 import AdminServidores from "./pages/admin/AdminServidores";
 import AdminIndicacoes from "./pages/admin/AdminIndicacoes";
+import AdminIndicacoesConfig from "./pages/admin/AdminIndicacoesConfig";
+import AdminIndicacoesRegistros from "./pages/admin/AdminIndicacoesRegistros";
+import AdminIndicacoesSaques from "./pages/admin/AdminIndicacoesSaques";
+import AdminIndicacoesRanking from "./pages/admin/AdminIndicacoesRanking";
 import AdminLogin from "./pages/admin/AdminLogin";
 
 
@@ -189,7 +193,10 @@ const App = () => (
             <Route path="/admin/templates/novo" element={<AdminTemplateNovo />} />
             <Route path="/admin/templates/editar/:id" element={<AdminTemplateEditar />} />
             <Route path="/admin/servidores" element={<AdminServidores />} />
-            <Route path="/admin/indicacoes" element={<AdminIndicacoes />} />
+            <Route path="/admin/indicacoes" element={<AdminIndicacoesConfig />} />
+            <Route path="/admin/indicacoes/registros" element={<AdminIndicacoesRegistros />} />
+            <Route path="/admin/indicacoes/saques" element={<AdminIndicacoesSaques />} />
+            <Route path="/admin/indicacoes/ranking" element={<AdminIndicacoesRanking />} />
             <Route path="/admin/configuracoes" element={<AdminConfiguracoes />} />
             <Route path="/admin/logs" element={<AdminLogs />} />
           </Route>

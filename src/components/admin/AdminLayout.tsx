@@ -80,7 +80,18 @@ const adminNavItems: NavItem[] = [
     ],
   },
   { title: "Servidores", url: "/admin/servidores", icon: Server },
-  { title: "Indicações", url: "/admin/indicacoes", icon: Share2 },
+  {
+    title: "Indicações",
+    url: "/admin/indicacoes",
+    icon: Share2,
+    submenuKey: "indicacoes",
+    subItems: [
+      { to: "/admin/indicacoes", label: "Configurações" },
+      { to: "/admin/indicacoes/registros", label: "Indicações" },
+      { to: "/admin/indicacoes/saques", label: "Saques" },
+      { to: "/admin/indicacoes/ranking", label: "Top 5" },
+    ],
+  },
   { title: "Configurações", url: "/admin/configuracoes", icon: Settings },
   { title: "Logs", url: "/admin/logs", icon: ScrollText },
 ];
