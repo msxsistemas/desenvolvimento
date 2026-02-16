@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 
 import { Progress } from "@/components/ui/progress";
-import { Send, Loader2, Upload, X, Image, FileText } from "lucide-react";
+import { Send, Loader2, Upload, X, Image, FileText, MessageSquare, Users, Filter, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -28,9 +28,12 @@ const tiposMensagem = [
 const destinatariosOptions = [
   { value: "clientes_ativos_plano", label: "Clientes Ativos Por Plano" },
   { value: "clientes_ativos", label: "Clientes Ativos" },
+  { value: "clientes_ativos_servidor", label: "Clientes Ativos por Servidor" },
+  { value: "clientes_vencidos_servidor", label: "Clientes Vencidos por Servidor" },
   { value: "clientes_inativos", label: "Clientes Inativos" },
   { value: "clientes_vencidos", label: "Clientes Vencidos" },
-  { value: "clientes_vencidos_data", label: "Clientes Vencidos Data" },
+  { value: "clientes_vencidos_data", label: "Clientes Vencidos por Data" },
+  { value: "por_tags", label: "Por Tags" },
   { value: "clientes_desativados", label: "Clientes Desativados" },
   { value: "todos", label: "Para Todos" },
 ];
@@ -43,6 +46,7 @@ const getDestinatarioLabel = (value: string) => {
 export default function EnviosEmMassa() {
   const [tipoMensagem, setTipoMensagem] = useState("");
   const [destinatarios, setDestinatarios] = useState("");
+  const [filtroPlano, setFiltroPlano] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [sending, setSending] = useState(false);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -50,6 +54,8 @@ export default function EnviosEmMassa() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({ total: 0, sent: 0, failed: 0 });
   const [showProgress, setShowProgress] = useState(false);
+  const [planos, setPlanos] = useState<{ nome: string }[]>([]);
+  const [clienteCount, setClienteCount] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useCurrentUser();
   const { isConnected, sendMessage } = useEvolutionAPISimple();
@@ -58,7 +64,49 @@ export default function EnviosEmMassa() {
     document.title = "Envios em Massa | Tech Play";
   }, []);
 
-  const availableKeys = availableVariableKeys;
+  // Fetch planos for filter
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from("planos").select("nome").eq("user_id", user.id).then(({ data }) => {
+      if (data) setPlanos(data);
+    });
+  }, [user?.id]);
+
+  // Count clients matching current filter
+  useEffect(() => {
+    if (!user?.id || !destinatarios) {
+      setClienteCount(null);
+      return;
+    }
+    const fetchCount = async () => {
+      let query = supabase.from("clientes").select("id", { count: 'exact', head: true }).eq("user_id", user.id);
+      const today = new Date().toISOString().split('T')[0];
+      switch (destinatarios) {
+        case "clientes_ativos":
+          query = query.eq("ativo", true).gte("data_vencimento", today);
+          break;
+        case "clientes_ativos_plano":
+          query = query.eq("ativo", true).gte("data_vencimento", today).not("plano", "is", null);
+          if (filtroPlano) query = query.eq("plano", filtroPlano);
+          break;
+        case "clientes_vencidos":
+        case "clientes_vencidos_data":
+          query = query.lt("data_vencimento", today);
+          break;
+        case "clientes_inativos":
+          query = query.eq("ativo", false);
+          break;
+        case "clientes_desativados":
+          query = query.eq("ativo", false);
+          break;
+        case "todos":
+          break;
+      }
+      const { count } = await query;
+      setClienteCount(count ?? 0);
+    };
+    fetchCount();
+  }, [user?.id, destinatarios, filtroPlano]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -159,6 +207,7 @@ export default function EnviosEmMassa() {
           break;
         case "clientes_ativos_plano":
           query = query.eq("ativo", true).gte("data_vencimento", today).not("plano", "is", null);
+          if (filtroPlano) query = query.eq("plano", filtroPlano);
           break;
         case "clientes_vencidos":
         case "clientes_vencidos_data":
@@ -293,13 +342,15 @@ export default function EnviosEmMassa() {
   const showMediaUpload = tipoMensagem && tipoMensagem !== 'texto';
   const progressPercent = progress.total > 0 ? Math.round(((progress.sent + progress.failed) / progress.total) * 100) : 0;
 
+  const showFilterPlano = destinatarios === 'clientes_ativos_plano';
+
   return (
     <main className="space-y-4">
       {/* Header */}
       <header className="flex items-center justify-between p-4 rounded-lg bg-card border border-border">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Envios em Massa</h1>
-          <p className="text-sm text-muted-foreground">Envie mensagens para múltiplos clientes</p>
+          <h1 className="text-xl font-semibold text-foreground">Envios De Mensagens Em Massa</h1>
+          <p className="text-sm text-muted-foreground">Faça envio de mensagens para os seus clientes!</p>
         </div>
       </header>
 
@@ -325,10 +376,13 @@ export default function EnviosEmMassa() {
       {/* Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Form Section */}
-        <div className="rounded-lg border border-border bg-card p-4 space-y-4">
-          {/* Message Type */}
-          <div className="space-y-2">
-            <Label className="text-foreground">Tipo de mensagem</Label>
+        <div className="space-y-4">
+          {/* TIPO DE MENSAGEM */}
+          <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-primary" />
+              <Label className="text-xs font-bold uppercase tracking-wider text-foreground">Tipo de Mensagem</Label>
+            </div>
             <Select value={tipoMensagem} onValueChange={(value) => {
               setTipoMensagem(value);
               removeMedia();
@@ -347,52 +401,45 @@ export default function EnviosEmMassa() {
                 ))}
               </SelectContent>
             </Select>
+
+            {/* Media Upload */}
+            {showMediaUpload && (
+              <div className="space-y-2">
+                <Label className="text-foreground text-sm">Selecione uma imagem</Label>
+                {!mediaFile ? (
+                  <div 
+                    className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">Clique para selecionar</p>
+                    <p className="text-xs text-muted-foreground mt-1">Máximo: 16MB</p>
+                  </div>
+                ) : (
+                  <div className="relative bg-secondary rounded-lg p-4">
+                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={removeMedia}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                    {mediaPreview && (
+                      <img src={mediaPreview} alt="Preview" className="max-h-32 mx-auto rounded" />
+                    )}
+                  </div>
+                )}
+                <Input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+              </div>
+            )}
           </div>
 
-          {/* Media Upload */}
-          {showMediaUpload && (
-            <div className="space-y-2">
-              <Label className="text-foreground">Selecione uma imagem</Label>
-              
-              {!mediaFile ? (
-                <div 
-                  className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">Clique para selecionar</p>
-                  <p className="text-xs text-muted-foreground mt-1">Máximo: 16MB</p>
-                </div>
-              ) : (
-                <div className="relative bg-secondary rounded-lg p-4">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 h-6 w-6"
-                    onClick={removeMedia}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                  {mediaPreview && (
-                    <img src={mediaPreview} alt="Preview" className="max-h-32 mx-auto rounded" />
-                  )}
-                </div>
-              )}
-              
-              <Input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
+          {/* PÚBLICO ALVO */}
+          <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
+              <Label className="text-xs font-bold uppercase tracking-wider text-foreground">Público Alvo</Label>
             </div>
-          )}
-
-          {/* Recipients */}
-          <div className="space-y-2">
-            <Label className="text-foreground">Destinatários</Label>
-            <Select value={destinatarios} onValueChange={setDestinatarios}>
+            <Select value={destinatarios} onValueChange={(val) => {
+              setDestinatarios(val);
+              setFiltroPlano("");
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione os destinatários" />
               </SelectTrigger>
@@ -402,13 +449,44 @@ export default function EnviosEmMassa() {
                 ))}
               </SelectContent>
             </Select>
+
+            {/* Client count indicator */}
+            {destinatarios && clienteCount !== null && clienteCount === 0 && (
+              <div className="flex items-center gap-2 text-sm bg-destructive/10 text-destructive border border-destructive/30 rounded-lg px-3 py-2">
+                <AlertTriangle className="h-4 w-4" />
+                Nenhum cliente encontrado
+              </div>
+            )}
+            {destinatarios && clienteCount !== null && clienteCount > 0 && (
+              <p className="text-xs text-muted-foreground">{clienteCount} cliente(s) encontrado(s)</p>
+            )}
           </div>
 
+          {/* FILTROS */}
+          {showFilterPlano && (
+            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-primary" />
+                <Label className="text-xs font-bold uppercase tracking-wider text-foreground">Filtros</Label>
+              </div>
+              <Select value={filtroPlano} onValueChange={setFiltroPlano}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o plano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {planos.map((p) => (
+                    <SelectItem key={p.nome} value={p.nome}>{p.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Message */}
-          <div className="space-y-2">
+          <div className="rounded-lg border border-border bg-card p-4 space-y-3">
             <Label className="text-foreground">Mensagem</Label>
             <div className="flex flex-wrap gap-1 mb-2">
-              {availableKeys.map((key) => (
+              {availableVariableKeys.map((key) => (
                 <span 
                   key={key} 
                   className="text-primary text-xs bg-primary/10 px-2 py-1 rounded cursor-pointer hover:bg-primary/20"
