@@ -59,7 +59,6 @@ import TemplateEditar from "./pages/whatsapp/TemplateEditar";
 import ConfiguracaoEnvio from "./pages/whatsapp/ConfiguracaoEnvio";
 import ConfiguracoesNotificacoes from "./pages/configuracoes/ConfiguracoesNotificacoes";
 import Relatorios from "./pages/Relatorios";
-import LogsPainel from "./pages/LogsPainel";
 import LogsSistema from "./pages/LogsSistema";
 import IndicacoesClientes from "./pages/indicacoes/IndicacoesClientes";
 import IndicacoesSistema from "./pages/indicacoes/IndicacoesSistema";
@@ -165,7 +164,6 @@ const App = () => (
             <Route path="/configurar/notificacoes" element={<ConfiguracoesNotificacoes />} />
             <Route path="/whatsapp/parear" element={<ParearWhatsapp />} />
             {/* Logs routes */}
-            <Route path="/logs/painel" element={<LogsPainel />} />
             <Route path="/logs/sistema" element={<LogsSistema />} />
             {/* Indicações routes */}
             <Route path="/indicacoes/clientes" element={<IndicacoesClientes />} />
