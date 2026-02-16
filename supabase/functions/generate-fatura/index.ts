@@ -191,8 +191,21 @@ Deno.serve(async (req) => {
 
           if (ciabraConfig?.api_key_hash) {
             try {
-              const privateKey = atob(ciabraConfig.api_key_hash);
-              const publicKey = ciabraConfig.public_key_hash ? atob(ciabraConfig.public_key_hash) : '';
+              let privateKey = '';
+              let publicKey = '';
+              if (ciabraConfig.api_key_hash === 'vault') {
+                const { data: vaultKey } = await supabaseAdmin.rpc('get_gateway_secret', {
+                  p_user_id: fatura.user_id, p_gateway: 'ciabra', p_secret_name: 'api_key'
+                });
+                privateKey = vaultKey || '';
+                const { data: vaultPub } = await supabaseAdmin.rpc('get_gateway_secret', {
+                  p_user_id: fatura.user_id, p_gateway: 'ciabra', p_secret_name: 'public_key'
+                });
+                publicKey = vaultPub || '';
+              } else {
+                privateKey = atob(ciabraConfig.api_key_hash);
+                publicKey = ciabraConfig.public_key_hash ? atob(ciabraConfig.public_key_hash) : '';
+              }
               const basicToken = btoa(`${publicKey}:${privateKey}`);
               const ciabraHeaders = { 'Authorization': `Basic ${basicToken}`, 'Content-Type': 'application/json' };
               
@@ -470,8 +483,22 @@ Deno.serve(async (req) => {
               .maybeSingle();
 
             if (ciabraConfig?.api_key_hash) {
-              const privateKey = atob(ciabraConfig.api_key_hash);
-              const publicKey = ciabraConfig.public_key_hash ? atob(ciabraConfig.public_key_hash) : '';
+              // Get keys from Vault if stored there, otherwise try base64 decode
+              let privateKey = '';
+              let publicKey = '';
+              if (ciabraConfig.api_key_hash === 'vault') {
+                const { data: vaultKey } = await supabaseAdmin.rpc('get_gateway_secret', {
+                  p_user_id: fatura.user_id, p_gateway: 'ciabra', p_secret_name: 'api_key'
+                });
+                privateKey = vaultKey || '';
+                const { data: vaultPub } = await supabaseAdmin.rpc('get_gateway_secret', {
+                  p_user_id: fatura.user_id, p_gateway: 'ciabra', p_secret_name: 'public_key'
+                });
+                publicKey = vaultPub || '';
+              } else {
+                privateKey = atob(ciabraConfig.api_key_hash);
+                publicKey = ciabraConfig.public_key_hash ? atob(ciabraConfig.public_key_hash) : '';
+              }
               const basicToken = btoa(`${publicKey}:${privateKey}`);
               const externalId = `fatura-${fatura.id.substring(0, 8)}`;
               const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
