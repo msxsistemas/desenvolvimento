@@ -65,17 +65,11 @@ export function AddPanelModal({
         </DialogHeader>
 
         {/* Warning */}
-        <div className="flex items-center justify-between bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
-          <div className="flex items-center gap-2">
-            <span className="text-orange-400 text-xs">⚠️</span>
-            <span className="text-sm font-medium text-orange-400">IMPORTANTE:</span>
-            <span className="text-sm text-muted-foreground">Desabilite 2FA no painel se necessário</span>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="h-8">
-              <Shield className="w-4 h-4 mr-1" />
-              <span className="text-xs">AES-256</span>
-            </Button>
+        <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
+          <Shield className="w-5 h-5 text-orange-400 shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-orange-400">Atenção</p>
+            <p className="text-xs text-muted-foreground">Para garantir o funcionamento da integração, desabilite a autenticação em dois fatores (2FA) no painel do provedor antes de adicionar suas credenciais.</p>
           </div>
         </div>
 
