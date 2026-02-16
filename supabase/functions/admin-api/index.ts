@@ -68,6 +68,18 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Audit log for admin actions
+    try {
+      await supabase.from('logs_sistema').insert({
+        user_id: user.id,
+        nivel: 'info',
+        componente: 'admin-api',
+        evento: `Admin action: ${action}${body.target_user_id ? ` target=${body.target_user_id}` : ''}`,
+      });
+    } catch (logErr) {
+      console.warn('Audit log failed:', logErr);
+    }
+
     const json = (data: unknown, status = 200) =>
       new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 

@@ -51,13 +51,34 @@ Deno.serve(async (req) => {
       console.log('📩 Webhook type detected:', webhookType);
 
       // Verify webhook by checking that the charge exists in our database
-      // This prevents forged webhooks since only real charges will match
+      // and cross-referencing with the Ciabra API for authenticity
       const possibleChargeId = String(body.id || body.payment_id || body.charge_id || body.invoiceId || '');
       if (!possibleChargeId) {
         console.warn('⚠️ Ciabra webhook missing charge ID - rejecting');
         return new Response(JSON.stringify({ error: 'Missing charge identifier' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
+
+      // Verify the charge exists in cobrancas OR user_subscriptions before processing
+      const { data: existingCharge } = await supabaseAdmin
+        .from('cobrancas')
+        .select('id')
+        .eq('gateway', 'ciabra')
+        .eq('gateway_charge_id', possibleChargeId)
+        .maybeSingle();
+      
+      const { data: existingSub } = await supabaseAdmin
+        .from('user_subscriptions')
+        .select('id')
+        .eq('gateway_subscription_id', possibleChargeId)
+        .maybeSingle();
+
+      if (!existingCharge && !existingSub) {
+        console.warn('⚠️ Ciabra webhook charge ID not found in database - rejecting:', possibleChargeId);
+        return new Response(JSON.stringify({ error: 'Unknown charge' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
+      }
+      console.log('✅ Ciabra webhook charge verified in database');
       
       const isPaid = webhookType.includes('CONFIRMED') || webhookType.includes('PAID')
         || webhookType.includes('APPROVED') || webhookType.includes('RECEIVED')
@@ -270,53 +291,6 @@ Deno.serve(async (req) => {
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
           );
         }
-      }
-
-      case 'test-create': {
-        // Minimal test to debug Ciabra 500 error
-        const { data: config } = await supabaseAdmin
-          .from('ciabra_config')
-          .select('api_key_hash, public_key_hash')
-          .eq('user_id', user.id)
-          .eq('is_configured', true)
-          .maybeSingle();
-
-        if (!config?.api_key_hash) {
-          return new Response(JSON.stringify({ error: 'Not configured' }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-        }
-
-        const privateKey2 = atob(config.api_key_hash);
-        const publicKey2 = config.public_key_hash ? atob(config.public_key_hash) : '';
-        const basicToken2 = btoa(`${publicKey2}:${privateKey2}`);
-        const headers2 = { 'Authorization': `Basic ${basicToken2}`, 'Content-Type': 'application/json' };
-
-        // First test auth
-        const authResp = await fetch(`${CIABRA_BASE_URL}/auth/applications/check`, { headers: headers2 });
-        const authText = await authResp.text();
-
-        // Then try minimal invoice
-        const invoiceResp = await fetch(`${CIABRA_BASE_URL}/invoices/applications/invoices`, {
-          method: 'POST',
-          headers: headers2,
-          body: JSON.stringify({
-            description: "Teste",
-            dueDate: new Date(Date.now() + 86400000).toISOString(),
-            installmentCount: 1,
-            invoiceType: "SINGLE",
-            items: [],
-            price: 1,
-            paymentTypes: ["PIX"],
-            notifications: [],
-            webhooks: []
-          }),
-        });
-        const invoiceText = await invoiceResp.text();
-
-        return new Response(JSON.stringify({
-          auth: { status: authResp.status, body: authText.substring(0, 300) },
-          invoice: { status: invoiceResp.status, body: invoiceText.substring(0, 500) }
-        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       default:
