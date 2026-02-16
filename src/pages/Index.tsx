@@ -16,7 +16,7 @@ import DashboardClientTables from "@/components/dashboard/DashboardClientTables"
 export default function Index() {
   const { userId } = useCurrentUser();
   const { profile } = useProfile(userId);
-  const { entradas, saidas, lucros, loading: loadingFinanceiro } = useFinanceiro();
+  const { entradas, saidas, lucros, lucrosMes, lucrosAno, loading: loadingFinanceiro } = useFinanceiro();
   const {
     totalClientes,
     clientesAtivos,
@@ -104,8 +104,9 @@ export default function Index() {
       <DashboardFinanceCards
         entradas={entradas}
         saidas={saidas}
-        lucros={lucros}
+        lucros={lucrosMes}
         valorTotalMes={valorTotalMes}
+        valorTotalAno={lucrosAno}
       />
 
       {/* 3ª linha — Gráficos */}
