@@ -192,6 +192,8 @@ export default function IndicacoesSistema() {
     }
   };
 
+  const TAXA_SAQUE = 1.50;
+
   // Calculate pending withdrawals to show correct available balance
   const saquePendente = saques
     .filter(s => s.status === "pendente" || s.status === "aprovado")
