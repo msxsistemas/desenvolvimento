@@ -434,45 +434,39 @@ export default function FilaMensagens() {
       </header>
 
       {/* Filters */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="space-y-2">
-            <Label className="text-muted-foreground">Busca</Label>
-            <Input
-              placeholder=""
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-muted-foreground">Status</Label>
-            <Select value={filtro} onValueChange={setFiltro}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas ({counts.todas})</SelectItem>
-                <SelectItem value="aguardando">Aguardando ({counts.aguardando})</SelectItem>
-                <SelectItem value="agendada">Agendadas ({counts.agendada})</SelectItem>
-                <SelectItem value="enviadas">Enviadas ({counts.enviadas})</SelectItem>
-                <SelectItem value="erro">Com Erro ({counts.erro})</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-end gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => { setBusca(""); setFiltro("todas"); }}
+      <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: "todas", label: "Todas", count: counts.todas },
+            { value: "aguardando", label: "Aguardando", count: counts.aguardando },
+            { value: "agendada", label: "Agendadas", count: counts.agendada },
+            { value: "enviadas", label: "Enviadas", count: counts.enviadas },
+            { value: "erro", label: "Com Erro", count: counts.erro },
+          ].map((f) => (
+            <Button
+              key={f.value}
+              variant={filtro === f.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFiltro(f.value)}
             >
-              Limpar
+              {f.label} ({f.count})
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => loadMensagens()}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Buscar por nome ou WhatsApp..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="max-w-sm"
+          />
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => loadMensagens()}
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
