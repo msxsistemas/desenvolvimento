@@ -36,46 +36,29 @@ export default function Checkout() {
 
   useEffect(() => {
     if (!user?.id) return;
-    loadConfiguration();
-    checkGatewayConfigs();
+    loadAllConfigs();
   }, [user?.id]);
 
-  const checkGatewayConfigs = async () => {
+  const loadAllConfigs = async () => {
     if (!user?.id) return;
-    const [ciabra, mp] = await Promise.all([
+    const [checkoutResult, ciabra, mp] = await Promise.all([
+      supabase.from('checkout_config').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('ciabra_config').select('is_configured').eq('user_id', user.id).maybeSingle(),
       supabase.from('mercadopago_config').select('is_configured').eq('user_id', user.id).maybeSingle(),
     ]);
+
     setCiabraConfigured(!!(ciabra.data as any)?.is_configured);
     setMercadoPagoConfigured(!!(mp.data as any)?.is_configured);
-  };
 
-  const loadConfiguration = async () => {
-    if (!user?.id) return;
-    try {
-      const { data, error } = await supabase
-        .from('checkout_config')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Erro ao carregar configurações:', error);
-        return;
-      }
-
-      if (data) {
-        setPixEnabled(data.pix_enabled);
-        setCreditCardEnabled(data.credit_card_enabled);
-        setPixManualEnabled(data.pix_manual_enabled);
-        setPixManualKey(data.pix_manual_key || "");
-        setGatewayAtivo((data as any).gateway_ativo || "asaas");
-      }
-    } catch (error) {
-      console.error('Erro ao carregar configurações:', error);
-    } finally {
-      setInitialLoading(false);
+    if (checkoutResult.data) {
+      const data = checkoutResult.data;
+      setPixEnabled(data.pix_enabled);
+      setCreditCardEnabled(data.credit_card_enabled);
+      setPixManualEnabled(data.pix_manual_enabled);
+      setPixManualKey(data.pix_manual_key || "");
+      setGatewayAtivo((data as any).gateway_ativo || "asaas");
     }
+    setInitialLoading(false);
   };
 
   useEffect(() => {
@@ -90,13 +73,6 @@ export default function Checkout() {
   ];
 
   const configuredGateways = gateways.filter(g => g.configured);
-
-  // Only auto-select a gateway if the current one is not configured (e.g. was removed)
-  useEffect(() => {
-    if (!initialLoading && configuredGateways.length > 0 && !configuredGateways.find(g => g.id === gatewayAtivo)) {
-      setGatewayAtivo(configuredGateways[0].id);
-    }
-  }, [initialLoading, configuredGateways.length]);
 
   const handleSave = async () => {
     if (!user?.id) {
