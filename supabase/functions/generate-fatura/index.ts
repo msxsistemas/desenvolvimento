@@ -706,12 +706,32 @@ Deno.serve(async (req) => {
         } else if (gatewayAtivo === 'v3pay') {
           // V3Pay PIX generation
           try {
-            const { data: v3Config } = await supabaseAdmin
-              .from('v3pay_config').select('*').eq('user_id', user.id).maybeSingle();
-            if (v3Config) {
-              const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-              const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-              console.log('📌 V3Pay gateway selected - charge creation delegated');
+            const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+            const v3Resp = await fetch(`${supabaseUrl}/functions/v1/v3pay-integration`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authHeader,
+              },
+              body: JSON.stringify({
+                action: 'create-pix',
+                valor: String(valor),
+                descricao: `Renovação - ${plano_nome || 'Plano'}`,
+                cliente_nome,
+              }),
+            });
+            const v3Data = await v3Resp.json();
+            console.log('📋 V3Pay PIX result:', JSON.stringify(v3Data));
+
+            if (v3Data.success && v3Data.charge_id) {
+              gateway_charge_id = v3Data.charge_id;
+              pix_qr_code = v3Data.pix_qr_code || null;
+              pix_copia_cola = v3Data.pix_copia_cola || null;
+
+              await supabaseAdmin.from('cobrancas').insert({
+                user_id: user.id, gateway: 'v3pay', gateway_charge_id: v3Data.charge_id,
+                cliente_whatsapp, cliente_nome, valor: parsedValor, status: 'pendente',
+              });
             }
           } catch (err: any) {
             console.error('V3Pay PIX error:', err.message);
@@ -817,7 +837,7 @@ Deno.serve(async (req) => {
       }
 
       // 4. Send WhatsApp with invoice link using template from mensagens_padroes
-      const faturaUrl = `${req.headers.get('origin') || 'https://id-preview--bde754a3-9b0e-4fc4-b801-0602657a64ed.lovable.app'}/fatura/${fatura.id}`;
+      const faturaUrl = `https://gestormsx.lovable.app/fatura/${fatura.id}`;
       
       try {
         const evolutionUrl = Deno.env.get('EVOLUTION_API_URL');
@@ -866,6 +886,7 @@ Deno.serve(async (req) => {
                 '{valor_plano}': `R$ ${parsedValor.toFixed(2)}`,
                 '{valor}': `R$ ${parsedValor.toFixed(2)}`,
                 '{link_fatura}': faturaUrl,
+                '{subtotal}': `R$ ${parsedValor.toFixed(2)}`,
               };
 
               message = template;
