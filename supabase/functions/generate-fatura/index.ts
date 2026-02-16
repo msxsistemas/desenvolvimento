@@ -691,6 +691,188 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Public action: apply coupon to fatura
+    if (action === 'apply-coupon') {
+      const { fatura_id, codigo } = body;
+      if (!isValidUUID(fatura_id)) {
+        return new Response(JSON.stringify({ error: 'ID de fatura inválido' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+      if (!codigo || typeof codigo !== 'string' || codigo.trim().length === 0) {
+        return new Response(JSON.stringify({ error: 'Código do cupom é obrigatório' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      if (!checkRateLimit(`apply-coupon:${fatura_id}`, 10, 60000)) {
+        return new Response(JSON.stringify({ error: 'Muitas tentativas. Aguarde um momento.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
+      }
+
+      const { data: fatura, error: faturaErr } = await supabaseAdmin
+        .from('faturas')
+        .select('*')
+        .eq('id', fatura_id)
+        .maybeSingle();
+
+      if (faturaErr || !fatura) {
+        return new Response(JSON.stringify({ error: 'Fatura não encontrada' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
+      }
+
+      if (fatura.status === 'pago') {
+        return new Response(JSON.stringify({ error: 'Esta fatura já foi paga' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      if (fatura.pix_qr_code || fatura.pix_copia_cola || fatura.gateway_charge_id) {
+        return new Response(JSON.stringify({ error: 'Não é possível aplicar cupom após gerar o PIX' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      const { data: cupom } = await supabaseAdmin
+        .from('cupons')
+        .select('*')
+        .eq('user_id', fatura.user_id)
+        .eq('codigo', codigo.trim().toUpperCase())
+        .eq('ativo', true)
+        .maybeSingle();
+
+      if (!cupom) {
+        return new Response(JSON.stringify({ error: 'Cupom inválido ou expirado' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      if (cupom.validade && new Date(cupom.validade) < new Date()) {
+        return new Response(JSON.stringify({ error: 'Cupom expirado' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      if (cupom.limite_uso !== null && cupom.usos_atuais >= cupom.limite_uso) {
+        return new Response(JSON.stringify({ error: 'Cupom atingiu o limite de uso' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      const valorOriginal = Number(fatura.valor);
+      let desconto = 0;
+      if (cupom.tipo_desconto === 'percentual') {
+        desconto = valorOriginal * (cupom.desconto / 100);
+      } else {
+        desconto = cupom.desconto;
+      }
+      desconto = Math.min(desconto, valorOriginal);
+      const valorFinal = Math.max(valorOriginal - desconto, 0);
+
+      const { error: updateErr } = await supabaseAdmin
+        .from('faturas')
+        .update({ valor: valorFinal, valor_original: valorOriginal, cupom_codigo: cupom.codigo })
+        .eq('id', fatura.id);
+
+      if (updateErr) {
+        console.error('Error updating fatura:', updateErr);
+        return new Response(JSON.stringify({ error: 'Erro ao aplicar desconto' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+      }
+
+      await supabaseAdmin
+        .from('cupons')
+        .update({ usos_atuais: cupom.usos_atuais + 1 })
+        .eq('id', cupom.id);
+
+      console.log(`✅ Coupon ${cupom.codigo} applied to fatura ${fatura.id}: R$${valorOriginal} -> R$${valorFinal} (desconto: R$${desconto.toFixed(2)})`);
+
+      let nome_empresa: string | null = null;
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('nome_empresa')
+        .eq('user_id', fatura.user_id)
+        .maybeSingle();
+      if (profile?.nome_empresa) nome_empresa = profile.nome_empresa;
+
+      return new Response(JSON.stringify({
+        success: true,
+        fatura: { ...fatura, valor: valorFinal, nome_empresa },
+        desconto: desconto.toFixed(2),
+        cupom_codigo: cupom.codigo,
+        tipo_desconto: cupom.tipo_desconto,
+        valor_desconto: cupom.desconto,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Public action: remove coupon from fatura
+    if (action === 'remove-coupon') {
+      const { fatura_id } = body;
+      if (!isValidUUID(fatura_id)) {
+        return new Response(JSON.stringify({ error: 'ID de fatura inválido' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      if (!checkRateLimit(`remove-coupon:${fatura_id}`, 10, 60000)) {
+        return new Response(JSON.stringify({ error: 'Muitas tentativas. Aguarde um momento.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
+      }
+
+      const { data: fatura, error: faturaErr } = await supabaseAdmin
+        .from('faturas')
+        .select('*')
+        .eq('id', fatura_id)
+        .maybeSingle();
+
+      if (faturaErr || !fatura) {
+        return new Response(JSON.stringify({ error: 'Fatura não encontrada' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
+      }
+
+      if (fatura.status === 'pago') {
+        return new Response(JSON.stringify({ error: 'Esta fatura já foi paga' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      if (!fatura.cupom_codigo || !fatura.valor_original) {
+        return new Response(JSON.stringify({ error: 'Nenhum cupom aplicado nesta fatura' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
+
+      const { data: cupom } = await supabaseAdmin
+        .from('cupons')
+        .select('*')
+        .eq('user_id', fatura.user_id)
+        .eq('codigo', fatura.cupom_codigo)
+        .maybeSingle();
+
+      if (cupom && cupom.usos_atuais > 0) {
+        await supabaseAdmin
+          .from('cupons')
+          .update({ usos_atuais: cupom.usos_atuais - 1 })
+          .eq('id', cupom.id);
+      }
+
+      const valorOriginal = fatura.valor_original;
+      const { error: updateErr } = await supabaseAdmin
+        .from('faturas')
+        .update({ valor: valorOriginal, valor_original: null, cupom_codigo: null })
+        .eq('id', fatura.id);
+
+      if (updateErr) {
+        return new Response(JSON.stringify({ error: 'Erro ao remover cupom' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+      }
+
+      console.log(`🗑️ Coupon removed from fatura ${fatura.id}: R$${fatura.valor} -> R$${valorOriginal}`);
+
+      let nome_empresa: string | null = null;
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('nome_empresa')
+        .eq('user_id', fatura.user_id)
+        .maybeSingle();
+      if (profile?.nome_empresa) nome_empresa = profile.nome_empresa;
+
+      return new Response(JSON.stringify({
+        success: true,
+        fatura: { ...fatura, valor: valorOriginal, valor_original: null, cupom_codigo: null, nome_empresa },
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
 
     // Auth required for other actions
     const authHeader = req.headers.get('Authorization');
@@ -996,200 +1178,6 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ success: true, fatura, url: faturaUrl }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
-    // Public action: apply coupon to fatura
-    if (action === 'apply-coupon') {
-      const { fatura_id, codigo } = body;
-      if (!isValidUUID(fatura_id)) {
-        return new Response(JSON.stringify({ error: 'ID de fatura inválido' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-      }
-      if (!codigo || typeof codigo !== 'string' || codigo.trim().length === 0) {
-        return new Response(JSON.stringify({ error: 'Código do cupom é obrigatório' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-      }
-
-      // Rate limit
-      if (!checkRateLimit(`apply-coupon:${fatura_id}`, 10, 60000)) {
-        return new Response(JSON.stringify({ error: 'Muitas tentativas. Aguarde um momento.' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
-      }
-
-      // Get fatura
-      const { data: fatura, error: faturaErr } = await supabaseAdmin
-        .from('faturas')
-        .select('*')
-        .eq('id', fatura_id)
-        .maybeSingle();
-
-      if (faturaErr || !fatura) {
-        return new Response(JSON.stringify({ error: 'Fatura não encontrada' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
-      }
-
-      if (fatura.status === 'pago') {
-        return new Response(JSON.stringify({ error: 'Esta fatura já foi paga' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-      }
-
-      // Already has PIX generated - can't apply coupon after PIX
-      if (fatura.pix_qr_code || fatura.pix_copia_cola || fatura.gateway_charge_id) {
-        return new Response(JSON.stringify({ error: 'Não é possível aplicar cupom após gerar o PIX' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-      }
-
-      // Find coupon by code for this user
-      const { data: cupom } = await supabaseAdmin
-        .from('cupons')
-        .select('*')
-        .eq('user_id', fatura.user_id)
-        .eq('codigo', codigo.trim().toUpperCase())
-        .eq('ativo', true)
-        .maybeSingle();
-
-      if (!cupom) {
-        return new Response(JSON.stringify({ error: 'Cupom inválido ou expirado' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-      }
-
-      // Check expiry
-      if (cupom.validade && new Date(cupom.validade) < new Date()) {
-        return new Response(JSON.stringify({ error: 'Cupom expirado' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-      }
-
-      // Check usage limit
-      if (cupom.limite_uso !== null && cupom.usos_atuais >= cupom.limite_uso) {
-        return new Response(JSON.stringify({ error: 'Cupom atingiu o limite de uso' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-      }
-
-      // Calculate discount
-      const valorOriginal = Number(fatura.valor);
-      let desconto = 0;
-      if (cupom.tipo_desconto === 'percentual') {
-        desconto = valorOriginal * (cupom.desconto / 100);
-      } else {
-        desconto = cupom.desconto;
-      }
-      desconto = Math.min(desconto, valorOriginal); // Can't exceed total
-      const valorFinal = Math.max(valorOriginal - desconto, 0);
-
-      // Update fatura value and store original
-      const { error: updateErr } = await supabaseAdmin
-        .from('faturas')
-        .update({ valor: valorFinal, valor_original: valorOriginal, cupom_codigo: cupom.codigo })
-        .eq('id', fatura.id);
-
-      if (updateErr) {
-        console.error('Error updating fatura:', updateErr);
-        return new Response(JSON.stringify({ error: 'Erro ao aplicar desconto' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
-      }
-
-      // Increment coupon usage
-      await supabaseAdmin
-        .from('cupons')
-        .update({ usos_atuais: cupom.usos_atuais + 1 })
-        .eq('id', cupom.id);
-
-      console.log(`✅ Coupon ${cupom.codigo} applied to fatura ${fatura.id}: R$${valorOriginal} -> R$${valorFinal} (desconto: R$${desconto.toFixed(2)})`);
-
-      // Fetch company name
-      let nome_empresa: string | null = null;
-      const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('nome_empresa')
-        .eq('user_id', fatura.user_id)
-        .maybeSingle();
-      if (profile?.nome_empresa) nome_empresa = profile.nome_empresa;
-
-      return new Response(JSON.stringify({
-        success: true,
-        fatura: { ...fatura, valor: valorFinal, nome_empresa },
-        desconto: desconto.toFixed(2),
-        cupom_codigo: cupom.codigo,
-        tipo_desconto: cupom.tipo_desconto,
-        valor_desconto: cupom.desconto,
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
-    // Public action: remove coupon from fatura
-    if (action === 'remove-coupon') {
-      const { fatura_id } = body;
-      if (!isValidUUID(fatura_id)) {
-        return new Response(JSON.stringify({ error: 'ID de fatura inválido' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-      }
-
-      if (!checkRateLimit(`remove-coupon:${fatura_id}`, 10, 60000)) {
-        return new Response(JSON.stringify({ error: 'Muitas tentativas. Aguarde um momento.' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
-      }
-
-      const { data: fatura, error: faturaErr } = await supabaseAdmin
-        .from('faturas')
-        .select('*')
-        .eq('id', fatura_id)
-        .maybeSingle();
-
-      if (faturaErr || !fatura) {
-        return new Response(JSON.stringify({ error: 'Fatura não encontrada' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
-      }
-
-      if (fatura.status === 'pago') {
-        return new Response(JSON.stringify({ error: 'Esta fatura já foi paga' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-      }
-
-      if (!fatura.cupom_codigo || !fatura.valor_original) {
-        return new Response(JSON.stringify({ error: 'Nenhum cupom aplicado nesta fatura' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
-      }
-
-      // Decrement coupon usage
-      const { data: cupom } = await supabaseAdmin
-        .from('cupons')
-        .select('*')
-        .eq('user_id', fatura.user_id)
-        .eq('codigo', fatura.cupom_codigo)
-        .maybeSingle();
-
-      if (cupom && cupom.usos_atuais > 0) {
-        await supabaseAdmin
-          .from('cupons')
-          .update({ usos_atuais: cupom.usos_atuais - 1 })
-          .eq('id', cupom.id);
-      }
-
-      // Restore original value
-      const valorOriginal = fatura.valor_original;
-      const { error: updateErr } = await supabaseAdmin
-        .from('faturas')
-        .update({ valor: valorOriginal, valor_original: null, cupom_codigo: null })
-        .eq('id', fatura.id);
-
-      if (updateErr) {
-        return new Response(JSON.stringify({ error: 'Erro ao remover cupom' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
-      }
-
-      console.log(`🗑️ Coupon removed from fatura ${fatura.id}: R$${fatura.valor} -> R$${valorOriginal}`);
-
-      let nome_empresa: string | null = null;
-      const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('nome_empresa')
-        .eq('user_id', fatura.user_id)
-        .maybeSingle();
-      if (profile?.nome_empresa) nome_empresa = profile.nome_empresa;
-
-      return new Response(JSON.stringify({
-        success: true,
-        fatura: { ...fatura, valor: valorOriginal, valor_original: null, cupom_codigo: null, nome_empresa },
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     return new Response(JSON.stringify({ error: 'Ação inválida' }),
