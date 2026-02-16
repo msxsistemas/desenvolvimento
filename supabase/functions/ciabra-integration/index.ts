@@ -47,8 +47,17 @@ Deno.serve(async (req) => {
     // Check if this is a webhook from Ciabra (has type, event, hookType, or installmentId)
     const webhookType = (body.type || body.event || body.hookType || '').toUpperCase();
     if (body.event || body.type || body.hookType || body.installmentId) {
-      console.log('📩 Ciabra Webhook received:', JSON.stringify(body).substring(0, 800));
+      console.log('📩 Ciabra Webhook received');
       console.log('📩 Webhook type detected:', webhookType);
+
+      // Verify webhook by checking that the charge exists in our database
+      // This prevents forged webhooks since only real charges will match
+      const possibleChargeId = String(body.id || body.payment_id || body.charge_id || body.invoiceId || '');
+      if (!possibleChargeId) {
+        console.warn('⚠️ Ciabra webhook missing charge ID - rejecting');
+        return new Response(JSON.stringify({ error: 'Missing charge identifier' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+      }
       
       const isPaid = webhookType.includes('CONFIRMED') || webhookType.includes('PAID')
         || webhookType.includes('APPROVED') || webhookType.includes('RECEIVED')

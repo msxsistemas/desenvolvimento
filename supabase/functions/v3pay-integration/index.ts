@@ -63,8 +63,14 @@ async function handleWebhook(body: any, supabaseAdmin: any) {
       }
     }
     if (!verifiedUserId) {
-      console.warn('⚠️ Webhook signature verification failed');
+      console.warn('⚠️ Webhook signature verification failed - rejecting');
+      return new Response(JSON.stringify({ error: 'Invalid webhook signature' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
     }
+  } else {
+    console.warn('⚠️ No webhook signature provided - rejecting');
+    return new Response(JSON.stringify({ error: 'Missing webhook signature' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
   }
 
   // Process webhook events
