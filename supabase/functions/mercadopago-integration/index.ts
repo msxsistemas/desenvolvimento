@@ -47,22 +47,59 @@ Deno.serve(async (req) => {
     // Check if this is a webhook from Mercado Pago
     if (body.type === 'payment' || body.action === 'payment.updated' || body.action === 'payment.created') {
       console.log('📩 MP Webhook received:', body.type || body.action);
-      
-      const paymentId = body.data?.id;
-      if (paymentId && (body.action === 'payment.updated' || body.type === 'payment')) {
-        const chargeId = String(paymentId);
-        
-        const { data: cobranca } = await supabaseAdmin
-          .from('cobrancas')
-          .select('*')
-          .eq('gateway', 'mercadopago')
-          .eq('gateway_charge_id', chargeId)
-          .eq('status', 'pendente')
-          .maybeSingle();
 
-        if (cobranca) {
-          console.log(`📋 Cobrança MP encontrada para: ${cobranca.cliente_whatsapp}`);
-          await triggerAutoRenewal(cobranca.user_id, cobranca.cliente_whatsapp, 'mercadopago', chargeId);
+      // Verify webhook by fetching the payment from MP API to confirm it's real
+      const paymentId = body.data?.id;
+      if (paymentId) {
+        // Look up any MP config to get an access token for verification
+        const { data: mpConfigs } = await supabaseAdmin
+          .from('mercadopago_config')
+          .select('access_token_hash')
+          .eq('is_configured', true)
+          .limit(5);
+
+        let paymentVerified = false;
+        let verifiedPaymentStatus = '';
+        if (mpConfigs) {
+          for (const cfg of mpConfigs) {
+            try {
+              const token = atob(cfg.access_token_hash);
+              const verifyResp = await fetch(`${MP_BASE_URL}/v1/payments/${paymentId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              if (verifyResp.ok) {
+                const paymentData = await verifyResp.json();
+                verifiedPaymentStatus = paymentData.status;
+                paymentVerified = true;
+                break;
+              }
+            } catch { /* try next config */ }
+          }
+        }
+
+        if (!paymentVerified) {
+          console.warn('⚠️ Could not verify MP webhook payment - rejecting');
+          return new Response(JSON.stringify({ error: 'Unverified webhook' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
+        }
+
+        console.log('✅ MP webhook verified, payment status:', verifiedPaymentStatus);
+
+        if (verifiedPaymentStatus === 'approved') {
+          const chargeId = String(paymentId);
+          
+          const { data: cobranca } = await supabaseAdmin
+            .from('cobrancas')
+            .select('*')
+            .eq('gateway', 'mercadopago')
+            .eq('gateway_charge_id', chargeId)
+            .eq('status', 'pendente')
+            .maybeSingle();
+
+          if (cobranca) {
+            console.log(`📋 Cobrança MP encontrada para: ${cobranca.cliente_whatsapp}`);
+            await triggerAutoRenewal(cobranca.user_id, cobranca.cliente_whatsapp, 'mercadopago', chargeId);
+          }
         }
       }
       

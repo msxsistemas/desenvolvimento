@@ -62,6 +62,16 @@ Deno.serve(async (req) => {
     // Check if this is a webhook from Asaas (has 'event' field)
     if (body.event) {
       console.log('📩 Asaas Webhook received:', body.event);
+
+      // Verify webhook authenticity by checking the Asaas access token header
+      const asaasToken = req.headers.get('asaas-access-token');
+      const expectedToken = Deno.env.get('ASAAS_API_KEY');
+      if (!asaasToken || !expectedToken || asaasToken !== expectedToken) {
+        console.warn('⚠️ Webhook signature/token verification failed');
+        return new Response(JSON.stringify({ error: 'Unauthorized webhook' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
+      }
+      console.log('✅ Asaas webhook token verified');
       
       if (body.event === 'PAYMENT_CONFIRMED' || body.event === 'PAYMENT_RECEIVED') {
         const payment = body.payment || body;
