@@ -337,7 +337,7 @@ export function useServidorPage(providerId: string) {
 
       if (data.success) {
         const account = data.account;
-        if (data.data?.token) localStorage.setItem("auth_token", data.data.token);
+        if (data.data?.token) sessionStorage.setItem("auth_token", data.data.token);
         const isPartialValidation = data.data?.usernameValidated && !data.data?.credentialsValidated;
         const detailsMsg = isPartialValidation
           ? `✅ Painel: ${nomePainel}\n🔗 Endpoint: ${data.endpoint}\n👤 Usuário: ${usuario}\n📡 Status: Conectado com sucesso!\n\n⚠️ Nota: O reCAPTCHA v3 do painel impede a verificação completa da senha pelo servidor. O usuário foi validado com sucesso.`

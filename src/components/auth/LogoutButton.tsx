@@ -10,6 +10,12 @@ export function LogoutButton() {
       if (error) {
         toast.error('Erro ao sair');
       } else {
+        // Clear sensitive data from localStorage
+        localStorage.removeItem('whatsapp_session_data');
+        localStorage.removeItem('whatsapp_session');
+        localStorage.removeItem('whatsapp_messages');
+        localStorage.removeItem('auth_token');
+        sessionStorage.removeItem('auth_token');
         toast.success('Logout realizado com sucesso!');
       }
     } catch (error) {
