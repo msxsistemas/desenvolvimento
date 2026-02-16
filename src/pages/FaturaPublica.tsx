@@ -12,6 +12,8 @@ interface Fatura {
   cliente_nome: string;
   plano_nome: string | null;
   valor: number;
+  valor_original: number | null;
+  cupom_codigo: string | null;
   status: string;
   gateway: string | null;
   pix_qr_code: string | null;
@@ -68,6 +70,12 @@ export default function FaturaPublica() {
 
       previousStatusRef.current = newFatura.status;
       setFatura(newFatura);
+
+      // Initialize coupon state from fatura data
+      if (newFatura.cupom_codigo && newFatura.valor_original && !couponApplied) {
+        const desconto = (Number(newFatura.valor_original) - Number(newFatura.valor)).toFixed(2);
+        setCouponApplied({ codigo: newFatura.cupom_codigo, desconto });
+      }
     } catch {
       if (!isPolling) setError("Erro ao carregar fatura");
     } finally {
@@ -160,6 +168,34 @@ export default function FaturaPublica() {
       setApplyingCoupon(false);
     }
   }, [id, couponCode, toast]);
+
+  const handleRemoveCoupon = useCallback(async () => {
+    if (!id) return;
+    setApplyingCoupon(true);
+    try {
+      const resp = await fetch(
+        `https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/generate-fatura`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "remove-coupon", fatura_id: id }),
+        }
+      );
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        toast({ title: "Erro", description: data.error || "Erro ao remover cupom", variant: "destructive" });
+        return;
+      }
+      setCouponApplied(null);
+      setCouponCode("");
+      setFatura(data.fatura as Fatura);
+      toast({ title: "Cupom removido", description: "O valor original foi restaurado." });
+    } catch {
+      toast({ title: "Erro", description: "Erro ao remover cupom.", variant: "destructive" });
+    } finally {
+      setApplyingCoupon(false);
+    }
+  }, [id, toast]);
 
   if (loading) {
     return (
@@ -447,14 +483,34 @@ export default function FaturaPublica() {
              )}
 
              {/* Coupon Applied Badge */}
-             {couponApplied && (
-               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2 print:hidden">
-                 <CheckCircle className="h-4 w-4 text-emerald-500" />
-                 <span className="text-sm text-emerald-700 font-medium">
-                   Cupom <strong>{couponApplied.codigo}</strong> aplicado — desconto de R$ {couponApplied.desconto}
-                 </span>
-               </div>
-             )}
+              {couponApplied && !isPaid && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center justify-between print:hidden">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+                    <span className="text-sm text-emerald-700 font-medium">
+                      Cupom <strong>{couponApplied.codigo}</strong> aplicado — desconto de R$ {couponApplied.desconto}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 px-3 text-xs"
+                    onClick={handleRemoveCoupon}
+                    disabled={applyingCoupon}
+                  >
+                    {applyingCoupon ? <Loader2 className="h-3 w-3 animate-spin" /> : <><XCircle className="h-3 w-3 mr-1" /> Remover</>}
+                  </Button>
+                </div>
+              )}
+
+              {couponApplied && isPaid && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2 print:hidden">
+                  <CheckCircle className="h-4 w-4 text-emerald-500" />
+                  <span className="text-sm text-emerald-700 font-medium">
+                    Cupom <strong>{couponApplied.codigo}</strong> aplicado — desconto de R$ {couponApplied.desconto}
+                  </span>
+                </div>
+              )}
 
              {/* Action Buttons */}
               <div className="flex justify-center gap-3 print:hidden pt-2">
