@@ -27,9 +27,8 @@ function getRandomInterval(min: number, max: number): number {
 }
 
 /**
- * Global hook that processes scheduled/pending WhatsApp messages in the background,
- * respecting the user's envio_config (intervals, batch limits, pauses).
- * Does NOT use useEvolutionAPISimple to avoid hook count issues.
+ * Processes scheduled/pending WhatsApp messages ONLY when they exist in the queue.
+ * Uses Supabase realtime to detect new messages instead of constant polling.
  */
 export const useMessageQueueProcessor = () => {
   const { userId } = useCurrentUser();
@@ -40,9 +39,16 @@ export const useMessageQueueProcessor = () => {
   const configRef = useRef<EnvioConfig>(DEFAULT_CONFIG);
   const dailySentRef = useRef(0);
   const lastDayRef = useRef<string>('');
+  const activeRef = useRef(false);
+
+  const clearScheduled = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
 
   const sendMessageDirect = useCallback(async (phone: string, message: string) => {
-    // Normalize phone
     const digitsOnly = phone.replace(/\D/g, '');
     const normalizedPhone = !digitsOnly.startsWith('55') && digitsOnly.length >= 10
       ? '55' + digitsOnly
@@ -55,9 +61,8 @@ export const useMessageQueueProcessor = () => {
     if (error) throw new Error(error.message || 'Erro ao enviar mensagem');
     if (data?.error) {
       const errorStr = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
-      // Detect connection lost errors and update session status in DB
       if (errorStr.toLowerCase().includes('connection closed') || errorStr.toLowerCase().includes('not connected')) {
-        console.warn('[QueueProcessor] WhatsApp desconectado detectado, atualizando status no banco');
+        console.warn('[QueueProcessor] WhatsApp desconectado detectado');
         await supabase
           .from('whatsapp_sessions')
           .update({ status: 'disconnected', last_activity: new Date().toISOString() })
@@ -71,7 +76,6 @@ export const useMessageQueueProcessor = () => {
   const checkIsConnected = useCallback(async (): Promise<boolean> => {
     if (!userId) return false;
     try {
-      // Check DB status first (fast, no API call)
       const { data } = await supabase
         .from('whatsapp_sessions')
         .select('status')
@@ -113,12 +117,10 @@ export const useMessageQueueProcessor = () => {
   const processNext = useCallback(async (): Promise<boolean> => {
     if (!userId || processingRef.current || pausingRef.current) return false;
 
-    // Check connection status from DB
     const connected = await checkIsConnected();
     if (!connected) return false;
 
     const config = configRef.current;
-
     const today = new Date().toISOString().slice(0, 10);
     if (lastDayRef.current !== today) {
       lastDayRef.current = today;
@@ -167,7 +169,7 @@ export const useMessageQueueProcessor = () => {
           .from('whatsapp_messages')
           .update({ status: 'failed', error_message: String(err), scheduled_for: null })
           .eq('id', msg.id);
-        return true; // had work, even if failed
+        return true;
       } finally {
         processingRef.current = false;
       }
@@ -178,47 +180,77 @@ export const useMessageQueueProcessor = () => {
     }
   }, [userId, sendMessageDirect, checkIsConnected]);
 
-  const processNextWithFeedback = processNext;
+  // Start processing loop - only called when we know there are messages
+  const startProcessingLoop = useCallback(() => {
+    if (activeRef.current) return;
+    activeRef.current = true;
+    console.log('[QueueProcessor] Iniciando processamento da fila');
 
-  const idleCountRef = useRef(0);
+    const scheduleNext = async () => {
+      const hadWork = await processNext();
+      if (hadWork) {
+        // There might be more messages, continue with configured delay
+        const config = configRef.current;
+        const delay = config.configuracoes_ativas
+          ? getRandomInterval(config.tempo_minimo, config.tempo_maximo)
+          : 5000;
+        timeoutRef.current = setTimeout(scheduleNext, delay);
+      } else {
+        // No more messages, stop the loop
+        activeRef.current = false;
+        console.log('[QueueProcessor] Fila vazia, aguardando novas mensagens');
+      }
+    };
+
+    scheduleNext();
+  }, [processNext]);
 
   useEffect(() => {
     if (!userId) return;
 
     loadConfig();
-    const configInterval = setInterval(loadConfig, 120000);
 
-    const scheduleNext = () => {
-      const config = configRef.current;
-      // When actively sending, use configured intervals
-      // When idle (no pending messages), back off progressively: 30s, 60s, max 120s
-      const idleDelay = Math.min(30000 * Math.pow(2, idleCountRef.current), 120000);
-      const delay = config.configuracoes_ativas
-        ? getRandomInterval(config.tempo_minimo, config.tempo_maximo)
-        : idleDelay;
-
-      timeoutRef.current = setTimeout(async () => {
-        const hadWork = await processNextWithFeedback();
-        if (hadWork) {
-          idleCountRef.current = 0;
-        } else {
-          idleCountRef.current = Math.min(idleCountRef.current + 1, 4);
+    // Subscribe to new pending/scheduled messages via realtime
+    const channel = supabase
+      .channel('queue-processor')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'whatsapp_messages',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const status = (payload.new as any)?.status;
+          if (status === 'pending' || status === 'scheduled') {
+            console.log('[QueueProcessor] Nova mensagem detectada na fila');
+            startProcessingLoop();
+          }
         }
-        scheduleNext();
-      }, delay);
+      )
+      .subscribe();
+
+    // One-time initial check for any pending messages left over
+    const checkInitial = async () => {
+      const { data } = await supabase
+        .from('whatsapp_messages')
+        .select('id')
+        .eq('user_id', userId)
+        .in('status', ['pending', 'scheduled'])
+        .limit(1);
+
+      if (data && data.length > 0) {
+        startProcessingLoop();
+      }
     };
 
-    // Initial check after 10s delay (not immediately on mount)
-    timeoutRef.current = setTimeout(() => {
-      processNextWithFeedback().then((hadWork) => {
-        if (!hadWork) idleCountRef.current = 1;
-        scheduleNext();
-      });
-    }, 10000);
+    checkInitial();
 
     return () => {
-      clearInterval(configInterval);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      supabase.removeChannel(channel);
+      clearScheduled();
+      activeRef.current = false;
     };
-  }, [userId, loadConfig]);
+  }, [userId, loadConfig, startProcessingLoop]);
 };
