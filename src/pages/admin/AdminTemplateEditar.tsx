@@ -34,7 +34,7 @@ export default function AdminTemplateEditar() {
       const { id: _, created_at, updated_at, ...payload } = form;
       await supabase.from("system_templates").update(payload).eq("id", id);
       toast({ title: "Template atualizado!" });
-      navigate("/admin/templates");
+      navigate("/role/admin/templates");
     } catch {
       toast({ title: "Erro ao salvar template", variant: "destructive" });
     }
@@ -52,7 +52,7 @@ export default function AdminTemplateEditar() {
               </div>
               <p className="text-xs/6 text-muted-foreground">Altere os dados do template padrão.</p>
             </div>
-            <Button onClick={() => navigate("/admin/templates")} size="sm" variant="outline" className="gap-2">
+            <Button onClick={() => navigate("/role/admin/templates")} size="sm" variant="outline" className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Voltar
             </Button>
           </div>

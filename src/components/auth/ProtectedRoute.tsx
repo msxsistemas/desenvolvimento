@@ -50,7 +50,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Bloquear acesso de admins ao painel de usuário comum
   if (isAdmin) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/role/admin/dashboard" replace />;
   }
 
   if (isTrialExpired) {

@@ -102,7 +102,7 @@ export default function AdminPlanos() {
               </div>
               <p className="text-xs/6 text-muted-foreground">Gerencie os planos de assinatura disponíveis no sistema.</p>
             </div>
-            <Button onClick={() => navigate("/admin/planos/novo")} size="sm" className="gap-2">
+            <Button onClick={() => navigate("/role/admin/planos/novo")} size="sm" className="gap-2">
               <Plus className="h-4 w-4" /> Novo Plano
             </Button>
           </div>
@@ -225,7 +225,7 @@ export default function AdminPlanos() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex gap-1 justify-end">
-                              <Button variant="ghost" size="sm" className="h-8" onClick={() => navigate(`/admin/planos/editar/${p.id}`)}><Pencil className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="sm" className="h-8" onClick={() => navigate(`/role/admin/planos/editar/${p.id}`)}><Pencil className="h-4 w-4" /></Button>
                               <Button variant="ghost" size="sm" className="text-destructive h-8" onClick={() => handleDelete(p.id)}><Trash2 className="h-4 w-4" /></Button>
                             </div>
                           </TableCell>

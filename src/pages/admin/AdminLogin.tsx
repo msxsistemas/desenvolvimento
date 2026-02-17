@@ -36,7 +36,7 @@ export default function AdminLogin() {
       }
 
       toast.success("Login administrativo realizado com sucesso!");
-      navigate("/admin", { replace: true });
+      navigate("/role/admin", { replace: true });
     } catch (err: any) {
       const msg = err?.message || "Erro ao fazer login";
       if (/Invalid login/i.test(msg)) {

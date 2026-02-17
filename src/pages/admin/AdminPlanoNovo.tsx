@@ -47,7 +47,7 @@ export default function AdminPlanoNovo() {
       const { error } = await supabase.from("system_plans").insert({ ...form });
       if (error) throw error;
       toast({ title: "Plano criado com sucesso!" });
-      navigate("/admin/planos");
+      navigate("/role/admin/planos");
     } catch {
       toast({ title: "Erro ao criar plano", variant: "destructive" });
     } finally {
@@ -67,7 +67,7 @@ export default function AdminPlanoNovo() {
               </div>
               <p className="text-xs/6 text-muted-foreground">Preencha os dados para criar um novo plano SaaS.</p>
             </div>
-            <Button onClick={() => navigate("/admin/planos")} size="sm" variant="outline" className="gap-2">
+            <Button onClick={() => navigate("/role/admin/planos")} size="sm" variant="outline" className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Voltar
             </Button>
           </div>
@@ -120,7 +120,7 @@ export default function AdminPlanoNovo() {
             <div className="flex items-center gap-2"><Switch checked={form.destaque} onCheckedChange={v => setForm(f => ({ ...f, destaque: v }))} /><Label>Destaque</Label></div>
           </div>
           <div className="flex gap-3">
-            <Button type="button" variant="outline" className="flex-1" onClick={() => navigate("/admin/planos")}>Cancelar</Button>
+            <Button type="button" variant="outline" className="flex-1" onClick={() => navigate("/role/admin/planos")}>Cancelar</Button>
             <Button type="submit" disabled={saving} className="flex-1">
               {saving ? "Criando..." : "Criar Plano"}
             </Button>

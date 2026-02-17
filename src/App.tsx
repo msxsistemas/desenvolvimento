@@ -184,29 +184,29 @@ const App = () => (
           </Route>
 
           {/* Admin routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/role/admin/login" element={<AdminLogin />} />
           <Route element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
-            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-            <Route path="/admin/planos" element={<AdminPlanos />} />
-            <Route path="/admin/planos/novo" element={<AdminPlanoNovo />} />
-            <Route path="/admin/planos/editar/:id" element={<AdminPlanoEditar />} />
-            <Route path="/admin/assinaturas" element={<AdminAssinaturas />} />
-            <Route path="/admin/gateways" element={<AdminGateways />} />
+            <Route path="/role/admin" element={<Navigate to="/role/admin/dashboard" replace />} />
+            <Route path="/role/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/role/admin/usuarios" element={<AdminUsuarios />} />
+            <Route path="/role/admin/planos" element={<AdminPlanos />} />
+            <Route path="/role/admin/planos/novo" element={<AdminPlanoNovo />} />
+            <Route path="/role/admin/planos/editar/:id" element={<AdminPlanoEditar />} />
+            <Route path="/role/admin/assinaturas" element={<AdminAssinaturas />} />
+            <Route path="/role/admin/gateways" element={<AdminGateways />} />
             
-            <Route path="/admin/gateways/:provider" element={<AdminGatewayConfig />} />
-            <Route path="/admin/templates" element={<AdminTemplates />} />
-            <Route path="/admin/templates/novo" element={<AdminTemplateNovo />} />
-            <Route path="/admin/templates/editar/:id" element={<AdminTemplateEditar />} />
-            <Route path="/admin/servidores" element={<AdminServidores />} />
-            <Route path="/admin/indicacoes" element={<AdminIndicacoesConfig />} />
-            <Route path="/admin/indicacoes/usuarios" element={<AdminIndicacoesUsuarios />} />
-            <Route path="/admin/indicacoes/registros" element={<AdminIndicacoesRegistros />} />
-            <Route path="/admin/indicacoes/saques" element={<AdminIndicacoesSaques />} />
-            <Route path="/admin/indicacoes/ranking" element={<AdminIndicacoesRanking />} />
-            <Route path="/admin/configuracoes" element={<AdminConfiguracoes />} />
-            <Route path="/admin/logs" element={<AdminLogs />} />
+            <Route path="/role/admin/gateways/:provider" element={<AdminGatewayConfig />} />
+            <Route path="/role/admin/templates" element={<AdminTemplates />} />
+            <Route path="/role/admin/templates/novo" element={<AdminTemplateNovo />} />
+            <Route path="/role/admin/templates/editar/:id" element={<AdminTemplateEditar />} />
+            <Route path="/role/admin/servidores" element={<AdminServidores />} />
+            <Route path="/role/admin/indicacoes" element={<AdminIndicacoesConfig />} />
+            <Route path="/role/admin/indicacoes/usuarios" element={<AdminIndicacoesUsuarios />} />
+            <Route path="/role/admin/indicacoes/registros" element={<AdminIndicacoesRegistros />} />
+            <Route path="/role/admin/indicacoes/saques" element={<AdminIndicacoesSaques />} />
+            <Route path="/role/admin/indicacoes/ranking" element={<AdminIndicacoesRanking />} />
+            <Route path="/role/admin/configuracoes" element={<AdminConfiguracoes />} />
+            <Route path="/role/admin/logs" element={<AdminLogs />} />
           </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
