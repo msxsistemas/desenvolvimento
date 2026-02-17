@@ -1,31 +1,6 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState, useRef, useEffect } from "react";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
-const countryCodes = [
-  { code: "55", label: "🇧🇷 +55", country: "Brasil" },
-  { code: "1", label: "🇺🇸 +1", country: "EUA/Canadá" },
-  { code: "351", label: "🇵🇹 +351", country: "Portugal" },
-  { code: "244", label: "🇦🇴 +244", country: "Angola" },
-  { code: "258", label: "🇲🇿 +258", country: "Moçambique" },
-  { code: "238", label: "🇨🇻 +238", country: "Cabo Verde" },
-  { code: "245", label: "🇬🇼 +245", country: "Guiné-Bissau" },
-  { code: "239", label: "🇸🇹 +239", country: "São Tomé" },
-  { code: "670", label: "🇹🇱 +670", country: "Timor-Leste" },
-  { code: "54", label: "🇦🇷 +54", country: "Argentina" },
-  { code: "595", label: "🇵🇾 +595", country: "Paraguai" },
-  { code: "598", label: "🇺🇾 +598", country: "Uruguai" },
-  { code: "56", label: "🇨🇱 +56", country: "Chile" },
-  { code: "57", label: "🇨🇴 +57", country: "Colômbia" },
-  { code: "51", label: "🇵🇪 +51", country: "Peru" },
-  { code: "58", label: "🇻🇪 +58", country: "Venezuela" },
-  { code: "52", label: "🇲🇽 +52", country: "México" },
-  { code: "34", label: "🇪🇸 +34", country: "Espanha" },
-  { code: "33", label: "🇫🇷 +33", country: "França" },
-  { code: "39", label: "🇮🇹 +39", country: "Itália" },
-  { code: "44", label: "🇬🇧 +44", country: "Reino Unido" },
-  { code: "49", label: "🇩🇪 +49", country: "Alemanha" },
-  { code: "81", label: "🇯🇵 +81", country: "Japão" },
-];
 
 interface CountryCodeSelectProps {
   value: string;
@@ -34,29 +9,68 @@ interface CountryCodeSelectProps {
 }
 
 export function CountryCodeSelect({ value, onChange, className }: CountryCodeSelectProps) {
-  const selected = countryCodes.find(c => c.code === value);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const cleaned = draft.replace(/\D/g, "");
+    if (cleaned) {
+      onChange(cleaned);
+    } else {
+      setDraft(value);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
         className={cn(
-          "w-[85px] rounded-r-none border-r-0 bg-muted text-muted-foreground text-sm shrink-0 px-2 [&>svg]:ml-0 [&>svg]:shrink-0",
+          "inline-flex items-center justify-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm h-10 shrink-0 cursor-pointer hover:bg-muted/80 transition-colors min-w-[60px]",
           className
         )}
       >
-        <SelectValue>
-          {selected ? `+${selected.code}` : `+${value}`}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent className="max-h-[280px]">
-        {countryCodes.map((c) => (
-          <SelectItem key={c.code} value={c.code}>
-            {c.label} — {c.country}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        +{value}
+      </button>
+    );
+  }
+
+  return (
+    <div className={cn("relative shrink-0", className)}>
+      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground select-none">+</span>
+      <Input
+        ref={inputRef}
+        type="text"
+        inputMode="numeric"
+        value={draft}
+        onChange={(e) => {
+          const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+          setDraft(v);
+        }}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          }
+        }}
+        className="w-[70px] rounded-r-none border-r-0 pl-5 pr-1 text-sm h-10"
+      />
+    </div>
   );
 }
 
-export { countryCodes };
+export const countryCodes = [
+  { code: "55", label: "🇧🇷 +55", country: "Brasil" },
+];
