@@ -10,7 +10,7 @@ import { User } from '@supabase/supabase-js';
 import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 import { InlineError } from '@/components/ui/inline-error';
 import { useSystemLogo } from '@/hooks/useSystemLogo';
-import logoGestorMsx from '@/assets/logo-gestor-msx-header.png';
+import logoMsx from '@/assets/logo-msx.png';
 
 export default function Auth() {
   const logoUrl = useSystemLogo();
@@ -329,9 +329,9 @@ export default function Auth() {
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-secondary via-background to-background items-center justify-center p-12 border-r border-border">
-        <div className="max-w-lg text-center flex flex-col items-center">
-          <div className="w-[420px] mx-auto mb-12">
-            <img src={logoGestorMsx} alt="Gestor MSX" className="w-full h-auto object-contain" />
+        <div className="max-w-md text-center">
+          <div className="w-72 h-72 mx-auto mb-8">
+            <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
           </div>
           <p className="text-lg text-muted-foreground mb-8">
             Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
@@ -350,8 +350,8 @@ export default function Auth() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="w-48 mx-auto mb-4">
-              <img src={logoGestorMsx} alt="Gestor MSX" className="w-full h-auto object-contain" />
+            <div className="w-20 h-20 mx-auto mb-4">
+              <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">Gestor MSX</h1>
           </div>
