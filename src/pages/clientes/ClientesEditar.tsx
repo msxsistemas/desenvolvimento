@@ -23,6 +23,7 @@ import { Home, User, Package, Key, Smartphone, Users, ChevronDown, Trash2, Arrow
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useClientes, usePlanos, useProdutos, useAplicativos } from "@/hooks/useDatabase";
+import { CountryCodeSelect, countryCodes } from "@/components/ui/country-code-select";
 
 export default function ClientesEditar() {
   const navigate = useNavigate();
@@ -51,6 +52,7 @@ export default function ClientesEditar() {
     app: string;
     dataVencApp: string;
   }>>([]);
+  const [countryCode, setCountryCode] = useState("55");
 
   const form = useForm({
     defaultValues: {
@@ -97,10 +99,13 @@ export default function ClientesEditar() {
       try {
         const cliente = await buscarPorId(id);
         if (cliente) {
-          // Remover o +55 do início para exibir no formulário
+          // Detectar código do país do número salvo
           let whatsappSemPrefixo = cliente.whatsapp || "";
-          if (whatsappSemPrefixo.startsWith('55') && whatsappSemPrefixo.length > 11) {
-            whatsappSemPrefixo = whatsappSemPrefixo.substring(2);
+          const detectedCode = countryCodes.find(c => c.code !== "1" && whatsappSemPrefixo.startsWith(c.code))
+            || countryCodes.find(c => c.code === "55");
+          if (detectedCode && whatsappSemPrefixo.startsWith(detectedCode.code)) {
+            setCountryCode(detectedCode.code);
+            whatsappSemPrefixo = whatsappSemPrefixo.substring(detectedCode.code.length);
           }
           
           form.reset({
@@ -186,8 +191,8 @@ export default function ClientesEditar() {
   const formatWhatsAppNumber = (phone: string): string => {
     if (!phone) return '';
     let cleaned = phone.replace(/\D/g, '');
-    if (!cleaned.startsWith('55')) {
-      cleaned = '55' + cleaned;
+    if (!cleaned.startsWith(countryCode)) {
+      cleaned = countryCode + cleaned;
     }
     return cleaned;
   };
@@ -334,17 +339,15 @@ export default function ClientesEditar() {
               <div className="space-y-2" data-field="whatsapp">
                 <Label className="text-sm font-medium">WhatsApp <span className="text-destructive">*</span></Label>
                 <div className="flex">
-                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-border bg-muted text-muted-foreground text-sm">
-                    +55
-                  </span>
+                  <CountryCodeSelect value={countryCode} onChange={setCountryCode} />
                   <Input 
                     placeholder="11999999999" 
                     className={`bg-background border-border rounded-l-none ${fieldErrors.whatsapp ? 'border-destructive' : ''}`}
                     {...form.register("whatsapp")}
                     onChange={(e) => {
                       let value = e.target.value.replace(/\D/g, '');
-                      if (value.startsWith('55')) {
-                        value = value.substring(2);
+                      if (value.startsWith(countryCode)) {
+                        value = value.substring(countryCode.length);
                       }
                       form.setValue("whatsapp", value);
                       setFieldErrors(prev => ({ ...prev, whatsapp: '' }));

@@ -43,7 +43,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/lib/supabase";
 import { Textarea } from "@/components/ui/textarea";
 import { InlineError } from "@/components/ui/inline-error";
-
+import { CountryCodeSelect } from "@/components/ui/country-code-select";
 
 export default function ClientesListCreate() {
   const navigate = useNavigate();
@@ -64,6 +64,7 @@ export default function ClientesListCreate() {
   const [produtos, setProdutos] = useState<any[]>([]);
   const [aplicativos, setAplicativos] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [countryCode, setCountryCode] = useState("55");
   
   const { criar, buscar, editar, deletar } = useClientes();
   const { buscar: buscarPlanos } = usePlanos();
@@ -993,11 +994,9 @@ export default function ClientesListCreate() {
   // Função para formatar o número de WhatsApp com +55
   const formatWhatsAppNumber = (phone: string): string => {
     if (!phone) return '';
-    // Remove tudo que não for número
     let cleaned = phone.replace(/\D/g, '');
-    // Se não começar com 55, adiciona
-    if (!cleaned.startsWith('55')) {
-      cleaned = '55' + cleaned;
+    if (!cleaned.startsWith(countryCode)) {
+      cleaned = countryCode + cleaned;
     }
     return cleaned;
   };
@@ -1767,20 +1766,16 @@ export default function ClientesListCreate() {
               <div className="space-y-2">
                 <Label htmlFor="whatsapp">Whatsapp</Label>
                 <div className="flex">
-                  <span className="inline-flex items-center px-3 bg-muted border border-r-0 border-input rounded-l-md text-muted-foreground text-sm">
-                    +55
-                  </span>
+                  <CountryCodeSelect value={countryCode} onChange={setCountryCode} />
                   <Input 
                     id="whatsapp" 
                     placeholder="83999999999" 
                     className="rounded-l-none"
                     {...form.register("whatsapp")}
                     onChange={(e) => {
-                      // Remove tudo que não for número
                       let value = e.target.value.replace(/\D/g, '');
-                      // Remove o 55 do início se o usuário digitar
-                      if (value.startsWith('55') && value.length > 11) {
-                        value = value.substring(2);
+                      if (value.startsWith(countryCode) && value.length > 11) {
+                        value = value.substring(countryCode.length);
                       }
                       form.setValue("whatsapp", value);
                     }}

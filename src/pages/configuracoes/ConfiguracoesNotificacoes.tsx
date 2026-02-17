@@ -9,6 +9,7 @@ import { Bell } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { toast } from "sonner";
+import { CountryCodeSelect } from "@/components/ui/country-code-select";
 
 interface NotifConfig {
   hora_notificacoes: string;
@@ -51,6 +52,7 @@ export default function ConfiguracoesNotificacoes() {
   const [config, setConfig] = useState<NotifConfig>(defaultConfig);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [countryCode, setCountryCode] = useState("55");
 
   useEffect(() => {
     document.title = "Configurações de Notificações | Gestor MSX";
@@ -184,8 +186,8 @@ export default function ConfiguracoesNotificacoes() {
               <div className="space-y-1.5">
                 <Label htmlFor="whatsapp_pag">WhatsApp para receber notificação de pagamentos online:</Label>
                 <div className="flex">
-                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm">+55</span>
-                  <Input id="whatsapp_pag" type="text" className="rounded-l-none" placeholder="11999999999" value={config.whatsapp_pagamentos.replace(/^55/, '')} onChange={(e) => update("whatsapp_pagamentos", '55' + e.target.value.replace(/\D/g, ''))} />
+                  <CountryCodeSelect value={countryCode} onChange={setCountryCode} />
+                  <Input id="whatsapp_pag" type="text" className="rounded-l-none" placeholder="11999999999" value={config.whatsapp_pagamentos.replace(new RegExp(`^${countryCode}`), '')} onChange={(e) => update("whatsapp_pagamentos", countryCode + e.target.value.replace(/\D/g, ''))} />
                 </div>
               </div>
             </div>
