@@ -400,8 +400,8 @@ export default function Auth() {
 
           <div className="bg-card border border-border rounded-3xl p-8 lg:p-10 shadow-2xl">
             {/* Logo inside modal on mobile */}
-            <div className="lg:hidden flex justify-center mb-4">
-              <div className="w-44 h-44">
+            <div className="lg:hidden flex justify-center mb-2">
+              <div className="w-36 h-24">
                 <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
               </div>
             </div>
