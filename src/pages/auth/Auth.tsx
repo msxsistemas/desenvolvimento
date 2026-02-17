@@ -328,69 +328,66 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex bg-background relative">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col" style={{ background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.7) 50%, hsl(220 40% 20%) 100%)' }}>
-        {/* Geometric shapes */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-white/[0.04] -translate-y-1/2 translate-x-1/3" />
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-white/[0.03] translate-y-1/3 -translate-x-1/4" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-white/[0.05]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-white/[0.07]" />
-        </div>
+      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden flex-col bg-background border-r border-border">
+        {/* Subtle dot grid */}
+        <div className="absolute inset-0 opacity-[0.4]" style={{ backgroundImage: 'radial-gradient(circle, hsl(var(--primary) / 0.15) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
-        {/* Diagonal lines pattern */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 40px, white 40px, white 41px)' }} />
+        {/* Accent stripe */}
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/50 to-transparent" />
 
         {/* Main content */}
-        <div className="relative z-10 flex flex-col h-full p-12 justify-between">
-          {/* Top - Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 drop-shadow-lg">
+        <div className="relative z-10 flex flex-col h-full px-14 py-10 justify-between">
+          {/* Top - Brand */}
+          <div>
+            <div className="w-16 h-16 mb-8 drop-shadow-md">
               <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
             </div>
-            <span className="text-white/90 font-bold text-lg tracking-wide">GESTOR MSX</span>
-          </div>
-
-          {/* Center - Hero text */}
-          <div className="flex-1 flex flex-col justify-center max-w-md">
-            <h2 className="text-4xl font-extrabold text-white leading-tight mb-4 tracking-tight">
-              Controle total.
+            <h2 className="text-3xl font-extrabold text-foreground leading-snug tracking-tight">
+              Gerencie seus
               <br />
-              <span className="text-white/60">Zero complicação.</span>
+              clientes com
+              <br />
+              <span className="text-primary">inteligência.</span>
             </h2>
-            <p className="text-white/50 text-base leading-relaxed mb-10">
-              Automatize cobranças, gerencie clientes e acompanhe tudo em tempo real — tudo em um só painel.
-            </p>
-
-            {/* Stats row */}
-            <div className="flex gap-8">
-              <div>
-                <div className="text-2xl font-bold text-white">99%</div>
-                <div className="text-xs text-white/40 mt-0.5">Uptime</div>
-              </div>
-              <div className="w-px bg-white/10" />
-              <div>
-                <div className="text-2xl font-bold text-white">24/7</div>
-                <div className="text-xs text-white/40 mt-0.5">Automação</div>
-              </div>
-              <div className="w-px bg-white/10" />
-              <div>
-                <div className="text-2xl font-bold text-white">100%</div>
-                <div className="text-xs text-white/40 mt-0.5">Seguro</div>
-              </div>
-            </div>
           </div>
 
-          {/* Bottom - Testimonial-style or feature highlights */}
-          <div className="border-t border-white/10 pt-6">
-            <div className="flex items-center gap-4">
-              <div className="flex -space-x-2">
-                <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white/10 flex items-center justify-center text-[10px] text-white font-bold">M</div>
-                <div className="w-8 h-8 rounded-full bg-white/15 border-2 border-white/10 flex items-center justify-center text-[10px] text-white font-bold">S</div>
-                <div className="w-8 h-8 rounded-full bg-white/10 border-2 border-white/10 flex items-center justify-center text-[10px] text-white font-bold">X</div>
+          {/* Center - Feature list */}
+          <div className="space-y-5">
+            {[
+              { icon: Sparkles, title: 'Automação completa', desc: 'Cobranças e renovações no piloto automático' },
+              { icon: Lock, title: 'Segurança total', desc: 'Dados criptografados e acesso protegido' },
+              { icon: Mail, title: 'Notificações inteligentes', desc: 'WhatsApp integrado com templates prontos' },
+            ].map((feat) => (
+              <div key={feat.title} className="flex items-start gap-4 group">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">
+                  <feat.icon className="h-4.5 w-4.5 text-primary" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-foreground">{feat.title}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{feat.desc}</div>
+                </div>
               </div>
-              <p className="text-white/40 text-xs leading-relaxed">
-                Centenas de revendedores já automatizaram sua gestão com o Gestor MSX.
-              </p>
+            ))}
+          </div>
+
+          {/* Bottom - Trust bar */}
+          <div className="pt-6 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {['bg-primary/70', 'bg-primary/50', 'bg-primary/30'].map((bg, i) => (
+                    <div key={i} className={`w-7 h-7 rounded-full ${bg} border-2 border-background flex items-center justify-center text-[9px] text-white font-bold ${i > 0 ? '-ml-2' : ''}`}>
+                      {['M', 'S', 'X'][i]}
+                    </div>
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground ml-1">+500 revendedores ativos</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {[1,2,3,4,5].map(i => (
+                  <svg key={i} className="w-3.5 h-3.5 text-yellow-500 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                ))}
+              </div>
             </div>
           </div>
         </div>
