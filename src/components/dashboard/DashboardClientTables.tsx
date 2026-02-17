@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useEvolutionAPISimple } from "@/hooks/useEvolutionAPISimple";
 import { replaceMessageVariables } from "@/utils/message-variables";
 import { Send, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -274,8 +273,8 @@ function ClientTable({ title, subtitle, clientes, planosMap, headerColor, notifi
 
 export default function DashboardClientTables() {
   const { userId } = useCurrentUser();
-  const { sendMessage, isConnected, hydrated } = useEvolutionAPISimple();
   const [loading, setLoading] = useState(true);
+  const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [vencidos, setVencidos] = useState<Cliente[]>([]);
   const [vencendoHoje, setVencendoHoje] = useState<Cliente[]>([]);
   const [proximoVencer, setProximoVencer] = useState<Cliente[]>([]);
@@ -285,6 +284,13 @@ export default function DashboardClientTables() {
   useEffect(() => {
     if (userId) {
       carregarDados();
+      // Check WhatsApp status once
+      supabase
+        .from('whatsapp_sessions')
+        .select('status')
+        .eq('user_id', userId)
+        .maybeSingle()
+        .then(({ data }) => setWhatsappConnected(data?.status === 'connected'));
     }
   }, [userId]);
 
@@ -358,12 +364,7 @@ export default function DashboardClientTables() {
   };
 
   const handleNotify = async (cliente: Cliente, type: NotificationType) => {
-    if (!hydrated) {
-      toast.error("Aguarde o carregamento...");
-      return;
-    }
-
-    if (!isConnected) {
+    if (!whatsappConnected) {
       toast.error("WhatsApp não está conectado. Vá em Parear WhatsApp para conectar.");
       return;
     }
