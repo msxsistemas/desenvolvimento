@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
-const ADMIN_SECRET_CODE = "159753";
+const ADMIN_SECRET_CODE = "280385";
 
 export default function AdminLogin() {
   const [secretCode, setSecretCode] = useState("");
