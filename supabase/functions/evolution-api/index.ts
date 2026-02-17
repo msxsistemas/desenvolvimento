@@ -14,8 +14,7 @@ Deno.serve(async (req) => {
     const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL');
     const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY');
 
-    console.log('[Evolution API] URL configured:', EVOLUTION_API_URL ? 'Yes' : 'No');
-    console.log('[Evolution API] Key configured:', EVOLUTION_API_KEY ? 'Yes (length: ' + EVOLUTION_API_KEY.length + ')' : 'No');
+    console.log('[Evolution API] Config:', EVOLUTION_API_URL ? 'OK' : 'Missing');
 
     if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
       console.error('Evolution API not configured');
