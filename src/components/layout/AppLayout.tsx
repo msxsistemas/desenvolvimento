@@ -310,12 +310,12 @@ export default function AppLayout() {
 
           <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 animate-enter min-w-0">
             <Outlet />
+            <footer className="mt-8 border-t border-border py-3 text-center">
+              <p className="text-[11px] text-muted-foreground/50">
+                2026© Todos os direitos reservados Gestor MSX
+              </p>
+            </footer>
           </main>
-          <footer className="flex-shrink-0 border-t border-border py-3 text-center">
-            <p className="text-[11px] text-muted-foreground/50">
-              2026© Todos os direitos reservados Gestor MSX
-            </p>
-          </footer>
         </div>
       </div>
     </SidebarProvider>
