@@ -191,7 +191,7 @@ export function AppSidebar() {
       {items.map((subItem) => (
         <SidebarMenuSubItem key={subItem.to}>
           <SidebarMenuSubButton asChild className="h-auto p-0 hover:bg-transparent">
-            <NavLink to={subItem.to} end className={subItemClass(isActive(subItem.to))}>
+            <NavLink to={subItem.to} end className={subItemClass(isActive(subItem.to))} onClick={() => setOpenMobile(false)}>
               <span className={subItemDotClass(isActive(subItem.to))} />
               {subItem.label}
             </NavLink>
@@ -350,7 +350,7 @@ export function AppSidebar() {
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild className="h-auto p-0 hover:bg-transparent active:bg-transparent active:text-inherit focus-visible:ring-0 rounded-none">
-                      <NavLink to={item.to} end onClick={() => setOpenSubmenu(null)}>
+                      <NavLink to={item.to} end onClick={() => { setOpenSubmenu(null); setOpenMobile(false); }}>
                         <div className={`flex items-center ${isCollapsed ? 'justify-center px-0 py-3' : 'justify-between px-5 py-3'} w-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                           isActive(item.to) && openSubmenu === null
                             ? `bg-primary/15 text-primary ${!isCollapsed ? 'border-l-[3px] border-l-primary' : ''} font-medium`
