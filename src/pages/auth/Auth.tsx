@@ -328,36 +328,47 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex bg-background relative">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12" style={{ background: 'linear-gradient(160deg, hsl(var(--background)) 0%, hsl(220 25% 14%) 50%, hsl(220 30% 10%) 100%)' }}>
-        {/* Decorative elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-primary/30 blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-primary/20 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-primary/10" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-primary/5" />
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12" style={{ background: 'linear-gradient(160deg, hsl(220 30% 8%) 0%, hsl(220 25% 12%) 40%, hsl(220 30% 8%) 100%)' }}>
+        {/* Animated decorative elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-10 left-10 w-80 h-80 rounded-full bg-primary/15 blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
+          <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-primary/10 blur-[120px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }} />
+          <div className="absolute top-1/3 right-1/4 w-48 h-48 rounded-full bg-accent/10 blur-[80px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '2s' }} />
         </div>
+        {/* Concentric rings */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full border border-primary/[0.04]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-primary/[0.07]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-primary/[0.05]" />
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, hsl(var(--primary)) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
         <div className="relative z-10 max-w-lg text-center flex flex-col items-center">
-          <div className="w-80 h-80 mb-6 drop-shadow-2xl">
+          <div className="w-72 h-72 mb-8 drop-shadow-2xl transition-transform duration-700 hover:scale-105">
             <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
           </div>
-          <p className="text-lg text-muted-foreground/80 mb-10 max-w-sm leading-relaxed">
+          <p className="text-lg text-muted-foreground/70 mb-12 max-w-sm leading-relaxed font-light tracking-wide">
             Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
           </p>
-          <div className="flex items-center gap-8 text-sm text-muted-foreground/70">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span>Automação</span>
+          <div className="flex items-center gap-6 text-sm">
+            <div className="flex items-center gap-2.5 text-muted-foreground/60 hover:text-primary/80 transition-colors duration-300">
+              <div className="p-1.5 rounded-md bg-primary/10">
+                <Sparkles className="h-3.5 w-3.5 text-primary/70" />
+              </div>
+              <span className="font-medium tracking-wide">Automação</span>
             </div>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-primary" />
-              <span>Cobranças</span>
+            <div className="w-px h-5 bg-border/30" />
+            <div className="flex items-center gap-2.5 text-muted-foreground/60 hover:text-primary/80 transition-colors duration-300">
+              <div className="p-1.5 rounded-md bg-primary/10">
+                <Mail className="h-3.5 w-3.5 text-primary/70" />
+              </div>
+              <span className="font-medium tracking-wide">Cobranças</span>
             </div>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-2">
-              <Lock className="h-4 w-4 text-primary" />
-              <span>Segurança</span>
+            <div className="w-px h-5 bg-border/30" />
+            <div className="flex items-center gap-2.5 text-muted-foreground/60 hover:text-primary/80 transition-colors duration-300">
+              <div className="p-1.5 rounded-md bg-primary/10">
+                <Lock className="h-3.5 w-3.5 text-primary/70" />
+              </div>
+              <span className="font-medium tracking-wide">Segurança</span>
             </div>
           </div>
         </div>
