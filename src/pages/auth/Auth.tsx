@@ -397,14 +397,14 @@ export default function Auth() {
       <div className="flex-1 flex flex-col min-h-screen">
         <div className="flex-1 flex items-center justify-center p-4 lg:p-12">
         <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-8">
-            <div className="w-52 h-52 mx-auto">
-              <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
-            </div>
-          </div>
 
           <div className="bg-card border border-border rounded-3xl p-8 lg:p-10 shadow-2xl">
+            {/* Logo inside modal on mobile */}
+            <div className="lg:hidden flex justify-center mb-4">
+              <div className="w-44 h-44">
+                <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
+              </div>
+            </div>
             {!isSignUp ? (
               // Login Form
               <div className="space-y-5">
