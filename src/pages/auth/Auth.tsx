@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
-import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles, Shield, Zap, Users } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 import { InlineError } from '@/components/ui/inline-error';
 import { useSystemLogo } from '@/hooks/useSystemLogo';
 import iconMsx from '@/assets/icon-msx.png';
@@ -328,47 +328,21 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12">
-        {/* Animated background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,25%,12%)] via-[hsl(220,20%,16%)] to-[hsl(220,25%,10%)]" />
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 25% 25%, hsl(199,89%,48%) 0%, transparent 50%), radial-gradient(circle at 75% 75%, hsl(280,70%,50%) 0%, transparent 50%)' }} />
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(hsl(0,0%,100%) 1px, transparent 1px), linear-gradient(90deg, hsl(0,0%,100%) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
-        
-        <div className="relative z-10 max-w-md text-center">
-          {/* Logo circle with glow */}
-          <div className="relative w-28 h-28 mx-auto mb-8">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[hsl(199,89%,48%)] to-[hsl(280,70%,50%)] opacity-30 blur-xl animate-pulse" />
-            <div className="relative w-28 h-28 rounded-full border-2 border-[hsl(199,89%,48%)]/30 overflow-hidden shadow-2xl bg-[hsl(220,25%,15%)] flex items-center justify-center">
-              <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
-            </div>
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-secondary via-background to-background items-center justify-center p-12 border-r border-border">
+        <div className="max-w-md text-center">
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full overflow-hidden shadow-2xl bg-destructive flex items-center justify-center">
+            <img src={iconMsx} alt="Logo" className="w-full h-full object-cover" />
           </div>
-
-          <h1 className="text-4xl font-bold text-white mb-2">
-            Gestor <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(199,89%,58%)] to-[hsl(199,89%,48%)]">MSX</span>
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            Gestor MSX
           </h1>
-          <p className="text-[hsl(220,15%,60%)] text-lg mb-10">
+          <p className="text-lg text-muted-foreground mb-8">
             Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
           </p>
-
-          {/* Feature pills */}
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10">
-              <div className="w-8 h-8 rounded-lg bg-[hsl(199,89%,48%)]/15 flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-[hsl(199,89%,48%)]" />
-              </div>
-              <span className="text-[hsl(220,15%,75%)] text-sm">Automação de cobranças</span>
-            </div>
-            <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10">
-              <div className="w-8 h-8 rounded-lg bg-[hsl(280,70%,50%)]/15 flex items-center justify-center">
-                <Zap className="h-4 w-4 text-[hsl(280,70%,50%)]" />
-              </div>
-              <span className="text-[hsl(220,15%,75%)] text-sm">Integração com WhatsApp</span>
-            </div>
-            <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/10">
-              <div className="w-8 h-8 rounded-lg bg-[hsl(150,60%,40%)]/15 flex items-center justify-center">
-                <Users className="h-4 w-4 text-[hsl(150,60%,45%)]" />
-              </div>
-              <span className="text-[hsl(220,15%,75%)] text-sm">Gestão completa de clientes</span>
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span>Automação de cobranças</span>
             </div>
           </div>
         </div>
@@ -379,13 +353,10 @@ export default function Auth() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <img src={iconMsx} alt="MSX" className="w-10 h-10 rounded-lg" />
-              <h1 className="text-2xl font-bold text-foreground">
-                Gestor <span className="text-primary">MSX</span>
-              </h1>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg bg-destructive">
+              <img src={iconMsx} alt="Logo" className="w-full h-full object-cover" />
             </div>
-            <p className="text-muted-foreground text-sm">Gerencie seus clientes com facilidade</p>
+            <h1 className="text-2xl font-bold text-foreground">Gestor MSX</h1>
           </div>
 
           <div className="bg-card border border-border rounded-3xl p-8 lg:p-10 shadow-2xl">
