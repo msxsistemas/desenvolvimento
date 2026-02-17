@@ -326,7 +326,7 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="min-h-screen flex bg-background relative">
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12" style={{ background: 'linear-gradient(160deg, hsl(var(--background)) 0%, hsl(220 25% 14%) 50%, hsl(220 30% 10%) 100%)' }}>
         {/* Decorative elements */}
@@ -683,6 +683,12 @@ export default function Auth() {
             )}
           </div>
         </div>
+      </div>
+      {/* Footer */}
+      <div className="absolute bottom-0 left-0 right-0 text-center py-4">
+        <p className="text-xs text-muted-foreground/50">
+          2026© Todos os direitos reservados Gestor MSX
+        </p>
       </div>
     </div>
   );
