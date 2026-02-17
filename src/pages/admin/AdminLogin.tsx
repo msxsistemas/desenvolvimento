@@ -18,6 +18,7 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [shakeError, setShakeError] = useState(false);
+  const [codeError, setCodeError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export default function AdminLogin() {
         toast.success("Acesso liberado!");
       } else {
         setShakeError(true);
-        toast.error("Código incorreto.");
+        setCodeError("Código incorreto. Tente novamente.");
         setTimeout(() => {
           setSecretCode("");
           setShakeError(false);
@@ -100,6 +101,9 @@ export default function AdminLogin() {
                 </InputOTPGroup>
               </InputOTP>
             </div>
+            {codeError && (
+              <p className="text-xs text-destructive font-medium text-center">{codeError}</p>
+            )}
             <p className="text-xs text-muted-foreground text-center">
               <KeyRound className="inline h-3 w-3 mr-1" />
               Insira o código de 6 dígitos para desbloquear.
