@@ -328,37 +328,72 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex bg-background relative">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12" style={{ background: 'linear-gradient(160deg, hsl(220 30% 8%) 0%, hsl(220 25% 12%) 40%, hsl(220 20% 16%) 100%)' }}>
-        {/* Animated decorative elements */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col" style={{ background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.7) 50%, hsl(220 40% 20%) 100%)' }}>
+        {/* Geometric shapes */}
         <div className="absolute inset-0">
-          {/* Primary glow - top right */}
-          <div className="absolute -top-20 -right-20 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[120px] animate-pulse" style={{ animationDuration: '6s' }} />
-          {/* Secondary glow - bottom left */}
-          <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full bg-primary/6 blur-[100px] animate-pulse" style={{ animationDuration: '8s', animationDelay: '2s' }} />
-          {/* Accent glow - center */}
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[300px] h-[300px] rounded-full bg-primary/5 blur-[80px]" />
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-white/[0.04] -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-white/[0.03] translate-y-1/3 -translate-x-1/4" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-white/[0.05]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-white/[0.07]" />
         </div>
 
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, hsl(var(--primary)) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+        {/* Diagonal lines pattern */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 40px, white 40px, white 41px)' }} />
 
-        {/* Concentric rings */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full border border-primary/[0.04]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-primary/[0.06]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-primary/[0.08]" />
-
-        {/* Content - Logo only */}
-        <div className="relative z-10 flex items-center justify-center h-full">
-          <div className="relative">
-            <div className="absolute inset-0 w-72 h-72 bg-primary/10 blur-3xl rounded-full scale-75" />
-            <div className="relative w-72 h-72 drop-shadow-2xl">
+        {/* Main content */}
+        <div className="relative z-10 flex flex-col h-full p-12 justify-between">
+          {/* Top - Logo */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 drop-shadow-lg">
               <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
+            </div>
+            <span className="text-white/90 font-bold text-lg tracking-wide">GESTOR MSX</span>
+          </div>
+
+          {/* Center - Hero text */}
+          <div className="flex-1 flex flex-col justify-center max-w-md">
+            <h2 className="text-4xl font-extrabold text-white leading-tight mb-4 tracking-tight">
+              Controle total.
+              <br />
+              <span className="text-white/60">Zero complicação.</span>
+            </h2>
+            <p className="text-white/50 text-base leading-relaxed mb-10">
+              Automatize cobranças, gerencie clientes e acompanhe tudo em tempo real — tudo em um só painel.
+            </p>
+
+            {/* Stats row */}
+            <div className="flex gap-8">
+              <div>
+                <div className="text-2xl font-bold text-white">99%</div>
+                <div className="text-xs text-white/40 mt-0.5">Uptime</div>
+              </div>
+              <div className="w-px bg-white/10" />
+              <div>
+                <div className="text-2xl font-bold text-white">24/7</div>
+                <div className="text-xs text-white/40 mt-0.5">Automação</div>
+              </div>
+              <div className="w-px bg-white/10" />
+              <div>
+                <div className="text-2xl font-bold text-white">100%</div>
+                <div className="text-xs text-white/40 mt-0.5">Seguro</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom - Testimonial-style or feature highlights */}
+          <div className="border-t border-white/10 pt-6">
+            <div className="flex items-center gap-4">
+              <div className="flex -space-x-2">
+                <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white/10 flex items-center justify-center text-[10px] text-white font-bold">M</div>
+                <div className="w-8 h-8 rounded-full bg-white/15 border-2 border-white/10 flex items-center justify-center text-[10px] text-white font-bold">S</div>
+                <div className="w-8 h-8 rounded-full bg-white/10 border-2 border-white/10 flex items-center justify-center text-[10px] text-white font-bold">X</div>
+              </div>
+              <p className="text-white/40 text-xs leading-relaxed">
+                Centenas de revendedores já automatizaram sua gestão com o Gestor MSX.
+              </p>
             </div>
           </div>
         </div>
-
-        {/* Bottom decorative line */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
       </div>
 
       {/* Right side - Form */}
