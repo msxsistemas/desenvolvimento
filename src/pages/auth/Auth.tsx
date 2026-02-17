@@ -26,6 +26,8 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('rememberMe') === 'true');
+  const [savedEmail, setSavedEmail] = useState(() => localStorage.getItem('savedEmail') || '');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -161,6 +163,13 @@ export default function Auth() {
           toast.error('Erro ao fazer login. Tente novamente.');
         }
       } else {
+        if (rememberMe) {
+          localStorage.setItem('rememberMe', 'true');
+          localStorage.setItem('savedEmail', email);
+        } else {
+          localStorage.removeItem('rememberMe');
+          localStorage.removeItem('savedEmail');
+        }
         toast.success('Login realizado com sucesso!');
       }
     } catch (error) {
@@ -423,8 +432,8 @@ export default function Auth() {
                         name="signin-email"
                         type="email"
                         placeholder="seu@email.com"
+                        defaultValue={savedEmail}
                         className="pl-11 h-12 bg-secondary/50 border-border/50 rounded-xl focus:border-primary/50 transition-colors"
-                        required
                       />
                     </div>
                   </div>
@@ -496,7 +505,20 @@ export default function Auth() {
                     </div>
                   </div>
 
-                  <Button 
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="remember-me"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
+                    />
+                    <Label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer select-none">
+                      Lembrar meu email
+                    </Label>
+                  </div>
+
+                  <Button
                     type="submit" 
                     className="w-full h-12 text-base rounded-xl bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0 font-medium shadow-lg shadow-[hsl(280,70%,50%)]/20" 
                     disabled={loading}
