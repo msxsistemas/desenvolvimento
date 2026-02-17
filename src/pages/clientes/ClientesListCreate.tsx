@@ -1223,6 +1223,14 @@ export default function ClientesListCreate() {
         const headers = lines[0].split(';').map(h => h.trim().replace(/"/g, ''));
         const nomeIdx = headers.findIndex(h => h.toLowerCase() === 'nome');
         const whatsappIdx = headers.findIndex(h => h.toLowerCase() === 'whatsapp');
+        const emailIdx = headers.findIndex(h => h.toLowerCase() === 'email');
+        const usuarioIdx = headers.findIndex(h => h.toLowerCase().includes('usuario') || h.toLowerCase().includes('usuário'));
+        const senhaIdx = headers.findIndex(h => h.toLowerCase() === 'senha');
+        const observacaoIdx = headers.findIndex(h => h.toLowerCase().includes('observa'));
+        const aniversarioIdx = headers.findIndex(h => h.toLowerCase().includes('nascimento') || h.toLowerCase().includes('aniversario') || h.toLowerCase().includes('aniversário'));
+        const dataVencimentoIdx = headers.findIndex(h => h.toLowerCase().includes('vencimento'));
+        const macIdx = headers.findIndex(h => h.toLowerCase() === 'mac');
+        const dispositivoIdx = headers.findIndex(h => h.toLowerCase().includes('dispositivo'));
 
         if (nomeIdx === -1 || whatsappIdx === -1) {
           toast({ title: "Erro", description: "Arquivo deve conter colunas 'nome' e 'whatsapp'", variant: "destructive" });
@@ -1242,12 +1250,7 @@ export default function ClientesListCreate() {
 
           if (!nome || !whatsapp) { erros++; continue; }
 
-          const emailIdx = headers.findIndex(h => h.toLowerCase() === 'email');
-          const usuarioIdx = headers.findIndex(h => h.toLowerCase() === 'usuario');
-          const senhaIdx = headers.findIndex(h => h.toLowerCase() === 'senha');
-          const observacaoIdx = headers.findIndex(h => h.toLowerCase() === 'observacao');
-
-          const { error } = await supabase.from('clientes').insert({
+          const clienteData: Record<string, unknown> = {
             nome,
             whatsapp,
             email: emailIdx >= 0 ? values[emailIdx] || '' : '',
@@ -1255,7 +1258,22 @@ export default function ClientesListCreate() {
             senha: senhaIdx >= 0 ? values[senhaIdx] || '' : '',
             observacao: observacaoIdx >= 0 ? values[observacaoIdx] || '' : '',
             user_id: user.id,
-          });
+          };
+
+          if (aniversarioIdx >= 0 && values[aniversarioIdx]) {
+            clienteData.aniversario = values[aniversarioIdx];
+          }
+          if (dataVencimentoIdx >= 0 && values[dataVencimentoIdx]) {
+            clienteData.data_vencimento = values[dataVencimentoIdx];
+          }
+          if (macIdx >= 0 && values[macIdx]) {
+            clienteData.mac = values[macIdx];
+          }
+          if (dispositivoIdx >= 0 && values[dispositivoIdx]) {
+            clienteData.dispositivo = values[dispositivoIdx];
+          }
+
+          const { error } = await supabase.from('clientes').insert(clienteData as any);
 
           if (error) { erros++; } else { importados++; }
         }
