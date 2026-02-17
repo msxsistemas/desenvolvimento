@@ -26,6 +26,7 @@ import { supabase } from "@/lib/supabase";
 import { useClientes, usePlanos, useProdutos, useAplicativos } from "@/hooks/useDatabase";
 import { format } from "date-fns";
 import { replaceMessageVariables } from "@/utils/message-variables";
+import { CountryCodeSelect } from "@/components/ui/country-code-select";
 
 export default function ClientesCadastro() {
   const navigate = useNavigate();
@@ -53,6 +54,7 @@ export default function ClientesCadastro() {
     app: string;
     dataVencApp: string;
   }>>([]);
+  const [countryCode, setCountryCode] = useState("55");
 
   const form = useForm({
     defaultValues: {
@@ -116,8 +118,8 @@ export default function ClientesCadastro() {
   const formatWhatsAppNumber = (phone: string): string => {
     if (!phone) return '';
     let cleaned = phone.replace(/\D/g, '');
-    if (!cleaned.startsWith('55')) {
-      cleaned = '55' + cleaned;
+    if (!cleaned.startsWith(countryCode)) {
+      cleaned = countryCode + cleaned;
     }
     return cleaned;
   };
@@ -305,17 +307,15 @@ export default function ClientesCadastro() {
               <div className="space-y-2">
                 <Label className="text-sm font-medium">WhatsApp <span className="text-destructive">*</span></Label>
                 <div className="flex">
-                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-border bg-muted text-muted-foreground text-sm">
-                    +55
-                  </span>
+                  <CountryCodeSelect value={countryCode} onChange={setCountryCode} />
                   <Input 
                     placeholder="11999999999" 
                     className="bg-background border-border rounded-l-none"
                     {...form.register("whatsapp")}
                     onChange={(e) => {
                       let value = e.target.value.replace(/\D/g, '');
-                      if (value.startsWith('55')) {
-                        value = value.substring(2);
+                      if (value.startsWith(countryCode)) {
+                        value = value.substring(countryCode.length);
                       }
                       form.setValue("whatsapp", value);
                     }}
