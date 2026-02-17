@@ -328,39 +328,59 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex bg-background relative">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12" style={{ background: 'linear-gradient(160deg, hsl(var(--background)) 0%, hsl(220 25% 14%) 50%, hsl(220 30% 10%) 100%)' }}>
-        {/* Decorative elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-primary/30 blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-primary/20 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-primary/10" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-primary/5" />
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12" style={{ background: 'linear-gradient(160deg, hsl(220 30% 8%) 0%, hsl(220 25% 12%) 40%, hsl(220 20% 16%) 100%)' }}>
+        {/* Animated decorative elements */}
+        <div className="absolute inset-0">
+          {/* Primary glow - top right */}
+          <div className="absolute -top-20 -right-20 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[120px] animate-pulse" style={{ animationDuration: '6s' }} />
+          {/* Secondary glow - bottom left */}
+          <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full bg-primary/6 blur-[100px] animate-pulse" style={{ animationDuration: '8s', animationDelay: '2s' }} />
+          {/* Accent glow - center */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[300px] h-[300px] rounded-full bg-primary/5 blur-[80px]" />
         </div>
 
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, hsl(var(--primary)) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+
+        {/* Concentric rings */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full border border-primary/[0.04]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-primary/[0.06]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-primary/[0.08]" />
+
+        {/* Content */}
         <div className="relative z-10 max-w-lg text-center flex flex-col items-center">
-          <div className="w-80 h-80 mb-6 drop-shadow-2xl">
-            <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
+          {/* Logo with glow effect */}
+          <div className="relative mb-8">
+            <div className="absolute inset-0 w-80 h-80 bg-primary/10 blur-3xl rounded-full scale-75" />
+            <div className="relative w-80 h-80 drop-shadow-2xl">
+              <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
+            </div>
           </div>
-          <p className="text-lg text-muted-foreground/80 mb-10 max-w-sm leading-relaxed">
+
+          {/* Tagline */}
+          <p className="text-lg text-muted-foreground/70 mb-10 max-w-sm leading-relaxed font-light">
             Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
           </p>
-          <div className="flex items-center gap-8 text-sm text-muted-foreground/70">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span>Automação</span>
+
+          {/* Feature pills */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/[0.08] border border-primary/[0.12] backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-medium text-primary/80">Automação</span>
             </div>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-primary" />
-              <span>Cobranças</span>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/[0.08] border border-primary/[0.12] backdrop-blur-sm">
+              <Mail className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-medium text-primary/80">Cobranças</span>
             </div>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-2">
-              <Lock className="h-4 w-4 text-primary" />
-              <span>Segurança</span>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/[0.08] border border-primary/[0.12] backdrop-blur-sm">
+              <Lock className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-medium text-primary/80">Segurança</span>
             </div>
           </div>
         </div>
+
+        {/* Bottom decorative line */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
       </div>
 
       {/* Right side - Form */}
