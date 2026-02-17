@@ -10,6 +10,7 @@ import { User } from '@supabase/supabase-js';
 import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles, Shield, Zap, BarChart3 } from 'lucide-react';
 import { InlineError } from '@/components/ui/inline-error';
 import { useSystemLogo } from '@/hooks/useSystemLogo';
+import iconMsx from '@/assets/icon-msx.png';
 
 export default function Auth() {
   const logoUrl = useSystemLogo();
@@ -243,7 +244,7 @@ export default function Auth() {
           <div className="bg-card border border-border/60 rounded-2xl shadow-2xl p-8 backdrop-blur-sm">
             <div className="text-center mb-8">
               <div className="w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden shadow-lg ring-2 ring-primary/20">
-                <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                <img src={iconMsx} alt="Logo" className="w-full h-full object-cover" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">Redefinir Senha</h1>
               <p className="text-muted-foreground text-sm mt-1">Digite sua nova senha abaixo</p>
@@ -344,7 +345,7 @@ export default function Auth() {
           <div className="max-w-sm text-center space-y-8">
             {/* Logo */}
             <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden shadow-2xl ring-2 ring-primary/30 bg-card">
-              <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              <img src={iconMsx} alt="Logo" className="w-full h-full object-cover" />
             </div>
 
             <div className="space-y-3">
@@ -383,7 +384,7 @@ export default function Auth() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <div className="w-16 h-16 mx-auto mb-3 rounded-2xl overflow-hidden shadow-lg ring-2 ring-primary/20 bg-card">
-              <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              <img src={iconMsx} alt="Logo" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-xl font-bold text-foreground">Msx Gestor</h1>
           </div>
