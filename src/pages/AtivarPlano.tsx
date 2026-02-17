@@ -127,7 +127,7 @@ export default function AtivarPlano() {
         // Direct activation (free plan or no gateway)
         setPaymentStatus('paid');
         toast.success('Plano ativado com sucesso!');
-        setTimeout(() => navigate('/'), 2000);
+        setTimeout(() => navigate('/dashboard'), 2000);
       }
     } catch (error: any) {
       console.error('Erro:', error);
@@ -161,7 +161,7 @@ export default function AtivarPlano() {
           setPaymentStatus('paid');
           clearInterval(interval);
           toast.success('Pagamento confirmado! Plano ativado.');
-          setTimeout(() => navigate('/'), 2000);
+          setTimeout(() => navigate('/dashboard'), 2000);
         }
       } catch {}
     }, 5000);
