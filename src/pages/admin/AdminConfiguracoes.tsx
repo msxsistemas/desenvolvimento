@@ -32,7 +32,7 @@ export default function AdminConfiguracoes() {
   const { toast } = useToast();
 
   useEffect(() => {
-    document.title = "Configurações | Admin Msx Gestor";
+    document.title = "Configurações | Admin Gestor Msx";
     const fetch_ = async () => {
       const { data } = await supabase.from("system_config").select("*").eq("id", 1).single();
       if (data) setConfig(data as SystemConfig);
@@ -111,7 +111,7 @@ export default function AdminConfiguracoes() {
             <Settings className="h-5 w-5 text-foreground/70" />
             <h1 className="text-base font-semibold tracking-tight text-foreground">Configurações do Sistema</h1>
           </div>
-          <p className="text-xs/6 text-muted-foreground">Configurações globais da plataforma Msx Gestor.</p>
+          <p className="text-xs/6 text-muted-foreground">Configurações globais da plataforma Gestor Msx.</p>
         </div>
       </header>
 

@@ -41,7 +41,7 @@ export default function AdminTemplates() {
   };
 
   useEffect(() => {
-    document.title = "Templates | Admin Msx Gestor";
+    document.title = "Templates | Admin Gestor Msx";
     fetch_();
   }, []);
 

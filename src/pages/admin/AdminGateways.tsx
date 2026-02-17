@@ -47,7 +47,7 @@ export default function AdminGateways() {
   };
 
   useEffect(() => {
-    document.title = "Gateways | Admin Msx Gestor";
+    document.title = "Gateways | Admin Gestor Msx";
     fetch_();
   }, []);
 

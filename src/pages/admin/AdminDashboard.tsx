@@ -48,7 +48,7 @@ export default function AdminDashboard() {
   const [showLucro, setShowLucro] = useState(false);
 
   useEffect(() => {
-    document.title = "Dashboard Admin | Msx Gestor";
+    document.title = "Dashboard Admin | Gestor Msx";
     const fetchStats = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();

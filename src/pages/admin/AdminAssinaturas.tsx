@@ -82,7 +82,7 @@ export default function AdminAssinaturas() {
   };
 
   useEffect(() => {
-    document.title = "Assinaturas | Admin Msx Gestor";
+    document.title = "Assinaturas | Admin Gestor Msx";
     fetch_();
   }, []);
 
