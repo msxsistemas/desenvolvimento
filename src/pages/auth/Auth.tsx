@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
-import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles, Users, DollarSign, Plug, MessageSquare, BarChart3, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 import { InlineError } from '@/components/ui/inline-error';
 import { useSystemLogo } from '@/hooks/useSystemLogo';
 import logoMsx from '@/assets/logo-msx.png';
@@ -337,38 +337,28 @@ export default function Auth() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-primary/5" />
         </div>
 
-        <div className="relative z-10 max-w-md w-full flex flex-col items-center">
-          {/* Logo */}
-          <div className="w-44 h-44 mb-6 drop-shadow-2xl">
+        <div className="relative z-10 max-w-lg text-center flex flex-col items-center">
+          <div className="w-80 h-80 mb-6 drop-shadow-2xl">
             <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
           </div>
-
-          {/* Tagline */}
-          <p className="text-base text-muted-foreground/70 mb-12 max-w-xs text-center leading-relaxed">
+          <p className="text-lg text-muted-foreground/80 mb-10 max-w-sm leading-relaxed">
             Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
           </p>
-
-          {/* Divider */}
-          <div className="w-12 h-px bg-primary/30 mb-10" />
-
-          {/* Feature list */}
-          <div className="w-full space-y-4">
-            {[
-              { icon: Users, label: 'Gestão de usuários e acessos' },
-              { icon: DollarSign, label: 'Ferramentas financeiras integradas' },
-              { icon: Plug, label: 'Integração com plataformas autorizadas' },
-              { icon: MessageSquare, label: 'Comunicação automatizada' },
-              { icon: BarChart3, label: 'Relatórios operacionais e métricas' },
-            ].map(({ icon: Icon, label }, i) => (
-              <div
-                key={label}
-                className="flex items-center gap-4 animate-fade-in"
-                style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
-              >
-                <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-400" />
-                <span className="text-sm text-muted-foreground/90">{label}</span>
-              </div>
-            ))}
+          <div className="flex items-center gap-8 text-sm text-muted-foreground/70">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span>Automação</span>
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-primary" />
+              <span>Cobranças</span>
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-primary" />
+              <span>Segurança</span>
+            </div>
           </div>
         </div>
       </div>
