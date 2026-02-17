@@ -328,67 +328,76 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex bg-background relative">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden flex-col bg-background border-r border-border">
-        {/* Subtle dot grid */}
-        <div className="absolute inset-0 opacity-[0.4]" style={{ backgroundImage: 'radial-gradient(circle, hsl(var(--primary) / 0.15) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+      <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden flex-col" style={{ background: 'linear-gradient(165deg, hsl(220 25% 6%) 0%, hsl(220 30% 10%) 50%, hsl(var(--primary) / 0.15) 100%)' }}>
+        {/* Mesh gradient blobs */}
+        <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary/20 blur-[150px]" />
+        <div className="absolute bottom-[-15%] left-[-5%] w-[400px] h-[400px] rounded-full bg-primary/10 blur-[120px]" />
 
-        {/* Accent stripe */}
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/50 to-transparent" />
+        {/* Noise texture */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E")` }} />
 
-        {/* Main content */}
-        <div className="relative z-10 flex flex-col h-full px-14 py-10 justify-between">
-          {/* Top - Brand */}
-          <div>
-            <div className="w-16 h-16 mb-8 drop-shadow-md">
+        {/* Content */}
+        <div className="relative z-10 flex flex-col h-full p-12 justify-between">
+          {/* Top - Logo + badge */}
+          <div className="flex items-center justify-between">
+            <div className="w-14 h-14 drop-shadow-lg">
               <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
             </div>
-            <h2 className="text-3xl font-extrabold text-foreground leading-snug tracking-tight">
-              Gerencie seus
-              <br />
-              clientes com
-              <br />
-              <span className="text-primary">inteligência.</span>
-            </h2>
-          </div>
-
-          {/* Center - Feature list */}
-          <div className="space-y-5">
-            {[
-              { icon: Sparkles, title: 'Automação completa', desc: 'Cobranças e renovações no piloto automático' },
-              { icon: Lock, title: 'Segurança total', desc: 'Dados criptografados e acesso protegido' },
-              { icon: Mail, title: 'Notificações inteligentes', desc: 'WhatsApp integrado com templates prontos' },
-            ].map((feat) => (
-              <div key={feat.title} className="flex items-start gap-4 group">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">
-                  <feat.icon className="h-4.5 w-4.5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-foreground">{feat.title}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{feat.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Bottom - Trust bar */}
-          <div className="pt-6 border-t border-border">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex">
-                  {['bg-primary/70', 'bg-primary/50', 'bg-primary/30'].map((bg, i) => (
-                    <div key={i} className={`w-7 h-7 rounded-full ${bg} border-2 border-background flex items-center justify-center text-[9px] text-white font-bold ${i > 0 ? '-ml-2' : ''}`}>
-                      {['M', 'S', 'X'][i]}
-                    </div>
-                  ))}
-                </div>
-                <span className="text-xs text-muted-foreground ml-1">+500 revendedores ativos</span>
-              </div>
-              <div className="flex items-center gap-1">
-                {[1,2,3,4,5].map(i => (
-                  <svg key={i} className="w-3.5 h-3.5 text-yellow-500 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                ))}
-              </div>
+            <div className="px-3 py-1 rounded-full bg-primary/15 border border-primary/25 text-[10px] font-semibold text-primary tracking-wider uppercase">
+              Pro Platform
             </div>
+          </div>
+
+          {/* Center - Main content */}
+          <div className="space-y-8">
+            {/* Headline */}
+            <div>
+              <p className="text-primary text-xs font-semibold uppercase tracking-[0.2em] mb-4">Gestor MSX</p>
+              <h2 className="text-[2.5rem] font-black text-white leading-[1.1] tracking-tight">
+                Automatize.
+                <br />
+                Gerencie.
+                <br />
+                <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Escale.</span>
+              </h2>
+            </div>
+
+            {/* Glass feature cards */}
+            <div className="space-y-3">
+              {[
+                { icon: Sparkles, text: 'Cobranças automáticas via WhatsApp' },
+                { icon: Lock, text: 'Painéis integrados com renovação auto' },
+                { icon: Mail, text: 'Notificações personalizadas por template' },
+              ].map((feat) => (
+                <div key={feat.text} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.06] backdrop-blur-sm">
+                  <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
+                    <feat.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-[13px] text-white/70 font-medium">{feat.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom */}
+          <div className="space-y-4">
+            {/* Stat pills */}
+            <div className="flex gap-2">
+              {[
+                { value: '99.9%', label: 'Uptime' },
+                { value: '500+', label: 'Revendedores' },
+                { value: '24/7', label: 'Automação' },
+              ].map((stat) => (
+                <div key={stat.label} className="flex-1 text-center py-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                  <div className="text-sm font-bold text-white">{stat.value}</div>
+                  <div className="text-[10px] text-white/30 mt-0.5">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[11px] text-white/20 text-center">
+              © {new Date().getFullYear()} Gestor MSX — Todos os direitos reservados
+            </p>
           </div>
         </div>
       </div>
