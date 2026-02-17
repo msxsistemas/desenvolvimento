@@ -330,7 +330,7 @@ export default function Auth() {
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-secondary via-background to-background items-center justify-center p-12 border-r border-border">
         <div className="max-w-md text-center">
-          <div className="w-24 h-24 mx-auto mb-8 rounded-full overflow-hidden shadow-2xl bg-destructive flex items-center justify-center">
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full overflow-hidden shadow-2xl flex items-center justify-center">
             <img src={iconMsx} alt="Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-4xl font-bold text-foreground mb-4">
