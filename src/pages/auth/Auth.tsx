@@ -364,7 +364,8 @@ export default function Auth() {
       </div>
 
       {/* Right side - Form */}
-      <div className="flex-1 flex items-center justify-center p-4 lg:p-12">
+      <div className="flex-1 flex flex-col min-h-screen">
+        <div className="flex-1 flex items-center justify-center p-4 lg:p-12">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
@@ -683,12 +684,13 @@ export default function Auth() {
             )}
           </div>
         </div>
-      </div>
-      {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 text-center py-4">
-        <p className="text-xs text-muted-foreground/50">
-          2026© Todos os direitos reservados Gestor MSX
-        </p>
+        </div>
+        {/* Footer */}
+        <div className="text-center py-4 flex-shrink-0">
+          <p className="text-xs text-muted-foreground/50">
+            2026© Todos os direitos reservados Gestor MSX
+          </p>
+        </div>
       </div>
     </div>
   );
