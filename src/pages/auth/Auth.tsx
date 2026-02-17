@@ -328,18 +328,36 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-secondary via-background to-background items-center justify-center p-12 border-r border-border">
-        <div className="max-w-md text-center">
-          <div className="w-96 h-96 mx-auto mb-8">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12" style={{ background: 'linear-gradient(160deg, hsl(var(--background)) 0%, hsl(220 25% 14%) 50%, hsl(220 30% 10%) 100%)' }}>
+        {/* Decorative elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-primary/30 blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-primary/20 blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-primary/10" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-primary/5" />
+        </div>
+
+        <div className="relative z-10 max-w-lg text-center flex flex-col items-center">
+          <div className="w-80 h-80 mb-6 drop-shadow-2xl">
             <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
           </div>
-          <p className="text-lg text-muted-foreground mb-8">
+          <p className="text-lg text-muted-foreground/80 mb-10 max-w-sm leading-relaxed">
             Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
           </p>
-          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-8 text-sm text-muted-foreground/70">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span>Automação de cobranças</span>
+              <span>Automação</span>
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-primary" />
+              <span>Cobranças</span>
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-primary" />
+              <span>Segurança</span>
             </div>
           </div>
         </div>
