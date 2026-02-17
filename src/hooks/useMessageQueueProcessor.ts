@@ -110,12 +110,12 @@ export const useMessageQueueProcessor = () => {
     }
   }, [userId]);
 
-  const processNext = useCallback(async () => {
-    if (!userId || processingRef.current || pausingRef.current) return;
+  const processNext = useCallback(async (): Promise<boolean> => {
+    if (!userId || processingRef.current || pausingRef.current) return false;
 
     // Check connection status from DB
     const connected = await checkIsConnected();
-    if (!connected) return;
+    if (!connected) return false;
 
     const config = configRef.current;
 
@@ -125,7 +125,7 @@ export const useMessageQueueProcessor = () => {
       dailySentRef.current = 0;
     }
 
-    if (config.limite_diario && dailySentRef.current >= config.limite_diario) return;
+    if (config.limite_diario && dailySentRef.current >= config.limite_diario) return false;
 
     try {
       const agora = new Date().toISOString();
@@ -138,7 +138,7 @@ export const useMessageQueueProcessor = () => {
         .order('created_at', { ascending: true })
         .limit(1);
 
-      if (error || !pendentes || pendentes.length === 0) return;
+      if (error || !pendentes || pendentes.length === 0) return false;
 
       const msg = pendentes[0];
       processingRef.current = true;
@@ -160,45 +160,65 @@ export const useMessageQueueProcessor = () => {
           console.log(`[QueueProcessor] Lote atingido, pausando ${config.pausa_prolongada}s`);
           setTimeout(() => { pausingRef.current = false; }, config.pausa_prolongada * 1000);
         }
+        return true;
       } catch (err) {
         console.error(`[QueueProcessor] Erro ao enviar para ${msg.phone}:`, err);
         await supabase
           .from('whatsapp_messages')
           .update({ status: 'failed', error_message: String(err), scheduled_for: null })
           .eq('id', msg.id);
+        return true; // had work, even if failed
       } finally {
         processingRef.current = false;
       }
     } catch (e) {
       console.error('[QueueProcessor] Erro geral:', e);
       processingRef.current = false;
+      return false;
     }
   }, [userId, sendMessageDirect, checkIsConnected]);
+
+  const processNextWithFeedback = processNext;
+
+  const idleCountRef = useRef(0);
 
   useEffect(() => {
     if (!userId) return;
 
     loadConfig();
-    const configInterval = setInterval(loadConfig, 60000);
+    const configInterval = setInterval(loadConfig, 120000);
 
     const scheduleNext = () => {
       const config = configRef.current;
+      // When actively sending, use configured intervals
+      // When idle (no pending messages), back off progressively: 30s, 60s, max 120s
+      const idleDelay = Math.min(30000 * Math.pow(2, idleCountRef.current), 120000);
       const delay = config.configuracoes_ativas
         ? getRandomInterval(config.tempo_minimo, config.tempo_maximo)
-        : 5000;
+        : idleDelay;
 
       timeoutRef.current = setTimeout(async () => {
-        await processNext();
+        const hadWork = await processNextWithFeedback();
+        if (hadWork) {
+          idleCountRef.current = 0;
+        } else {
+          idleCountRef.current = Math.min(idleCountRef.current + 1, 4);
+        }
         scheduleNext();
       }, delay);
     };
 
-    processNext();
-    scheduleNext();
+    // Initial check after 10s delay (not immediately on mount)
+    timeoutRef.current = setTimeout(() => {
+      processNextWithFeedback().then((hadWork) => {
+        if (!hadWork) idleCountRef.current = 1;
+        scheduleNext();
+      });
+    }, 10000);
 
     return () => {
       clearInterval(configInterval);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [userId, loadConfig, processNext]);
+  }, [userId, loadConfig]);
 };
