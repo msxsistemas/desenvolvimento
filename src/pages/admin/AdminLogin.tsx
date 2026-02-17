@@ -9,21 +9,32 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
-const ADMIN_SECRET_CODE = "280385";
-
 export default function AdminLogin() {
   const [secretCode, setSecretCode] = useState("");
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
   const [shakeError, setShakeError] = useState(false);
   const [codeError, setCodeError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     if (secretCode.length === 6) {
-      if (secretCode === ADMIN_SECRET_CODE) {
+      verifyAdminCode(secretCode);
+    }
+  }, [secretCode]);
+
+  const verifyAdminCode = async (code: string) => {
+    setVerifyingCode(true);
+    setCodeError("");
+    try {
+      const resp = await supabase.functions.invoke('verify-admin-code', {
+        body: { code },
+      });
+      
+      if (resp.data?.success) {
         setIsUnlocked(true);
         toast.success("Acesso liberado!");
       } else {
@@ -34,8 +45,17 @@ export default function AdminLogin() {
           setShakeError(false);
         }, 600);
       }
+    } catch {
+      setShakeError(true);
+      setCodeError("Erro ao verificar código.");
+      setTimeout(() => {
+        setSecretCode("");
+        setShakeError(false);
+      }, 600);
+    } finally {
+      setVerifyingCode(false);
     }
-  }, [secretCode]);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
