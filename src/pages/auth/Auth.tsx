@@ -330,12 +330,9 @@ export default function Auth() {
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-secondary via-background to-background items-center justify-center p-12 border-r border-border">
         <div className="max-w-md text-center">
-          <div className="w-28 h-28 mx-auto mb-8">
+          <div className="w-48 h-48 mx-auto mb-8">
             <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Gestor MSX
-          </h1>
           <p className="text-lg text-muted-foreground mb-8">
             Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
           </p>
