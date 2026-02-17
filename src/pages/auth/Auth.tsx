@@ -337,14 +337,12 @@ export default function Auth() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-primary/5" />
         </div>
 
-        <div className="relative z-10 max-w-lg text-center flex flex-col items-center">
-          <div className="w-72 h-72 mb-3 drop-shadow-2xl">
+        <div className="relative z-10 w-full max-w-md text-center flex flex-col items-center">
+          <div className="w-80 h-80 mb-6 drop-shadow-2xl">
             <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
           </div>
-          <p className="text-base text-muted-foreground/70 mb-5 max-w-sm leading-relaxed">
-            Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
-          </p>
-          <div className="flex items-center gap-8 text-sm text-muted-foreground/70 mb-8">
+
+          <div className="flex items-center gap-8 text-sm text-muted-foreground/70 mb-10">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               <span>Automação</span>
@@ -362,34 +360,34 @@ export default function Auth() {
           </div>
 
           {/* Feature cards */}
-          <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-4 text-left hover:bg-white/[0.07] transition-colors">
-              <div className="p-2 rounded-lg bg-primary/10 w-fit mb-2">
-                <UserIcon className="h-4 w-4 text-primary" />
+          <div className="grid grid-cols-2 gap-4 w-full">
+            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-5 text-left hover:bg-white/[0.07] transition-colors">
+              <div className="p-2.5 rounded-xl bg-primary/10 w-fit mb-3">
+                <UserIcon className="h-5 w-5 text-primary" />
               </div>
-              <h4 className="text-sm font-medium text-foreground/90">Gestão de Clientes</h4>
-              <p className="text-xs text-muted-foreground/50 mt-1">Cadastre e organize seus clientes</p>
+              <h4 className="text-sm font-semibold text-foreground/90">Gestão de Clientes</h4>
+              <p className="text-xs text-muted-foreground/50 mt-1.5 leading-relaxed">Cadastre e organize seus clientes</p>
             </div>
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-4 text-left hover:bg-white/[0.07] transition-colors">
-              <div className="p-2 rounded-lg bg-primary/10 w-fit mb-2">
-                <Phone className="h-4 w-4 text-primary" />
+            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-5 text-left hover:bg-white/[0.07] transition-colors">
+              <div className="p-2.5 rounded-xl bg-primary/10 w-fit mb-3">
+                <Phone className="h-5 w-5 text-primary" />
               </div>
-              <h4 className="text-sm font-medium text-foreground/90">WhatsApp</h4>
-              <p className="text-xs text-muted-foreground/50 mt-1">Envios automáticos e em massa</p>
+              <h4 className="text-sm font-semibold text-foreground/90">WhatsApp</h4>
+              <p className="text-xs text-muted-foreground/50 mt-1.5 leading-relaxed">Envios automáticos e em massa</p>
             </div>
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-4 text-left hover:bg-white/[0.07] transition-colors">
-              <div className="p-2 rounded-lg bg-primary/10 w-fit mb-2">
-                <ArrowRight className="h-4 w-4 text-primary" />
+            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-5 text-left hover:bg-white/[0.07] transition-colors">
+              <div className="p-2.5 rounded-xl bg-primary/10 w-fit mb-3">
+                <ArrowRight className="h-5 w-5 text-primary" />
               </div>
-              <h4 className="text-sm font-medium text-foreground/90">Renovações</h4>
-              <p className="text-xs text-muted-foreground/50 mt-1">Renovação automática de serviços</p>
+              <h4 className="text-sm font-semibold text-foreground/90">Renovações</h4>
+              <p className="text-xs text-muted-foreground/50 mt-1.5 leading-relaxed">Renovação automática de serviços</p>
             </div>
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-4 text-left hover:bg-white/[0.07] transition-colors">
-              <div className="p-2 rounded-lg bg-primary/10 w-fit mb-2">
-                <Gift className="h-4 w-4 text-primary" />
+            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-5 text-left hover:bg-white/[0.07] transition-colors">
+              <div className="p-2.5 rounded-xl bg-primary/10 w-fit mb-3">
+                <Gift className="h-5 w-5 text-primary" />
               </div>
-              <h4 className="text-sm font-medium text-foreground/90">Indicações</h4>
-              <p className="text-xs text-muted-foreground/50 mt-1">Programa de indicações integrado</p>
+              <h4 className="text-sm font-semibold text-foreground/90">Indicações</h4>
+              <p className="text-xs text-muted-foreground/50 mt-1.5 leading-relaxed">Programa de indicações integrado</p>
             </div>
           </div>
         </div>
