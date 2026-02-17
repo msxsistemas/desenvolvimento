@@ -7,10 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
-import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles, Shield, Zap, BarChart3 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 import { InlineError } from '@/components/ui/inline-error';
 import { useSystemLogo } from '@/hooks/useSystemLogo';
-import iconMsx from '@/assets/icon-msx.png';
 
 export default function Auth() {
   const logoUrl = useSystemLogo();
@@ -29,6 +28,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  // Get referral code from URL
   const referralCode = searchParams.get('ref') || '';
 
   useEffect(() => {
@@ -67,6 +67,7 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate, isRecovery]);
 
+  // If there's a referral code, default to signup
   useEffect(() => {
     if (referralCode) {
       setIsSignUp(true);
@@ -84,6 +85,8 @@ export default function Auth() {
     const password = formData.get('signup-password') as string;
     const confirmPassword = formData.get('confirm-password') as string;
     const refCode = formData.get('referral-code') as string;
+
+    // name is validated by required attribute
 
     if (password !== confirmPassword) {
       setAuthError('As senhas não coincidem');
@@ -170,6 +173,8 @@ export default function Auth() {
     e.preventDefault();
     setResetLoading(true);
 
+    // resetEmail is validated by required attribute
+
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: `${window.location.origin}/auth`,
@@ -192,6 +197,8 @@ export default function Auth() {
   const handleUpdatePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+
+    // newPassword is validated by required attribute
 
     if (newPassword.length < 6) {
       setAuthError('A senha deve ter pelo menos 6 caracteres');
@@ -233,18 +240,15 @@ export default function Auth() {
     }
   };
 
-  const inputClass = "pl-11 h-12 bg-muted/50 border-border/60 rounded-xl focus:border-primary/60 focus:ring-1 focus:ring-primary/20 transition-all duration-200";
-  const buttonClass = "w-full h-12 text-base rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold shadow-lg shadow-primary/25 transition-all duration-200 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5";
-
   // Password recovery form
   if (isRecovery) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-card border border-border/60 rounded-2xl shadow-2xl p-8 backdrop-blur-sm">
+        <div className="w-full max-w-md">
+          <div className="bg-card border border-border rounded-2xl shadow-xl p-8">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden shadow-lg ring-2 ring-primary/20">
-                <img src={iconMsx} alt="Logo" className="w-full h-full object-cover" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg">
+                <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">Redefinir Senha</h1>
               <p className="text-muted-foreground text-sm mt-1">Digite sua nova senha abaixo</p>
@@ -254,20 +258,20 @@ export default function Auth() {
               <div className="space-y-2">
                 <Label htmlFor="new-password">Nova Senha</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="new-password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Mínimo 6 caracteres"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className={`${inputClass} pr-10`}
+                    className="pl-10 pr-10 h-12 bg-secondary border-border"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -276,20 +280,20 @@ export default function Auth() {
               <div className="space-y-2">
                 <Label htmlFor="confirm-new-password">Confirmar Nova Senha</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="confirm-new-password"
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Confirme sua nova senha"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    className={`${inputClass} pr-10`}
+                    className="pl-10 pr-10 h-12 bg-secondary border-border"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -298,7 +302,7 @@ export default function Auth() {
               <InlineError message={authError} />
               <Button 
                 type="submit" 
-                className={buttonClass}
+                className="w-full h-12 text-base bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0" 
                 disabled={loading}
               >
                 {loading ? (
@@ -320,82 +324,48 @@ export default function Auth() {
     );
   }
 
-  const features = [
-    { icon: Zap, title: "Automação Inteligente", desc: "Cobranças e notificações automáticas" },
-    { icon: Shield, title: "Segurança Total", desc: "Dados protegidos e criptografados" },
-    { icon: BarChart3, title: "Relatórios Completos", desc: "Métricas e insights em tempo real" },
-  ];
-
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden">
-        {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-primary/5" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary/8 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
-        
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)',
-          backgroundSize: '32px 32px'
-        }} />
-
-        <div className="relative flex flex-col items-center justify-center w-full p-12 z-10">
-          <div className="max-w-sm text-center space-y-8">
-            {/* Logo */}
-            <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden shadow-2xl ring-2 ring-primary/30 bg-card">
-              <img src={iconMsx} alt="Logo" className="w-full h-full object-cover" />
-            </div>
-
-            <div className="space-y-3">
-              <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
-                Msx Gestor
-              </h1>
-              <p className="text-muted-foreground text-base leading-relaxed">
-                A plataforma completa para gerenciar seus clientes, planos e cobranças.
-              </p>
-            </div>
-
-            {/* Features */}
-            <div className="space-y-4 pt-4">
-              {features.map((f, i) => (
-                <div 
-                  key={i} 
-                  className="flex items-center gap-4 bg-card/60 backdrop-blur-sm border border-border/40 rounded-xl p-4 text-left transition-all duration-300 hover:bg-card/80 hover:border-primary/20"
-                >
-                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <f.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{f.title}</p>
-                    <p className="text-xs text-muted-foreground">{f.desc}</p>
-                  </div>
-                </div>
-              ))}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-secondary via-background to-background items-center justify-center p-12 border-r border-border">
+        <div className="max-w-md text-center">
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full overflow-hidden shadow-2xl bg-destructive flex items-center justify-center">
+            <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+          </div>
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            Msx Gestor
+          </h1>
+          <p className="text-lg text-muted-foreground mb-8">
+            Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
+          </p>
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span>Automação de cobranças</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Right side - Form */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 lg:p-12">
-        <div className="w-full max-w-[420px] animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex-1 flex items-center justify-center p-4 lg:p-12">
+        <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-3 rounded-2xl overflow-hidden shadow-lg ring-2 ring-primary/20 bg-card">
-              <img src={iconMsx} alt="Logo" className="w-full h-full object-cover" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg bg-destructive">
+              <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
             </div>
-            <h1 className="text-xl font-bold text-foreground">Msx Gestor</h1>
+            <h1 className="text-2xl font-bold text-foreground">Msx Gestor</h1>
           </div>
 
-          <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-7 sm:p-9 shadow-2xl shadow-black/20">
+          <div className="bg-card border border-border rounded-3xl p-8 lg:p-10 shadow-2xl">
             {!isSignUp ? (
               // Login Form
               <div className="space-y-5">
                 <div className="text-center space-y-1">
-                  <h2 className="text-2xl font-bold text-foreground">Bem-vindo de volta</h2>
-                  <p className="text-muted-foreground text-sm">Entre com suas credenciais para acessar</p>
+                  <p className="text-muted-foreground text-sm">Acesse sua conta</p>
+                  <h2 className="text-2xl font-bold text-foreground">Entrar</h2>
+                  <p className="text-muted-foreground text-sm">Acesse sua conta</p>
                 </div>
 
                 <form onSubmit={handleSignIn} className="space-y-4">
@@ -408,7 +378,7 @@ export default function Auth() {
                         name="signin-email"
                         type="email"
                         placeholder="seu@email.com"
-                        className={inputClass}
+                        className="pl-11 h-12 bg-secondary/50 border-border/50 rounded-xl focus:border-primary/50 transition-colors"
                         required
                       />
                     </div>
@@ -419,7 +389,7 @@ export default function Auth() {
                       <Label htmlFor="signin-password" className="text-sm font-medium">Senha</Label>
                       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
                         <DialogTrigger asChild>
-                          <button type="button" className="text-xs text-primary hover:text-primary-hover hover:underline font-medium transition-colors">
+                          <button type="button" className="text-xs text-primary hover:underline font-medium">
                             Esqueceu a senha?
                           </button>
                         </DialogTrigger>
@@ -445,7 +415,7 @@ export default function Auth() {
                             </div>
                             <Button 
                               type="submit" 
-                              className={buttonClass}
+                              className="w-full h-12 rounded-xl bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0" 
                               disabled={resetLoading}
                             >
                               {resetLoading ? (
@@ -454,7 +424,7 @@ export default function Auth() {
                                   Enviando...
                                 </>
                               ) : (
-                                'Enviar link de recuperação'
+                                'Enviar link'
                               )}
                             </Button>
                           </form>
@@ -468,7 +438,7 @@ export default function Auth() {
                         name="signin-password"
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Sua senha"
-                        className={`${inputClass} pr-11`}
+                        className="pl-11 pr-11 h-12 bg-secondary/50 border-border/50 rounded-xl focus:border-primary/50 transition-colors"
                         required
                       />
                       <button
@@ -483,7 +453,7 @@ export default function Auth() {
 
                   <Button 
                     type="submit" 
-                    className={buttonClass}
+                    className="w-full h-12 text-base rounded-xl bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0 font-medium shadow-lg shadow-[hsl(280,70%,50%)]/20" 
                     disabled={loading}
                   >
                     {loading ? (
@@ -501,12 +471,12 @@ export default function Auth() {
                 </form>
 
                 {/* Separator */}
-                <div className="relative py-1">
+                <div className="relative py-2">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border/40" />
+                    <span className="w-full border-t border-border/50" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card/80 px-4 text-muted-foreground font-medium tracking-wider">ou</span>
+                    <span className="bg-card px-4 text-muted-foreground font-medium">OU</span>
                   </div>
                 </div>
 
@@ -517,7 +487,7 @@ export default function Auth() {
                     <button
                       type="button"
                       onClick={() => setIsSignUp(true)}
-                      className="text-primary hover:text-primary-hover hover:underline font-semibold transition-colors"
+                      className="text-primary hover:underline font-semibold"
                     >
                       Criar conta gratuita
                     </button>
@@ -526,54 +496,55 @@ export default function Auth() {
               </div>
             ) : (
               // Signup Form
-              <div className="space-y-5">
-                <div className="text-center space-y-1">
-                  <h2 className="text-2xl font-bold text-foreground">Criar sua conta</h2>
-                  <p className="text-muted-foreground text-sm">Preencha seus dados para começar</p>
+              <div className="space-y-6">
+                <div className="text-center">
+                  <p className="text-muted-foreground text-sm">Crie sua conta</p>
+                  <h2 className="text-2xl font-bold text-foreground mt-2">Cadastrar</h2>
+                  <p className="text-muted-foreground text-sm mt-1">Preencha seus dados para começar</p>
                 </div>
 
-                <form onSubmit={handleSignUp} className="space-y-3.5">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="signup-name" className="text-sm font-medium">Nome completo</Label>
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">Nome completo</Label>
                     <div className="relative">
-                      <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="signup-name"
                         name="signup-name"
                         type="text"
                         placeholder="Seu nome"
-                        className={inputClass}
+                        className="pl-10 h-12 bg-secondary border-border"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="signup-email"
                         name="signup-email"
                         type="email"
                         placeholder="seu@email.com"
-                        className={inputClass}
+                        className="pl-10 h-12 bg-secondary border-border"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="signup-whatsapp" className="text-sm font-medium">WhatsApp <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-whatsapp">WhatsApp (opcional)</Label>
                     <div className="relative">
-                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="signup-whatsapp"
                         name="signup-whatsapp"
                         type="tel"
                         placeholder="(00) 00000-0000"
                         maxLength={15}
-                        className={inputClass}
+                        className="pl-10 h-12 bg-secondary border-border"
                         onChange={(e) => {
                           let value = e.target.value.replace(/\D/g, '');
                           if (value.length > 11) value = value.slice(0, 11);
@@ -590,63 +561,61 @@ export default function Auth() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="signup-password" className="text-sm font-medium">Senha</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signup-password"
-                          name="signup-password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="Min. 6 chars"
-                          className={`${inputClass} pr-10`}
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="confirm-password" className="text-sm font-medium">Confirmar</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="confirm-password"
-                          name="confirm-password"
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          placeholder="Confirme"
-                          className={`${inputClass} pr-10`}
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Senha</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="signup-password"
+                        name="signup-password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Mínimo 6 caracteres"
+                        className="pl-10 pr-10 h-12 bg-secondary border-border"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="referral-code" className="text-sm font-medium">Código de indicação <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirmar senha</Label>
                     <div className="relative">
-                      <Gift className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="confirm-password"
+                        name="confirm-password"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Confirme sua senha"
+                        className="pl-10 pr-10 h-12 bg-secondary border-border"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="referral-code">Código de indicação (opcional)</Label>
+                    <div className="relative">
+                      <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="referral-code"
                         name="referral-code"
                         type="text"
                         placeholder="REF_XXXXXX"
                         defaultValue={referralCode}
-                        className={inputClass}
+                        className="pl-10 h-12 bg-secondary border-border"
                       />
                     </div>
                   </div>
@@ -655,7 +624,7 @@ export default function Auth() {
 
                   <Button 
                     type="submit" 
-                    className={buttonClass}
+                    className="w-full h-12 text-base bg-gradient-to-r from-[hsl(280,70%,50%)] to-[hsl(199,89%,48%)] hover:from-[hsl(280,70%,45%)] hover:to-[hsl(199,89%,43%)] text-white border-0" 
                     disabled={loading}
                   >
                     {loading ? (
@@ -673,12 +642,12 @@ export default function Auth() {
                 </form>
 
                 {/* Separator */}
-                <div className="relative py-1">
+                <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border/40" />
+                    <span className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card/80 px-4 text-muted-foreground font-medium tracking-wider">ou</span>
+                    <span className="bg-card px-4 text-muted-foreground">OU</span>
                   </div>
                 </div>
 
@@ -689,7 +658,7 @@ export default function Auth() {
                     <button
                       type="button"
                       onClick={() => setIsSignUp(false)}
-                      className="text-primary hover:text-primary-hover hover:underline font-semibold transition-colors"
+                      className="text-primary hover:underline font-medium"
                     >
                       Fazer login
                     </button>
@@ -698,11 +667,6 @@ export default function Auth() {
               </div>
             )}
           </div>
-
-          {/* Footer */}
-          <p className="text-center text-xs text-muted-foreground/60 mt-6">
-            © {new Date().getFullYear()} Msx Gestor. Todos os direitos reservados.
-          </p>
         </div>
       </div>
     </div>
