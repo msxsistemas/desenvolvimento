@@ -348,42 +348,35 @@ export default function Auth() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-primary/[0.08]" />
 
         {/* Content */}
-        <div className="relative z-10 max-w-lg text-center flex flex-col items-center">
-          {/* Logo with glow effect */}
-          <div className="relative mb-10">
-            <div className="absolute inset-0 w-80 h-80 bg-primary/10 blur-3xl rounded-full scale-75" />
-            <div className="relative w-80 h-80 drop-shadow-2xl">
+        <div className="relative z-10 flex flex-col items-center justify-center h-full">
+          {/* Logo */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 w-64 h-64 bg-primary/10 blur-3xl rounded-full scale-75" />
+            <div className="relative w-64 h-64 drop-shadow-2xl">
               <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
             </div>
           </div>
 
-          {/* Headline */}
-          <h2 className="text-2xl font-bold text-foreground mb-2 tracking-tight">
-            Sua gestão no <span className="text-primary">próximo nível</span>
-          </h2>
-          <p className="text-sm text-muted-foreground/60 mb-10 max-w-xs leading-relaxed">
-            Clientes, cobranças e automações em um só lugar — simples, rápido e seguro.
+          {/* Tagline */}
+          <p className="text-base text-muted-foreground/50 mb-8 max-w-xs text-center leading-relaxed">
+            Gestão inteligente de clientes, cobranças e automações.
           </p>
 
-          {/* Feature cards */}
-          <div className="grid grid-cols-3 gap-3 w-full max-w-sm">
-            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-foreground/[0.03] border border-foreground/[0.06]">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-primary" />
-              </div>
-              <span className="text-[11px] font-medium text-muted-foreground/70">Automação</span>
+          {/* Minimal feature row */}
+          <div className="flex items-center gap-6 text-xs text-muted-foreground/40">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary/60" />
+              <span>Automação</span>
             </div>
-            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-foreground/[0.03] border border-foreground/[0.06]">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Mail className="h-4 w-4 text-primary" />
-              </div>
-              <span className="text-[11px] font-medium text-muted-foreground/70">Cobranças</span>
+            <div className="w-1 h-1 rounded-full bg-muted-foreground/20" />
+            <div className="flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5 text-primary/60" />
+              <span>Cobranças</span>
             </div>
-            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-foreground/[0.03] border border-foreground/[0.06]">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Lock className="h-4 w-4 text-primary" />
-              </div>
-              <span className="text-[11px] font-medium text-muted-foreground/70">Segurança</span>
+            <div className="w-1 h-1 rounded-full bg-muted-foreground/20" />
+            <div className="flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 text-primary/60" />
+              <span>Segurança</span>
             </div>
           </div>
         </div>
