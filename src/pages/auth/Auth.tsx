@@ -328,76 +328,37 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex bg-background relative">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden flex-col" style={{ background: 'linear-gradient(165deg, hsl(220 25% 6%) 0%, hsl(220 30% 10%) 50%, hsl(var(--primary) / 0.15) 100%)' }}>
-        {/* Mesh gradient blobs */}
-        <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary/20 blur-[150px]" />
-        <div className="absolute bottom-[-15%] left-[-5%] w-[400px] h-[400px] rounded-full bg-primary/10 blur-[120px]" />
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12" style={{ background: 'linear-gradient(160deg, hsl(var(--background)) 0%, hsl(220 25% 14%) 50%, hsl(220 30% 10%) 100%)' }}>
+        {/* Decorative elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-primary/30 blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-primary/20 blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-primary/10" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-primary/5" />
+        </div>
 
-        {/* Noise texture */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E")` }} />
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col h-full p-12 justify-between">
-          {/* Top - Logo + badge */}
-          <div className="flex items-center justify-between">
-            <div className="w-14 h-14 drop-shadow-lg">
-              <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
-            </div>
-            <div className="px-3 py-1 rounded-full bg-primary/15 border border-primary/25 text-[10px] font-semibold text-primary tracking-wider uppercase">
-              Pro Platform
-            </div>
+        <div className="relative z-10 max-w-lg text-center flex flex-col items-center">
+          <div className="w-80 h-80 mb-6 drop-shadow-2xl">
+            <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
           </div>
-
-          {/* Center - Main content */}
-          <div className="space-y-8">
-            {/* Headline */}
-            <div>
-              <p className="text-primary text-xs font-semibold uppercase tracking-[0.2em] mb-4">Gestor MSX</p>
-              <h2 className="text-[2.5rem] font-black text-white leading-[1.1] tracking-tight">
-                Automatize.
-                <br />
-                Gerencie.
-                <br />
-                <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Escale.</span>
-              </h2>
+          <p className="text-lg text-muted-foreground/80 mb-10 max-w-sm leading-relaxed">
+            Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
+          </p>
+          <div className="flex items-center gap-8 text-sm text-muted-foreground/70">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span>Automação</span>
             </div>
-
-            {/* Glass feature cards */}
-            <div className="space-y-3">
-              {[
-                { icon: Sparkles, text: 'Cobranças automáticas via WhatsApp' },
-                { icon: Lock, text: 'Painéis integrados com renovação auto' },
-                { icon: Mail, text: 'Notificações personalizadas por template' },
-              ].map((feat) => (
-                <div key={feat.text} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.06] backdrop-blur-sm">
-                  <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
-                    <feat.icon className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="text-[13px] text-white/70 font-medium">{feat.text}</span>
-                </div>
-              ))}
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-primary" />
+              <span>Cobranças</span>
             </div>
-          </div>
-
-          {/* Bottom */}
-          <div className="space-y-4">
-            {/* Stat pills */}
-            <div className="flex gap-2">
-              {[
-                { value: '99.9%', label: 'Uptime' },
-                { value: '500+', label: 'Revendedores' },
-                { value: '24/7', label: 'Automação' },
-              ].map((stat) => (
-                <div key={stat.label} className="flex-1 text-center py-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                  <div className="text-sm font-bold text-white">{stat.value}</div>
-                  <div className="text-[10px] text-white/30 mt-0.5">{stat.label}</div>
-                </div>
-              ))}
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-primary" />
+              <span>Segurança</span>
             </div>
-
-            <p className="text-[11px] text-white/20 text-center">
-              © {new Date().getFullYear()} Gestor MSX — Todos os direitos reservados
-            </p>
           </div>
         </div>
       </div>
