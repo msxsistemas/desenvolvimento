@@ -112,7 +112,7 @@ export function AppSidebar() {
 
   // Menu items
   const menuItems = [
-    { to: "/", icon: Home, label: "Dashboard" },
+    { to: "/dashboard", icon: Home, label: "Dashboard" },
     { to: "/clientes", icon: Users, label: "Clientes", hasSubmenu: true },
     { to: "/planos", icon: List, label: "Planos", hasPlanosSubmenu: true },
     { to: "/aplicativos", icon: Package, label: "Aplicativos", hasAplicativosSubmenu: true },
@@ -271,7 +271,7 @@ export function AppSidebar() {
         ) : (
           /* Desktop: show logo */
           <>
-            <NavLink to="/" className={`flex items-center justify-center gap-2 transition-all duration-300 ${isCollapsed ? 'py-5' : 'py-6 px-4'} hover:opacity-80`}>
+            <NavLink to="/dashboard" className={`flex items-center justify-center gap-2 transition-all duration-300 ${isCollapsed ? 'py-5' : 'py-6 px-4'} hover:opacity-80`}>
               <svg viewBox="0 0 100 110" className={`flex-shrink-0 ${isCollapsed ? 'w-9 h-9' : 'w-9 h-9'}`}>
                 <defs>
                   <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">

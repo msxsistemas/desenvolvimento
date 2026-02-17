@@ -50,7 +50,7 @@ export default function Auth() {
       if (user) {
         setUser(user);
         const planParam = searchParams.get('plan');
-        navigate(planParam ? `/ativar-plano?plan=${planParam}` : '/');
+        navigate(planParam ? `/ativar-plano?plan=${planParam}` : '/dashboard');
       }
     });
 
@@ -60,7 +60,7 @@ export default function Auth() {
       } else if (session?.user && !isRecovery) {
         setUser(session.user);
         const planParam = searchParams.get('plan');
-        navigate(planParam ? `/ativar-plano?plan=${planParam}` : '/');
+        navigate(planParam ? `/ativar-plano?plan=${planParam}` : '/dashboard');
       } else if (!session) {
         setUser(null);
       }
@@ -234,7 +234,7 @@ export default function Auth() {
         setIsRecovery(false);
         setNewPassword('');
         setConfirmNewPassword('');
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
       toast.error('Erro ao atualizar senha');
