@@ -41,9 +41,8 @@ export default function LegalPageLayout({ title, date, children }: LegalPageLayo
 
       {/* Hero */}
       <div className="border-b border-border/30 py-16 text-center" style={{ background: 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(220 25% 12%) 100%)' }}>
-        <span className="inline-block px-4 py-1.5 rounded-full bg-primary/20 text-primary text-xs font-semibold tracking-widest uppercase mb-6">
-          Documento Legal
-        </span>
+
+
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3">{title}</h1>
         <p className="text-muted-foreground/60 text-sm">Última atualização: {date}</p>
       </div>
