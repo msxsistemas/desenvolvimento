@@ -10,7 +10,7 @@ import { User } from '@supabase/supabase-js';
 import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 import { InlineError } from '@/components/ui/inline-error';
 import { useSystemLogo } from '@/hooks/useSystemLogo';
-import logoGestorMsx from '@/assets/logo-gestor-msx-header.png';
+import iconMsx from '@/assets/icon-msx.png';
 
 export default function Auth() {
   const logoUrl = useSystemLogo();
@@ -330,10 +330,10 @@ export default function Auth() {
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-secondary via-background to-background items-center justify-center p-12 border-r border-border">
         <div className="max-w-md text-center">
-          <div className="mx-auto mb-8">
-            <img src={logoGestorMsx} alt="Gestor MSX" className="h-16 object-contain" />
+          <div className="w-24 h-24 mx-auto mb-8 rounded-2xl p-3 shadow-xl">
+            <img src={iconMsx} alt="Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-4xl font-bold text-foreground mb-4 sr-only">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
             Gestor MSX
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
@@ -353,9 +353,10 @@ export default function Auth() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="mx-auto mb-4">
-              <img src={logoGestorMsx} alt="Gestor MSX" className="h-10 object-contain mx-auto" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg">
+              <img src={iconMsx} alt="Logo" className="w-full h-full object-cover" />
             </div>
+            <h1 className="text-2xl font-bold text-foreground">Gestor MSX</h1>
           </div>
 
           <div className="bg-card border border-border rounded-3xl p-8 lg:p-10 shadow-2xl">
