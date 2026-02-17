@@ -24,7 +24,7 @@ export default function PlanosDisponiveis() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = 'Planos Disponíveis | Msx Gestor';
+    document.title = 'Planos Disponíveis | Gestor Msx';
     fetchPlans();
   }, []);
 
@@ -85,7 +85,7 @@ export default function PlanosDisponiveis() {
             <div className="w-9 h-9 rounded-full overflow-hidden shadow-md">
               <img src={logoPlay} alt="Logo" className="w-full h-full object-cover" />
             </div>
-            <span className="text-lg font-bold text-foreground">Msx Gestor</span>
+            <span className="text-lg font-bold text-foreground">Gestor Msx</span>
           </div>
           <Button variant="ghost" onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="mr-2 h-4 w-4" />

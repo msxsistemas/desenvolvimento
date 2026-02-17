@@ -69,7 +69,7 @@ export default function AdminUsuarios() {
   };
 
   useEffect(() => {
-    document.title = "Usuários | Admin Msx Gestor";
+    document.title = "Usuários | Admin Gestor Msx";
     fetchUsers();
   }, []);
 

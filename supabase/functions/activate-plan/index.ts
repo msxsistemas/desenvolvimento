@@ -422,7 +422,7 @@ async function generateAsaasPayment(gateway: any, plan: any, user: any) {
       billingType: "PIX",
       value: plan.valor,
       dueDate: dueDate.toISOString().split("T")[0],
-      description: `Plano ${plan.nome} - Msx Gestor`,
+      description: `Plano ${plan.nome} - Gestor Msx`,
     }),
   });
 
@@ -454,7 +454,7 @@ async function generateMercadoPagoPayment(gateway: any, plan: any, user: any) {
     },
     body: JSON.stringify({
       transaction_amount: plan.valor,
-      description: `Plano ${plan.nome} - Msx Gestor`,
+      description: `Plano ${plan.nome} - Gestor Msx`,
       payment_method_id: "pix",
       payer: { email: user.email },
     }),
@@ -527,7 +527,7 @@ async function generateCiabraPayment(gateway: any, plan: any, user: any) {
     const externalId = `plan-${plan.id.substring(0, 8)}-${Date.now()}`;
 
     const invoicePayload: any = {
-      description: `Plano ${plan.nome} - Msx Gestor`,
+      description: `Plano ${plan.nome} - Gestor Msx`,
       dueDate,
       installmentCount: 1,
       invoiceType: "SINGLE",
@@ -590,7 +590,7 @@ async function generateV3PayPayment(gateway: any, plan: any, user: any) {
       },
       body: JSON.stringify({
         amount: Math.round(plan.valor * 100),
-        description: `Plano ${plan.nome} - Msx Gestor`,
+        description: `Plano ${plan.nome} - Gestor Msx`,
         payment_method: "pix",
         payer: { email: user.email },
       }),

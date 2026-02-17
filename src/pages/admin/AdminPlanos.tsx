@@ -54,7 +54,7 @@ export default function AdminPlanos() {
   };
 
   useEffect(() => {
-    document.title = "Planos SaaS | Admin Msx Gestor";
+    document.title = "Planos SaaS | Admin Gestor Msx";
     fetchPlans();
     fetchSubscriberCounts();
   }, []);

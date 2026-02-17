@@ -24,7 +24,7 @@ export default function AdminLogs() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = "Logs | Admin Msx Gestor";
+    document.title = "Logs | Admin Gestor Msx";
     const fetch_ = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();

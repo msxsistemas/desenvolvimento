@@ -34,7 +34,7 @@ export default function Auth() {
   const referralCode = searchParams.get('ref') || '';
 
   useEffect(() => {
-    document.title = isSignUp ? 'Cadastro | Msx Gestor' : 'Entrar | Msx Gestor';
+    document.title = isSignUp ? 'Cadastro | Gestor Msx' : 'Entrar | Gestor Msx';
   }, [isSignUp]);
 
   useEffect(() => {
