@@ -63,11 +63,41 @@ Deno.serve(async (req) => {
     if (body.event) {
       console.log('📩 Asaas Webhook received:', body.event);
 
-      // Verify webhook authenticity by checking the Asaas access token header
+      // Verify webhook authenticity: check token against per-user configured secrets
       const asaasToken = req.headers.get('asaas-access-token');
-      const expectedToken = Deno.env.get('ASAAS_API_KEY');
-      if (!asaasToken || !expectedToken || asaasToken !== expectedToken) {
-        console.warn('⚠️ Webhook signature/token verification failed');
+      if (!asaasToken) {
+        console.warn('⚠️ Webhook missing access token header');
+        return new Response(JSON.stringify({ error: 'Unauthorized webhook' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
+      }
+
+      // First try matching against global env (backward compat)
+      const globalToken = Deno.env.get('ASAAS_API_KEY');
+      let webhookVerified = false;
+      if (globalToken && asaasToken === globalToken) {
+        webhookVerified = true;
+      }
+
+      // Also try matching against per-user asaas_config api_key_hash entries
+      if (!webhookVerified) {
+        const { data: configs } = await supabaseAdmin
+          .from('asaas_config')
+          .select('user_id, api_key_hash')
+          .eq('is_configured', true);
+        
+        if (configs && configs.length > 0) {
+          // Check if any user's configured key matches the webhook token
+          for (const config of configs) {
+            if (config.api_key_hash === asaasToken) {
+              webhookVerified = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!webhookVerified) {
+        console.warn('⚠️ Webhook token verification failed - no matching configuration');
         return new Response(JSON.stringify({ error: 'Unauthorized webhook' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
       }
