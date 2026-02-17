@@ -26,8 +26,7 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('rememberMe') === 'true');
-  const [savedEmail, setSavedEmail] = useState(() => localStorage.getItem('savedEmail') || '');
+  const [savedEmail] = useState(() => localStorage.getItem('savedEmail') || '');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -163,13 +162,7 @@ export default function Auth() {
           toast.error('Erro ao fazer login. Tente novamente.');
         }
       } else {
-        if (rememberMe) {
-          localStorage.setItem('rememberMe', 'true');
-          localStorage.setItem('savedEmail', email);
-        } else {
-          localStorage.removeItem('rememberMe');
-          localStorage.removeItem('savedEmail');
-        }
+        localStorage.setItem('savedEmail', email);
         toast.success('Login realizado com sucesso!');
       }
     } catch (error) {
@@ -505,18 +498,6 @@ export default function Auth() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="remember-me"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
-                    />
-                    <Label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer select-none">
-                      Lembrar meu email
-                    </Label>
-                  </div>
 
                   <Button
                     type="submit" 
