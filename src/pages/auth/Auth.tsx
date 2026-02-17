@@ -347,36 +347,12 @@ export default function Auth() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-primary/[0.06]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-primary/[0.08]" />
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center h-full">
-          {/* Logo */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 w-64 h-64 bg-primary/10 blur-3xl rounded-full scale-75" />
-            <div className="relative w-64 h-64 drop-shadow-2xl">
+        {/* Content - Logo only */}
+        <div className="relative z-10 flex items-center justify-center h-full">
+          <div className="relative">
+            <div className="absolute inset-0 w-72 h-72 bg-primary/10 blur-3xl rounded-full scale-75" />
+            <div className="relative w-72 h-72 drop-shadow-2xl">
               <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
-            </div>
-          </div>
-
-          {/* Tagline */}
-          <p className="text-base text-muted-foreground/50 mb-8 max-w-xs text-center leading-relaxed">
-            Gestão inteligente de clientes, cobranças e automações.
-          </p>
-
-          {/* Minimal feature row */}
-          <div className="flex items-center gap-6 text-xs text-muted-foreground/40">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-primary/60" />
-              <span>Automação</span>
-            </div>
-            <div className="w-1 h-1 rounded-full bg-muted-foreground/20" />
-            <div className="flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5 text-primary/60" />
-              <span>Cobranças</span>
-            </div>
-            <div className="w-1 h-1 rounded-full bg-muted-foreground/20" />
-            <div className="flex items-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-primary/60" />
-              <span>Segurança</span>
             </div>
           </div>
         </div>
