@@ -337,12 +337,12 @@ export default function Auth() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-primary/5" />
         </div>
 
-        <div className="relative z-10 w-full max-w-xl text-center flex flex-col items-center px-4">
-          <div className="w-96 h-64 mb-2 drop-shadow-2xl">
+        <div className="relative z-10 w-full max-w-2xl text-center flex flex-col items-center px-6">
+          <div className="w-96 h-64 -mb-2 drop-shadow-2xl">
             <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
           </div>
 
-          <div className="flex items-center gap-10 text-base text-muted-foreground/70 mb-10">
+          <div className="flex items-center gap-10 text-base text-muted-foreground/70 mb-8">
             <div className="flex items-center gap-2.5">
               <Sparkles className="h-5 w-5 text-primary" />
               <span>Automação</span>
@@ -361,28 +361,28 @@ export default function Auth() {
 
           {/* Feature cards */}
           <div className="grid grid-cols-2 gap-5 w-full">
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-6 text-left hover:bg-white/[0.07] transition-colors">
+            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-7 text-left hover:bg-white/[0.07] transition-colors">
               <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4">
                 <UserIcon className="h-6 w-6 text-primary" />
               </div>
               <h4 className="text-base font-semibold text-foreground/90">Gestão de Clientes</h4>
               <p className="text-sm text-muted-foreground/50 mt-2 leading-relaxed">Cadastre e organize todos os seus clientes</p>
             </div>
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-6 text-left hover:bg-white/[0.07] transition-colors">
+            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-7 text-left hover:bg-white/[0.07] transition-colors">
               <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4">
                 <Phone className="h-6 w-6 text-primary" />
               </div>
               <h4 className="text-base font-semibold text-foreground/90">WhatsApp</h4>
               <p className="text-sm text-muted-foreground/50 mt-2 leading-relaxed">Envios automáticos e em massa</p>
             </div>
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-6 text-left hover:bg-white/[0.07] transition-colors">
+            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-7 text-left hover:bg-white/[0.07] transition-colors">
               <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4">
                 <ArrowRight className="h-6 w-6 text-primary" />
               </div>
               <h4 className="text-base font-semibold text-foreground/90">Renovações</h4>
               <p className="text-sm text-muted-foreground/50 mt-2 leading-relaxed">Renovação automática de serviços</p>
             </div>
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-6 text-left hover:bg-white/[0.07] transition-colors">
+            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl p-7 text-left hover:bg-white/[0.07] transition-colors">
               <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4">
                 <Gift className="h-6 w-6 text-primary" />
               </div>
