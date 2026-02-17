@@ -542,10 +542,9 @@ export default function Auth() {
             ) : (
               // Signup Form
               <div className="space-y-6">
-                <div className="text-center">
-                  <p className="text-muted-foreground text-sm">Crie sua conta</p>
-                  <h2 className="text-2xl font-bold text-foreground mt-2">Cadastrar</h2>
-                  <p className="text-muted-foreground text-sm mt-1">Preencha seus dados para começar</p>
+                <div className="text-center space-y-1">
+                  <h2 className="text-2xl font-bold text-foreground">Cadastrar</h2>
+                  <p className="text-muted-foreground text-sm">Preencha seus dados para começar</p>
                 </div>
 
                 <form onSubmit={handleSignUp} className="space-y-4">
