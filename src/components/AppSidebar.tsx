@@ -371,11 +371,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <div className="p-3 border-t border-border">
-        <p className="text-[10px] text-muted-foreground/40 text-center leading-tight">
-          2026© Todos os direitos reservados Gestor MSX
-        </p>
-      </div>
     </Sidebar>
   );
 }
