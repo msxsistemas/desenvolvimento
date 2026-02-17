@@ -399,10 +399,9 @@ export default function Auth() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="w-20 h-20 mx-auto mb-4">
+            <div className="w-28 h-28 mx-auto">
               <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Gestor MSX</h1>
           </div>
 
           <div className="bg-card border border-border rounded-3xl p-8 lg:p-10 shadow-2xl">
