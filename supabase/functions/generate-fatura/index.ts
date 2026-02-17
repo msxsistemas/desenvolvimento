@@ -291,7 +291,25 @@ Deno.serve(async (req) => {
         }
       }
 
-      return new Response(JSON.stringify({ success: true, fatura: { ...fatura, nome_empresa } }),
+      // Return only necessary fields - exclude sensitive internal data
+      const safeFatura = {
+        id: fatura.id,
+        cliente_nome: fatura.cliente_nome,
+        plano_nome: fatura.plano_nome,
+        valor: fatura.valor,
+        valor_original: fatura.valor_original,
+        cupom_codigo: fatura.cupom_codigo,
+        status: fatura.status,
+        gateway: fatura.gateway,
+        pix_qr_code: fatura.pix_qr_code,
+        pix_copia_cola: fatura.pix_copia_cola,
+        pix_manual_key: fatura.pix_manual_key,
+        paid_at: fatura.paid_at,
+        created_at: fatura.created_at,
+        nome_empresa,
+      };
+
+      return new Response(JSON.stringify({ success: true, fatura: safeFatura }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
