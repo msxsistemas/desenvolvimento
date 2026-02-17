@@ -271,7 +271,7 @@ export function AppSidebar() {
         ) : (
           /* Desktop: show logo */
           <>
-            <div className={`flex items-center justify-center gap-2 transition-all duration-300 ${isCollapsed ? 'py-5' : 'py-6 px-4'}`}>
+            <NavLink to="/" className={`flex items-center justify-center gap-2 transition-all duration-300 ${isCollapsed ? 'py-5' : 'py-6 px-4'} hover:opacity-80`}>
               <svg viewBox="0 0 100 110" className={`flex-shrink-0 ${isCollapsed ? 'w-9 h-9' : 'w-9 h-9'}`}>
                 <defs>
                   <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -285,7 +285,7 @@ export function AppSidebar() {
               {!isCollapsed && (
                 <span className="text-xl font-bold tracking-wide text-foreground">GESTOR <span className="text-primary">MSX</span></span>
               )}
-            </div>
+            </NavLink>
             {!isCollapsed && (
               <div className="flex justify-center -mt-4 mb-1 gap-1">
                 <Crown size={14} className="text-success" />
