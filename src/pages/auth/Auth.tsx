@@ -10,7 +10,7 @@ import { User } from '@supabase/supabase-js';
 import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 import { InlineError } from '@/components/ui/inline-error';
 import { useSystemLogo } from '@/hooks/useSystemLogo';
-import iconMsx from '@/assets/icon-msx.png';
+import logoMsx from '@/assets/logo-msx.png';
 
 export default function Auth() {
   const logoUrl = useSystemLogo();
@@ -330,8 +330,8 @@ export default function Auth() {
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-secondary via-background to-background items-center justify-center p-12 border-r border-border">
         <div className="max-w-md text-center">
-          <div className="w-20 h-20 mx-auto mb-8">
-            <img src={iconMsx} alt="Logo" className="w-full h-full object-contain" />
+          <div className="w-28 h-28 mx-auto mb-8">
+            <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-4xl font-bold text-foreground mb-4">
             Gestor MSX
@@ -353,8 +353,8 @@ export default function Auth() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden shadow-lg">
-              <img src={iconMsx} alt="Logo" className="w-full h-full object-cover" />
+            <div className="w-20 h-20 mx-auto mb-4">
+              <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">Gestor MSX</h1>
           </div>
