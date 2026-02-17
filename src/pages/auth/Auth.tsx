@@ -337,28 +337,36 @@ export default function Auth() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-primary/5" />
         </div>
 
-        <div className="relative z-10 max-w-lg text-center flex flex-col items-center">
-          <div className="w-64 h-64 mb-8 drop-shadow-2xl">
+        <div className="relative z-10 max-w-md w-full flex flex-col items-center">
+          {/* Logo */}
+          <div className="w-44 h-44 mb-6 drop-shadow-2xl">
             <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
           </div>
-          <p className="text-lg text-muted-foreground/80 mb-10 max-w-sm leading-relaxed">
+
+          {/* Tagline */}
+          <p className="text-base text-muted-foreground/70 mb-12 max-w-xs text-center leading-relaxed">
             Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
           </p>
 
+          {/* Divider */}
+          <div className="w-12 h-px bg-primary/30 mb-10" />
+
           {/* Feature list */}
-          <div className="w-full max-w-xs space-y-3 text-left">
+          <div className="w-full space-y-4">
             {[
               { icon: Users, label: 'Gestão de usuários e acessos' },
               { icon: DollarSign, label: 'Ferramentas financeiras integradas' },
               { icon: Plug, label: 'Integração com plataformas autorizadas' },
               { icon: MessageSquare, label: 'Comunicação automatizada' },
               { icon: BarChart3, label: 'Relatórios operacionais e métricas' },
-            ].map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-3 text-sm text-muted-foreground/80">
-                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Icon className="h-4 w-4 text-primary" />
-                </div>
-                <span>{label}</span>
+            ].map(({ icon: Icon, label }, i) => (
+              <div
+                key={label}
+                className="flex items-center gap-4 animate-fade-in"
+                style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
+              >
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-400" />
+                <span className="text-sm text-muted-foreground/90">{label}</span>
               </div>
             ))}
           </div>
