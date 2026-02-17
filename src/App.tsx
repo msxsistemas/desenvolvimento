@@ -95,6 +95,8 @@ import FaturaPublica from "./pages/FaturaPublica";
 import AtivarPlano from "./pages/AtivarPlano";
 import PlanosDisponiveis from "./pages/PlanosDisponiveis";
 import RenovarAcesso from "./pages/RenovarAcesso";
+import TermosDeServico from "./pages/TermosDeServico";
+import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -108,6 +110,8 @@ const App = () => (
           <Route path="/fatura/:id" element={<FaturaPublica />} />
           
           <Route path="/planos-disponiveis" element={<PlanosDisponiveis />} />
+          <Route path="/termos-de-servico" element={<TermosDeServico />} />
+          <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
 
           {/* Protected layout wrapper for main routes */}
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
