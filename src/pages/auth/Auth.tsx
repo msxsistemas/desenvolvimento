@@ -350,31 +350,10 @@ export default function Auth() {
         {/* Content */}
         <div className="relative z-10 max-w-lg text-center flex flex-col items-center">
           {/* Logo with glow effect */}
-          <div className="relative mb-8">
+          <div className="relative mb-16">
             <div className="absolute inset-0 w-80 h-80 bg-primary/10 blur-3xl rounded-full scale-75" />
             <div className="relative w-80 h-80 drop-shadow-2xl">
               <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
-            </div>
-          </div>
-
-          {/* Tagline */}
-          <p className="text-lg text-muted-foreground/70 mb-10 max-w-sm leading-relaxed font-light">
-            Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
-          </p>
-
-          {/* Feature pills */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/[0.08] border border-primary/[0.12] backdrop-blur-sm">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-medium text-primary/80">Automação</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/[0.08] border border-primary/[0.12] backdrop-blur-sm">
-              <Mail className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-medium text-primary/80">Cobranças</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/[0.08] border border-primary/[0.12] backdrop-blur-sm">
-              <Lock className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-medium text-primary/80">Segurança</span>
             </div>
           </div>
         </div>
