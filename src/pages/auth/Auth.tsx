@@ -686,7 +686,12 @@ export default function Auth() {
         </div>
         </div>
         {/* Footer */}
-        <div className="text-center py-4 flex-shrink-0">
+        <div className="text-center py-4 flex-shrink-0 space-y-1.5">
+          <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground/50">
+            <a href="/termos-de-servico" className="hover:text-muted-foreground transition-colors">Termos de Serviço</a>
+            <span>•</span>
+            <a href="/politica-de-privacidade" className="hover:text-muted-foreground transition-colors">Política de Privacidade</a>
+          </div>
           <p className="text-xs text-muted-foreground/50">
             2026© Todos os direitos reservados Gestor MSX
           </p>
