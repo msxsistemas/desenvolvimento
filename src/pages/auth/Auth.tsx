@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
-import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone, Gift, Loader2, ArrowRight, Sparkles, Users, DollarSign, Plug, MessageSquare, BarChart3, CheckCircle2 } from 'lucide-react';
 import { InlineError } from '@/components/ui/inline-error';
 import { useSystemLogo } from '@/hooks/useSystemLogo';
 import logoMsx from '@/assets/logo-msx.png';
@@ -338,27 +338,29 @@ export default function Auth() {
         </div>
 
         <div className="relative z-10 max-w-lg text-center flex flex-col items-center">
-          <div className="w-80 h-80 mb-6 drop-shadow-2xl">
+          <div className="w-64 h-64 mb-8 drop-shadow-2xl">
             <img src={logoMsx} alt="Logo MSX" className="w-full h-full object-contain" />
           </div>
           <p className="text-lg text-muted-foreground/80 mb-10 max-w-sm leading-relaxed">
             Gerencie seus clientes, planos e cobranças de forma simples e eficiente.
           </p>
-          <div className="flex items-center gap-8 text-sm text-muted-foreground/70">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span>Automação</span>
-            </div>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-primary" />
-              <span>Cobranças</span>
-            </div>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-2">
-              <Lock className="h-4 w-4 text-primary" />
-              <span>Segurança</span>
-            </div>
+
+          {/* Feature list */}
+          <div className="w-full max-w-xs space-y-3 text-left">
+            {[
+              { icon: Users, label: 'Gestão de usuários e acessos' },
+              { icon: DollarSign, label: 'Ferramentas financeiras integradas' },
+              { icon: Plug, label: 'Integração com plataformas autorizadas' },
+              { icon: MessageSquare, label: 'Comunicação automatizada' },
+              { icon: BarChart3, label: 'Relatórios operacionais e métricas' },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-3 text-sm text-muted-foreground/80">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Icon className="h-4 w-4 text-primary" />
+                </div>
+                <span>{label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
