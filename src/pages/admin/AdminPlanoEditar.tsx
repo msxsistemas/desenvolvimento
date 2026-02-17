@@ -52,7 +52,7 @@ export default function AdminPlanoEditar() {
       const { id: _, created_at, updated_at, ...payload } = form;
       await supabase.from("system_plans").update(payload).eq("id", id);
       toast({ title: "Plano atualizado!" });
-      navigate("/admin/planos");
+      navigate("/role/admin/planos");
     } catch {
       toast({ title: "Erro ao salvar plano", variant: "destructive" });
     }
@@ -70,7 +70,7 @@ export default function AdminPlanoEditar() {
               </div>
               <p className="text-xs/6 text-muted-foreground">Altere os dados do plano SaaS.</p>
             </div>
-            <Button onClick={() => navigate("/admin/planos")} size="sm" variant="outline" className="gap-2">
+            <Button onClick={() => navigate("/role/admin/planos")} size="sm" variant="outline" className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Voltar
             </Button>
           </div>
@@ -122,7 +122,7 @@ export default function AdminPlanoEditar() {
             <div className="flex items-center gap-2"><Switch checked={form.destaque} onCheckedChange={v => setForm((f: any) => ({ ...f, destaque: v }))} /><Label>Destaque</Label></div>
           </div>
           <div className="flex gap-3">
-            <Button type="button" variant="outline" className="flex-1" onClick={() => navigate("/admin/planos")}>Cancelar</Button>
+            <Button type="button" variant="outline" className="flex-1" onClick={() => navigate("/role/admin/planos")}>Cancelar</Button>
             <Button onClick={handleSave} className="flex-1">Salvar Alterações</Button>
           </div>
         </CardContent>

@@ -64,7 +64,7 @@ export default function AdminTemplates() {
               </div>
               <p className="text-xs/6 text-muted-foreground">Mensagens padrão copiadas para novos usuários do sistema.</p>
             </div>
-            <Button onClick={() => navigate("/admin/templates/novo")} size="sm" className="gap-2">
+            <Button onClick={() => navigate("/role/admin/templates/novo")} size="sm" className="gap-2">
               <Plus className="h-4 w-4" /> Novo Template
             </Button>
           </div>
@@ -105,7 +105,7 @@ export default function AdminTemplates() {
                       <TableCell><Badge variant={t.ativo ? "default" : "secondary"}>{t.ativo ? "Ativo" : "Inativo"}</Badge></TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/templates/editar/${t.id}`)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/role/admin/templates/editar/${t.id}`)}><Pencil className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(t.id)}><Trash2 className="h-4 w-4" /></Button>
                         </div>
                       </TableCell>

@@ -19,7 +19,7 @@ export default function AdminTemplateNovo() {
     try {
       await supabase.from("system_templates").insert(form);
       toast({ title: "Template criado!" });
-      navigate("/admin/templates");
+      navigate("/role/admin/templates");
     } catch {
       toast({ title: "Erro ao criar template", variant: "destructive" });
     }
@@ -37,7 +37,7 @@ export default function AdminTemplateNovo() {
               </div>
               <p className="text-xs/6 text-muted-foreground">Preencha os dados para criar um novo template padrão.</p>
             </div>
-            <Button onClick={() => navigate("/admin/templates")} size="sm" variant="outline" className="gap-2">
+            <Button onClick={() => navigate("/role/admin/templates")} size="sm" variant="outline" className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Voltar
             </Button>
           </div>

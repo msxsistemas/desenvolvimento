@@ -38,63 +38,63 @@ interface NavItem {
 }
 
 const adminNavItems: NavItem[] = [
-  { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
-  { title: "Usuários", url: "/admin/usuarios", icon: Users },
+  { title: "Dashboard", url: "/role/admin/dashboard", icon: LayoutDashboard },
+  { title: "Usuários", url: "/role/admin/usuarios", icon: Users },
   {
     title: "Planos SaaS",
-    url: "/admin/planos",
+    url: "/role/admin/planos",
     icon: CreditCard,
     submenuKey: "planos",
     subItems: [
-      { to: "/admin/planos/novo", label: "Criar Novo" },
-      { to: "/admin/planos", label: "Gerenciar" },
+      { to: "/role/admin/planos/novo", label: "Criar Novo" },
+      { to: "/role/admin/planos", label: "Gerenciar" },
     ],
   },
   {
     title: "Assinaturas",
-    url: "/admin/assinaturas",
+    url: "/role/admin/assinaturas",
     icon: UserCheck,
   },
   {
     title: "Gateways",
-    url: "/admin/gateways",
+    url: "/role/admin/gateways",
     icon: Wallet,
     submenuKey: "gateways",
     subItems: [
-      { to: "/admin/gateways", label: "Checkout" },
-      { to: "/admin/gateways/asaas", label: "Asaas" },
-      { to: "/admin/gateways/mercadopago", label: "Mercado Pago" },
-      { to: "/admin/gateways/ciabra", label: "Ciabra" },
+      { to: "/role/admin/gateways", label: "Checkout" },
+      { to: "/role/admin/gateways/asaas", label: "Asaas" },
+      { to: "/role/admin/gateways/mercadopago", label: "Mercado Pago" },
+      { to: "/role/admin/gateways/ciabra", label: "Ciabra" },
       
-      { to: "/admin/gateways/v3pay", label: "V3Pay" },
+      { to: "/role/admin/gateways/v3pay", label: "V3Pay" },
     ],
   },
   {
     title: "Templates",
-    url: "/admin/templates",
+    url: "/role/admin/templates",
     icon: MessageSquare,
     submenuKey: "templates",
     subItems: [
-      { to: "/admin/templates/novo", label: "Criar Novo" },
-      { to: "/admin/templates", label: "Gerenciar" },
+      { to: "/role/admin/templates/novo", label: "Criar Novo" },
+      { to: "/role/admin/templates", label: "Gerenciar" },
     ],
   },
-  { title: "Servidores", url: "/admin/servidores", icon: Server },
+  { title: "Servidores", url: "/role/admin/servidores", icon: Server },
   {
     title: "Indicações",
-    url: "/admin/indicacoes",
+    url: "/role/admin/indicacoes",
     icon: Share2,
     submenuKey: "indicacoes",
     subItems: [
-      { to: "/admin/indicacoes", label: "Configurações" },
-      { to: "/admin/indicacoes/usuarios", label: "Usuários" },
-      { to: "/admin/indicacoes/registros", label: "Indicações" },
-      { to: "/admin/indicacoes/saques", label: "Saques" },
-      { to: "/admin/indicacoes/ranking", label: "Top 5" },
+      { to: "/role/admin/indicacoes", label: "Configurações" },
+      { to: "/role/admin/indicacoes/usuarios", label: "Usuários" },
+      { to: "/role/admin/indicacoes/registros", label: "Indicações" },
+      { to: "/role/admin/indicacoes/saques", label: "Saques" },
+      { to: "/role/admin/indicacoes/ranking", label: "Top 5" },
     ],
   },
-  { title: "Configurações", url: "/admin/configuracoes", icon: Settings },
-  { title: "Logs", url: "/admin/logs", icon: ScrollText },
+  { title: "Configurações", url: "/role/admin/configuracoes", icon: Settings },
+  { title: "Logs", url: "/role/admin/logs", icon: ScrollText },
 ];
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
@@ -195,7 +195,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             <NavLink
               key={item.url}
               to={item.url}
-              end={item.url === "/admin/dashboard"}
+              end={item.url === "/role/admin/dashboard"}
               onClick={() => { setOpenSubmenu(null); onNavigate?.(); }}
               className={() => menuItemClass(isActive(item.url) && openSubmenu === null)}
             >
