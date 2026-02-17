@@ -186,7 +186,8 @@ const App = () => (
           {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/usuarios" element={<AdminUsuarios />} />
             <Route path="/admin/planos" element={<AdminPlanos />} />
             <Route path="/admin/planos/novo" element={<AdminPlanoNovo />} />

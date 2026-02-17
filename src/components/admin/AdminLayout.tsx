@@ -38,7 +38,7 @@ interface NavItem {
 }
 
 const adminNavItems: NavItem[] = [
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
   { title: "Usuários", url: "/admin/usuarios", icon: Users },
   {
     title: "Planos SaaS",
@@ -195,7 +195,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             <NavLink
               key={item.url}
               to={item.url}
-              end={item.url === "/admin"}
+              end={item.url === "/admin/dashboard"}
               onClick={() => { setOpenSubmenu(null); onNavigate?.(); }}
               className={() => menuItemClass(isActive(item.url) && openSubmenu === null)}
             >
