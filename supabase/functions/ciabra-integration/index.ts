@@ -80,16 +80,17 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
 
+      // Verify charge exists in database AND retrieve associated user for key verification
       const { data: existingCharge } = await supabaseAdmin
         .from('cobrancas')
-        .select('id')
+        .select('id, user_id')
         .eq('gateway', 'ciabra')
         .eq('gateway_charge_id', possibleChargeId)
         .maybeSingle();
       
       const { data: existingSub } = await supabaseAdmin
         .from('user_subscriptions')
-        .select('id')
+        .select('id, user_id')
         .eq('gateway_subscription_id', possibleChargeId)
         .maybeSingle();
 
@@ -98,6 +99,24 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: 'Unknown charge' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
       }
+
+      // Verify webhook authenticity: check that the originating user has Ciabra configured
+      const webhookUserId = existingCharge?.user_id || existingSub?.user_id;
+      if (webhookUserId) {
+        const { data: cibraConfig } = await supabaseAdmin
+          .from('ciabra_config')
+          .select('is_configured')
+          .eq('user_id', webhookUserId)
+          .eq('is_configured', true)
+          .maybeSingle();
+        
+        if (!cibraConfig) {
+          console.warn('⚠️ Ciabra webhook rejected: user has no active Ciabra config');
+          return new Response(JSON.stringify({ error: 'Gateway not configured for user' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
+        }
+      }
+
       console.log('✅ Ciabra webhook charge verified in database');
       
       const isPaid = webhookType.includes('CONFIRMED') || webhookType.includes('PAID')
