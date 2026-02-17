@@ -228,10 +228,6 @@ export default function AtivarPlano() {
 
   const getFeatures = (p: SystemPlan) => {
     const f: string[] = [];
-    if (p.limite_clientes) f.push(`Até ${p.limite_clientes} clientes`);
-    if (p.limite_mensagens) f.push(`Até ${p.limite_mensagens} mensagens/mês`);
-    if (p.limite_whatsapp_sessions) f.push(`${p.limite_whatsapp_sessions} sessão WhatsApp`);
-    if (p.limite_paineis) f.push(`${p.limite_paineis} painel integrado`);
     if (p.recursos && Array.isArray(p.recursos)) {
       p.recursos.forEach((r: any) => {
         if (typeof r === 'string') f.push(r);
