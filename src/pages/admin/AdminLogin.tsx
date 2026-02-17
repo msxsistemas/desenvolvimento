@@ -1,18 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Shield, LogIn } from "lucide-react";
+import { Shield, LogIn, Lock, KeyRound } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+
+const ADMIN_SECRET_CODE = "159753";
 
 export default function AdminLogin() {
+  const [secretCode, setSecretCode] = useState("");
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [shakeError, setShakeError] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (secretCode.length === 6) {
+      if (secretCode === ADMIN_SECRET_CODE) {
+        setIsUnlocked(true);
+        toast.success("Acesso liberado!");
+      } else {
+        setShakeError(true);
+        toast.error("Código incorreto.");
+        setTimeout(() => {
+          setSecretCode("");
+          setShakeError(false);
+        }, 600);
+      }
+    }
+  }, [secretCode]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +43,6 @@ export default function AdminLogin() {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      // Check if user has admin role
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
@@ -48,6 +69,46 @@ export default function AdminLogin() {
       setLoading(false);
     }
   };
+
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-sm shadow-lg">
+          <CardHeader className="text-center space-y-2">
+            <div className="flex justify-center">
+              <div className="rounded-full bg-destructive/10 p-3">
+                <Lock className="h-8 w-8 text-destructive" />
+              </div>
+            </div>
+            <CardTitle className="text-xl">Área Restrita</CardTitle>
+            <CardDescription>Digite o código de acesso para continuar.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4">
+            <div className={shakeError ? "animate-shake" : ""}>
+              <InputOTP
+                maxLength={6}
+                value={secretCode}
+                onChange={setSecretCode}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              <KeyRound className="inline h-3 w-3 mr-1" />
+              Insira o código de 6 dígitos para desbloquear.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
