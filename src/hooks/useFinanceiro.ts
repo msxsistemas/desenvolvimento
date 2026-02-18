@@ -65,32 +65,40 @@ export function useFinanceiro(): DadosFinanceiros {
 
       // Carregamento dos dados financeiros
 
-      // Buscar clientes, planos e produtos
-      const [clientesRes, planosRes, produtosRes] = await Promise.all([
-        supabase.from('clientes').select('*'),
-        supabase.from('planos').select('*'),
-        supabase.from('produtos').select('*')
+      // Buscar todos os registros com paginação para evitar limite de 1000 rows
+      const fetchAllPaginated = async <T>(query: any): Promise<T[]> => {
+        const PAGE_SIZE = 1000;
+        let all: T[] = [];
+        let from = 0;
+        let hasMore = true;
+        while (hasMore) {
+          const { data, error } = await query.range(from, from + PAGE_SIZE - 1);
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+          all = all.concat(data as T[]);
+          hasMore = data.length === PAGE_SIZE;
+          from += PAGE_SIZE;
+        }
+        return all;
+      };
+
+      const [clientes, planos, produtos] = await Promise.all([
+        fetchAllPaginated<Cliente>(supabase.from('clientes').select('*')),
+        fetchAllPaginated<Plano>(supabase.from('planos').select('*')),
+        fetchAllPaginated<Produto>(supabase.from('produtos').select('*'))
       ]);
 
       // Buscar transações customizadas com fallback
-      let transacoesRes: { data: any[] | null; error: any } = { data: [], error: null };
+      let transacoesCustomizadas: any[] = [];
       try {
-        transacoesRes = await supabase
+        const { data } = await supabase
           .from('transacoes')
           .select('*')
           .order('created_at', { ascending: false });
+        transacoesCustomizadas = data || [];
       } catch {
         // Tabela de transações ainda não criada
       }
-
-      if (clientesRes.error) throw clientesRes.error;
-      if (planosRes.error) throw planosRes.error;
-      if (produtosRes.error) throw produtosRes.error;
-
-      const clientes = clientesRes.data as Cliente[];
-      const planos = planosRes.data as Plano[];
-      const produtos = produtosRes.data as Produto[];
-      const transacoesCustomizadas = transacoesRes.data || [];
 
       // Dados carregados com sucesso
 
