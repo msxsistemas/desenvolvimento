@@ -455,7 +455,7 @@ export default function ClientesListCreate() {
 
           const templateFatura = msgPadroes?.fatura_criada;
           if (templateFatura && templateFatura.trim()) {
-            const publicOrigin = "https://gestormsx.lovable.app";
+            const publicOrigin = "https://gestormsx.pro";
             const faturaLink = result.fatura?.id 
               ? `${publicOrigin}/fatura/${result.fatura.id}` 
               : "";
