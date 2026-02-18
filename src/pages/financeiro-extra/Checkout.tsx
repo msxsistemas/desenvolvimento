@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreditCard, QrCode, Settings, Building2, Zap, ShieldCheck, ExternalLink } from "lucide-react";
+import { CreditCard, QrCode, Settings, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAssas } from "@/hooks/useAssas";
 import { useV3Pay } from "@/hooks/useV3Pay";
@@ -111,173 +111,111 @@ export default function Checkout() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-3 mb-1">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Settings className="h-5 w-5 text-primary" />
+    <div>
+      <header className="rounded-lg border mb-6 overflow-hidden shadow" aria-label="Configuração do Checkout">
+        <div className="px-4 py-3 text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
+          <div className="flex items-center gap-2">
+            <Settings className="h-5 w-5" aria-hidden="true" />
+            <h1 className="text-base font-semibold tracking-tight">Configuração do Checkout</h1>
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Configuração do Checkout</h1>
-            <p className="text-sm text-muted-foreground">Gerencie os métodos de pagamento dos seus clientes.</p>
-          </div>
+          <p className="text-xs/6 opacity-90">Configure os métodos de pagamento disponíveis para seus clientes.</p>
         </div>
-      </div>
+      </header>
 
-      {/* Gateway Selection */}
-      <Card className="border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-border/40 flex items-center gap-2.5">
-          <Building2 className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold text-foreground">Gateway de Pagamento</span>
-        </div>
-        <CardContent className="p-5 space-y-4">
-          {configuredGateways.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border/60 bg-muted/30 p-5 text-center space-y-3">
-              <div className="h-10 w-10 rounded-full bg-warning/10 flex items-center justify-center mx-auto">
-                <Zap className="h-5 w-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Nenhum gateway configurado</p>
-                <p className="text-xs text-muted-foreground mt-1">Configure pelo menos um gateway para ativar pagamentos automáticos.</p>
-              </div>
-              <div className="flex flex-wrap justify-center gap-2 pt-1">
-                {[
-                  { label: "Asaas", href: "/configuracoes/asaas" },
-                  { label: "Mercado Pago", href: "/configuracoes/mercado-pago" },
-                  { label: "Ciabra", href: "/configuracoes/ciabra" },
-                  { label: "V3Pay", href: "/configuracoes/v3pay" },
-                ].map(g => (
-                  <a
-                    key={g.label}
-                    href={g.href}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent hover:border-primary/30 transition-all duration-200"
-                  >
-                    {g.label}
-                    <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                  </a>
-                ))}
-              </div>
+      <main className="space-y-4">
+        {/* Gateway + Métodos de Pagamento */}
+        <Card className="shadow-sm">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-foreground/70" />
+              <CardTitle className="text-sm">Gateway e Métodos de Pagamento</CardTitle>
             </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Gateway Ativo</label>
-                <Select value={gatewayAtivo} onValueChange={setGatewayAtivo}>
-                  <SelectTrigger className="w-full sm:w-56 h-10">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {configuredGateways.map((g) => (
-                      <SelectItem key={g.id} value={g.id}>{g.label}</SelectItem>
+            <CardDescription>
+              Selecione o gateway ativo e habilite os métodos de pagamento.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Gateway Selector */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Gateway Ativo</label>
+              {configuredGateways.length === 0 ? (
+                <div className="rounded-md border px-3 py-2">
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum gateway configurado.{" "}
+                    <a href="/configuracoes/asaas" className="text-primary underline">Asaas</a>{" · "}
+                    <a href="/configuracoes/mercado-pago" className="text-primary underline">Mercado Pago</a>{" · "}
+                    <a href="/configuracoes/ciabra" className="text-primary underline">Ciabra</a>{" · "}
+                    <a href="/configuracoes/v3pay" className="text-primary underline">V3Pay</a>
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Select value={gatewayAtivo} onValueChange={setGatewayAtivo}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {configuredGateways.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>{g.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex flex-wrap gap-1.5">
+                    {gateways.map((g) => (
+                      <Badge
+                        key={g.id}
+                        variant={g.configured ? (g.id === gatewayAtivo ? "default" : "secondary") : "outline"}
+                        className="text-[10px] px-1.5 py-0"
+                      >
+                        {g.label}
+                      </Badge>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Toggles */}
+            <div className="grid gap-2">
+              <div className="rounded-md border px-3 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <QrCode className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm">PIX Automático</span>
+                </div>
+                <Switch
+                  checked={pixEnabled}
+                  onCheckedChange={setPixEnabled}
+                  id="pix-toggle"
+                  disabled={configuredGateways.length === 0}
+                />
               </div>
-              <div className="flex flex-wrap gap-2">
-                {gateways.map((g) => (
-                  <Badge
-                    key={g.id}
-                    variant={g.configured ? (g.id === gatewayAtivo ? "default" : "secondary") : "outline"}
-                    className={`text-[11px] px-2.5 py-0.5 font-medium transition-all duration-200 ${
-                      g.id === gatewayAtivo && g.configured
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : ""
-                    }`}
-                  >
-                    {g.configured && g.id === gatewayAtivo && (
-                      <ShieldCheck className="h-3 w-3 mr-1" />
-                    )}
-                    {g.label}
-                  </Badge>
-                ))}
+
+              <div className="rounded-md border px-3 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm">Cartão de Crédito</span>
+                </div>
+                <Switch
+                  checked={creditCardEnabled}
+                  onCheckedChange={setCreditCardEnabled}
+                  id="credit-card-toggle"
+                />
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Payment Methods */}
-      <Card className="border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-border/40 flex items-center gap-2.5">
-          <CreditCard className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold text-foreground">Métodos de Pagamento</span>
-        </div>
-        <CardContent className="p-5 space-y-3">
-          {/* PIX Toggle */}
-          <div
-            className={`group rounded-xl border px-4 py-3.5 flex items-center justify-between transition-all duration-200 ${
-              pixEnabled && configuredGateways.length > 0
-                ? "border-success/30 bg-success/5"
-                : "border-border/60 hover:border-border"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${
-                pixEnabled && configuredGateways.length > 0 ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"
-              }`}>
-                <QrCode className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-sm font-medium text-foreground">PIX Automático</span>
-                <p className="text-[11px] text-muted-foreground">Gera QR code via gateway</p>
-              </div>
-            </div>
-            <Switch
-              checked={pixEnabled}
-              onCheckedChange={setPixEnabled}
-              id="pix-toggle"
-              disabled={configuredGateways.length === 0}
-            />
-          </div>
-
-          {/* Credit Card Toggle */}
-          <div
-            className={`group rounded-xl border px-4 py-3.5 flex items-center justify-between transition-all duration-200 ${
-              creditCardEnabled
-                ? "border-primary/30 bg-primary/5"
-                : "border-border/60 hover:border-border"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${
-                creditCardEnabled ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
-              }`}>
-                <CreditCard className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-sm font-medium text-foreground">Cartão de Crédito</span>
-                <p className="text-[11px] text-muted-foreground">Aceite pagamentos por cartão</p>
-              </div>
-            </div>
-            <Switch
-              checked={creditCardEnabled}
-              onCheckedChange={setCreditCardEnabled}
-              id="credit-card-toggle"
-            />
-          </div>
-
-          {pixEnabled && configuredGateways.length > 0 && (
-            <div className="flex items-center gap-2 rounded-lg bg-success/10 border border-success/20 px-3 py-2">
-              <ShieldCheck className="h-3.5 w-3.5 text-success" />
-              <p className="text-xs text-success font-medium">
-                PIX ativo via {gateways.find(g => g.id === gatewayAtivo)?.label}
+            {pixEnabled && configuredGateways.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                ✅ PIX ativo via <strong>{gateways.find(g => g.id === gatewayAtivo)?.label}</strong>
               </p>
+            )}
+            <div className="flex justify-center border-t pt-4 mt-2">
+              <Button onClick={handleSave} disabled={loading}>
+                {loading ? "Salvando..." : "Salvar Configurações"}
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Save */}
-      <div className="flex justify-end">
-        <Button
-          onClick={handleSave}
-          disabled={loading}
-          className="px-8 h-10 font-semibold shadow-sm"
-        >
-          {loading ? "Salvando..." : "Salvar Configurações"}
-        </Button>
-      </div>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
 }
