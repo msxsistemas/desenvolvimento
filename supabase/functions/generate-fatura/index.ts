@@ -826,7 +826,7 @@ async function handleCreateFatura(body: any, user: any, authHeader: string, supa
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
   }
 
-  const faturaUrl = `https://gestormsx.lovable.app/fatura/${fatura.id}`;
+  const faturaUrl = `https://gestormsx.pro/fatura/${fatura.id}`;
 
   // Send WhatsApp notification
   try {
