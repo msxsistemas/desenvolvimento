@@ -180,7 +180,6 @@ const App = () => (
             <Route path="/indicacoes/sistema" element={<IndicacoesSistema />} />
             {/* Outros routes */}
             <Route path="/outros/cupom" element={<Cupom />} />
-            <Route path="/indicacoes/sistema" element={<IndicacoesSistema />} />
           </Route>
 
           {/* Admin routes */}

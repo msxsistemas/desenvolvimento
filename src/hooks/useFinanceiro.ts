@@ -63,7 +63,7 @@ export function useFinanceiro(): DadosFinanceiros {
       
       setDados(prev => ({ ...prev, loading: true, error: null }));
 
-      console.log('🔄 Iniciando carregamento dos dados financeiros...');
+      // Carregamento dos dados financeiros
 
       // Buscar clientes, planos e produtos
       const [clientesRes, planosRes, produtosRes] = await Promise.all([
@@ -73,14 +73,14 @@ export function useFinanceiro(): DadosFinanceiros {
       ]);
 
       // Buscar transações customizadas com fallback
-      let transacoesRes = { data: [], error: null };
+      let transacoesRes: { data: any[] | null; error: any } = { data: [], error: null };
       try {
-        transacoesRes = await (supabase as any)
+        transacoesRes = await supabase
           .from('transacoes')
           .select('*')
           .order('created_at', { ascending: false });
-      } catch (error) {
-        console.log('Tabela de transações ainda não criada, continuando sem transações customizadas');
+      } catch {
+        // Tabela de transações ainda não criada
       }
 
       if (clientesRes.error) throw clientesRes.error;
@@ -92,12 +92,7 @@ export function useFinanceiro(): DadosFinanceiros {
       const produtos = produtosRes.data as Produto[];
       const transacoesCustomizadas = transacoesRes.data || [];
 
-      console.log('📊 Dados carregados:', { 
-        clientes: clientes.length, 
-        planos: planos.length, 
-        produtos: produtos.length,
-        transacoesCustomizadas: transacoesCustomizadas.length
-      });
+      // Dados carregados com sucesso
 
       // Criar mapas usando IDs em vez de nomes
       const planosMap = new Map(planos.map(p => [p.id!, p]));
@@ -228,7 +223,7 @@ export function useFinanceiro(): DadosFinanceiros {
       if (!userId) throw new Error('Usuário não autenticado');
       
       // Tentar inserir a transação
-      let { error } = await (supabase as any)
+      let { error } = await supabase
         .from('transacoes')
         .insert({
           valor: novaTransacao.valor,
@@ -239,7 +234,7 @@ export function useFinanceiro(): DadosFinanceiros {
 
       // Se a tabela não existir, tentar criar automaticamente
       if (error && error.code === 'PGRST205') {
-        console.log('🔧 Tabela não encontrada, criando automaticamente...');
+        // Tabela não encontrada, criando automaticamente
         
         try {
           // Chamar a edge function para criar a tabela
@@ -249,10 +244,8 @@ export function useFinanceiro(): DadosFinanceiros {
             throw new Error(`Erro ao criar tabela: ${createError.message}`);
           }
           
-          console.log('✅ Tabela criada:', createResult);
-          
           // Tentar inserir novamente
-          const { error: insertError } = await (supabase as any)
+          const { error: insertError } = await supabase
             .from('transacoes')
             .insert({
               valor: novaTransacao.valor,
@@ -265,7 +258,7 @@ export function useFinanceiro(): DadosFinanceiros {
             throw insertError;
           }
           
-          console.log('✅ Transação salva após criar tabela!');
+          // Transação salva após criar tabela
         } catch (createErr) {
           console.error('Erro ao criar tabela automaticamente:', createErr);
           throw new Error('A tabela de transações não existe e não foi possível criá-la automaticamente. Contacte o suporte.');
@@ -285,7 +278,7 @@ export function useFinanceiro(): DadosFinanceiros {
 
   const editarTransacao = async (id: string, transacaoEditada: NovaTransacao) => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('transacoes')
         .update({
           valor: transacaoEditada.valor,
@@ -306,7 +299,7 @@ export function useFinanceiro(): DadosFinanceiros {
 
   const excluirTransacao = async (id: string) => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('transacoes')
         .delete()
         .eq('id', id);
