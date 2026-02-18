@@ -253,14 +253,14 @@ export default function AppLayout() {
               )}
 
               {/* Separator */}
-              <div className="hidden sm:block w-px h-6 bg-border mx-1" />
+              <div className="hidden sm:block w-px h-6 bg-border/50 mx-1" />
 
               {/* Profile section */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 h-auto p-1.5 hover:bg-accent">
-                    <div className="w-11 h-11 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
-                      <span className="text-muted-foreground text-sm font-bold">
+                  <Button variant="ghost" className="flex items-center gap-2.5 h-auto p-1.5 rounded-xl hover:bg-accent/50 hover:scale-[1.02] transition-all duration-200 border border-transparent hover:border-border/50">
+                    <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <span className="text-primary text-sm font-bold">
                         {getUserInitials(user?.user_metadata?.full_name, user?.email)}
                       </span>
                     </div>
@@ -269,22 +269,22 @@ export default function AppLayout() {
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-50">
-                  <DropdownMenuItem disabled>
+                <DropdownMenuContent align="end" className="w-56 bg-popover/95 backdrop-blur-md border border-border/50 shadow-xl rounded-xl z-50">
+                  <DropdownMenuItem disabled className="py-2.5">
                     <User className="mr-2 h-4 w-4" />
                     <span className="text-sm font-medium truncate">{getCompanyName()}</span>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/perfil')}>
+                  <DropdownMenuSeparator className="bg-border/50" />
+                  <DropdownMenuItem onClick={() => navigate('/perfil')} className="py-2.5 rounded-lg mx-1 cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     Meu Perfil
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/renovar-acesso')}>
+                  <DropdownMenuItem onClick={() => navigate('/renovar-acesso')} className="py-2.5 rounded-lg mx-1 cursor-pointer">
                     <Star className="mr-2 h-4 w-4" />
                     Renovar Acesso
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
+                  <DropdownMenuSeparator className="bg-border/50" />
+                  <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive py-2.5 rounded-lg mx-1 cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     Sair
                   </DropdownMenuItem>
