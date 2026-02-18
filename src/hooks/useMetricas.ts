@@ -3,6 +3,34 @@ import { supabase } from '@/integrations/supabase/client';
 import { Cliente, Plano, Produto } from '@/types/database';
 import { useCurrentUser } from './useCurrentUser';
 
+// Utility to fetch all rows bypassing Supabase 1000-row limit
+async function fetchAllRows<T>(
+  table: 'clientes' | 'planos' | 'produtos',
+  userId: string,
+): Promise<T[]> {
+  const PAGE_SIZE = 1000;
+  let allRows: T[] = [];
+  let from = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .eq('user_id', userId)
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+
+    allRows = allRows.concat(data as T[]);
+    hasMore = data.length === PAGE_SIZE;
+    from += PAGE_SIZE;
+  }
+
+  return allRows;
+}
+
 interface MetricasClientes {
   totalClientes: number;
   clientesAtivos: number;
@@ -55,22 +83,15 @@ export function useMetricasClientes(): MetricasClientes {
       
       setMetricas(prev => ({ ...prev, loading: true, error: null }));
 
-      const { data: clientes, error } = await supabase
-        .from('clientes')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (error) throw error;
+      const clientes = await fetchAllRows<Cliente>('clientes', userId);
 
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
 
-      // Início do mês atual
       const inicioMesAtual = new Date();
       inicioMesAtual.setDate(1);
       inicioMesAtual.setHours(0, 0, 0, 0);
 
-      // Filtrar clientes criados no mês atual
       const clientesDoMesAtual = clientes.filter(cliente => {
         const dataCliente = new Date(cliente.created_at || '');
         return dataCliente >= inicioMesAtual;
@@ -82,7 +103,6 @@ export function useMetricasClientes(): MetricasClientes {
         return dataCliente.getTime() === hoje.getTime();
       }).length;
 
-      // Gerar dados dos últimos 7 dias
       const clientesNovosData = [];
       for (let i = 6; i >= 0; i--) {
         const data = new Date();
@@ -101,14 +121,12 @@ export function useMetricasClientes(): MetricasClientes {
         });
       }
 
-      // Calcular clientes ativos e vencidos baseado na data de vencimento
       const agora = new Date();
       let clientesAtivos = 0;
       let clientesVencidos = 0;
 
       clientes.forEach(cliente => {
         if (!cliente.data_vencimento) {
-          // Se não tem data de vencimento, considera como ativo
           clientesAtivos++;
         } else {
           const dataVencimento = new Date(cliente.data_vencimento);
@@ -121,7 +139,7 @@ export function useMetricasClientes(): MetricasClientes {
       });
 
       setMetricas({
-        totalClientes: clientesDoMesAtual.length, // Apenas clientes do mês atual
+        totalClientes: clientesDoMesAtual.length,
         clientesAtivos,
         clientesVencidos,
         clientesNovosHoje,
@@ -166,23 +184,16 @@ export function useMetricasPagamentos(): MetricasPagamentos {
       
       setMetricas(prev => ({ ...prev, loading: true, error: null }));
 
-      const [clientesRes, planosRes] = await Promise.all([
-        supabase.from('clientes').select('*').eq('user_id', userId),
-        supabase.from('planos').select('*').eq('user_id', userId)
+      const [clientes, planos] = await Promise.all([
+        fetchAllRows<Cliente>('clientes', userId),
+        fetchAllRows<Plano>('planos', userId)
       ]);
-
-      if (clientesRes.error) throw clientesRes.error;
-      if (planosRes.error) throw planosRes.error;
-
-      const clientes = clientesRes.data as Cliente[];
-      const planos = planosRes.data as Plano[];
 
       const planosMap = new Map(planos.map(p => [p.id!, p]));
 
       let valorTotalMes = 0;
       let totalPagamentos = 0;
 
-      // Calcular pagamentos do mês atual
       const inicioMes = new Date();
       inicioMes.setDate(1);
       inicioMes.setHours(0, 0, 0, 0);
@@ -201,7 +212,6 @@ export function useMetricasPagamentos(): MetricasPagamentos {
         }
       });
 
-      // Gerar dados dos últimos 7 dias
       const pagamentosData = [];
       for (let i = 6; i >= 0; i--) {
         const data = new Date();
@@ -278,66 +288,43 @@ export function useMetricasRenovacoes(): MetricasRenovacoes {
       
       setMetricas(prev => ({ ...prev, loading: true, error: null }));
 
-      const { data: clientes, error } = await supabase
-        .from('clientes')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (error) throw error;
+      const clientes = await fetchAllRows<Cliente>('clientes', userId);
 
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
 
-      // Início do mês atual
       const inicioMesAtual = new Date();
       inicioMesAtual.setDate(1);
       inicioMesAtual.setHours(0, 0, 0, 0);
 
-      // Considera renovação do mês atual: clientes criados ANTES do mês atual e ainda ativos
-      // (se estão ativos, significa que renovaram em algum momento)
       const clientesRenovados = clientes.filter(cliente => {
         const dataCriacao = new Date(cliente.created_at || '');
         const dataVencimento = cliente.data_vencimento ? new Date(cliente.data_vencimento) : null;
-        
-        // Cliente foi criado ANTES do mês atual E ainda está ativo (vencimento futuro)
         return dataCriacao < inicioMesAtual && dataVencimento && dataVencimento > hoje;
       });
 
       const totalRenovacoes = clientesRenovados.length;
 
-      // Contar renovações hoje (clientes que venceriam hoje mas foram renovados)
       const renovacoesHoje = clientes.filter(cliente => {
         const dataVencimento = cliente.data_vencimento ? new Date(cliente.data_vencimento) : null;
         if (!dataVencimento) return false;
-        
-        // Cliente com vencimento nos próximos 7 dias (provavelmente renovado recentemente)
         const seteDiasFrente = new Date();
         seteDiasFrente.setDate(seteDiasFrente.getDate() + 7);
-        
         return dataVencimento >= hoje && dataVencimento <= seteDiasFrente;
       }).length;
 
-      // Gerar dados dos últimos 7 dias - apenas clientes que realmente renovaram
       const renovacoesData = [];
       for (let i = 6; i >= 0; i--) {
         const data = new Date();
         data.setDate(data.getDate() - i);
         data.setHours(0, 0, 0, 0);
         
-        // Contar apenas clientes que foram criados antes do mês atual
-        // e que ainda estão ativos (renovaram)
         const renovacoesDoDia = clientes.filter(cliente => {
           const dataCriacao = new Date(cliente.created_at || '');
           const dataVencimento = cliente.data_vencimento ? new Date(cliente.data_vencimento) : null;
-          
-          // Cliente criado ANTES do início do mês atual
-          // E tem vencimento futuro (renovado)
-          // E o vencimento é próximo desta data (renovado neste período)
           if (dataCriacao >= inicioMesAtual || !dataVencimento) return false;
-          
           const dataVencimentoFormatada = new Date(dataVencimento);
           dataVencimentoFormatada.setHours(0, 0, 0, 0);
-          
           return dataVencimentoFormatada.getTime() === data.getTime();
         }).length;
 
