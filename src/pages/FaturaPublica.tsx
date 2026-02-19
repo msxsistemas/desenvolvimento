@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Copy, CheckCircle, XCircle, Wallet, RefreshCw, QrCode, Printer, Tag, Loader2 } from "lucide-react";
+import { Copy, CheckCircle, XCircle, Wallet, RefreshCw, QrCode, Printer, Tag, Loader2, ShieldCheck } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useToast } from "@/hooks/use-toast";
 
@@ -231,6 +231,16 @@ export default function FaturaPublica() {
   const valorOriginalFormatted = hasDiscount
     ? Number(fatura.valor_original).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : null;
+
+  const gatewayInfo: Record<string, { label: string; color: string; bg: string; border: string; dot: string }> = {
+    woovi:       { label: "Woovi PIX",     color: "text-purple-700",  bg: "bg-purple-50",  border: "border-purple-200", dot: "bg-purple-500" },
+    asaas:       { label: "Asaas PIX",     color: "text-blue-700",    bg: "bg-blue-50",    border: "border-blue-200",   dot: "bg-blue-500"   },
+    mercadopago: { label: "Mercado Pago",  color: "text-sky-700",     bg: "bg-sky-50",     border: "border-sky-200",    dot: "bg-sky-500"    },
+    v3pay:       { label: "V3Pay PIX",     color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200",dot: "bg-emerald-500"},
+    ciabra:      { label: "Ciabra PIX",    color: "text-orange-700",  bg: "bg-orange-50",  border: "border-orange-200", dot: "bg-orange-500" },
+    pix_manual:  { label: "PIX Manual",    color: "text-teal-700",    bg: "bg-teal-50",    border: "border-teal-200",   dot: "bg-teal-500"   },
+  };
+  const gw = fatura.gateway ? (gatewayInfo[fatura.gateway] ?? { label: fatura.gateway, color: "text-slate-700", bg: "bg-slate-50", border: "border-slate-200", dot: "bg-slate-400" }) : null;
   const descontoFormatted = hasDiscount
     ? (Number(fatura.valor_original) - Number(fatura.valor)).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : null;
@@ -332,6 +342,21 @@ export default function FaturaPublica() {
               )}
             </div>
 
+            {/* Gateway Badge */}
+            {gw && (
+              <div className={`flex items-center gap-2.5 rounded-lg border px-4 py-3 ${gw.bg} ${gw.border}`}>
+                <ShieldCheck className={`h-4 w-4 shrink-0 ${gw.color}`} />
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`text-xs font-semibold uppercase tracking-wide ${gw.color}`}>Gateway de Pagamento</span>
+                  <span className="text-slate-300">•</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className={`inline-block w-2 h-2 rounded-full ${gw.dot}`} />
+                    <span className={`text-sm font-bold ${gw.color}`}>{gw.label}</span>
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* PIX Payment Modal */}
             <Dialog open={showPix} onOpenChange={setShowPix}>
               <DialogContent className="sm:max-w-md border border-slate-200 shadow-2xl rounded-xl p-0 overflow-hidden bg-white">
@@ -359,12 +384,14 @@ export default function FaturaPublica() {
                   )}
 
                   {/* Gateway badge */}
-                  {!generatingPix && (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="border-2 border-[#3b9ede] rounded-lg px-5 py-3 inline-flex flex-col items-center">
-                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">Pagamento Seguro</span>
-                        <span className="text-lg font-bold text-[#3b9ede]">
-                          {fatura.gateway === "pix_manual" ? "PIX" : fatura.gateway === "v3pay" ? "V3Pay" : fatura.gateway === "mercadopago" ? "Mercado Pago" : fatura.gateway === "ciabra" ? "Ciabra" : "Asaas"}
+                  {!generatingPix && gw && (
+                    <div className={`flex items-center justify-center gap-2 rounded-lg border px-5 py-3 ${gw.bg} ${gw.border}`}>
+                      <ShieldCheck className={`h-4 w-4 ${gw.color}`} />
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">Pagamento Seguro via</span>
+                        <span className={`flex items-center gap-1.5 text-base font-bold ${gw.color}`}>
+                          <span className={`inline-block w-2 h-2 rounded-full ${gw.dot}`} />
+                          {gw.label}
                         </span>
                       </div>
                     </div>
