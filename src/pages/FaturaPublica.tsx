@@ -341,7 +341,11 @@ export default function FaturaPublica() {
                 <div className="bg-slate-100 px-6 py-4 border-b border-slate-200">
                   <DialogHeader>
                     <DialogTitle className="text-base font-bold text-slate-800 uppercase tracking-wide">
-                      {fatura.gateway === "pix_manual" ? "PIX Manual" : "PIX Automático"}
+                      {fatura.gateway === "pix_manual"
+                        ? "PIX Manual"
+                        : fatura.gateway
+                          ? `PIX Automático - ${fatura.gateway.toUpperCase()}`
+                          : "PIX Automático"}
                     </DialogTitle>
                   </DialogHeader>
                 </div>
