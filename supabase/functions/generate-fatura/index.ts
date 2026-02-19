@@ -793,18 +793,31 @@ async function handleGeneratePix(body: any, supabaseAdmin: any): Promise<Respons
   const checkoutConfig = checkoutConfigResult.data;
   const userHasWoovi = !!(wooviConfigResult.data as any)?.is_configured;
 
-  const gatewayAtivo = checkoutConfig?.gateway_ativo || fatura.gateway || 'asaas';
+  // Resolve product gateway (same hierarchy as create: product > global > fatura.gateway)
+  let produtoGatewayRegen: string | null = null;
+  if (fatura.cliente_id && isValidUUID(fatura.cliente_id)) {
+    const { data: clienteRegen } = await supabaseAdmin.from('clientes').select('produto').eq('id', fatura.cliente_id).maybeSingle();
+    if (clienteRegen?.produto) {
+      const { data: produtoRegen } = await supabaseAdmin.from('produtos').select('gateway').eq('nome', clienteRegen.produto).eq('user_id', fatura.user_id).maybeSingle();
+      if (produtoRegen?.gateway) produtoGatewayRegen = produtoRegen.gateway;
+    }
+  }
+
+  const gatewayAtivo = produtoGatewayRegen || checkoutConfig?.gateway_ativo || fatura.gateway || 'asaas';
 
   let pixResult = emptyPix;
-  let gateway = fatura.gateway;
+  let gateway = produtoGatewayRegen || fatura.gateway;
   let pix_manual_key: string | null = null;
 
-  // Woovi: user must have it configured AND selected as active gateway AND pix_enabled
-  const useWoovi = userHasWoovi && gatewayAtivo === 'woovi' && checkoutConfig?.pix_enabled;
+  const useWoovi = userHasWoovi && gatewayAtivo === 'woovi' && (checkoutConfig?.pix_enabled || !!produtoGatewayRegen);
 
   if (useWoovi) {
     gateway = 'woovi';
     pixResult = await wooviGeneratePix(fatura, supabaseAdmin);
+  } else if (produtoGatewayRegen) {
+    // Product-specific gateway always generates PIX regardless of pix_enabled toggle
+    gateway = produtoGatewayRegen;
+    pixResult = await generatePixForGateway(produtoGatewayRegen, fatura, supabaseAdmin);
   } else if (checkoutConfig?.pix_enabled) {
     gateway = gatewayAtivo;
     pixResult = await generatePixForGateway(gatewayAtivo, fatura, supabaseAdmin);
