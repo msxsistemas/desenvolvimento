@@ -276,9 +276,9 @@ async function getCiabraCredentials(supabaseAdmin: any, userId: string): Promise
 
   let privateKey = '', publicKey = '';
   if (config.api_key_hash === 'vault') {
-    const { data: vKey } = await supabaseAdmin.rpc('get_gateway_secret', { p_user_id: userId, p_gateway: 'ciabra', p_secret_name: 'api_key' });
+    const { data: vKey } = await supabaseAdmin.rpc('admin_get_gateway_secret', { p_user_id: userId, p_gateway: 'ciabra', p_secret_name: 'api_key' });
     privateKey = vKey || '';
-    const { data: vPub } = await supabaseAdmin.rpc('get_gateway_secret', { p_user_id: userId, p_gateway: 'ciabra', p_secret_name: 'public_key' });
+    const { data: vPub } = await supabaseAdmin.rpc('admin_get_gateway_secret', { p_user_id: userId, p_gateway: 'ciabra', p_secret_name: 'public_key' });
     publicKey = vPub || '';
   } else {
     privateKey = atob(config.api_key_hash);
