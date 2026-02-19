@@ -41,11 +41,13 @@ Deno.serve(async (req) => {
 
         if (action === "check") {
           try {
-            const { data: secret } = await adminClient.rpc("get_gateway_secret", {
+            // Use userClient so auth.uid() resolves correctly inside the RPC
+            const { data: secret, error } = await userClient.rpc("get_gateway_secret", {
               p_user_id: user.id,
               p_gateway: "woovi",
               p_secret_name: "app_id",
             });
+            if (error) throw error;
             return new Response(JSON.stringify({ configured: !!secret && secret !== "" }), {
               headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
@@ -64,13 +66,20 @@ Deno.serve(async (req) => {
             });
           }
 
-          // Store the App ID securely via vault
-          await adminClient.rpc("store_gateway_secret", {
+          // Use userClient so auth.uid() resolves correctly inside the RPC
+          const { error: storeError } = await userClient.rpc("store_gateway_secret", {
             p_user_id: user.id,
             p_gateway: "woovi",
             p_secret_name: "app_id",
             p_secret_value: appId,
           });
+
+          if (storeError) {
+            console.error("store_gateway_secret error:", storeError.message);
+            return new Response(JSON.stringify({ error: storeError.message }), {
+              status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
 
           return new Response(JSON.stringify({ ok: true, configured: true }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
