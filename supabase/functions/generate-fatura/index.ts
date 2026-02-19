@@ -781,9 +781,40 @@ async function handleGeneratePix(body: any, supabaseAdmin: any): Promise<Respons
     return new Response(JSON.stringify({ success: true, fatura, message: 'Fatura já paga' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
-  if (fatura.pix_qr_code || fatura.pix_copia_cola || (fatura.gateway === 'pix_manual' && fatura.pix_manual_key)) {
+
+  // Se PIX manual, retorna direto
+  if (fatura.gateway === 'pix_manual' && fatura.pix_manual_key) {
     return new Response(JSON.stringify({ success: true, fatura }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+
+  // Se já tem pix_copia_cola salvo, retorna direto (não precisa regerar)
+  if (fatura.pix_copia_cola) {
+    return new Response(JSON.stringify({ success: true, fatura }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+
+  // Se tem gateway_charge_id mas não tem pix_copia_cola, tenta buscar o brCode do gateway existente
+  // para Woovi: busca o charge pelo correlationID existente em vez de criar um novo
+  if (fatura.gateway_charge_id && fatura.gateway === 'woovi') {
+    try {
+      const appId = await wooviGetAppId(supabaseAdmin, fatura.user_id);
+      if (appId) {
+        const resp = await fetch(`https://api.openpix.com.br/api/openpix/v1/charge/${fatura.gateway_charge_id}`, {
+          headers: { 'Authorization': appId, 'Content-Type': 'application/json' },
+        });
+        const data = await resp.json();
+        const charge = data.charge || data;
+        const brCode = charge.brCode || charge.qrCodeLink?.brCode || charge.pixQrCode?.brCode || null;
+        if (brCode) {
+          await supabaseAdmin.from('faturas').update({ pix_copia_cola: brCode }).eq('id', fatura.id);
+          return new Response(JSON.stringify({ success: true, fatura: { ...fatura, pix_copia_cola: brCode } }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+      }
+    } catch (err: any) {
+      console.error('Woovi fetch existing charge error:', err.message);
+    }
   }
 
   const [checkoutConfigResult, wooviConfigResult] = await Promise.all([
