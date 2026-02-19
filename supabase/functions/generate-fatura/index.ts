@@ -561,13 +561,27 @@ async function wooviGeneratePix(fatura: any, supabaseAdmin: any): Promise<PixRes
       body: JSON.stringify(payload),
     });
     const data = await resp.json();
-    console.log('Woovi generate PIX response:', JSON.stringify(data).substring(0, 300));
+    console.log('Woovi generate PIX response FULL:', JSON.stringify(data).substring(0, 600));
     const charge = data.charge || data;
-    if (!charge?.correlationID && !charge?.brCode) return emptyPix;
+    if (!charge?.correlationID && !charge?.transactionID) return emptyPix;
 
     const chargeId = charge.correlationID || correlationID;
-    const brCode = charge.brCode || data.brCode || null;
-    const qrCodeImage = charge.qrCodeImage || null;
+
+    // OpenPix returns brCode inside charge.qrCodeLink or directly on charge
+    const brCode = charge.brCode
+      || charge.qrCodeLink?.brCode
+      || charge.pixQrCode?.brCode
+      || data.brCode
+      || null;
+
+    // QR image: OpenPix may return a URL or base64
+    const qrCodeImageUrl = charge.qrCodeLink?.qrCodeImageUrl
+      || charge.pixQrCode?.qrCodeImageUrl
+      || charge.qrCodeImageUrl
+      || null;
+
+    console.log('Woovi brCode:', brCode ? brCode.substring(0, 50) + '...' : 'null');
+    console.log('Woovi qrCodeImageUrl:', qrCodeImageUrl);
 
     await supabaseAdmin.from('cobrancas').upsert({
       user_id: fatura.user_id, gateway: 'woovi', gateway_charge_id: chargeId,
@@ -575,7 +589,7 @@ async function wooviGeneratePix(fatura: any, supabaseAdmin: any): Promise<PixRes
       valor: fatura.valor, status: 'pendente',
     }, { onConflict: 'gateway_charge_id' });
 
-    return { pix_qr_code: qrCodeImage, pix_copia_cola: brCode, gateway_charge_id: chargeId };
+    return { pix_qr_code: null, pix_copia_cola: brCode, gateway_charge_id: chargeId };
   } catch (err: any) {
     console.error('Woovi PIX generate error:', err.message);
     return emptyPix;
