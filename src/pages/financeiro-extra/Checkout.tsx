@@ -9,6 +9,7 @@ import { CreditCard, QrCode, Settings, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAssas } from "@/hooks/useAssas";
 import { useV3Pay } from "@/hooks/useV3Pay";
+import { useWoovi } from "@/hooks/useWoovi";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -22,6 +23,7 @@ export default function Checkout() {
   const { toast } = useToast();
   const { isConfigured: asaasConfigured } = useAssas();
   const { isConfigured: v3payConfigured } = useV3Pay();
+  const { isConfigured: wooviConfigured } = useWoovi();
   const { user } = useCurrentUser();
   const [pixEnabled, setPixEnabled] = useState(false);
   const [creditCardEnabled, setCreditCardEnabled] = useState(false);
@@ -70,6 +72,7 @@ export default function Checkout() {
     { id: "mercadopago", label: "Mercado Pago", configured: mercadoPagoConfigured },
     { id: "ciabra", label: "Ciabra", configured: ciabraConfigured },
     { id: "v3pay", label: "V3Pay", configured: v3payConfigured },
+    { id: "woovi", label: "Woovi", configured: wooviConfigured },
   ];
 
   const configuredGateways = gateways.filter(g => g.configured);
@@ -145,7 +148,8 @@ export default function Checkout() {
                     <a href="/configuracoes/asaas" className="text-primary underline">Asaas</a>{" · "}
                     <a href="/configuracoes/mercado-pago" className="text-primary underline">Mercado Pago</a>{" · "}
                     <a href="/configuracoes/ciabra" className="text-primary underline">Ciabra</a>{" · "}
-                    <a href="/configuracoes/v3pay" className="text-primary underline">V3Pay</a>
+                    <a href="/configuracoes/v3pay" className="text-primary underline">V3Pay</a>{" · "}
+                    <a href="/configuracoes/woovi" className="text-primary underline">Woovi</a>
                   </p>
                 </div>
               ) : (
