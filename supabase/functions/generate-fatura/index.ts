@@ -946,9 +946,9 @@ async function handleCreateFatura(body: any, user: any, authHeader: string, supa
   const useWoovi2 = !produtoGateway && userHasWoovi2 && gatewayEfetivo === 'woovi' && checkoutConfig?.pix_enabled;
   const produtoUsaWoovi = produtoGateway === 'woovi';
 
-  let gateway: string | null = null;
-  let pix_manual_key: string | null = null;
-  let pixResult = emptyPix;
+  // Always record the effective gateway on the fatura (product-specific > global default)
+  let gateway: string = gatewayEfetivo;
+  let pixResult: PixResult = emptyPix;
 
   if (produtoUsaWoovi || useWoovi2) {
     gateway = 'woovi';
@@ -958,7 +958,6 @@ async function handleCreateFatura(body: any, user: any, authHeader: string, supa
     gateway = produtoGateway;
     pixResult = await createPixForNewFatura(produtoGateway, user.id, cliente_nome, cliente_whatsapp, parsedValor, plano_nome, supabaseAdmin, authHeader);
   } else if (checkoutConfig?.pix_enabled) {
-    gateway = gatewayEfetivo;
     pixResult = await createPixForNewFatura(gatewayEfetivo, user.id, cliente_nome, cliente_whatsapp, parsedValor, plano_nome, supabaseAdmin, authHeader);
   }
 
