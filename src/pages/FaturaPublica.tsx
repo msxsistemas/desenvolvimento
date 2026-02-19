@@ -341,11 +341,28 @@ export default function FaturaPublica() {
                 <div className="bg-slate-100 px-6 py-4 border-b border-slate-200">
                   <DialogHeader>
                     <DialogTitle className="text-base font-bold text-slate-800 uppercase tracking-wide">
-                      {fatura.gateway === "pix_manual"
-                        ? "PIX Manual"
-                        : fatura.gateway
-                          ? `PIX Automático - ${fatura.gateway.toUpperCase()}`
-                          : "PIX Automático"}
+                      <div className="flex items-center gap-2">
+                        {fatura.gateway === "woovi" && (
+                          <img src="https://woovi.com/img/woovi.svg" alt="Woovi" className="h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        )}
+                        {fatura.gateway === "asaas" && (
+                          <img src="https://asaas.com/favicon.ico" alt="Asaas" className="h-5 w-5 object-contain rounded" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        )}
+                        {fatura.gateway === "mercadopago" && (
+                          <img src="https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/5.20.3/mercadopago/logo__large@2x.png" alt="Mercado Pago" className="h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        )}
+                        {fatura.gateway === "ciabra" && (
+                          <img src="https://ciabra.com/favicon.ico" alt="Ciabra" className="h-5 w-5 object-contain rounded" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        )}
+                        {fatura.gateway === "v3pay" && (
+                          <img src="https://v3pay.com.br/favicon.ico" alt="V3Pay" className="h-5 w-5 object-contain rounded" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        )}
+                        {fatura.gateway === "pix_manual"
+                          ? "PIX Manual"
+                          : fatura.gateway
+                            ? `PIX Automático - ${fatura.gateway.toUpperCase()}`
+                            : "PIX Automático"}
+                      </div>
                     </DialogTitle>
                   </DialogHeader>
                 </div>
