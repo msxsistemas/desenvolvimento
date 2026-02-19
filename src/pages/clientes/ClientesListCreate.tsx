@@ -442,15 +442,18 @@ export default function ClientesListCreate() {
       }
 
       const novaFaturaUrl = result.fatura?.id ? `https://gestormsx.pro/fatura/${result.fatura.id}` : null;
-      
-      // Abre a nova fatura automaticamente em nova aba para o usuário ver o novo PIX
-      if (novaFaturaUrl) {
-        window.open(novaFaturaUrl, '_blank');
-      }
 
       toast({ 
-        title: "✅ Nova fatura gerada!", 
-        description: `Fatura criada para ${cliente.nome}. Nova aba aberta com o PIX atualizado.`,
+        title: "Fatura gerada!", 
+        description: `Fatura criada para ${cliente.nome}`,
+        action: novaFaturaUrl ? (
+          <button 
+            onClick={() => window.open(novaFaturaUrl, '_blank')} 
+            className="text-xs underline font-medium"
+          >
+            Abrir fatura
+          </button>
+        ) : undefined,
       });
       
       // Enviar mensagem de fatura criada via WhatsApp
