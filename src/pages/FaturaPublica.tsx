@@ -341,28 +341,7 @@ export default function FaturaPublica() {
                 <div className="bg-slate-100 px-6 py-4 border-b border-slate-200">
                   <DialogHeader>
                     <DialogTitle className="text-base font-bold text-slate-800 uppercase tracking-wide">
-                      <div className="flex items-center gap-2">
-                        {fatura.gateway === "woovi" && (
-                          <img src="https://woovi.com/img/woovi.svg" alt="Woovi" className="h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                        )}
-                        {fatura.gateway === "asaas" && (
-                          <img src="https://asaas.com/favicon.ico" alt="Asaas" className="h-5 w-5 object-contain rounded" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                        )}
-                        {fatura.gateway === "mercadopago" && (
-                          <img src="https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/5.20.3/mercadopago/logo__large@2x.png" alt="Mercado Pago" className="h-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                        )}
-                        {fatura.gateway === "ciabra" && (
-                          <img src="https://ciabra.com/favicon.ico" alt="Ciabra" className="h-5 w-5 object-contain rounded" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                        )}
-                        {fatura.gateway === "v3pay" && (
-                          <img src="https://v3pay.com.br/favicon.ico" alt="V3Pay" className="h-5 w-5 object-contain rounded" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                        )}
-                        {fatura.gateway === "pix_manual"
-                          ? "PIX Manual"
-                          : fatura.gateway
-                            ? `PIX Automático - ${fatura.gateway.toUpperCase()}`
-                            : "PIX Automático"}
-                      </div>
+                      {fatura.gateway === "pix_manual" ? "PIX Manual" : "PIX Automático"}
                     </DialogTitle>
                   </DialogHeader>
                 </div>
@@ -372,6 +351,21 @@ export default function FaturaPublica() {
                   <p className="text-sm text-slate-700 font-semibold text-center">
                     Após confirmar o pagamento, clique no botão Fechar logo abaixo!
                   </p>
+
+                  {/* Gateway badge */}
+                  {fatura.gateway && fatura.gateway !== "pix_manual" && (
+                    <div className="border border-[#3b9ede] rounded-lg px-4 py-3 text-center">
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Pagamento Seguro</p>
+                      <p className="text-base font-bold text-[#3b9ede]">
+                        {fatura.gateway === "asaas" ? "Asaas"
+                          : fatura.gateway === "mercadopago" ? "Mercado Pago"
+                          : fatura.gateway === "ciabra" ? "Ciabra"
+                          : fatura.gateway === "v3pay" ? "V3Pay"
+                          : fatura.gateway === "woovi" ? "Woovi"
+                          : fatura.gateway.toUpperCase()}
+                      </p>
+                    </div>
+                  )}
 
                   {/* Loading state */}
                   {generatingPix && (
