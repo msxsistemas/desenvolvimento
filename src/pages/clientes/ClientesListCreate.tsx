@@ -441,7 +441,21 @@ export default function ClientesListCreate() {
         throw new Error(result.error || "Erro ao gerar fatura");
       }
 
-      toast({ title: "Fatura gerada!", description: `Fatura criada para ${cliente.nome}` });
+      const novaFaturaUrl = result.fatura?.id ? `https://gestormsx.pro/fatura/${result.fatura.id}` : null;
+      toast({ 
+        title: "Fatura gerada!", 
+        description: novaFaturaUrl 
+          ? `Fatura criada para ${cliente.nome}` 
+          : `Fatura criada para ${cliente.nome}`,
+        action: novaFaturaUrl ? (
+          <button 
+            onClick={() => window.open(novaFaturaUrl, '_blank')} 
+            className="text-xs underline font-medium"
+          >
+            Abrir fatura
+          </button>
+        ) : undefined,
+      });
       
       // Enviar mensagem de fatura criada via WhatsApp
       try {
@@ -455,10 +469,7 @@ export default function ClientesListCreate() {
 
           const templateFatura = msgPadroes?.fatura_criada;
           if (templateFatura && templateFatura.trim()) {
-            const publicOrigin = "https://gestormsx.pro";
-            const faturaLink = result.fatura?.id 
-              ? `${publicOrigin}/fatura/${result.fatura.id}` 
-              : "";
+            const faturaLink = novaFaturaUrl || "";
 
             const mensagemFinal = replaceMessageVariables(
               templateFatura,
