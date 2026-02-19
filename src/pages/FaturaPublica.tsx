@@ -136,8 +136,9 @@ export default function FaturaPublica() {
   const handleOpenPix = useCallback(() => {
     setShowPix(true);
     if (fatura && !fatura.pix_qr_code && !fatura.pix_copia_cola && !(fatura.gateway === "pix_manual" && fatura.pix_manual_key)) {
-      // Trigger generation automatically
-      setTimeout(() => handleGeneratePix(), 100);
+      // Set generating immediately so modal shows spinner, then trigger
+      setGeneratingPix(true);
+      setTimeout(() => handleGeneratePix(), 50);
     }
   }, [fatura, handleGeneratePix]);
 
