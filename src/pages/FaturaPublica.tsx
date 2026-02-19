@@ -368,10 +368,12 @@ export default function FaturaPublica() {
                   {!generatingPix && (fatura.pix_qr_code || fatura.pix_copia_cola) && (
                     <div className="flex flex-col items-center gap-2">
                       <div className="bg-white border border-slate-200 rounded-lg p-3">
-                        {fatura.pix_qr_code ? (
-                          <img src={`data:image/png;base64,${fatura.pix_qr_code}`} alt="QR Code PIX" className="w-44 h-44" />
-                        ) : fatura.pix_copia_cola ? (
+                        {fatura.pix_copia_cola ? (
                           <QRCode value={fatura.pix_copia_cola} size={176} />
+                        ) : fatura.pix_qr_code?.startsWith('http') ? (
+                          <img src={fatura.pix_qr_code} alt="QR Code PIX" className="w-44 h-44" />
+                        ) : fatura.pix_qr_code ? (
+                          <img src={`data:image/png;base64,${fatura.pix_qr_code}`} alt="QR Code PIX" className="w-44 h-44" />
                         ) : null}
                       </div>
                     </div>
