@@ -763,20 +763,23 @@ async function handleGeneratePix(body: any, supabaseAdmin: any): Promise<Respons
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
-  const { data: checkoutConfig } = await supabaseAdmin.from('checkout_config').select('*').eq('user_id', fatura.user_id).maybeSingle();
+  const [checkoutConfigResult, wooviConfigResult] = await Promise.all([
+    supabaseAdmin.from('checkout_config').select('*').eq('user_id', fatura.user_id).maybeSingle(),
+    supabaseAdmin.from('woovi_config').select('is_configured').eq('user_id', fatura.user_id).maybeSingle(),
+  ]);
+  const checkoutConfig = checkoutConfigResult.data;
+  const userHasWoovi = !!(wooviConfigResult.data as any)?.is_configured;
 
-  // Check if Woovi system gateway is active (it bypasses user checkout_config)
-  const { data: wooviGw } = await supabaseAdmin.from('system_gateways').select('*').eq('provedor', 'woovi').eq('ativo', true).maybeSingle();
-
-  const gatewayAtivo = wooviGw ? 'woovi' : (checkoutConfig?.gateway_ativo || fatura.gateway || 'asaas');
+  const gatewayAtivo = checkoutConfig?.gateway_ativo || fatura.gateway || 'asaas';
 
   let pixResult = emptyPix;
   let gateway = fatura.gateway;
   let pix_manual_key: string | null = null;
 
-  // Generate PIX: Woovi uses system_gateways (active regardless of checkout pix_enabled),
-  // all other gateways require checkout_config.pix_enabled = true
-  if (wooviGw) {
+  // Woovi: user must have it configured AND selected as active gateway AND pix_enabled
+  const useWoovi = userHasWoovi && gatewayAtivo === 'woovi' && checkoutConfig?.pix_enabled;
+
+  if (useWoovi) {
     gateway = 'woovi';
     pixResult = await wooviGeneratePix(fatura, supabaseAdmin);
   } else if (checkoutConfig?.pix_enabled) {
@@ -785,7 +788,7 @@ async function handleGeneratePix(body: any, supabaseAdmin: any): Promise<Respons
   }
 
   // Fallback to PIX manual
-  if (!pixResult.pix_qr_code && !pixResult.pix_copia_cola && !wooviGw && !checkoutConfig?.pix_enabled && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
+  if (!pixResult.pix_qr_code && !pixResult.pix_copia_cola && !checkoutConfig?.pix_enabled && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
     gateway = 'pix_manual';
     pix_manual_key = checkoutConfig.pix_manual_key;
   }
@@ -895,18 +898,21 @@ async function handleCreateFatura(body: any, user: any, authHeader: string, supa
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
   }
 
-  const { data: checkoutConfig } = await supabaseAdmin.from('checkout_config').select('*').eq('user_id', user.id).maybeSingle();
+  const [checkoutConfigResult2, wooviConfigResult2] = await Promise.all([
+    supabaseAdmin.from('checkout_config').select('*').eq('user_id', user.id).maybeSingle(),
+    supabaseAdmin.from('woovi_config').select('is_configured').eq('user_id', user.id).maybeSingle(),
+  ]);
+  const checkoutConfig = checkoutConfigResult2.data;
+  const userHasWoovi2 = !!(wooviConfigResult2.data as any)?.is_configured;
 
-  // Check if Woovi system gateway is active (bypasses user checkout_config pix_enabled)
-  const { data: wooviGw } = await supabaseAdmin.from('system_gateways').select('*').eq('provedor', 'woovi').eq('ativo', true).maybeSingle();
-
-  const gatewayAtivo = wooviGw ? 'woovi' : (checkoutConfig?.gateway_ativo || 'asaas');
+  const gatewayAtivo = checkoutConfig?.gateway_ativo || 'asaas';
+  const useWoovi2 = userHasWoovi2 && gatewayAtivo === 'woovi' && checkoutConfig?.pix_enabled;
 
   let gateway: string | null = null;
   let pix_manual_key: string | null = null;
   let pixResult = emptyPix;
 
-  if (wooviGw) {
+  if (useWoovi2) {
     gateway = 'woovi';
     pixResult = await createPixForNewFatura('woovi', user.id, cliente_nome, cliente_whatsapp, parsedValor, plano_nome, supabaseAdmin, authHeader);
   } else if (checkoutConfig?.pix_enabled) {
@@ -914,7 +920,7 @@ async function handleCreateFatura(body: any, user: any, authHeader: string, supa
     pixResult = await createPixForNewFatura(gatewayAtivo, user.id, cliente_nome, cliente_whatsapp, parsedValor, plano_nome, supabaseAdmin, authHeader);
   }
 
-  if (!gateway && !wooviGw && !checkoutConfig?.pix_enabled && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
+  if (!gateway && !checkoutConfig?.pix_enabled && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
     gateway = 'pix_manual';
     pix_manual_key = checkoutConfig.pix_manual_key;
   }
