@@ -764,19 +764,28 @@ async function handleGeneratePix(body: any, supabaseAdmin: any): Promise<Respons
   }
 
   const { data: checkoutConfig } = await supabaseAdmin.from('checkout_config').select('*').eq('user_id', fatura.user_id).maybeSingle();
-  const gatewayAtivo = checkoutConfig?.gateway_ativo || fatura.gateway || 'asaas';
+
+  // Check if Woovi system gateway is active (it bypasses user checkout_config)
+  const { data: wooviGw } = await supabaseAdmin.from('system_gateways').select('*').eq('provedor', 'woovi').eq('ativo', true).maybeSingle();
+
+  const gatewayAtivo = wooviGw ? 'woovi' : (checkoutConfig?.gateway_ativo || fatura.gateway || 'asaas');
 
   let pixResult = emptyPix;
   let gateway = fatura.gateway;
   let pix_manual_key: string | null = null;
 
-  if (checkoutConfig?.pix_enabled) {
+  // Generate PIX: Woovi uses system_gateways (active regardless of checkout pix_enabled),
+  // all other gateways require checkout_config.pix_enabled = true
+  if (wooviGw) {
+    gateway = 'woovi';
+    pixResult = await wooviGeneratePix(fatura, supabaseAdmin);
+  } else if (checkoutConfig?.pix_enabled) {
     gateway = gatewayAtivo;
     pixResult = await generatePixForGateway(gatewayAtivo, fatura, supabaseAdmin);
   }
 
   // Fallback to PIX manual
-  if (!pixResult.pix_qr_code && !pixResult.pix_copia_cola && !checkoutConfig?.pix_enabled && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
+  if (!pixResult.pix_qr_code && !pixResult.pix_copia_cola && !wooviGw && !checkoutConfig?.pix_enabled && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
     gateway = 'pix_manual';
     pix_manual_key = checkoutConfig.pix_manual_key;
   }
@@ -887,18 +896,25 @@ async function handleCreateFatura(body: any, user: any, authHeader: string, supa
   }
 
   const { data: checkoutConfig } = await supabaseAdmin.from('checkout_config').select('*').eq('user_id', user.id).maybeSingle();
-  const gatewayAtivo = checkoutConfig?.gateway_ativo || 'asaas';
+
+  // Check if Woovi system gateway is active (bypasses user checkout_config pix_enabled)
+  const { data: wooviGw } = await supabaseAdmin.from('system_gateways').select('*').eq('provedor', 'woovi').eq('ativo', true).maybeSingle();
+
+  const gatewayAtivo = wooviGw ? 'woovi' : (checkoutConfig?.gateway_ativo || 'asaas');
 
   let gateway: string | null = null;
   let pix_manual_key: string | null = null;
   let pixResult = emptyPix;
 
-  if (checkoutConfig?.pix_enabled) {
+  if (wooviGw) {
+    gateway = 'woovi';
+    pixResult = await createPixForNewFatura('woovi', user.id, cliente_nome, cliente_whatsapp, parsedValor, plano_nome, supabaseAdmin, authHeader);
+  } else if (checkoutConfig?.pix_enabled) {
     gateway = gatewayAtivo;
     pixResult = await createPixForNewFatura(gatewayAtivo, user.id, cliente_nome, cliente_whatsapp, parsedValor, plano_nome, supabaseAdmin, authHeader);
   }
 
-  if (!gateway && !checkoutConfig?.pix_enabled && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
+  if (!gateway && !wooviGw && !checkoutConfig?.pix_enabled && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
     gateway = 'pix_manual';
     pix_manual_key = checkoutConfig.pix_manual_key;
   }
