@@ -40,22 +40,14 @@ Deno.serve(async (req) => {
         }
 
         if (action === "check") {
-          try {
-            // Use userClient so auth.uid() resolves correctly inside the RPC
-            const { data: secret, error } = await userClient.rpc("get_gateway_secret", {
-              p_user_id: user.id,
-              p_gateway: "woovi",
-              p_secret_name: "app_id",
-            });
-            if (error) throw error;
-            return new Response(JSON.stringify({ configured: !!secret && secret !== "" }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          } catch {
-            return new Response(JSON.stringify({ configured: false }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
+          const { data } = await adminClient
+            .from("woovi_config")
+            .select("is_configured")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          return new Response(JSON.stringify({ configured: !!(data as any)?.is_configured }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
         }
 
         if (action === "configure") {
@@ -66,17 +58,34 @@ Deno.serve(async (req) => {
             });
           }
 
-          // Use userClient so auth.uid() resolves correctly inside the RPC
-          const { error: storeError } = await userClient.rpc("store_gateway_secret", {
+          // Store App ID securely in vault
+          const { error: vaultError } = await userClient.rpc("store_gateway_secret", {
             p_user_id: user.id,
             p_gateway: "woovi",
             p_secret_name: "app_id",
             p_secret_value: appId,
           });
+          if (vaultError) {
+            console.error("vault store error:", vaultError.message);
+            return new Response(JSON.stringify({ error: vaultError.message }), {
+              status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
 
-          if (storeError) {
-            console.error("store_gateway_secret error:", storeError.message);
-            return new Response(JSON.stringify({ error: storeError.message }), {
+          // Save config record to woovi_config table (same pattern as other gateways)
+          const appIdHash = btoa(appId.substring(0, 8) + appId.substring(appId.length - 8));
+          const { error: upsertError } = await adminClient
+            .from("woovi_config")
+            .upsert({
+              user_id: user.id,
+              app_id_hash: appIdHash,
+              is_configured: true,
+              webhook_url: `${supabaseUrl}/functions/v1/woovi-integration`,
+            }, { onConflict: "user_id" });
+
+          if (upsertError) {
+            console.error("woovi_config upsert error:", upsertError.message);
+            return new Response(JSON.stringify({ error: upsertError.message }), {
               status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }

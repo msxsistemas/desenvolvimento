@@ -4,79 +4,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Key, Copy, Webhook, ExternalLink, Settings } from "lucide-react";
+import { Key, Copy, ExternalLink, Settings, Webhook } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { useWoovi } from "@/hooks/useWoovi";
 
 export default function Woovi() {
   const [appId, setAppId] = useState("");
-  const [isConfigured, setIsConfigured] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const { isConfigured, loading, configureWoovi } = useWoovi();
 
   const webhookUrl = `https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/woovi-integration`;
 
   useEffect(() => {
     document.title = "Woovi - Gateway de Pagamentos | Gestor MSX";
-    checkConfiguration();
   }, []);
-
-  const checkConfiguration = async () => {
-    setChecking(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const resp = await fetch(
-        `https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/woovi-integration`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ action: "check" }),
-        }
-      );
-      const result = await resp.json();
-      setIsConfigured(result.configured === true);
-    } catch {
-      // silent
-    } finally {
-      setChecking(false);
-    }
-  };
 
   const handleConfigure = async () => {
     if (!appId.trim()) {
       toast.error("Por favor, insira o App ID da Woovi");
       return;
     }
-    setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Sessão expirada");
-
-      const resp = await fetch(
-        `https://dxxfablfqigoewcfmjzl.supabase.co/functions/v1/woovi-integration`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ action: "configure", app_id: appId }),
-        }
-      );
-      const result = await resp.json();
-      if (!resp.ok) throw new Error(result.error || "Erro ao configurar");
-      setIsConfigured(true);
+      await configureWoovi(appId);
       setAppId("");
-      toast.success("Woovi configurado com sucesso!");
-    } catch (e: any) {
-      toast.error(e.message || "Erro ao configurar Woovi");
-    } finally {
-      setLoading(false);
+    } catch {
+      // error already toasted in hook
     }
   };
 
@@ -111,17 +62,8 @@ export default function Woovi() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Input
-                  readOnly
-                  value={webhookUrl}
-                  className="font-mono text-xs bg-muted/50"
-                />
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => copyToClipboard(webhookUrl, "URL do Webhook")}
-                  className="shrink-0"
-                >
+                <Input readOnly value={webhookUrl} className="font-mono text-xs bg-muted/50" />
+                <Button variant="default" size="sm" onClick={() => copyToClipboard(webhookUrl, "URL do Webhook")} className="shrink-0">
                   <Copy className="h-3 w-3 mr-1" />
                   Copiar
                 </Button>
@@ -145,16 +87,12 @@ export default function Woovi() {
                 <div className="flex items-center gap-2">
                   <Switch checked={isConfigured} disabled />
                   <Badge variant={isConfigured ? "default" : "destructive"}>
-                    {checking ? "Verificando..." : isConfigured ? "Ativado" : "Desativado"}
+                    {isConfigured ? "Ativado" : "Desativado"}
                   </Badge>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3 w-full"
-                onClick={() => window.open("https://app.woovi.com/home/applications", "_blank")}
-              >
+              <Button variant="outline" size="sm" className="mt-3 w-full"
+                onClick={() => window.open("https://app.woovi.com/home/applications", "_blank")}>
                 <ExternalLink className="h-3 w-3 mr-1" />
                 Abrir Painel da Woovi
               </Button>
