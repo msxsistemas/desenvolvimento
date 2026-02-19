@@ -501,22 +501,34 @@ async function v3payGeneratePix(fatura: any, supabaseAdmin: any, authHeader?: st
 // Gateway: Woovi
 // ──────────────────────────────────────────────
 
-async function wooviGetApiKey(supabaseAdmin: any, gatewayRow: any): Promise<string | null> {
-  if (!gatewayRow?.api_key_hash) return null;
-  return gatewayRow.api_key_hash;
-}
+async function wooviGetAppId(supabaseAdmin: any, userId: string): Promise<string | null> {
+  // First try vault (same pattern as Ciabra/V3Pay)
+  const { data: config } = await supabaseAdmin
+    .from('woovi_config').select('app_id_hash, is_configured')
+    .eq('user_id', userId).maybeSingle();
+  if (!config?.is_configured) return null;
 
-function wooviBaseUrl(ambiente: string): string {
-  return ambiente === 'producao' ? 'https://api.woovi.com' : 'https://api.woovi-sandbox.com';
+  if (config.app_id_hash === 'vault') {
+    const { data: vKey } = await supabaseAdmin.rpc('get_gateway_secret', {
+      p_user_id: userId, p_gateway: 'woovi', p_secret_name: 'app_id',
+    });
+    return vKey || null;
+  }
+
+  // Legacy: stored as base64 hash in woovi_config (fallback)
+  // Try vault first regardless
+  const { data: vKey } = await supabaseAdmin.rpc('get_gateway_secret', {
+    p_user_id: userId, p_gateway: 'woovi', p_secret_name: 'app_id',
+  });
+  return vKey || null;
 }
 
 async function wooviCheckStatus(fatura: any, supabaseAdmin: any): Promise<boolean> {
   try {
-    const { data: gw } = await supabaseAdmin.from('system_gateways').select('*').eq('provedor', 'woovi').eq('ativo', true).maybeSingle();
-    if (!gw?.api_key_hash) return false;
-    const baseUrl = wooviBaseUrl(gw.ambiente);
-    const resp = await fetch(`${baseUrl}/api/v1/charge/${fatura.gateway_charge_id}`, {
-      headers: { 'Authorization': gw.api_key_hash, 'Content-Type': 'application/json' },
+    const appId = await wooviGetAppId(supabaseAdmin, fatura.user_id);
+    if (!appId) return false;
+    const resp = await fetch(`https://api.woovi.com/api/v1/charge/${fatura.gateway_charge_id}`, {
+      headers: { 'Authorization': appId, 'Content-Type': 'application/json' },
     });
     const data = await resp.json();
     const charge = data.charge || data;
@@ -534,10 +546,12 @@ async function wooviCheckStatus(fatura: any, supabaseAdmin: any): Promise<boolea
 
 async function wooviGeneratePix(fatura: any, supabaseAdmin: any): Promise<PixResult> {
   try {
-    const { data: gw } = await supabaseAdmin.from('system_gateways').select('*').eq('provedor', 'woovi').eq('ativo', true).maybeSingle();
-    if (!gw?.api_key_hash) return emptyPix;
+    const appId = await wooviGetAppId(supabaseAdmin, fatura.user_id);
+    if (!appId) {
+      console.error('Woovi: App ID not found for user', fatura.user_id);
+      return emptyPix;
+    }
 
-    const baseUrl = wooviBaseUrl(gw.ambiente);
     const correlationID = `fatura-${fatura.id.substring(0, 8)}-${Date.now()}`;
     const valorCentavos = Math.round(parseFloat(fatura.valor.toString()) * 100);
 
@@ -547,12 +561,13 @@ async function wooviGeneratePix(fatura: any, supabaseAdmin: any): Promise<PixRes
       comment: `Cobrança - ${fatura.cliente_nome || 'Cliente'}`,
     };
 
-    const resp = await fetch(`${baseUrl}/api/v1/charge`, {
+    const resp = await fetch(`https://api.woovi.com/api/v1/charge`, {
       method: 'POST',
-      headers: { 'Authorization': gw.api_key_hash, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': appId, 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
     const data = await resp.json();
+    console.log('Woovi generate PIX response:', JSON.stringify(data).substring(0, 300));
     const charge = data.charge || data;
     if (!charge?.correlationID && !charge?.brCode) return emptyPix;
 
