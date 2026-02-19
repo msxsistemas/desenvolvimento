@@ -987,16 +987,17 @@ async function handleCreateFatura(body: any, user: any, authHeader: string, supa
     pixResult = await createPixForNewFatura(gatewayEfetivo, user.id, cliente_nome, cliente_whatsapp, parsedValor, plano_nome, supabaseAdmin, authHeader);
   }
 
-  if (!gateway && !checkoutConfig?.pix_enabled && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
+  let pixManualKey: string | null = null;
+  if (!produtoGateway && !checkoutConfig?.pix_enabled && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
     gateway = 'pix_manual';
-    pix_manual_key = checkoutConfig.pix_manual_key;
+    pixManualKey = checkoutConfig.pix_manual_key;
   }
 
   const { data: fatura, error: insertError } = await supabaseAdmin.from('faturas').insert({
     user_id: user.id, cliente_id: cliente_id || null, cliente_nome, cliente_whatsapp,
     plano_nome: plano_nome || null, valor: parsedValor, gateway,
     gateway_charge_id: pixResult.gateway_charge_id, pix_qr_code: pixResult.pix_qr_code,
-    pix_copia_cola: pixResult.pix_copia_cola, pix_manual_key, status: 'pendente',
+    pix_copia_cola: pixResult.pix_copia_cola, pix_manual_key: pixManualKey, status: 'pendente',
   }).select().single();
 
   if (insertError) {
