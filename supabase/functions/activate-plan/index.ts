@@ -617,15 +617,13 @@ async function generateWooviPayment(gateway: any, plan: any, user: any) {
   const appId = gateway.api_key_hash;
   if (!appId) return { error: "Gateway Woovi sem App ID configurado" };
 
-  const baseUrl = gateway.ambiente === "producao"
-    ? "https://api.woovi.com"
-    : "https://api.woovi-sandbox.com";
+  const baseUrl = "https://api.openpix.com.br";
 
   try {
     const correlationID = `plan-${plan.id.substring(0, 8)}-${Date.now()}`;
     const valorCentavos = Math.round(plan.valor * 100);
 
-    const resp = await fetch(`${baseUrl}/api/v1/charge`, {
+    const resp = await fetch(`${baseUrl}/api/openpix/v1/charge`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -719,10 +717,7 @@ async function checkPaymentStatus(gateway: any, chargeId: string): Promise<boole
     }
 
     if (provedor === "woovi") {
-      const baseUrl = gateway.ambiente === "producao"
-        ? "https://api.woovi.com"
-        : "https://api.woovi-sandbox.com";
-      const resp = await fetch(`${baseUrl}/api/v1/charge/${chargeId}`, {
+      const resp = await fetch(`https://api.openpix.com.br/api/openpix/v1/charge/${chargeId}`, {
         headers: { Authorization: gateway.api_key_hash },
       });
       const data = await resp.json();
