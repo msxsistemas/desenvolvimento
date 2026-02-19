@@ -928,19 +928,38 @@ async function handleCreateFatura(body: any, user: any, authHeader: string, supa
   const checkoutConfig = checkoutConfigResult2.data;
   const userHasWoovi2 = !!(wooviConfigResult2.data as any)?.is_configured;
 
-  const gatewayAtivo = checkoutConfig?.gateway_ativo || 'asaas';
-  const useWoovi2 = userHasWoovi2 && gatewayAtivo === 'woovi' && checkoutConfig?.pix_enabled;
+  // Check if client's product has a specific gateway configured
+  let produtoGateway: string | null = null;
+  if (cliente_id && isValidUUID(cliente_id)) {
+    const { data: cliente } = await supabaseAdmin.from('clientes').select('produto').eq('id', cliente_id).maybeSingle();
+    if (cliente?.produto) {
+      const { data: produto } = await supabaseAdmin.from('produtos').select('gateway').eq('nome', cliente.produto).eq('user_id', user.id).maybeSingle();
+      if (produto?.gateway) {
+        produtoGateway = produto.gateway;
+        console.log(`🎯 Using product-specific gateway: ${produtoGateway} for cliente ${cliente_id}`);
+      }
+    }
+  }
+
+  // Product gateway overrides global gateway; global is fallback
+  const gatewayEfetivo = produtoGateway || checkoutConfig?.gateway_ativo || 'asaas';
+  const useWoovi2 = !produtoGateway && userHasWoovi2 && gatewayEfetivo === 'woovi' && checkoutConfig?.pix_enabled;
+  const produtoUsaWoovi = produtoGateway === 'woovi';
 
   let gateway: string | null = null;
   let pix_manual_key: string | null = null;
   let pixResult = emptyPix;
 
-  if (useWoovi2) {
+  if (produtoUsaWoovi || useWoovi2) {
     gateway = 'woovi';
     pixResult = await createPixForNewFatura('woovi', user.id, cliente_nome, cliente_whatsapp, parsedValor, plano_nome, supabaseAdmin, authHeader);
+  } else if (produtoGateway) {
+    // Use product-specific gateway (not woovi)
+    gateway = produtoGateway;
+    pixResult = await createPixForNewFatura(produtoGateway, user.id, cliente_nome, cliente_whatsapp, parsedValor, plano_nome, supabaseAdmin, authHeader);
   } else if (checkoutConfig?.pix_enabled) {
-    gateway = gatewayAtivo;
-    pixResult = await createPixForNewFatura(gatewayAtivo, user.id, cliente_nome, cliente_whatsapp, parsedValor, plano_nome, supabaseAdmin, authHeader);
+    gateway = gatewayEfetivo;
+    pixResult = await createPixForNewFatura(gatewayEfetivo, user.id, cliente_nome, cliente_whatsapp, parsedValor, plano_nome, supabaseAdmin, authHeader);
   }
 
   if (!gateway && !checkoutConfig?.pix_enabled && checkoutConfig?.pix_manual_enabled && checkoutConfig?.pix_manual_key) {
