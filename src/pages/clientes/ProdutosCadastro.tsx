@@ -49,6 +49,7 @@ export default function ProdutosCadastro() {
     painelId: "",
     renovacaoAutomatica: true,
     tipoServico: "iptv" as "iptv" | "p2p",
+    gateway: "",
   });
 
   useEffect(() => {
@@ -118,6 +119,7 @@ export default function ProdutosCadastro() {
         painel_id: formData.painelId || null,
         renovacao_automatica: formData.renovacaoAutomatica,
         tipo_servico: formData.tipoServico,
+        gateway: formData.gateway || null,
         user_id: user.id,
       });
 
@@ -285,6 +287,30 @@ export default function ProdutosCadastro() {
                     </div>
                   ) : null}
                 </div>
+              )}
+            </div>
+
+            {/* Gateway de Cobrança */}
+            <div className="space-y-2 pt-2 border-t border-border">
+              <div>
+                <Label className="text-sm font-medium">Gateway de Cobrança</Label>
+                <p className="text-xs text-muted-foreground">Deixe em "Padrão global" para usar o gateway configurado no sistema. Selecione outro para usar um gateway específico para este produto.</p>
+              </div>
+              <Select value={formData.gateway} onValueChange={(value) => handleInputChange("gateway", value === "global" ? "" : value)}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue placeholder="Padrão global (sistema)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="global">🌐 Padrão global (sistema)</SelectItem>
+                  <SelectItem value="asaas">Asaas</SelectItem>
+                  <SelectItem value="mercadopago">Mercado Pago</SelectItem>
+                  <SelectItem value="v3pay">V3Pay</SelectItem>
+                  <SelectItem value="ciabra">Ciabra</SelectItem>
+                  <SelectItem value="woovi">Woovi</SelectItem>
+                </SelectContent>
+              </Select>
+              {formData.gateway && (
+                <p className="text-xs text-primary">✅ Cobranças deste produto usarão: <strong>{formData.gateway === 'mercadopago' ? 'Mercado Pago' : formData.gateway.charAt(0).toUpperCase() + formData.gateway.slice(1)}</strong></p>
               )}
             </div>
 

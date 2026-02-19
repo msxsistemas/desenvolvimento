@@ -790,6 +790,7 @@ export type Database = {
           created_at: string | null
           creditos: string | null
           descricao: string | null
+          gateway: string | null
           id: string
           nome: string
           painel_id: string | null
@@ -805,6 +806,7 @@ export type Database = {
           created_at?: string | null
           creditos?: string | null
           descricao?: string | null
+          gateway?: string | null
           id?: string
           nome: string
           painel_id?: string | null
@@ -820,6 +822,7 @@ export type Database = {
           created_at?: string | null
           creditos?: string | null
           descricao?: string | null
+          gateway?: string | null
           id?: string
           nome?: string
           painel_id?: string | null
