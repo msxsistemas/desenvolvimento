@@ -1455,6 +1455,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_gateway_secret: {
+        Args: { p_gateway: string; p_secret_name: string; p_user_id: string }
+        Returns: string
+      }
       create_default_templates: {
         Args: { target_user_id: string }
         Returns: undefined

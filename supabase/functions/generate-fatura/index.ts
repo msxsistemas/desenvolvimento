@@ -507,15 +507,14 @@ async function wooviGetAppId(supabaseAdmin: any, userId: string): Promise<string
     .eq('user_id', userId).maybeSingle();
   if (!config?.is_configured) return null;
 
-  // Busca diretamente do vault com service role (sem auth.uid constraint)
-  const vaultName = `gw_woovi_app_id_${userId}`;
-  const { data: secretRow } = await supabaseAdmin
-    .from('vault.decrypted_secrets')
-    .select('decrypted_secret')
-    .eq('name', vaultName)
-    .maybeSingle();
-
-  return secretRow?.decrypted_secret || null;
+  // Usa função admin que não requer auth.uid() (service role)
+  const { data: appId, error } = await supabaseAdmin.rpc('admin_get_gateway_secret', {
+    p_user_id: userId,
+    p_gateway: 'woovi',
+    p_secret_name: 'app_id',
+  });
+  if (error) console.error('wooviGetAppId vault error:', error.message);
+  return appId || null;
 }
 
 async function wooviCheckStatus(fatura: any, supabaseAdmin: any): Promise<boolean> {
