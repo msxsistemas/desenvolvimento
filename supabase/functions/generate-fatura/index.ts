@@ -934,7 +934,20 @@ async function handleCreateFatura(body: any, user: any, authHeader: string, supa
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
   }
 
+  // Delete existing pending faturas for this client before creating a new one
+  // This ensures the new fatura uses the current product/global gateway configuration
+  if (cliente_id && isValidUUID(cliente_id)) {
+    await supabaseAdmin
+      .from('faturas')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('cliente_id', cliente_id)
+      .eq('status', 'pendente');
+    console.log(`🗑️ Deleted existing pending faturas for cliente ${cliente_id} before creating new one`);
+  }
+
   const [checkoutConfigResult2, wooviConfigResult2] = await Promise.all([
+
     supabaseAdmin.from('checkout_config').select('*').eq('user_id', user.id).maybeSingle(),
     supabaseAdmin.from('woovi_config').select('is_configured').eq('user_id', user.id).maybeSingle(),
   ]);
