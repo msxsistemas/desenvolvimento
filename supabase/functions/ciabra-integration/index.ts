@@ -20,8 +20,15 @@ async function getVaultSecret(supabaseAdmin: any, userId: string, gateway: strin
   return data;
 }
 
-async function storeVaultSecret(supabaseAdmin: any, userId: string, gateway: string, secretName: string, secretValue: string): Promise<void> {
-  const { error } = await supabaseAdmin.rpc('store_gateway_secret', {
+async function storeVaultSecret(userToken: string, userId: string, gateway: string, secretName: string, secretValue: string): Promise<void> {
+  // Must use user-scoped client so auth.uid() is set in the RPC
+  const { createClient } = await import("npm:@supabase/supabase-js@2");
+  const userClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    { global: { headers: { Authorization: `Bearer ${userToken}` } } }
+  );
+  const { error } = await userClient.rpc('store_gateway_secret', {
     p_user_id: userId,
     p_gateway: gateway,
     p_secret_name: secretName,
@@ -181,9 +188,8 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
     }
 
-    const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    const userToken = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(userToken);
     if (authErr || !user) {
       return new Response(JSON.stringify({ error: 'Token inválido' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
@@ -203,9 +209,9 @@ Deno.serve(async (req) => {
         }
 
         try {
-          // Store keys in Supabase Vault (encrypted at rest)
-          await storeVaultSecret(supabaseAdmin, user.id, 'ciabra', 'api_key', apiKey);
-          await storeVaultSecret(supabaseAdmin, user.id, 'ciabra', 'public_key', publicKey);
+          // Store keys in Supabase Vault (encrypted at rest) using user-scoped client
+          await storeVaultSecret(userToken, user.id, 'ciabra', 'api_key', apiKey);
+          await storeVaultSecret(userToken, user.id, 'ciabra', 'public_key', publicKey);
 
           const { data: existing } = await supabaseAdmin
             .from('ciabra_config')
