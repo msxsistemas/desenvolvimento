@@ -829,7 +829,10 @@ async function handleGeneratePix(body: any, supabaseAdmin: any): Promise<Respons
   if (fatura.cliente_id && isValidUUID(fatura.cliente_id)) {
     const { data: clienteRegen } = await supabaseAdmin.from('clientes').select('produto').eq('id', fatura.cliente_id).maybeSingle();
     if (clienteRegen?.produto) {
-      const { data: produtoRegen } = await supabaseAdmin.from('produtos').select('gateway').eq('nome', clienteRegen.produto).eq('user_id', fatura.user_id).maybeSingle();
+      const produtoRegenQuery = isValidUUID(clienteRegen.produto)
+        ? supabaseAdmin.from('produtos').select('gateway').eq('id', clienteRegen.produto).eq('user_id', fatura.user_id).maybeSingle()
+        : supabaseAdmin.from('produtos').select('gateway').eq('nome', clienteRegen.produto).eq('user_id', fatura.user_id).maybeSingle();
+      const { data: produtoRegen } = await produtoRegenQuery;
       if (produtoRegen?.gateway) produtoGatewayRegen = produtoRegen.gateway;
     }
   }
@@ -990,7 +993,11 @@ async function handleCreateFatura(body: any, user: any, authHeader: string, supa
   if (cliente_id && isValidUUID(cliente_id)) {
     const { data: cliente } = await supabaseAdmin.from('clientes').select('produto').eq('id', cliente_id).maybeSingle();
     if (cliente?.produto) {
-      const { data: produto } = await supabaseAdmin.from('produtos').select('gateway').eq('nome', cliente.produto).eq('user_id', user.id).maybeSingle();
+      // produto field stores the UUID of the product, not the name
+      const produtoQuery = isValidUUID(cliente.produto)
+        ? supabaseAdmin.from('produtos').select('gateway').eq('id', cliente.produto).eq('user_id', user.id).maybeSingle()
+        : supabaseAdmin.from('produtos').select('gateway').eq('nome', cliente.produto).eq('user_id', user.id).maybeSingle();
+      const { data: produto } = await produtoQuery;
       if (produto?.gateway) {
         produtoGateway = produto.gateway;
         console.log(`🎯 Using product-specific gateway: ${produtoGateway} for cliente ${cliente_id}`);
