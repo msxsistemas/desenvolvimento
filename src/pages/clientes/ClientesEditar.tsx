@@ -390,6 +390,21 @@ export default function ClientesEditar() {
                   </SelectContent>
                 </Select>
                 {fieldErrors.produto && <span className="text-xs text-destructive">{fieldErrors.produto}</span>}
+                {(() => {
+                  const produtoSelecionado = produtos.find((p: any) => String(p.id) === form.watch("produto"));
+                  if (!produtoSelecionado) return null;
+                  const gw = (produtoSelecionado as any).gateway;
+                  const labels: Record<string, string> = { asaas: 'Asaas', mercadopago: 'Mercado Pago', v3pay: 'V3Pay', ciabra: 'Ciabra', woovi: 'Woovi' };
+                  return (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-xs text-muted-foreground">Gateway:</span>
+                      {gw
+                        ? <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-semibold">{labels[gw] || gw}</span>
+                        : <span className="inline-flex items-center rounded-full border border-border text-muted-foreground px-2 py-0.5 text-[10px] font-semibold">🌐 Global</span>
+                      }
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="space-y-2" data-field="plano">

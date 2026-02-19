@@ -18,6 +18,7 @@ export default function ClientesProdutos() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [gatewayFilter, setGatewayFilter] = useState("todos");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -89,11 +90,15 @@ export default function ClientesProdutos() {
       const matchesStatus = statusFilter === "todos" || 
         (statusFilter === "ativo" && (p as any).ativo !== false) || 
         (statusFilter === "inativo" && (p as any).ativo === false);
-      return matchesSearch && matchesStatus;
+      const gw = (p as any).gateway;
+      const matchesGateway = gatewayFilter === "todos" ||
+        (gatewayFilter === "global" && !gw) ||
+        (gw === gatewayFilter);
+      return matchesSearch && matchesStatus && matchesGateway;
     });
-  }, [produtos, searchTerm, statusFilter]);
+  }, [produtos, searchTerm, statusFilter, gatewayFilter]);
 
-  useEffect(() => { setPage(1); }, [searchTerm, statusFilter]);
+  useEffect(() => { setPage(1); }, [searchTerm, statusFilter, gatewayFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProdutos.length / PER_PAGE));
   const currentPage = Math.min(page, totalPages);
@@ -139,10 +144,27 @@ export default function ClientesProdutos() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Gateway</Label>
+            <Select value={gatewayFilter} onValueChange={setGatewayFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="global">🌐 Global</SelectItem>
+                <SelectItem value="asaas">Asaas</SelectItem>
+                <SelectItem value="mercadopago">Mercado Pago</SelectItem>
+                <SelectItem value="v3pay">V3Pay</SelectItem>
+                <SelectItem value="ciabra">Ciabra</SelectItem>
+                <SelectItem value="woovi">Woovi</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-end">
             <Button 
               variant="outline" 
-              onClick={() => { setSearchTerm(""); setStatusFilter("todos"); }}
+              onClick={() => { setSearchTerm(""); setStatusFilter("todos"); setGatewayFilter("todos"); }}
             >
               Limpar
             </Button>
