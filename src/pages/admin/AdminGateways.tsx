@@ -23,9 +23,10 @@ const provedorLabels: Record<string, string> = {
   mercadopago: "Mercado Pago",
   v3pay: "V3Pay",
   ciabra: "Ciabra",
+  woovi: "Woovi",
 };
 
-const allGateways = ["asaas", "mercadopago", "v3pay", "ciabra"];
+const allGateways = ["asaas", "mercadopago", "v3pay", "ciabra", "woovi"];
 
 export default function AdminGateways() {
   const [gateways, setGateways] = useState<SystemGateway[]>([]);

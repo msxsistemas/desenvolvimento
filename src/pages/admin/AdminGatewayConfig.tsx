@@ -15,6 +15,7 @@ const provedorLabels: Record<string, string> = {
   mercadopago: "Mercado Pago",
   v3pay: "V3Pay",
   ciabra: "Ciabra",
+  woovi: "Woovi",
 };
 
 const provedorDescriptions: Record<string, string> = {
@@ -22,6 +23,7 @@ const provedorDescriptions: Record<string, string> = {
   mercadopago: "Configure o gateway Mercado Pago para processar pagamentos de assinaturas.",
   v3pay: "Configure o gateway V3Pay para processar pagamentos PIX, cartão e boleto.",
   ciabra: "Configure o gateway Ciabra Invoice para processar pagamentos de assinaturas.",
+  woovi: "Configure o gateway Woovi para processar pagamentos PIX de assinaturas.",
 };
 
 const provedorWebhookDescriptions: Record<string, string> = {
@@ -29,6 +31,7 @@ const provedorWebhookDescriptions: Record<string, string> = {
   mercadopago: "Copie esta URL e adicione no painel do Mercado Pago em: Sua Aplicação → Webhooks → Notificações IPN.",
   v3pay: "Copie esta URL e adicione no painel V3Pay para receber notificações de pagamento.",
   ciabra: "Copie esta URL e adicione na plataforma Ciabra em: Integração → Webhooks.",
+  woovi: "Copie esta URL e adicione no painel Woovi em: API/Plugins → Webhooks para receber notificações de pagamento.",
 };
 
 const provedorDocsDescriptions: Record<string, string> = {
@@ -36,6 +39,7 @@ const provedorDocsDescriptions: Record<string, string> = {
   mercadopago: "Acesse o painel Mercado Pago → Seu Negócio → Configurações → Credenciais para obter seu Access Token.",
   v3pay: "Acesse o painel V3Pay para obter seu token de API.",
   ciabra: "Acesse a plataforma Ciabra → Integração → API Keys para obter sua chave de API.",
+  woovi: "Acesse o painel Woovi → API/Plugins → Aplicações → App ID para obter seu AppID.",
 };
 
 const provedorDocsUrls: Record<string, string> = {
@@ -43,6 +47,7 @@ const provedorDocsUrls: Record<string, string> = {
   mercadopago: "https://www.mercadopago.com.br/developers/panel/app",
   v3pay: "https://app.v3pay.com.br",
   ciabra: "https://plataforma.ciabra.com.br",
+  woovi: "https://app.woovi.com/home/applications/add",
 };
 
 const provedorDocsButtonLabels: Record<string, string> = {
@@ -50,6 +55,7 @@ const provedorDocsButtonLabels: Record<string, string> = {
   mercadopago: "Abrir Painel do Mercado Pago",
   v3pay: "Abrir Painel V3Pay",
   ciabra: "Abrir Plataforma Ciabra",
+  woovi: "Abrir Painel Woovi",
 };
 
 const provedorTokenLabels: Record<string, string> = {
@@ -57,6 +63,7 @@ const provedorTokenLabels: Record<string, string> = {
   mercadopago: "Access Token Mercado Pago",
   v3pay: "Token API V3Pay",
   ciabra: "Chaves de API Ciabra",
+  woovi: "App ID Woovi",
 };
 
 const provedorTokenDescriptions: Record<string, string> = {
@@ -64,6 +71,7 @@ const provedorTokenDescriptions: Record<string, string> = {
   mercadopago: "Cole o Access Token de produção do Mercado Pago abaixo para ativar a integração.",
   v3pay: "Cole o token da API do V3Pay abaixo para ativar a integração.",
   ciabra: "Acesse a plataforma Ciabra → Integração → Chave da API para obter sua Chave Pública e Chave Secreta.",
+  woovi: "Cole o App ID da Woovi abaixo. Acesse o painel Woovi → API/Plugins → Aplicações → App ID.",
 };
 
 const provedorTokenPlaceholders: Record<string, string> = {
@@ -71,6 +79,7 @@ const provedorTokenPlaceholders: Record<string, string> = {
   mercadopago: "APP_USR-0000000000000000-000000-00000000000000000000000000000000-000000000",
   v3pay: "Seu token Bearer da API V3Pay...",
   ciabra: "sk_live_...",
+  woovi: "Q2xpZW50X0lkOjZjYzc...",
 };
 
 const SUPABASE_PROJECT_ID = "dxxfablfqigoewcfmjzl";
@@ -80,6 +89,7 @@ const provedorWebhookEndpoints: Record<string, string> = {
   mercadopago: "mercadopago-integration",
   v3pay: "v3pay-integration",
   ciabra: "ciabra-integration",
+  woovi: "woovi-integration",
 };
 
 interface GatewayData {

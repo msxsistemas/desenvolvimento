@@ -498,6 +498,82 @@ async function v3payGeneratePix(fatura: any, supabaseAdmin: any, authHeader?: st
 }
 
 // ──────────────────────────────────────────────
+// Gateway: Woovi
+// ──────────────────────────────────────────────
+
+async function wooviGetApiKey(supabaseAdmin: any, gatewayRow: any): Promise<string | null> {
+  if (!gatewayRow?.api_key_hash) return null;
+  return gatewayRow.api_key_hash;
+}
+
+function wooviBaseUrl(ambiente: string): string {
+  return ambiente === 'producao' ? 'https://api.woovi.com' : 'https://api.woovi-sandbox.com';
+}
+
+async function wooviCheckStatus(fatura: any, supabaseAdmin: any): Promise<boolean> {
+  try {
+    const { data: gw } = await supabaseAdmin.from('system_gateways').select('*').eq('provedor', 'woovi').eq('ativo', true).maybeSingle();
+    if (!gw?.api_key_hash) return false;
+    const baseUrl = wooviBaseUrl(gw.ambiente);
+    const resp = await fetch(`${baseUrl}/api/v1/charge/${fatura.gateway_charge_id}`, {
+      headers: { 'Authorization': gw.api_key_hash, 'Content-Type': 'application/json' },
+    });
+    const data = await resp.json();
+    const charge = data.charge || data;
+    const status = (charge?.status || '').toUpperCase();
+    if (['COMPLETED', 'PAID', 'CONFIRMED'].includes(status)) {
+      await supabaseAdmin.from('faturas').update({ status: 'pago', paid_at: new Date().toISOString() }).eq('id', fatura.id);
+      console.log(`✅ Fatura ${fatura.id} marked as paid via Woovi`);
+      return true;
+    }
+  } catch (err: any) {
+    console.error('Woovi status check error:', err.message);
+  }
+  return false;
+}
+
+async function wooviGeneratePix(fatura: any, supabaseAdmin: any): Promise<PixResult> {
+  try {
+    const { data: gw } = await supabaseAdmin.from('system_gateways').select('*').eq('provedor', 'woovi').eq('ativo', true).maybeSingle();
+    if (!gw?.api_key_hash) return emptyPix;
+
+    const baseUrl = wooviBaseUrl(gw.ambiente);
+    const correlationID = `fatura-${fatura.id.substring(0, 8)}-${Date.now()}`;
+    const valorCentavos = Math.round(parseFloat(fatura.valor.toString()) * 100);
+
+    const payload: any = {
+      correlationID,
+      value: valorCentavos,
+      comment: `Cobrança - ${fatura.cliente_nome || 'Cliente'}`,
+    };
+
+    const resp = await fetch(`${baseUrl}/api/v1/charge`, {
+      method: 'POST',
+      headers: { 'Authorization': gw.api_key_hash, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    const charge = data.charge || data;
+    if (!charge?.correlationID && !charge?.brCode) return emptyPix;
+
+    const chargeId = charge.correlationID || correlationID;
+    const brCode = charge.brCode || data.brCode || null;
+    const qrCodeImage = charge.qrCodeImage || null;
+
+    await supabaseAdmin.from('cobrancas').upsert({
+      user_id: fatura.user_id, gateway: 'woovi', gateway_charge_id: chargeId,
+      cliente_whatsapp: fatura.cliente_whatsapp, cliente_nome: fatura.cliente_nome,
+      valor: fatura.valor, status: 'pendente',
+    }, { onConflict: 'gateway_charge_id' });
+
+    return { pix_qr_code: qrCodeImage, pix_copia_cola: brCode, gateway_charge_id: chargeId };
+  } catch (err: any) {
+    console.error('Woovi PIX generate error:', err.message);
+    return emptyPix;
+  }
+}
+
+// ──────────────────────────────────────────────
 // Gateway dispatcher
 // ──────────────────────────────────────────────
 
@@ -505,6 +581,7 @@ async function checkPaymentStatus(fatura: any, supabaseAdmin: any): Promise<bool
   if (fatura.gateway === 'asaas') return asaasCheckStatus(fatura, supabaseAdmin);
   if (fatura.gateway === 'mercadopago') return mpCheckStatus(fatura, supabaseAdmin);
   if (fatura.gateway === 'ciabra') return ciabraCheckStatus(fatura, supabaseAdmin);
+  if (fatura.gateway === 'woovi') return wooviCheckStatus(fatura, supabaseAdmin);
   return false;
 }
 
@@ -513,6 +590,7 @@ async function generatePixForGateway(gatewayAtivo: string, fatura: any, supabase
   if (gatewayAtivo === 'mercadopago') return mpGeneratePix(fatura, supabaseAdmin);
   if (gatewayAtivo === 'ciabra') return ciabraGeneratePix(fatura, supabaseAdmin);
   if (gatewayAtivo === 'v3pay') return v3payGeneratePix(fatura, supabaseAdmin, authHeader);
+  if (gatewayAtivo === 'woovi') return wooviGeneratePix(fatura, supabaseAdmin);
   return emptyPix;
 }
 
@@ -581,6 +659,18 @@ async function createPixForNewFatura(
       }
     } catch (err: any) { console.error('V3Pay PIX error:', err.message); }
     return emptyPix;
+  }
+  if (gatewayAtivo === 'woovi') {
+    // Reuse the fatura-based generator with a mock fatura object
+    const mockFatura = { id: `${userId}-${Date.now()}`, user_id: userId, cliente_nome: clienteNome, cliente_whatsapp: clienteWhatsapp, valor, plano_nome: planoNome };
+    const result = await wooviGeneratePix(mockFatura, supabaseAdmin);
+    if (result.gateway_charge_id) {
+      await supabaseAdmin.from('cobrancas').upsert({
+        user_id: userId, gateway: 'woovi', gateway_charge_id: result.gateway_charge_id,
+        cliente_whatsapp: clienteWhatsapp, cliente_nome: clienteNome, valor, status: 'pendente',
+      }, { onConflict: 'gateway_charge_id' });
+    }
+    return result;
   }
   return emptyPix;
 }
