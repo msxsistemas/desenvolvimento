@@ -15,13 +15,72 @@ Deno.serve(async (req) => {
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-  // Handle Woovi webhooks (charge completed)
   if (req.method === "POST") {
     try {
       const body = await req.json();
+      const action = body.action;
+
+      // ── User panel actions (require auth) ──────────────────────────
+      if (action === "check" || action === "configure") {
+        const authHeader = req.headers.get("Authorization");
+        if (!authHeader) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user } } = await userClient.auth.getUser();
+        if (!user) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (action === "check") {
+          try {
+            const { data: secret } = await adminClient.rpc("get_gateway_secret", {
+              p_user_id: user.id,
+              p_gateway: "woovi",
+              p_secret_name: "app_id",
+            });
+            return new Response(JSON.stringify({ configured: !!secret && secret !== "" }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          } catch {
+            return new Response(JSON.stringify({ configured: false }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        }
+
+        if (action === "configure") {
+          const appId = body.app_id;
+          if (!appId) {
+            return new Response(JSON.stringify({ error: "app_id é obrigatório" }), {
+              status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
+          // Store the App ID securely via vault
+          await adminClient.rpc("store_gateway_secret", {
+            p_user_id: user.id,
+            p_gateway: "woovi",
+            p_secret_name: "app_id",
+            p_secret_value: appId,
+          });
+
+          return new Response(JSON.stringify({ ok: true, configured: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      // ── Webhook handler (from Woovi servers) ──────────────────────
       console.log("Woovi webhook received:", JSON.stringify(body).substring(0, 500));
 
-      // Woovi sends event type in body.event or body.type
       const eventType = body.event || body.type || "";
       const charge = body.charge || body.data?.charge || body;
       const correlationID = charge?.correlationID || body.correlationID || null;
@@ -30,7 +89,6 @@ Deno.serve(async (req) => {
       if (correlationID && (["COMPLETED", "PAID", "CONFIRMED"].includes(status) || eventType.includes("COMPLETED") || eventType.includes("PAID"))) {
         console.log(`Woovi payment confirmed for correlationID: ${correlationID}`);
 
-        // Update cobrancas
         const { data: cobranca } = await adminClient
           .from("cobrancas")
           .select("*")
@@ -44,7 +102,6 @@ Deno.serve(async (req) => {
             .eq("id", cobranca.id);
           console.log(`✅ Cobranca ${cobranca.id} marked as paid`);
 
-          // Trigger auto-renewal
           fetch(`${supabaseUrl}/functions/v1/auto-renew-client`, {
             method: "POST",
             headers: {
@@ -60,7 +117,6 @@ Deno.serve(async (req) => {
           }).catch((e: any) => console.error("Auto-renewal trigger error:", e.message));
         }
 
-        // Also update faturas
         const { data: fatura } = await adminClient
           .from("faturas")
           .select("id")
@@ -80,7 +136,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (err: any) {
-      console.error("Woovi webhook error:", err.message);
+      console.error("Woovi error:", err.message);
       return new Response(JSON.stringify({ error: err.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
