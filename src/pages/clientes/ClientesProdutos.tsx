@@ -164,6 +164,7 @@ export default function ClientesProdutos() {
               <TableHead>Nome</TableHead>
               <TableHead>Valor</TableHead>
               <TableHead>Créditos</TableHead>
+              <TableHead>Gateway</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[120px] text-right">Ações</TableHead>
             </TableRow>
@@ -182,6 +183,15 @@ export default function ClientesProdutos() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{p.creditos || "-"}</TableCell>
+                  <TableCell>
+                    {(() => {
+                      const gw = (p as any).gateway;
+                      const labels: Record<string, string> = { asaas: 'Asaas', mercadopago: 'Mercado Pago', v3pay: 'V3Pay', ciabra: 'Ciabra', woovi: 'Woovi' };
+                      return gw
+                        ? <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary text-[10px]">{labels[gw] || gw}</Badge>
+                        : <Badge variant="outline" className="border-border text-muted-foreground text-[10px]">🌐 Global</Badge>;
+                    })()}
+                  </TableCell>
                   <TableCell>
                     <Badge 
                       variant="outline" 
@@ -226,7 +236,7 @@ export default function ClientesProdutos() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                   Nenhum produto encontrado
                 </TableCell>
               </TableRow>
