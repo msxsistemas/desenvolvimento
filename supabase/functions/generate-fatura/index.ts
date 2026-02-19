@@ -502,25 +502,20 @@ async function v3payGeneratePix(fatura: any, supabaseAdmin: any, authHeader?: st
 // ──────────────────────────────────────────────
 
 async function wooviGetAppId(supabaseAdmin: any, userId: string): Promise<string | null> {
-  // First try vault (same pattern as Ciabra/V3Pay)
   const { data: config } = await supabaseAdmin
-    .from('woovi_config').select('app_id_hash, is_configured')
+    .from('woovi_config').select('is_configured')
     .eq('user_id', userId).maybeSingle();
   if (!config?.is_configured) return null;
 
-  if (config.app_id_hash === 'vault') {
-    const { data: vKey } = await supabaseAdmin.rpc('get_gateway_secret', {
-      p_user_id: userId, p_gateway: 'woovi', p_secret_name: 'app_id',
-    });
-    return vKey || null;
-  }
+  // Busca diretamente do vault com service role (sem auth.uid constraint)
+  const vaultName = `gw_woovi_app_id_${userId}`;
+  const { data: secretRow } = await supabaseAdmin
+    .from('vault.decrypted_secrets')
+    .select('decrypted_secret')
+    .eq('name', vaultName)
+    .maybeSingle();
 
-  // Legacy: stored as base64 hash in woovi_config (fallback)
-  // Try vault first regardless
-  const { data: vKey } = await supabaseAdmin.rpc('get_gateway_secret', {
-    p_user_id: userId, p_gateway: 'woovi', p_secret_name: 'app_id',
-  });
-  return vKey || null;
+  return secretRow?.decrypted_secret || null;
 }
 
 async function wooviCheckStatus(fatura: any, supabaseAdmin: any): Promise<boolean> {
