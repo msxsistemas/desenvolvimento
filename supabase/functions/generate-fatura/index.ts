@@ -521,7 +521,7 @@ async function wooviCheckStatus(fatura: any, supabaseAdmin: any): Promise<boolea
   try {
     const appId = await wooviGetAppId(supabaseAdmin, fatura.user_id);
     if (!appId) return false;
-    const resp = await fetch(`https://api.woovi.com/api/v1/charge/${fatura.gateway_charge_id}`, {
+    const resp = await fetch(`https://api.openpix.com.br/api/openpix/v1/charge/${fatura.gateway_charge_id}`, {
       headers: { 'Authorization': appId, 'Content-Type': 'application/json' },
     });
     const data = await resp.json();
@@ -555,7 +555,7 @@ async function wooviGeneratePix(fatura: any, supabaseAdmin: any): Promise<PixRes
       comment: `Cobrança - ${fatura.cliente_nome || 'Cliente'}`,
     };
 
-    const resp = await fetch(`https://api.woovi.com/api/v1/charge`, {
+    const resp = await fetch(`https://api.openpix.com.br/api/openpix/v1/charge`, {
       method: 'POST',
       headers: { 'Authorization': appId, 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
