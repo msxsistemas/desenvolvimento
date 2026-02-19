@@ -365,6 +365,10 @@ async function generatePayment(
       return await generateV3PayPayment(gateway, plan, user);
     }
 
+    if (provedor === "woovi") {
+      return await generateWooviPayment(gateway, plan, user);
+    }
+
     // Fallback: no specific gateway handler
     return { error: `Gateway "${gateway.provedor}" não suportado para pagamentos de plano` };
   } catch (err: any) {
@@ -609,6 +613,56 @@ async function generateV3PayPayment(gateway: any, plan: any, user: any) {
   }
 }
 
+async function generateWooviPayment(gateway: any, plan: any, user: any) {
+  const appId = gateway.api_key_hash;
+  if (!appId) return { error: "Gateway Woovi sem App ID configurado" };
+
+  const baseUrl = gateway.ambiente === "producao"
+    ? "https://api.woovi.com"
+    : "https://api.woovi-sandbox.com";
+
+  try {
+    const correlationID = `plan-${plan.id.substring(0, 8)}-${Date.now()}`;
+    const valorCentavos = Math.round(plan.valor * 100);
+
+    const resp = await fetch(`${baseUrl}/api/v1/charge`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: appId,
+      },
+      body: JSON.stringify({
+        correlationID,
+        value: valorCentavos,
+        comment: `Plano ${plan.nome} - Gestor Msx`,
+      }),
+    });
+
+    const data = await resp.json();
+    console.log("Woovi charge response:", JSON.stringify(data).substring(0, 500));
+    const charge = data.charge || data;
+
+    if (!charge?.correlationID && !data.brCode) {
+      return { error: data.error || data.message || "Erro ao criar cobrança Woovi" };
+    }
+
+    const chargeId = charge.correlationID || correlationID;
+    const brCode = charge.brCode || data.brCode || null;
+    const qrCodeImage = charge.qrCodeImage || null;
+    const paymentLinkUrl = charge.paymentLinkUrl || null;
+
+    return {
+      charge_id: chargeId,
+      pix_qr_code: qrCodeImage,
+      pix_copia_cola: brCode,
+      payment_url: paymentLinkUrl,
+    };
+  } catch (err: any) {
+    console.error("Woovi payment error:", err);
+    return { error: err.message || "Erro ao criar pagamento Woovi" };
+  }
+}
+
 async function checkPaymentStatus(gateway: any, chargeId: string): Promise<boolean> {
   try {
     const provedor = gateway.provedor?.toLowerCase();
@@ -662,6 +716,19 @@ async function checkPaymentStatus(gateway: any, chargeId: string): Promise<boole
       });
       const data = await resp.json();
       return data.status === "approved" || data.status === "paid";
+    }
+
+    if (provedor === "woovi") {
+      const baseUrl = gateway.ambiente === "producao"
+        ? "https://api.woovi.com"
+        : "https://api.woovi-sandbox.com";
+      const resp = await fetch(`${baseUrl}/api/v1/charge/${chargeId}`, {
+        headers: { Authorization: gateway.api_key_hash },
+      });
+      const data = await resp.json();
+      const charge = data.charge || data;
+      const status = (charge?.status || "").toUpperCase();
+      return ["COMPLETED", "PAID", "CONFIRMED"].includes(status);
     }
 
     return false;
