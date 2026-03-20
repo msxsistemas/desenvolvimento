@@ -14,6 +14,198 @@ export type Database = {
   }
   public: {
     Tables: {
+      afiliados_comissoes: {
+        Row: {
+          afiliado_rede_id: string | null
+          comissao_percentual: number
+          comissao_tipo: string
+          comissao_valor: number
+          created_at: string
+          fatura_id: string | null
+          id: string
+          nivel: number
+          user_id: string
+          valor_fatura: number
+        }
+        Insert: {
+          afiliado_rede_id?: string | null
+          comissao_percentual?: number
+          comissao_tipo?: string
+          comissao_valor?: number
+          created_at?: string
+          fatura_id?: string | null
+          id?: string
+          nivel?: number
+          user_id: string
+          valor_fatura?: number
+        }
+        Update: {
+          afiliado_rede_id?: string | null
+          comissao_percentual?: number
+          comissao_tipo?: string
+          comissao_valor?: number
+          created_at?: string
+          fatura_id?: string | null
+          id?: string
+          nivel?: number
+          user_id?: string
+          valor_fatura?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afiliados_comissoes_afiliado_rede_id_fkey"
+            columns: ["afiliado_rede_id"]
+            isOneToOne: false
+            referencedRelation: "afiliados_rede"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "afiliados_comissoes_fatura_id_fkey"
+            columns: ["fatura_id"]
+            isOneToOne: false
+            referencedRelation: "faturas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      afiliados_niveis_config: {
+        Row: {
+          ativo: boolean
+          id: number
+          n1_tipo: string
+          n1_valor: number
+          n2_tipo: string
+          n2_valor: number
+          n3_tipo: string
+          n3_valor: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          id?: number
+          n1_tipo?: string
+          n1_valor?: number
+          n2_tipo?: string
+          n2_valor?: number
+          n3_tipo?: string
+          n3_valor?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          id?: number
+          n1_tipo?: string
+          n1_valor?: number
+          n2_tipo?: string
+          n2_valor?: number
+          n3_tipo?: string
+          n3_valor?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      afiliados_rede: {
+        Row: {
+          afiliado_email: string | null
+          afiliado_nome: string | null
+          afiliado_user_id: string | null
+          ativo: boolean
+          cliente_id: string | null
+          codigo_convite: string
+          comissao_recorrente: boolean
+          comissao_tipo: string
+          comissao_valor: number
+          created_at: string
+          id: string
+          nivel: number
+          pai_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          afiliado_email?: string | null
+          afiliado_nome?: string | null
+          afiliado_user_id?: string | null
+          ativo?: boolean
+          cliente_id?: string | null
+          codigo_convite: string
+          comissao_recorrente?: boolean
+          comissao_tipo?: string
+          comissao_valor?: number
+          created_at?: string
+          id?: string
+          nivel?: number
+          pai_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          afiliado_email?: string | null
+          afiliado_nome?: string | null
+          afiliado_user_id?: string | null
+          ativo?: boolean
+          cliente_id?: string | null
+          codigo_convite?: string
+          comissao_recorrente?: boolean
+          comissao_tipo?: string
+          comissao_valor?: number
+          created_at?: string
+          id?: string
+          nivel?: number
+          pai_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afiliados_rede_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "afiliados_rede_pai_id_fkey"
+            columns: ["pai_id"]
+            isOneToOne: false
+            referencedRelation: "afiliados_rede"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      afiliados_usuarios_config: {
+        Row: {
+          afiliados_liberado: boolean
+          codigo_convite: string | null
+          comissao_tipo: string
+          comissao_valor: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          afiliados_liberado?: boolean
+          codigo_convite?: string | null
+          comissao_tipo?: string
+          comissao_valor?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          afiliados_liberado?: boolean
+          codigo_convite?: string | null
+          comissao_tipo?: string
+          comissao_valor?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       aplicativos: {
         Row: {
           ativo: boolean | null
@@ -68,6 +260,45 @@ export type Database = {
           updated_at?: string
           user_id?: string
           webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      cached_panel_sessions: {
+        Row: {
+          access_token: string
+          cookies: string | null
+          created_at: string
+          expires_at: string
+          extra_data: Json | null
+          id: string
+          painel_id: string
+          provedor: string
+          token_type: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          cookies?: string | null
+          created_at?: string
+          expires_at?: string
+          extra_data?: Json | null
+          id?: string
+          painel_id: string
+          provedor: string
+          token_type?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          cookies?: string | null
+          created_at?: string
+          expires_at?: string
+          extra_data?: Json | null
+          id?: string
+          painel_id?: string
+          provedor?: string
+          token_type?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -142,7 +373,9 @@ export type Database = {
       }
       clientes: {
         Row: {
+          acessos_adicionais: Json | null
           aniversario: string | null
+          aplicativos_adicionais: Json | null
           app: string | null
           ativo: boolean | null
           created_at: string | null
@@ -164,14 +397,19 @@ export type Database = {
           observacao: string | null
           plano: string | null
           produto: string | null
+          renovacao_pendente: boolean | null
+          renovacao_pendente_dados: Json | null
           senha: string | null
           telas: number | null
+          tipo_painel: string | null
           user_id: string | null
           usuario: string | null
           whatsapp: string
         }
         Insert: {
+          acessos_adicionais?: Json | null
           aniversario?: string | null
+          aplicativos_adicionais?: Json | null
           app?: string | null
           ativo?: boolean | null
           created_at?: string | null
@@ -193,14 +431,19 @@ export type Database = {
           observacao?: string | null
           plano?: string | null
           produto?: string | null
+          renovacao_pendente?: boolean | null
+          renovacao_pendente_dados?: Json | null
           senha?: string | null
           telas?: number | null
+          tipo_painel?: string | null
           user_id?: string | null
           usuario?: string | null
           whatsapp: string
         }
         Update: {
+          acessos_adicionais?: Json | null
           aniversario?: string | null
+          aplicativos_adicionais?: Json | null
           app?: string | null
           ativo?: boolean | null
           created_at?: string | null
@@ -222,8 +465,11 @@ export type Database = {
           observacao?: string | null
           plano?: string | null
           produto?: string | null
+          renovacao_pendente?: boolean | null
+          renovacao_pendente_dados?: Json | null
           senha?: string | null
           telas?: number | null
+          tipo_painel?: string | null
           user_id?: string | null
           usuario?: string | null
           whatsapp?: string
@@ -430,6 +676,45 @@ export type Database = {
           },
         ]
       }
+      gateway_rotation_config: {
+        Row: {
+          ativo: boolean
+          contador_atual: number
+          created_at: string
+          gateway_a: string
+          gateway_atual: string
+          gateway_b: string
+          id: string
+          intervalo: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          contador_atual?: number
+          created_at?: string
+          gateway_a?: string
+          gateway_atual?: string
+          gateway_b?: string
+          id?: string
+          intervalo?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          contador_atual?: number
+          created_at?: string
+          gateway_a?: string
+          gateway_atual?: string
+          gateway_b?: string
+          id?: string
+          intervalo?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       indicacoes: {
         Row: {
           bonus: number
@@ -437,6 +722,8 @@ export type Database = {
           codigo_indicacao: string
           created_at: string
           id: string
+          indicado_email: string | null
+          indicado_nome: string | null
           status: string
           updated_at: string
           user_id: string
@@ -447,6 +734,8 @@ export type Database = {
           codigo_indicacao: string
           created_at?: string
           id?: string
+          indicado_email?: string | null
+          indicado_nome?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -457,6 +746,8 @@ export type Database = {
           codigo_indicacao?: string
           created_at?: string
           id?: string
+          indicado_email?: string | null
+          indicado_nome?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -467,6 +758,92 @@ export type Database = {
             columns: ["cliente_indicado_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      indicacoes_auto_renovacao: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          id: string
+          min_indicacoes: number | null
+          periodo: string | null
+          tipo_desconto: string | null
+          updated_at: string | null
+          user_id: string
+          valor_desconto: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          min_indicacoes?: number | null
+          periodo?: string | null
+          tipo_desconto?: string | null
+          updated_at?: string | null
+          user_id: string
+          valor_desconto?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          min_indicacoes?: number | null
+          periodo?: string | null
+          tipo_desconto?: string | null
+          updated_at?: string | null
+          user_id?: string
+          valor_desconto?: number | null
+        }
+        Relationships: []
+      }
+      indicacoes_descontos_log: {
+        Row: {
+          ciclo: number
+          created_at: string
+          fatura_id: string | null
+          id: string
+          indicador_id: string
+          indicador_nome: string
+          tipo_desconto: string
+          user_id: string
+          valor_desconto: number
+          valor_final: number
+          valor_original: number
+        }
+        Insert: {
+          ciclo?: number
+          created_at?: string
+          fatura_id?: string | null
+          id?: string
+          indicador_id: string
+          indicador_nome: string
+          tipo_desconto?: string
+          user_id: string
+          valor_desconto: number
+          valor_final: number
+          valor_original: number
+        }
+        Update: {
+          ciclo?: number
+          created_at?: string
+          fatura_id?: string | null
+          id?: string
+          indicador_id?: string
+          indicador_nome?: string
+          tipo_desconto?: string
+          user_id?: string
+          valor_desconto?: number
+          valor_final?: number
+          valor_original?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indicacoes_descontos_log_fatura_id_fkey"
+            columns: ["fatura_id"]
+            isOneToOne: false
+            referencedRelation: "faturas"
             referencedColumns: ["id"]
           },
         ]
@@ -533,6 +910,8 @@ export type Database = {
           expiracao_app: string | null
           fatura_criada: string | null
           id: number
+          indicacao_convite: string | null
+          indicacao_meta: string | null
           proximo_vencer: string | null
           updated_at: string | null
           user_id: string | null
@@ -550,6 +929,8 @@ export type Database = {
           expiracao_app?: string | null
           fatura_criada?: string | null
           id?: number
+          indicacao_convite?: string | null
+          indicacao_meta?: string | null
           proximo_vencer?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -567,6 +948,8 @@ export type Database = {
           expiracao_app?: string | null
           fatura_criada?: string | null
           id?: number
+          indicacao_convite?: string | null
+          indicacao_meta?: string | null
           proximo_vencer?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -582,6 +965,7 @@ export type Database = {
           created_at: string
           id: string
           is_configured: boolean | null
+          public_key_hash: string | null
           updated_at: string
           user_id: string
           webhook_url: string | null
@@ -591,6 +975,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_configured?: boolean | null
+          public_key_hash?: string | null
           updated_at?: string
           user_id: string
           webhook_url?: string | null
@@ -600,6 +985,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_configured?: boolean | null
+          public_key_hash?: string | null
           updated_at?: string
           user_id?: string
           webhook_url?: string | null
@@ -709,41 +1095,53 @@ export type Database = {
         Row: {
           auto_renovacao: boolean
           created_at: string
+          dispositivo: string | null
+          dispositivo_id: string | null
           id: string
           nome: string
           provedor: string
+          proxy_session_id: string | null
           senha: string
           status: string
           updated_at: string
           url: string
           user_id: string
           usuario: string
+          verificacao_status: string
         }
         Insert: {
           auto_renovacao?: boolean
           created_at?: string
+          dispositivo?: string | null
+          dispositivo_id?: string | null
           id?: string
           nome: string
           provedor?: string
+          proxy_session_id?: string | null
           senha: string
           status?: string
           updated_at?: string
           url: string
           user_id: string
           usuario: string
+          verificacao_status?: string
         }
         Update: {
           auto_renovacao?: boolean
           created_at?: string
+          dispositivo?: string | null
+          dispositivo_id?: string | null
           id?: string
           nome?: string
           provedor?: string
+          proxy_session_id?: string | null
           senha?: string
           status?: string
           updated_at?: string
           url?: string
           user_id?: string
           usuario?: string
+          verificacao_status?: string
         }
         Relationships: []
       }
@@ -874,6 +1272,27 @@ export type Database = {
           nome_empresa?: string | null
           telefone?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      registration_ips: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string
           user_id?: string
         }
         Relationships: []
@@ -1330,12 +1749,43 @@ export type Database = {
         }
         Relationships: []
       }
+      v3pay_pj_config: {
+        Row: {
+          api_token_hash: string
+          created_at: string
+          id: string
+          is_configured: boolean | null
+          updated_at: string
+          user_id: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_token_hash: string
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          updated_at?: string
+          user_id: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_token_hash?: string
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          updated_at?: string
+          user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       whatsapp_messages: {
         Row: {
           created_at: string
           delivered_at: string | null
           error_message: string | null
           id: string
+          media_url: string | null
           message: string
           message_id: string | null
           phone: string
@@ -1352,6 +1802,7 @@ export type Database = {
           delivered_at?: string | null
           error_message?: string | null
           id?: string
+          media_url?: string | null
           message: string
           message_id?: string | null
           phone: string
@@ -1368,6 +1819,7 @@ export type Database = {
           delivered_at?: string | null
           error_message?: string | null
           id?: string
+          media_url?: string | null
           message?: string
           message_id?: string | null
           phone?: string
@@ -1460,6 +1912,15 @@ export type Database = {
     Functions: {
       admin_get_gateway_secret: {
         Args: { p_gateway: string; p_secret_name: string; p_user_id: string }
+        Returns: string
+      }
+      admin_store_gateway_secret: {
+        Args: {
+          p_gateway: string
+          p_secret_name: string
+          p_secret_value: string
+          p_user_id: string
+        }
         Returns: string
       }
       create_default_templates: {
