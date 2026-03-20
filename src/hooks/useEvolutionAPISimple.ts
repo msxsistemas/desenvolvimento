@@ -18,7 +18,7 @@ export const useEvolutionAPISimple = () => {
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
-  const statusIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const savingRef = useRef(false);
   const hasLoadedRef = useRef(false);
   const failCountRef = useRef(0);

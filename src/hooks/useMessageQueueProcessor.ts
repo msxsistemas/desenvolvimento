@@ -35,7 +35,7 @@ export const useMessageQueueProcessor = () => {
   const processingRef = useRef(false);
   const batchCountRef = useRef(0);
   const pausingRef = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const configRef = useRef<EnvioConfig>(DEFAULT_CONFIG);
   const dailySentRef = useRef(0);
   const lastDayRef = useRef<string>('');
